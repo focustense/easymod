@@ -25,6 +25,7 @@ namespace NPC_Bundler
         {
             { "profile", new NavLink("Profile", typeof(ProfilePage), x => x.Profile) },
             { "log", new NavLink("Log", typeof(LogPage), x => x.Log) },
+            { "settings", new NavLink("Settings", typeof(SettingsPage), x => x.Settings) },
         };
 
         private readonly MainViewModel model;

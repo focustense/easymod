@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:fa="http://schemas.fontawesome.io/icons/"
+             xmlns:fa5="http://schemas.fontawesome.com/icons/"
              xmlns:local="clr-namespace:NPC_Bundler"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              d:DataContext="{d:DesignInstance Type=local:LoaderViewModel}"
@@ -12,7 +12,7 @@
     <Grid>
         <DockPanel>
             <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Height="24" Margin="8" DockPanel.Dock="Top">
-                <fa:ImageAwesome Name="SpinnerImage" Icon="Cog" Spin="True" Height="16" Width="16" Margin="0,0,12,0" Visibility="{Binding Path=IsSpinnerVisible, Converter={StaticResource BoolToVisibility}}"/>
+                <fa5:SvgAwesome Name="SpinnerImage" Icon="Solid_Cog" Spin="True" Height="20" Width="20" Margin="0,0,12,0" Visibility="{Binding Path=IsSpinnerVisible, Converter={StaticResource BoolToVisibility}}"/>
                 <TextBlock Text="{Binding Path=Status}" VerticalAlignment="Center" />
             </ui:SimpleStackPanel>
             <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">

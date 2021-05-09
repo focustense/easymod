@@ -16,11 +16,12 @@ namespace NPC_Bundler
         public LogViewModel Log { get; init; }
         public ProfileViewModel Profile { get; private set; }
         public string PageTitle { get; set; }
-        public BundlerSettings Settings => BundlerSettings.Default;
+        public SettingsViewModel Settings { get; init; }
 
         public MainViewModel()
         {
             Log = new LogViewModel();
+            Settings = new SettingsViewModel();
             Loader = new LoaderViewModel(Log);
             Loader.Loaded += () => {
                 Profile = new ProfileViewModel(Loader.Npcs);

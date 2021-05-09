@@ -118,7 +118,10 @@ namespace NPC_Bundler
         }
     }
 
-    public record NpcOverride(string PluginName, NpcFaceData? faceData);
+    public record NpcOverride(string PluginName, NpcFaceData? FaceData)
+    {
+        public bool HasFaceOverride => FaceData != null;
+    }
 
     public record NpcFaceData(
             uint[] HeadPartIds, uint? HairColorId, uint? FaceTextureSetId, NpcSkinTone? SkinTone,

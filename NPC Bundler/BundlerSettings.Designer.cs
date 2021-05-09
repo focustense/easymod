@@ -34,5 +34,17 @@ namespace NPC_Bundler {
                 this["ModRootDirectory"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MugshotsDirectory {
+            get {
+                return ((string)(this["MugshotsDirectory"]));
+            }
+            set {
+                this["MugshotsDirectory"] = value;
+            }
+        }
     }
 }

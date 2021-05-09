@@ -17,8 +17,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="FontAwesome.WPF" Version="4.7.0.9" />
+    <PackageReference Include="FontAwesome5" Version="2.1.1" />
     <PackageReference Include="ModernWpfUI" Version="0.9.4" />
+    <PackageReference Include="Ookii.Dialogs.Wpf" Version="3.1.0" />
     <PackageReference Include="PropertyChanged.Fody" Version="3.3.3">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -34,6 +35,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>BundlerSettings.settings</DependentUpon>
     </Compile>
+    <Compile Update="SettingsPage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -41,6 +45,13 @@
       <Generator>PublicSettingsSingleFileGenerator</Generator>
       <LastGenOutput>BundlerSettings.Designer.cs</LastGenOutput>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="SettingsPage.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
 </Project>

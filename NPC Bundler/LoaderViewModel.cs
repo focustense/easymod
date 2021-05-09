@@ -62,6 +62,7 @@ namespace NPC_Bundler
             LoadedPluginNames = Setup.GetLoadedFileNames();
             Status = "Done loading plugins. Building NPC index...";
             Npcs = new List<Npc>(await Task.Run(GetNpcs).ConfigureAwait(true));
+            Log.Append("All NPCs loaded.");
 
             Log.Pause();
             Status = "All done.";
@@ -77,6 +78,7 @@ namespace NPC_Bundler
             using var g = new HandleGroup();
             foreach (var fileName in LoadedPluginNames)
             {
+                Log.Append($"Reading NPC records from {fileName}...");
                 var file = g.AddHandle(Files.FileByName(fileName));
                 var npcRecords = g.AddHandles(Records.GetRecords(file, "NPC_", true));
                 foreach (var npcRecord in npcRecords)
