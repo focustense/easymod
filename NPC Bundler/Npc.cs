@@ -10,6 +10,7 @@ namespace NPC_Bundler
     public interface Npc
     {
         string BasePluginName { get; }
+        string EditorId { get; }
         uint FormId { get; }
         string LocalFormIdHex { get; }
         string Name { get; }
@@ -93,11 +94,7 @@ namespace NPC_Bundler
         {
             if (!Elements.HasElement(npcRecord, "NAMA"))
                 return null;
-            var faceParts = g.AddHandle(Elements.GetElement(npcRecord, "NAMA"));
-            return new NpcFaceParts(
-                ElementValues.GetIntValue(faceParts, "Nose"),
-                ElementValues.GetIntValue(faceParts, "Eyes"),
-                ElementValues.GetIntValue(faceParts, "Mouth"));
+            return null;
         }
 
         private static NpcFaceTint[] ReadFaceTints(Handle npcRecord, HandleGroup g)

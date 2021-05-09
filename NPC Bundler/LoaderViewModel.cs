@@ -92,6 +92,7 @@ namespace NPC_Bundler
                         npcs.Add(formId, new NpcInfo
                         {
                             BasePluginName = fileName,
+                            EditorId = RecordValues.GetEditorId(npcRecord),
                             FormId = Records.GetFormId(npcRecord, false, false),
                             LocalFormIdHex = Records.GetHexFormId(npcRecord, false, true),
                             // Checking for FULL isn't totally necessary, but avoids spamming log warnings.
@@ -102,7 +103,7 @@ namespace NPC_Bundler
                 }
             }
 
-            return npcs.Values;
+            return npcs.Values.OrderBy(x => x.FormId);
         }
 
         private async Task WaitForLoad()
@@ -137,14 +138,12 @@ namespace NPC_Bundler
     class NpcInfo : Npc
     {
         public string BasePluginName { get; set; }
+        public string EditorId { get; set; }
         public uint FormId { get; set; }
         public string LocalFormIdHex { get; set; }
         public string Name { get; set; }
         public List<NpcOverride> Overrides { get; set; } = new List<NpcOverride>();
 
-        IReadOnlyList<NpcOverride> Npc.Overrides
-        {
-            get { return Overrides.AsReadOnly(); }
-        }
+        IReadOnlyList<NpcOverride> Npc.Overrides => Overrides.AsReadOnly();
     }
 }

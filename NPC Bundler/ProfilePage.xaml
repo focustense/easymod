@@ -4,10 +4,35 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:NPC_Bundler"
-             xmlns:ui="http://schemas.modernwpf.com/2019"
+             xmlns:ui="http://schemas.modernwpf.com/2019" d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+             KeepAlive="True"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <TextBlock Text="Profile Content"/>
+             d:DesignHeight="700" d:DesignWidth="1200">
+    <Grid DataContext="{Binding Path=Profile}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="800px"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Border Margin="0,0,0,8" Style="{StaticResource GroupBorder}" Grid.Row="0" Grid.ColumnSpan="3">
+            <ui:SimpleStackPanel Orientation="Horizontal">
+                <CheckBox Content="Show DLC Overrides" IsChecked="{Binding ShowDlcOverrides}"/>
+                <CheckBox Content="Show Non-Conflicting Overrides" IsChecked="{Binding ShowSinglePluginOverrides}" Margin="16,0,0,0"/>
+                <CheckBox Content="Only Face Overrides" IsChecked="{Binding OnlyFaceOverrides}" Margin="16,0,0,0"/>
+            </ui:SimpleStackPanel>
+        </Border>
+        <DataGrid ItemsSource="{Binding DisplayedNpcs}" AutoGenerateColumns="False" SelectionMode="Single" Grid.Column="0" Grid.Row="1">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Base Plugin" Width="180" Binding="{Binding BasePluginName}"/>
+                <DataGridTextColumn Header="Form ID" Width="100" Binding="{Binding LocalFormIdHex}"/>
+                <DataGridTextColumn Header="Editor ID" Width="200" Binding="{Binding EditorId}"/>
+                <DataGridTextColumn Header="Name" Width="*" Binding="{Binding Name}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <GridSplitter HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5" ShowsPreview="True" Grid.Column="1" Grid.Row="1"></GridSplitter>
     </Grid>
 </ui:Page>

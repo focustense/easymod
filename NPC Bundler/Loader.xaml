@@ -4,18 +4,20 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:fa="http://schemas.fontawesome.io/icons/"
-             xmlns:local="clr-namespace:NPC_Bundler" d:DataContext="{d:DesignInstance Type=local:LoaderViewModel}"
+             xmlns:local="clr-namespace:NPC_Bundler"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             d:DataContext="{d:DesignInstance Type=local:LoaderViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <DockPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Height="24" Margin="8" DockPanel.Dock="Top">
+            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Height="24" Margin="8" DockPanel.Dock="Top">
                 <fa:ImageAwesome Name="SpinnerImage" Icon="Cog" Spin="True" Height="16" Width="16" Margin="0,0,12,0" Visibility="{Binding Path=IsSpinnerVisible, Converter={StaticResource BoolToVisibility}}"/>
                 <TextBlock Text="{Binding Path=Status}" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
+            </ui:SimpleStackPanel>
+            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
                 <Button Name="ConfirmLoad" Content="OK" Margin="8" Padding="4" Width="80" IsEnabled="{Binding CanLoad}" Click="ConfirmLoad_Click"/>
-            </StackPanel>
+            </ui:SimpleStackPanel>
             <Grid>
                 <DataGrid Name="LoadOrderGrid" AutoGenerateColumns="False" ItemsSource="{Binding Path=Plugins}" Margin="8,0,8,0" Visibility="{Binding Path=IsPluginListVisible, Converter={StaticResource BoolToVisibility}}" KeyDown="LoadOrderGrid_KeyDown">
                     <DataGrid.Columns>
@@ -31,7 +33,7 @@
                                 </Style>
                             </DataGridTemplateColumn.CellStyle>
                             <DataGridTemplateColumn.HeaderStyle>
-                                <Style TargetType="DataGridColumnHeader">
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
                                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
                                 </Style>
                             </DataGridTemplateColumn.HeaderStyle>

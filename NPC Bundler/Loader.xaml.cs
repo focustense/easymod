@@ -25,10 +25,7 @@ namespace NPC_Bundler
             InitializeComponent();
         }
 
-        protected LoaderViewModel Model
-        {
-            get { return (LoaderViewModel)DataContext; }
-        }
+        protected LoaderViewModel Model => (LoaderViewModel)DataContext;
 
         private void ConfirmLoad_Click(object sender, RoutedEventArgs e)
         {

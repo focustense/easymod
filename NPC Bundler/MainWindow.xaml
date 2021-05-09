@@ -15,9 +15,7 @@
                 <ui:NavigationViewItem Tag="profile" Content="Profile" IsSelected="True"></ui:NavigationViewItem>
                 <ui:NavigationViewItem Tag="log" Content="Log"></ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
-            <ScrollViewer>
-                <ui:Frame Name="PageFrame" Padding="12,0,12,24" IsTabStop="True" NavigationUIVisibility="Hidden" NavigationFailed="PageFrame_NavigationFailed"/>
-            </ScrollViewer>
+            <ui:Frame Name="PageFrame" Padding="12,0,12,24" IsTabStop="True" NavigationUIVisibility="Hidden"/>
         </ui:NavigationView>
     </Grid>
 </Window>

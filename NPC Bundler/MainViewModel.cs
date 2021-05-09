@@ -14,18 +14,18 @@ namespace NPC_Bundler
         public bool IsReady { get; private set; }
         public LoaderViewModel Loader { get; init; }
         public LogViewModel Log { get; init; }
+        public ProfileViewModel Profile { get; private set; }
         public string PageTitle { get; set; }
-
-        public BundlerSettings Settings
-        {
-            get { return BundlerSettings.Default; }
-        }
+        public BundlerSettings Settings => BundlerSettings.Default;
 
         public MainViewModel()
         {
             Log = new LogViewModel();
             Loader = new LoaderViewModel(Log);
-            Loader.Loaded += () => { IsReady = true; };
+            Loader.Loaded += () => {
+                Profile = new ProfileViewModel(Loader.Npcs);
+                IsReady = true;
+            };
         }
     }
 }

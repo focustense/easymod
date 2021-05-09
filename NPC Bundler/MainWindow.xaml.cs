@@ -23,7 +23,7 @@ namespace NPC_Bundler
     {
         private static readonly Dictionary<string, NavLink> NavLinks = new()
         {
-            { "profile", new NavLink("Profile", typeof(ProfilePage), x => x) },
+            { "profile", new NavLink("Profile", typeof(ProfilePage), x => x.Profile) },
             { "log", new NavLink("Log", typeof(LogPage), x => x.Log) },
         };
 
@@ -40,10 +40,7 @@ namespace NPC_Bundler
             if (NavLinks.TryGetValue(pageName, out NavLink navLink))
             {
                 model.PageTitle = navLink.Title;
-                // This causes a data binding error, no matter which order the context assignment and navigation occur
-                // in. Haven't figured out a way to prevent it, but seems benign enough to ignore.
                 PageFrame.Navigate(navLink.PageType);
-                PageFrame.DataContext = navLink.ViewModelSelector(model);
             }
         }
 
@@ -53,11 +50,6 @@ namespace NPC_Bundler
                 Navigate("settings");
             else
                 Navigate((string)args.SelectedItemContainer.Tag);
-        }
-
-        private void PageFrame_NavigationFailed(object sender, NavigationFailedEventArgs e)
-        {
-            Debug.WriteLine(e);
         }
     }
 
