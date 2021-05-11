@@ -32,6 +32,7 @@ namespace NPC_Bundler
                     Mod = Path.GetFileName(Path.TrimEndingDirectorySeparator(modDir)),
                     Plugins = Directory.EnumerateFiles(modDir)
                         .Where(f => pluginFileNames.Contains(Path.GetFileName(f)))
+                        .Select(f => Path.GetFileName(f))
                 })
                 .ToList();
             IDictionary<string, IEnumerable<string>> modsToPlugins = null;

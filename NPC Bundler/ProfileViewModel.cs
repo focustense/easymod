@@ -27,7 +27,10 @@ namespace NPC_Bundler
         public bool HasSelectedNpc => SelectedNpc != null;
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
         public bool OnlyFaceOverrides { get; set; }
+        public Mugshot SelectedMugshot { get; private set; }
+        public NpcOverrideConfiguration SelectedOverrideConfig { get; private set; }
         public NpcConfiguration SelectedNpc { get; private set; }
+        public IReadOnlyList<NpcOverrideConfiguration> SelectedNpcOverrides { get; private set; }
         public bool ShowDlcOverrides { get; set; }
         public bool ShowSinglePluginOverrides { get; set; } = true;
 
@@ -40,10 +43,36 @@ namespace NPC_Bundler
                 npcConfigurations.Add(npc.FormId, new NpcConfiguration(npc));
         }
 
+        public void SelectMugshot(Mugshot mugshot)
+        {
+            foreach (var ms in Mugshots ?? Enumerable.Empty<Mugshot>())
+                ms.IsHighlighted = false;
+            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration>())
+                overrideConfig.IsHighlighted =
+                    mugshot?.ProvidingPlugins?.Contains(overrideConfig.PluginName, StringComparer.OrdinalIgnoreCase) ??
+                    false;
+        }
+
         public void SelectNpc(NpcConfiguration npc)
         {
+            ClearNpcHighlights();
             SelectedNpc = npc;
+            SelectedNpcOverrides = npc.GetOverrides().ToList().AsReadOnly();
             Mugshots = GetMugshots().ToList().AsReadOnly();
+        }
+
+        public void SelectOverride(NpcOverrideConfiguration overrideConfig)
+        {
+            ClearNpcHighlights();
+            foreach (var mugshot in Mugshots ?? Enumerable.Empty<Mugshot>())
+                mugshot.IsHighlighted =
+                    mugshot.ProvidingPlugins.Contains(overrideConfig?.PluginName, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private void ClearNpcHighlights()
+        {
+            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration>())
+                overrideConfig.IsHighlighted = false;
         }
 
         private IEnumerable<Mugshot> GetMugshots()
@@ -53,7 +82,7 @@ namespace NPC_Bundler
             var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
             var mugshotModDirs = Directory.GetDirectories(BundlerSettings.Default.MugshotsDirectory);
             var overridingPluginNames = new HashSet<string>(
-                SelectedNpc.Overrides.Select(x => x.PluginName),
+                SelectedNpcOverrides?.Select(x => x.PluginName) ?? Enumerable.Empty<string>(),
                 StringComparer.OrdinalIgnoreCase);
             foreach (var mugshotModDir in mugshotModDirs)
             {
@@ -76,7 +105,11 @@ namespace NPC_Bundler
 
     public record Mugshot(
         string ProvidingMod, bool IsModInstalled, string[] ProvidingPlugins, string FileName)
+        : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public bool IsHighlighted { get; set; }
         public bool IsModMissing => !IsModInstalled;
         public bool IsPluginLoaded => ProvidingPlugins.Length > 0;
         public bool IsPluginMissing => ProvidingPlugins.Length == 0;
@@ -97,8 +130,6 @@ namespace NPC_Bundler
         public string FacePluginName { get; set; }
         public string LocalFormIdHex => npc.LocalFormIdHex;
         public string Name => npc.Name;
-        [DependsOn("FacePluginName", "MainPluginName")]
-        public IEnumerable<NpcOverrideConfiguration> Overrides => GetOverrides();
 
         private readonly Npc npc;
 
@@ -127,11 +158,14 @@ namespace NPC_Bundler
         }
     }
 
-    public class NpcOverrideConfiguration
+    public class NpcOverrideConfiguration : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public bool HasFaceOverride { get; init; }
         public bool IsDefaultSource { get; init; }
         public bool IsFaceSource { get; init; }
+        public bool IsHighlighted { get; set; }
         public string PluginName { get; init; }
         public Action SetDefaultSource { get; init; }
         public Action SetFaceSource { get; init; }

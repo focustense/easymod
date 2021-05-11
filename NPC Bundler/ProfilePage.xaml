@@ -70,15 +70,32 @@
             </DataGrid.Columns>
         </DataGrid>
         <GridSplitter HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5" Margin="4,0" Grid.Column="1" Grid.Row="1"></GridSplitter>
-        <ui:ScrollViewerEx Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.Column="2" Grid.Row="1">
-            <ui:SimpleStackPanel DataContext="{Binding Path=SelectedNpc}">
-                <GroupBox Header="Overrides">
-                    <ui:ListView ItemsSource="{Binding Path=Overrides}" SelectionMode="Single" ItemTemplate="{StaticResource OverrideListItemTemplate}"/>
-                </GroupBox>
-            </ui:SimpleStackPanel>
-        </ui:ScrollViewerEx>
+        <GroupBox Header="Provided/Overridden In" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.Column="2" Grid.Row="1">
+            <ui:ScrollViewerEx>
+                <ui:ListView Name="OverrideListView" ItemsSource="{Binding Path=SelectedNpcOverrides}" SelectionMode="Single" ItemTemplate="{StaticResource OverrideListItemTemplate}" SelectionChanged="OverrideListView_SelectionChanged">
+                    <ui:ListView.ItemContainerStyle>
+                        <Style TargetType="ui:ListViewItem">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                    <Setter Property="Background" Value="LightGoldenrodYellow"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:ListView.ItemContainerStyle>
+                </ui:ListView>
+            </ui:ScrollViewerEx>
+        </GroupBox>
         <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5" Margin="0,4" Grid.ColumnSpan="3" Grid.Row="2"></GridSplitter>
-        <ui:ListView ItemsSource="{Binding Path=Mugshots}" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.ColumnSpan="3" Grid.Row="3">
+        <ui:ListView Name="MugshotListView" ItemsSource="{Binding Path=Mugshots}" SelectionMode="Single" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.ColumnSpan="3" Grid.Row="3" SelectionChanged="MugshotListView_SelectionChanged">
+            <ui:ListView.ItemContainerStyle>
+                <Style TargetType="ui:ListViewItem">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                            <Setter Property="Background" Value="LightGoldenrodYellow"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ui:ListView.ItemContainerStyle>
             <ui:ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Orientation="Horizontal"/>
