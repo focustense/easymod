@@ -18,7 +18,7 @@ namespace NPC_Bundler
         {
             get {
                 var minOverrideCount = ShowSinglePluginOverrides ? 1 : 2;
-                return NpcConfigurations
+                return npcConfigurations.Values
                     .Where(x => x.GetOverrideCount(ShowDlcOverrides, !OnlyFaceOverrides) >= minOverrideCount);
             }
         }
@@ -31,14 +31,13 @@ namespace NPC_Bundler
         public bool ShowDlcOverrides { get; set; }
         public bool ShowSinglePluginOverrides { get; set; } = true;
 
-        protected List<NpcConfiguration> NpcConfigurations { get; init; }
+        private readonly SortedDictionary<uint, NpcConfiguration> npcConfigurations = new();
 
         public ProfileViewModel(IEnumerable<Npc> npcs)
         {
-            NpcConfigurations = npcs
-                .Where(npc => npc.Overrides.Count > 0)
-                .Select(npc => new NpcConfiguration(npc))
-                .ToList();
+            var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
+            foreach (var npc in npcsWithOverrides)
+                npcConfigurations.Add(npc.FormId, new NpcConfiguration(npc));
         }
 
         public void SelectNpc(NpcConfiguration npc)
@@ -92,19 +91,31 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string BasePluginName => npc.BasePluginName;
+        public string DefaultPluginName { get; set; }
         public string EditorId => npc.EditorId;
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
+        public string FacePluginName { get; set; }
         public string LocalFormIdHex => npc.LocalFormIdHex;
         public string Name => npc.Name;
-        public string OverridePluginName { get; set; }
-        public IReadOnlyList<NpcOverride> Overrides => npc.Overrides;
+        [DependsOn("FacePluginName", "MainPluginName")]
+        public IEnumerable<NpcOverrideConfiguration> Overrides => GetOverrides();
 
         private readonly Npc npc;
 
         public NpcConfiguration(Npc npc)
         {
             this.npc = npc;
-            OverridePluginName = npc.Overrides.LastOrDefault().PluginName;
+            FacePluginName = DefaultPluginName = npc.Overrides.LastOrDefault()?.PluginName ?? BasePluginName;
+        }
+
+        public IEnumerable<NpcOverrideConfiguration> GetOverrides()
+        {
+            // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
+            var sources = npc.Overrides.Select(x => new { x.PluginName, x.HasFaceOverride })
+                .Prepend(new { PluginName = BasePluginName, HasFaceOverride = true });
+            return sources.Select(x => new NpcOverrideConfiguration(
+                x.PluginName, x.HasFaceOverride, x.PluginName == DefaultPluginName, x.PluginName == FacePluginName,
+                () => { DefaultPluginName = x.PluginName; }, () => { FacePluginName = x.PluginName; }));
         }
 
         public int GetOverrideCount(bool includeDlc, bool includeNonFaces)
@@ -113,6 +124,28 @@ namespace NPC_Bundler
                 .Where(x => includeDlc || !DlcPluginNames.Contains(x.PluginName))
                 .Where(x => includeNonFaces || x.FaceData != null)
                 .Count();
+        }
+    }
+
+    public class NpcOverrideConfiguration
+    {
+        public bool HasFaceOverride { get; init; }
+        public bool IsDefaultSource { get; init; }
+        public bool IsFaceSource { get; init; }
+        public string PluginName { get; init; }
+        public Action SetDefaultSource { get; init; }
+        public Action SetFaceSource { get; init; }
+
+        public NpcOverrideConfiguration(
+            string pluginName, bool hasFaceOverride, bool isDefaultSource, bool isFaceSource, Action setDefaultSource,
+            Action setFaceSource)
+        {
+            PluginName = pluginName;
+            HasFaceOverride = hasFaceOverride;
+            IsDefaultSource = isDefaultSource;
+            IsFaceSource = isFaceSource;
+            SetDefaultSource = setDefaultSource;
+            SetFaceSource = setFaceSource;
         }
     }
 }
