@@ -93,7 +93,7 @@
             </ui:ScrollViewerEx>
         </GroupBox>
         <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5" Margin="0,4" Grid.ColumnSpan="3" Grid.Row="2"></GridSplitter>
-        <ui:ListView Name="MugshotListView" ItemsSource="{Binding Path=Mugshots}" SelectionMode="Single" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.ColumnSpan="3" Grid.Row="3" SelectionChanged="MugshotListView_SelectionChanged">
+        <ui:ListView Name="MugshotListView" ItemsSource="{Binding Path=Mugshots}" SelectionMode="Single" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.ColumnSpan="3" Grid.Row="3" SelectionChanged="MugshotListView_SelectionChanged" MouseDoubleClick="MugshotListView_MouseDoubleClick">
             <ui:ListView.ItemContainerStyle>
                 <Style TargetType="ui:ListViewItem">
                     <Style.Triggers>

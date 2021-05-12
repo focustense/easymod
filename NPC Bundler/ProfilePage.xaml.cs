@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace NPC_Bundler
 {
@@ -14,6 +15,13 @@ namespace NPC_Bundler
         public ProfilePage()
         {
             InitializeComponent();
+        }
+
+        private void MugshotListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left)
+                return;
+            Model.SetFaceOverride(MugshotListView.SelectedItem as Mugshot);
         }
 
         private void MugshotListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

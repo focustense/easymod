@@ -71,6 +71,25 @@ namespace NPC_Bundler
                 overrideConfig.IsSelected = true;
         }
 
+        public void SetFaceOverride(Mugshot mugshot)
+        {
+            if (SelectedNpc == null)
+                return;
+            // It should be rare for the same mugshot to correspond to two plugins *with that NPC* in the load order.
+            // A single mod might provide several optional add-on plugins that all modify different NPCs (or do totally
+            // different things altogether). If this really does happen, the most logical thing to do is to pick the
+            // last plugin in the load order which belongs to that mod, which we can assume is the one responsible for
+            // any conflict resolution between that mod/plugin and any other ones.
+            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
+            var modPlugins = new HashSet<string>(
+                modPluginMap.GetPluginsForMod(mugshot.ProvidingMod), StringComparer.OrdinalIgnoreCase);
+            var lastMatchingPlugin = SelectedNpc.Overrides
+                .Where(x => modPlugins.Contains(x.PluginName))
+                .LastOrDefault();
+            if (lastMatchingPlugin != null)
+                SelectedNpc.SetFaceSource(lastMatchingPlugin);
+        }
+
         private void ClearNpcHighlights()
         {
             foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration>())
