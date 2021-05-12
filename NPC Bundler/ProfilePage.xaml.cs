@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace NPC_Bundler
@@ -30,6 +31,18 @@ namespace NPC_Bundler
         {
             MugshotListView.SelectedItem = null;
             Model?.SelectOverride(e.AddedItems.Cast<NpcOverrideConfiguration>().FirstOrDefault());
+        }
+
+        private void SetDefaultOverrideButton_Click(object sender, RoutedEventArgs e)
+        {
+            var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration;
+            overrideConfig?.SetDefaultSource();
+        }
+
+        private void SetFaceOverrideButton_Click(object sender, RoutedEventArgs e)
+        {
+            var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration;
+            overrideConfig?.SetFaceSource();
         }
     }
 }

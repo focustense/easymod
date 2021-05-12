@@ -57,7 +57,7 @@ namespace NPC_Bundler
         {
             ClearNpcHighlights();
             SelectedNpc = npc;
-            SelectedNpcOverrides = npc.GetOverrides().ToList().AsReadOnly();
+            SelectedNpcOverrides = npc.Overrides;
             Mugshots = GetMugshots().ToList().AsReadOnly();
         }
 
@@ -67,12 +67,14 @@ namespace NPC_Bundler
             foreach (var mugshot in Mugshots ?? Enumerable.Empty<Mugshot>())
                 mugshot.IsHighlighted =
                     mugshot.ProvidingPlugins.Contains(overrideConfig?.PluginName, StringComparer.OrdinalIgnoreCase);
+            if (overrideConfig != null)
+                overrideConfig.IsSelected = true;
         }
 
         private void ClearNpcHighlights()
         {
             foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration>())
-                overrideConfig.IsHighlighted = false;
+                overrideConfig.IsSelected = overrideConfig.IsHighlighted = false;
         }
 
         private IEnumerable<Mugshot> GetMugshots()
@@ -129,25 +131,23 @@ namespace NPC_Bundler
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
         public string FacePluginName { get; set; }
         public string LocalFormIdHex => npc.LocalFormIdHex;
+        public IReadOnlyList<NpcOverrideConfiguration> Overrides { get; init; }
         public string Name => npc.Name;
 
         private readonly Npc npc;
 
+        private NpcOverrideConfiguration defaultSource;
+        private NpcOverrideConfiguration faceSource;
+
         public NpcConfiguration(Npc npc)
         {
             this.npc = npc;
-            FacePluginName = DefaultPluginName = npc.Overrides.LastOrDefault()?.PluginName ?? BasePluginName;
-        }
+            Overrides = GetOverrides().ToList().AsReadOnly();
 
-        public IEnumerable<NpcOverrideConfiguration> GetOverrides()
-        {
-            // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
-            var sources = npc.Overrides.Select(x => new { x.PluginName, x.HasFaceOverride })
-                .Prepend(new { PluginName = BasePluginName, HasFaceOverride = true });
-            return sources.Select(x => new NpcOverrideConfiguration(
-                x.PluginName, x.HasFaceOverride, x.PluginName == DefaultPluginName, x.PluginName == FacePluginName,
-                () => { DefaultPluginName = x.PluginName; }, () => { FacePluginName = x.PluginName; }));
-        }
+            var defaultOverride = Overrides.LastOrDefault();
+            SetDefaultSource(defaultOverride);
+            SetFaceSource(defaultOverride);
+        }        
 
         public int GetOverrideCount(bool includeDlc, bool includeNonFaces)
         {
@@ -156,6 +156,32 @@ namespace NPC_Bundler
                 .Where(x => includeNonFaces || x.FaceData != null)
                 .Count();
         }
+
+        public void SetDefaultSource(NpcOverrideConfiguration overrideConfig)
+        {
+            if (defaultSource != null)
+                defaultSource.IsDefaultSource = false;
+            if (overrideConfig != null)
+                overrideConfig.IsDefaultSource = true;
+            defaultSource = overrideConfig;
+        }
+
+        public void SetFaceSource(NpcOverrideConfiguration overrideConfig)
+        {
+            if (faceSource != null)
+                faceSource.IsFaceSource = false;
+            if (overrideConfig != null)
+                overrideConfig.IsFaceSource = true;
+            faceSource = overrideConfig;
+        }
+
+        private IEnumerable<NpcOverrideConfiguration> GetOverrides()
+        {
+            // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
+            var sources = npc.Overrides.Select(x => new { x.PluginName, x.HasFaceOverride })
+                .Prepend(new { PluginName = BasePluginName, HasFaceOverride = true });
+            return sources.Select(x => new NpcOverrideConfiguration(this, x.PluginName, x.HasFaceOverride));
+        }
     }
 
     public class NpcOverrideConfiguration : INotifyPropertyChanged
@@ -163,23 +189,29 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         public bool HasFaceOverride { get; init; }
-        public bool IsDefaultSource { get; init; }
-        public bool IsFaceSource { get; init; }
+        public bool IsDefaultSource { get; set; }
+        public bool IsFaceSource { get; set; }
         public bool IsHighlighted { get; set; }
+        public bool IsSelected { get; set; }
         public string PluginName { get; init; }
-        public Action SetDefaultSource { get; init; }
-        public Action SetFaceSource { get; init; }
 
-        public NpcOverrideConfiguration(
-            string pluginName, bool hasFaceOverride, bool isDefaultSource, bool isFaceSource, Action setDefaultSource,
-            Action setFaceSource)
+        private readonly NpcConfiguration parentConfig;
+
+        public NpcOverrideConfiguration(NpcConfiguration parentConfig, string pluginName, bool hasFaceOverride)
         {
+            this.parentConfig = parentConfig;
             PluginName = pluginName;
             HasFaceOverride = hasFaceOverride;
-            IsDefaultSource = isDefaultSource;
-            IsFaceSource = isFaceSource;
-            SetDefaultSource = setDefaultSource;
-            SetFaceSource = setFaceSource;
+        }
+
+        public void SetDefaultSource()
+        {
+            parentConfig.SetDefaultSource(this);
+        }
+
+        public void SetFaceSource()
+        {
+            parentConfig.SetFaceSource(this);
         }
     }
 }
