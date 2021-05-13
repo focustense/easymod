@@ -17,11 +17,13 @@ namespace NPC_Bundler
             InitializeComponent();
         }
 
-        private void MugshotListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void MugshotListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left)
                 return;
-            Model.SetFaceOverride(MugshotListView.SelectedItem as Mugshot);
+            bool detectPlugin = !Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl);
+            var mugshot = (sender as FrameworkElement).DataContext as Mugshot;
+            Model.SetFaceOverride(mugshot, detectPlugin);
         }
 
         private void MugshotListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -44,13 +46,14 @@ namespace NPC_Bundler
         private void SetDefaultOverrideButton_Click(object sender, RoutedEventArgs e)
         {
             var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration;
-            overrideConfig?.SetDefaultSource();
+            overrideConfig?.SetAsDefault();
         }
 
         private void SetFaceOverrideButton_Click(object sender, RoutedEventArgs e)
         {
             var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration;
-            overrideConfig?.SetFaceSource();
+            bool detectPlugin = !Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl);
+            overrideConfig?.SetAsFace(detectPlugin);
         }
     }
 }

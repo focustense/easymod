@@ -27,7 +27,6 @@ namespace NPC_Bundler
         public bool HasSelectedNpc => SelectedNpc != null;
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
         public bool OnlyFaceOverrides { get; set; }
-        public Mugshot SelectedMugshot { get; private set; }
         public NpcOverrideConfiguration SelectedOverrideConfig { get; private set; }
         public NpcConfiguration SelectedNpc { get; private set; }
         public IReadOnlyList<NpcOverrideConfiguration> SelectedNpcOverrides { get; private set; }
@@ -55,10 +54,14 @@ namespace NPC_Bundler
 
         public void SelectNpc(NpcConfiguration npc)
         {
+            if (SelectedNpc != null)
+                SelectedNpc.FaceModChanged -= OnNpcFaceModChanged;
             ClearNpcHighlights();
             SelectedNpc = npc;
             SelectedNpcOverrides = npc.Overrides;
-            Mugshots = GetMugshots().ToList().AsReadOnly();
+            Mugshots = Mugshot.GetMugshots(SelectedNpc).ToList().AsReadOnly();
+            SyncMugshotMod();
+            npc.FaceModChanged += OnNpcFaceModChanged;
         }
 
         public void SelectOverride(NpcOverrideConfiguration overrideConfig)
@@ -71,23 +74,10 @@ namespace NPC_Bundler
                 overrideConfig.IsSelected = true;
         }
 
-        public void SetFaceOverride(Mugshot mugshot)
+        public void SetFaceOverride(Mugshot mugshot, bool detectPlugin = false)
         {
-            if (SelectedNpc == null)
-                return;
-            // It should be rare for the same mugshot to correspond to two plugins *with that NPC* in the load order.
-            // A single mod might provide several optional add-on plugins that all modify different NPCs (or do totally
-            // different things altogether). If this really does happen, the most logical thing to do is to pick the
-            // last plugin in the load order which belongs to that mod, which we can assume is the one responsible for
-            // any conflict resolution between that mod/plugin and any other ones.
-            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
-            var modPlugins = new HashSet<string>(
-                modPluginMap.GetPluginsForMod(mugshot.ProvidingMod), StringComparer.OrdinalIgnoreCase);
-            var lastMatchingPlugin = SelectedNpc.Overrides
-                .Where(x => modPlugins.Contains(x.PluginName))
-                .LastOrDefault();
-            if (lastMatchingPlugin != null)
-                SelectedNpc.SetFaceSource(lastMatchingPlugin);
+            SelectedNpc?.SetFaceMod(mugshot?.ProvidingMod, detectPlugin);
+            SyncMugshotMod();
         }
 
         private void ClearNpcHighlights()
@@ -96,19 +86,44 @@ namespace NPC_Bundler
                 overrideConfig.IsSelected = overrideConfig.IsHighlighted = false;
         }
 
-        private IEnumerable<Mugshot> GetMugshots()
+        private void OnNpcFaceModChanged()
         {
-            if (SelectedNpc == null)
+            SyncMugshotMod();
+        }
+
+        private void SyncMugshotMod()
+        {
+            foreach (var ms in Mugshots)
+                ms.IsSelectedSource = ms.ProvidingMod == SelectedNpc?.FaceModName;
+        }
+    }
+
+    public record Mugshot(
+        string ProvidingMod, bool IsModInstalled, string[] ProvidingPlugins, string FileName)
+        : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public static bool Exists(string modName, string basePluginName, string localFormIdHex)
+        {
+            var path = Path.Combine(
+                BundlerSettings.Default.MugshotsDirectory, modName, basePluginName, $"00{localFormIdHex}.png");
+            return File.Exists(path);
+        }
+
+        public static IEnumerable<Mugshot> GetMugshots(NpcConfiguration npc)
+        {
+            if (npc == null)
                 yield break;
             var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
             var mugshotModDirs = Directory.GetDirectories(BundlerSettings.Default.MugshotsDirectory);
             var overridingPluginNames = new HashSet<string>(
-                SelectedNpcOverrides?.Select(x => x.PluginName) ?? Enumerable.Empty<string>(),
+                npc.Overrides.Select(x => x.PluginName) ?? Enumerable.Empty<string>(),
                 StringComparer.OrdinalIgnoreCase);
             foreach (var mugshotModDir in mugshotModDirs)
             {
                 var fileName =
-                    Path.Combine(mugshotModDir, SelectedNpc.BasePluginName, $"00{SelectedNpc.LocalFormIdHex}.png");
+                    Path.Combine(mugshotModDir, npc.BasePluginName, $"00{npc.LocalFormIdHex}.png");
                 if (File.Exists(fileName))
                 {
                     var modName = Path.GetFileName(Path.TrimEndingDirectorySeparator(mugshotModDir));
@@ -122,18 +137,12 @@ namespace NPC_Bundler
                 }
             }
         }
-    }
-
-    public record Mugshot(
-        string ProvidingMod, bool IsModInstalled, string[] ProvidingPlugins, string FileName)
-        : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
 
         public bool IsHighlighted { get; set; }
         public bool IsModMissing => !IsModInstalled;
         public bool IsPluginLoaded => ProvidingPlugins.Length > 0;
         public bool IsPluginMissing => ProvidingPlugins.Length == 0;
+        public bool IsSelectedSource { get; set; }
     }
 
     public class NpcConfiguration : INotifyPropertyChanged
@@ -142,21 +151,21 @@ namespace NPC_Bundler
             new[] { "Update.esm", "Dawnguard.esm", "Dragonborn.esm", "HearthFires.esm" },
             StringComparer.OrdinalIgnoreCase);
 
+        public event Action FaceModChanged;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string BasePluginName => npc.BasePluginName;
-        public string DefaultPluginName { get; set; }
         public string EditorId => npc.EditorId;
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
-        public string FacePluginName { get; set; }
+        public string FaceModName { get; private set; }
         public string LocalFormIdHex => npc.LocalFormIdHex;
         public IReadOnlyList<NpcOverrideConfiguration> Overrides { get; init; }
         public string Name => npc.Name;
 
         private readonly Npc npc;
 
-        private NpcOverrideConfiguration defaultSource;
-        private NpcOverrideConfiguration faceSource;
+        private NpcOverrideConfiguration defaultConfig;
+        private NpcOverrideConfiguration faceConfig;
 
         public NpcConfiguration(Npc npc)
         {
@@ -164,8 +173,8 @@ namespace NPC_Bundler
             Overrides = GetOverrides().ToList().AsReadOnly();
 
             var defaultOverride = Overrides.LastOrDefault();
-            SetDefaultSource(defaultOverride);
-            SetFaceSource(defaultOverride);
+            SetDefaultPlugin(defaultOverride);
+            SetFacePlugin(defaultOverride, true);
         }        
 
         public int GetOverrideCount(bool includeDlc, bool includeNonFaces)
@@ -176,22 +185,52 @@ namespace NPC_Bundler
                 .Count();
         }
 
-        public void SetDefaultSource(NpcOverrideConfiguration overrideConfig)
+        public void SetDefaultPlugin(NpcOverrideConfiguration overrideConfig)
         {
-            if (defaultSource != null)
-                defaultSource.IsDefaultSource = false;
+            if (defaultConfig != null)
+                defaultConfig.IsDefaultSource = false;
             if (overrideConfig != null)
                 overrideConfig.IsDefaultSource = true;
-            defaultSource = overrideConfig;
+            defaultConfig = overrideConfig;
         }
 
-        public void SetFaceSource(NpcOverrideConfiguration overrideConfig)
+        public void SetFaceMod(string modName, bool detectPlugin)
         {
-            if (faceSource != null)
-                faceSource.IsFaceSource = false;
-            if (overrideConfig != null)
-                overrideConfig.IsFaceSource = true;
-            faceSource = overrideConfig;
+            FaceModName = modName;
+            FaceModChanged?.Invoke();
+            if (!detectPlugin || string.IsNullOrEmpty(FaceModName))
+                return;
+            // It should be rare for the same mugshot to correspond to two plugins *with that NPC* in the load order.
+            // A single mod might provide several optional add-on plugins that all modify different NPCs (or do totally
+            // different things altogether). If this really does happen, the most logical thing to do is to pick the
+            // last plugin in the load order which belongs to that mod, which we can assume is the one responsible for
+            // any conflict resolution between that mod/plugin and any other ones.
+            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
+            var modPlugins = new HashSet<string>(
+                modPluginMap.GetPluginsForMod(modName), StringComparer.OrdinalIgnoreCase);
+            var lastMatchingPlugin = Overrides
+                .Where(x => modPlugins.Contains(x.PluginName))
+                .LastOrDefault();
+            if (lastMatchingPlugin != null)
+                SetFacePlugin(lastMatchingPlugin, false);
+        }
+
+        public void SetFacePlugin(NpcOverrideConfiguration defaultConfig, bool detectFaceMod)
+        {
+            if (faceConfig != null)
+                faceConfig.IsFaceSource = false;
+            if (defaultConfig != null)
+                defaultConfig.IsFaceSource = true;
+            faceConfig = defaultConfig;
+            if (!detectFaceMod || defaultConfig == null)
+                return;
+            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
+            var lastMatchingModName = modPluginMap
+                .GetModsForPlugin(defaultConfig.PluginName)
+                .Where(f => Mugshot.Exists(f, BasePluginName, LocalFormIdHex))
+                .LastOrDefault();
+            if (!string.IsNullOrEmpty(lastMatchingModName))
+                SetFaceMod(lastMatchingModName, false);
         }
 
         private IEnumerable<NpcOverrideConfiguration> GetOverrides()
@@ -223,14 +262,14 @@ namespace NPC_Bundler
             HasFaceOverride = hasFaceOverride;
         }
 
-        public void SetDefaultSource()
+        public void SetAsDefault()
         {
-            parentConfig.SetDefaultSource(this);
+            parentConfig.SetDefaultPlugin(this);
         }
 
-        public void SetFaceSource()
+        public void SetAsFace(bool detectMod = false)
         {
-            parentConfig.SetFaceSource(this);
+            parentConfig.SetFacePlugin(this, detectMod);
         }
     }
 }

@@ -93,9 +93,10 @@
             </ui:ScrollViewerEx>
         </GroupBox>
         <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5" Margin="0,4" Grid.ColumnSpan="3" Grid.Row="2"></GridSplitter>
-        <ui:ListView Name="MugshotListView" ItemsSource="{Binding Path=Mugshots}" SelectionMode="Single" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.ColumnSpan="3" Grid.Row="3" SelectionChanged="MugshotListView_SelectionChanged" MouseDoubleClick="MugshotListView_MouseDoubleClick">
+        <ui:ListView Name="MugshotListView" ItemsSource="{Binding Path=Mugshots}" SelectionMode="Single" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.ColumnSpan="3" Grid.Row="3" SelectionChanged="MugshotListView_SelectionChanged">
             <ui:ListView.ItemContainerStyle>
                 <Style TargetType="ui:ListViewItem">
+                    <EventSetter Event="MouseDoubleClick" Handler="MugshotListViewItem_MouseDoubleClick"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
                             <Setter Property="Background" Value="LightGoldenrodYellow"/>
@@ -125,7 +126,10 @@
                             </ItemsControl>
                             <TextBlock Foreground="Red" Text="Plugin not loaded" Visibility="{Binding IsPluginMissing, Converter={StaticResource BoolToVisibility}}"/>
                         </StackPanel>
-                        <Image x:Name="MugshotImage" Source="{Binding Path=FileName}" Stretch="Uniform" StretchDirection="DownOnly"/>
+                        <Grid>
+                            <Image x:Name="MugshotImage" Source="{Binding Path=FileName}" Stretch="Uniform" StretchDirection="DownOnly"/>
+                            <fa5:SvgAwesome Icon="Solid_CheckCircle" Foreground="Green" Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Visibility="{Binding IsSelectedSource, Converter={StaticResource BoolToVisibility}}"/>
+                        </Grid>
                     </DockPanel>
                 </DataTemplate>
             </ui:ListView.ItemTemplate>
