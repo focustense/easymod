@@ -13,6 +13,7 @@
         <ui:NavigationView Header="{Binding Path=PageTitle}" Visibility="{Binding Path=IsReady, Converter={StaticResource BoolToVisibility}}" PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" SelectionChanged="NavigationView_SelectionChanged">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Tag="profile" Content="Profile" IsSelected="True"></ui:NavigationViewItem>
+                <ui:NavigationViewItem Tag="build" Content="Build"></ui:NavigationViewItem>
                 <ui:NavigationViewItem Tag="log" Content="Log"></ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
             <ui:Frame Name="PageFrame" Padding="12,0,12,24" IsTabStop="True" NavigationUIVisibility="Hidden"/>

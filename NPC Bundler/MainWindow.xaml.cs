@@ -24,6 +24,7 @@ namespace NPC_Bundler
         private static readonly Dictionary<string, NavLink> NavLinks = new()
         {
             { "profile", new NavLink("Profile", typeof(ProfilePage), x => x.Profile) },
+            { "build", new NavLink("Build", typeof(BuildPage), x => x.Build) },
             { "log", new NavLink("Log", typeof(LogPage), x => x.Log) },
             { "settings", new NavLink("Settings", typeof(SettingsPage), x => x.Settings) },
         };

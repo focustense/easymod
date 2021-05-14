@@ -11,7 +11,8 @@
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
 
-            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
             <Style TargetType="DataGrid" BasedOn="{StaticResource DefaultDataGridStyle}">
                 <Setter Property="BorderThickness" Value="1"/>

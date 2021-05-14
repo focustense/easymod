@@ -11,6 +11,7 @@ namespace NPC_Bundler
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public BuildViewModel Build { get; private set; }
         public bool IsReady { get; private set; }
         public LoaderViewModel Loader { get; init; }
         public LogViewModel Log { get; init; }
@@ -25,6 +26,7 @@ namespace NPC_Bundler
             Loader = new LoaderViewModel(Log);
             Loader.Loaded += () => {
                 Profile = new ProfileViewModel(Loader.Npcs);
+                Build = new BuildViewModel(Profile.GetAllNpcConfigurations());
                 IsReady = true;
             };
         }
