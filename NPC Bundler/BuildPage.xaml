@@ -32,7 +32,7 @@
                     </ui:SimpleStackPanel>
                 </ui:SimpleStackPanel>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingInProgress, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingInProgress, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
                 <GroupBox>
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
@@ -43,6 +43,28 @@
                     <StackPanel>
                         <TextBlock Text="Working on it..."/>
                     </StackPanel>
+                </GroupBox>
+            </Border>
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingCompleted, Converter={StaticResource BoolToVisibility}}">
+                <GroupBox Header="Checks completed">
+                    <ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel Visibility="{Binding HasProblems, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
+                            <TextBlock Text="No problems were found."/>
+                            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                <Button Name="DoneNoProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Done" Click="DoneNoProblemsButton_Click"/>
+                            </ui:SimpleStackPanel>
+                        </ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel Visibility="{Binding HasProblems, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock>
+                                Potential problems were found. Check the list below for anything serious or game-breaking, and fix if possible. Click on an item for details.
+                            </TextBlock>
+                            <ListBox ItemsSource="{Binding Problems}" DisplayMemberPath="Message" ScrollViewer.VerticalScrollBarVisibility="Visible"/>
+                            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                <Button Name="RecheckProblemsButton" Content="Check again" Margin="0,0,8,0" Click="CheckForProblemsButton_Click"/>
+                                <Button Name="DismissProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Looks good" Click="DismissProblemsButton_Click"/>
+                            </ui:SimpleStackPanel>
+                        </ui:SimpleStackPanel>
+                    </ui:SimpleStackPanel>
                 </GroupBox>
             </Border>
         </ui:SimpleStackPanel>

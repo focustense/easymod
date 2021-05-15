@@ -37,6 +37,16 @@ namespace NPC_Bundler
             Model.CheckForProblems();
         }
 
+        private void DismissProblemsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.DismissProblems();
+        }
+
+        private void DoneNoProblemsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.DismissProblems();
+        }
+
         private void SkipProblemsButton_Click(object sender, RoutedEventArgs e)
         {
             Model.IsProblemCheckerVisible = false;

@@ -91,6 +91,7 @@ namespace NPC_Bundler
                 overrideConfig.IsSelected = overrideConfig.IsHighlighted = false;
         }
 
+        [SuppressPropertyChangedWarnings]
         private void OnNpcFaceModChanged()
         {
             SyncMugshotMod();

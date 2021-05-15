@@ -26,7 +26,7 @@ namespace NPC_Bundler
             Loader = new LoaderViewModel(Log);
             Loader.Loaded += () => {
                 Profile = new ProfileViewModel(Loader.Npcs);
-                Build = new BuildViewModel(Profile.GetAllNpcConfigurations());
+                Build = new BuildViewModel(Profile.GetAllNpcConfigurations(), Loader.LoadedPluginNames);
                 IsReady = true;
             };
         }
