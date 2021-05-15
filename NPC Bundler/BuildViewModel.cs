@@ -41,6 +41,7 @@ namespace NPC_Bundler
             {
                 warnings.AddRange(CheckModSettings());
                 warnings.AddRange(CheckForOverriddenArchives());
+                warnings.AddRange(CheckModPluginConsistency());
             });
             Problems = warnings.AsReadOnly();
             IsProblemCheckingInProgress = false;
@@ -65,7 +66,8 @@ namespace NPC_Bundler
             // So it may be an obscure theoretical problem that never comes up in practice, but if we do see it, then
             // it at least merits a warning, which the user can ignore if it's on purpose.
             var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
-            return Resources.GetLoadedContainers().AsParallel()
+            return Resources.GetLoadedContainers()
+                .AsParallel()
                 .Select(path => Path.GetFileName(path))
                 .Select(f => new {
                     Name = f,
@@ -76,19 +78,72 @@ namespace NPC_Bundler
                     $"Archive '{x.Name}' is provided by multiple mods: [{string.Join(", ", x.ProvidingMods)}]."));
         }
 
+        private IEnumerable<BuildWarning> CheckModPluginConsistency()
+        {
+            ArchiveFileMap.EnsureInitialized();
+            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
+            return Npcs.AsParallel()
+                .Select(npc => CheckModPluginConsistency(npc, modPluginMap))
+                .SelectMany(warnings => warnings);
+        }
+
+        private IEnumerable<BuildWarning> CheckModPluginConsistency(NpcConfiguration npc, ModPluginMap modPluginMap)
+        {
+            // Our job is to keep NPC records and facegen data consistent. That means we do NOT care about any NPCs that
+            // are either still using the master/vanilla plugin as the face source, or have identical face attributes,
+            // e.g. UESP records that generally don't touch faces - UNLESS the current profile also uses a facegen data
+            // mod for that NPC, which is covered later.
+            if (string.IsNullOrEmpty(npc.FaceModName))
+            {
+                if (npc.RequiresFacegenData())
+                    yield return new BuildWarning(
+                        $"{npc.EditorId} '{npc.Name}' uses a plugin with face overrides but doesn't have any face " +
+                        $"mod selected.");
+                yield break;
+            }
+
+            var modsProvidingFacePlugin = modPluginMap.GetModsForPlugin(npc.FacePluginName);
+            if (!modPluginMap.IsModInstalled(npc.FaceModName))
+            {
+                yield return new BuildWarning(
+                    $"{npc.EditorId} '{npc.Name}' uses a face mod ({npc.FaceModName}) that is not installed or not " +
+                    "detected.");
+                yield break;
+            }
+            if (!modsProvidingFacePlugin.Contains(npc.FaceModName))
+                yield return new BuildWarning(
+                    $"{npc.EditorId} '{npc.Name}' has mismatched face mod ({npc.FaceModName}) and face plugin " +
+                    $"({npc.FacePluginName}).");
+            var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
+            var hasLooseFacegen = File.Exists(
+                Path.Combine(BundlerSettings.Default.ModRootDirectory, npc.FaceModName, faceMeshFileName));
+            var hasArchiveFacegen = modPluginMap.GetArchivesForMod(npc.FaceModName)
+                .Select(f => ArchiveFileMap.ContainsFile(f, faceMeshFileName))
+                .Any();
+            // If the selected plugin has overrides, then we want to see facegen data. On the other hand, if the
+            // selected plugin does NOT have overrides, then a mod providing facegens will probably break something.
+            if (npc.RequiresFacegenData() && !hasLooseFacegen && !hasArchiveFacegen)
+                // This can mean the mod is missing the facegen, but can also happen if the BSA that would normally
+                // include it isn't loaded, i.e. due to the mod or plugin being disabled.
+                yield return new BuildWarning(
+                    $"No FaceGen mesh found for {npc.EditorId} '{npc.Name}' in mod ({npc.FaceModName}).");
+            else if (!npc.RequiresFacegenData() && (hasLooseFacegen || hasArchiveFacegen))
+                yield return new BuildWarning(
+                    $"{npc.EditorId} '{npc.Name}' does not override vanilla face attributes, but mod " +
+                    $"({npc.FaceModName}) contains facegen data.");
+            else if (hasLooseFacegen && hasArchiveFacegen)
+                yield return new BuildWarning(
+                    $"Mod ({npc.FaceModName}) provides a FaceGen mesh for {npc.EditorId} '{npc.Name}' both as a " +
+                    "loose file AND in an archive. The loose file will take priority.");
+        }
+
         private IEnumerable<BuildWarning> CheckModSettings()
         {
             var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
             if (string.IsNullOrWhiteSpace(modRootDirectory))
-            {
                 yield return new BuildWarning(WarningMessages.ModDirectoryNotSpecified());
-                yield break;
-            }
-            if (!Directory.Exists(modRootDirectory))
-            {
+            else if (!Directory.Exists(modRootDirectory))
                 yield return new BuildWarning(WarningMessages.ModDirectoryNotFound(modRootDirectory));
-                yield break;
-            }
         }
 
         static class WarningMessages

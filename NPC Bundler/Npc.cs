@@ -22,7 +22,21 @@ namespace NPC_Bundler
             var overrideFaceData = ReadFaceData(npcRecord, g);
             var masterRecord = g.AddHandle(Records.GetMasterRecord(npcRecord));
             var masterFaceData = ReadFaceData(masterRecord, g);
-            return overrideFaceData != masterFaceData ? overrideFaceData : null;
+            return !FaceDataEquals(overrideFaceData, masterFaceData) ? overrideFaceData : null;
+        }
+
+        private static bool FaceDataEquals(NpcFaceData a, NpcFaceData b)
+        {
+            // Thanks, Microsoft, for giving us record types with value-equality semantics but not bothering to give us
+            // a collection type that does the same. Brilliant!
+            return
+                a.FaceMorphs == b.FaceMorphs &&
+                a.FaceParts == b.FaceParts &&
+                a.FaceTextureSetId == b.FaceTextureSetId &&
+                a.FaceTints.SequenceEqual(b.FaceTints) &&
+                a.HairColorId == b.HairColorId &&
+                a.HeadPartIds.SequenceEqual(b.HeadPartIds) &&
+                a.SkinTone == b.SkinTone;
         }
 
         private static uint? GetFormId(Handle npcRecord, string path, HandleGroup g)
@@ -51,17 +65,6 @@ namespace NPC_Bundler
             var faceTints = ReadFaceTints(npcRecord, g);
             return new NpcFaceData(
                 headPartIds, hairColorId, faceTextureSetId, skinTone, faceMorphs, faceParts, faceTints);
-        }
-
-        private static NpcSkinTone? ReadSkinTone(Handle npcRecord, HandleGroup g)
-        {
-            if (!Elements.HasElement(npcRecord, "QNAM"))
-                return null;
-            var skinTone = g.AddHandle(Elements.GetElement(npcRecord, "QNAM"));
-            return new NpcSkinTone(
-                ElementValues.GetUIntValue(skinTone, "Red"),
-                ElementValues.GetUIntValue(skinTone, "Green"),
-                ElementValues.GetUIntValue(skinTone, "Blue"));
         }
 
         private static NpcFaceMorphs? ReadFaceMorphs(Handle npcRecord, HandleGroup g)
@@ -94,7 +97,15 @@ namespace NPC_Bundler
         {
             if (!Elements.HasElement(npcRecord, "NAMA"))
                 return null;
-            return null;
+            var faceParts = g.AddHandle(Elements.GetElement(npcRecord, "NAMA"));
+            return new NpcFaceParts(
+                // We seem to get some weird overflows in plugins like USSEP that can specify crazy
+                // values like 4294967295, since the underlying xEdit code appears to be implemented
+                // using signed ints. Reading floats seems to be a reliable workaround, since the
+                // underlying Variant *is* read correctly, it's just the explicit cast that's wrong.
+                (uint)ElementValues.GetFloatValue(faceParts, "Nose"),
+                (uint)ElementValues.GetFloatValue(faceParts, "Eyes"),
+                (uint)ElementValues.GetFloatValue(faceParts, "Mouth"));
         }
 
         private static NpcFaceTint[] ReadFaceTints(Handle npcRecord, HandleGroup g)
@@ -116,6 +127,17 @@ namespace NPC_Bundler
                         ElementValues.GetUIntValue(tintLayer, "TINV"));
                 }).ToArray();
         }
+
+        private static NpcSkinTone? ReadSkinTone(Handle npcRecord, HandleGroup g)
+        {
+            if (!Elements.HasElement(npcRecord, "QNAM"))
+                return null;
+            var skinTone = g.AddHandle(Elements.GetElement(npcRecord, "QNAM"));
+            return new NpcSkinTone(
+                ElementValues.GetUIntValue(skinTone, "Red"),
+                ElementValues.GetUIntValue(skinTone, "Green"),
+                ElementValues.GetUIntValue(skinTone, "Blue"));
+        }
     }
 
     public record NpcOverride(string PluginName, NpcFaceData? FaceData)
@@ -134,7 +156,7 @@ namespace NPC_Bundler
         double ChinUpDown, double ChinUnderbiteOverbite, double EyesForwardBack); // Ignore the "unknown" value.
 
     // Excludes the "unknown" value.
-    public record NpcFaceParts(int Nose, int Eyes, int Mouth);
+    public record NpcFaceParts(uint Nose, uint Eyes, uint Mouth);
 
     // TIAS is labeled as "preset" which seems to have no effect; ignore.
     public record NpcFaceTint(uint Layer, NpcFaceTintColor Color, uint Value);

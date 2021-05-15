@@ -15,9 +15,11 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string BasePluginName => npc.BasePluginName;
+        public string DefaultPluginName => defaultConfig?.PluginName;
         public string EditorId => npc.EditorId;
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
         public string FaceModName { get; private set; }
+        public string FacePluginName => faceConfig?.PluginName;
         public string LocalFormIdHex => npc.LocalFormIdHex;
         public IReadOnlyList<NpcOverrideConfiguration> Overrides { get; init; }
         public string Name => npc.Name;
@@ -43,6 +45,20 @@ namespace NPC_Bundler
                 .Where(x => includeDlc || !DlcPluginNames.Contains(x.PluginName))
                 .Where(x => includeNonFaces || x.FaceData != null)
                 .Count();
+        }
+
+        public bool HasFaceOverridesEnabled()
+        {
+            return faceConfig.HasFaceOverride &&
+                // Base (master) is considered an "override" in order to mark that it has new face data, but for the
+                // purposes of validation we don't want to treat it as a true override, as this program should never be
+                // used to merge the original plugins, just the appearance overhauls.
+                !string.Equals(FacePluginName, BasePluginName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool RequiresFacegenData()
+        {
+            return HasFaceOverridesEnabled() && !FileStructure.IsDlc(FacePluginName);
         }
 
         public void SetDefaultPlugin(NpcOverrideConfiguration overrideConfig)
@@ -87,7 +103,7 @@ namespace NPC_Bundler
             var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
             var lastMatchingModName = modPluginMap
                 .GetModsForPlugin(defaultConfig.PluginName)
-                .Where(f => Mugshot.Exists(f, BasePluginName, LocalFormIdHex))
+                .OrderBy(f => Mugshot.Exists(f, BasePluginName, LocalFormIdHex))
                 .LastOrDefault();
             if (!string.IsNullOrEmpty(lastMatchingModName))
                 SetFaceMod(lastMatchingModName, false);

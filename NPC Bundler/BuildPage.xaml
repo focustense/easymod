@@ -11,11 +11,17 @@
              d:DesignHeight="700" d:DesignWidth="1200">
 
     <Grid DataContext="{Binding Build}">
-        <ui:SimpleStackPanel>
-            <Button x:Name="AltCheckForProblemsButton" ToolTip="Check for problems" IsEnabled="{Binding IsProblemCheckerEnabled}" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource InvBoolToVisibility}}" Click="AltCheckForProblemsButton_Click">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Button x:Name="AltCheckForProblemsButton" ToolTip="Check for problems" IsEnabled="{Binding IsProblemCheckerEnabled}" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource InvBoolToVisibility}}" Grid.Row="0" Click="AltCheckForProblemsButton_Click">
                 <fa5:SvgAwesome Icon="Solid_Glasses" Width="16" Height="16"/>
             </Button>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1">
                 <ui:SimpleStackPanel>
                     <TextBlock TextWrapping="Wrap" Margin="0,0,0,16">
                         Before you build your NPC package, you should run a check for problems that could cause in-game blackface bugs or crashes. This isn't required, but normally only takes a few seconds and
@@ -32,7 +38,7 @@
                     </ui:SimpleStackPanel>
                 </ui:SimpleStackPanel>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingInProgress, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingInProgress, Converter={StaticResource BoolToVisibility}}" Grid.Row="2" d:Visibility="Collapsed">
                 <GroupBox>
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
@@ -45,28 +51,28 @@
                     </StackPanel>
                 </GroupBox>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingCompleted, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3">
                 <GroupBox Header="Checks completed">
-                    <ui:SimpleStackPanel>
+                    <Grid>
                         <ui:SimpleStackPanel Visibility="{Binding HasProblems, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
                             <TextBlock Text="No problems were found."/>
                             <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
                                 <Button Name="DoneNoProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Done" Click="DoneNoProblemsButton_Click"/>
                             </ui:SimpleStackPanel>
                         </ui:SimpleStackPanel>
-                        <ui:SimpleStackPanel Visibility="{Binding HasProblems, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock>
+                        <DockPanel Visibility="{Binding HasProblems, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock DockPanel.Dock="Top">
                                 Potential problems were found. Check the list below for anything serious or game-breaking, and fix if possible. Click on an item for details.
                             </TextBlock>
-                            <ListBox ItemsSource="{Binding Problems}" DisplayMemberPath="Message" ScrollViewer.VerticalScrollBarVisibility="Visible"/>
-                            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0" DockPanel.Dock="Bottom">
                                 <Button Name="RecheckProblemsButton" Content="Check again" Margin="0,0,8,0" Click="CheckForProblemsButton_Click"/>
                                 <Button Name="DismissProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Looks good" Click="DismissProblemsButton_Click"/>
                             </ui:SimpleStackPanel>
-                        </ui:SimpleStackPanel>
-                    </ui:SimpleStackPanel>
+                            <ListBox ItemsSource="{Binding Problems}" DisplayMemberPath="Message" ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="0,8,0,0"/>
+                        </DockPanel>
+                    </Grid>
                 </GroupBox>
             </Border>
-        </ui:SimpleStackPanel>
+        </Grid>
     </Grid>
 </ui:Page>

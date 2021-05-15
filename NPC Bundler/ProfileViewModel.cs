@@ -121,6 +121,8 @@ namespace NPC_Bundler
         {
             if (npc == null)
                 yield break;
+            // TODO: Provide placeholder items for mods that provide the facegen but don't have mugshots, so that users
+            // can select them anyway. Also provide placeholder for vanilla/default so that we can unapply a mod.
             var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
             var mugshotModDirs = Directory.GetDirectories(BundlerSettings.Default.MugshotsDirectory);
             var overridingPluginNames = new HashSet<string>(

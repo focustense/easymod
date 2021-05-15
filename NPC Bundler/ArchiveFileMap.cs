@@ -27,6 +27,12 @@ namespace NPC_Bundler
             Initialize();
         }
 
+        public static bool ContainsFile(string archiveName, string fileName)
+        {
+            Initialize();
+            return GetFilesInArchive(archiveName).Any(f => f.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+        }
+
         public static IEnumerable<string> GetArchivesContainingFile(string archivedFileName)
         {
             Initialize();
@@ -49,7 +55,7 @@ namespace NPC_Bundler
                 .Select(path => new
                 {
                     FileName = Path.GetFileName(path),
-                    FaceGenFiles = Resources.GetContainerFiles(path, @"meshes\actors\character\facegendata\facegeom"),
+                    FaceGenFiles = Resources.GetContainerFiles(path, FileStructure.FaceMeshesPath),
                 })
                 .ToList();
             Parallel.Invoke(
