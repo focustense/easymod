@@ -13,6 +13,7 @@
 
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+            <local:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>
 
             <Style TargetType="DataGrid" BasedOn="{StaticResource DefaultDataGridStyle}">
                 <Setter Property="BorderThickness" Value="1"/>
