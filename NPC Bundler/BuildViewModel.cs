@@ -69,13 +69,15 @@ namespace NPC_Bundler
             return Resources.GetLoadedContainers()
                 .AsParallel()
                 .Select(path => Path.GetFileName(path))
-                .Select(f => new {
+                .Select(f => new
+                {
                     Name = f,
                     ProvidingMods = modPluginMap.GetModsForArchive(f).ToList()
                 })
                 .Where(x => x.ProvidingMods.Count > 1)
                 .Select(x => new BuildWarning(
-                    $"Archive '{x.Name}' is provided by multiple mods: [{string.Join(", ", x.ProvidingMods)}]."));
+                    BuildWarningId.MultipleArchiveSources,
+                    WarningMessages.MultipleArchiveSources(x.Name, x.ProvidingMods)));
         }
 
         private IEnumerable<BuildWarning> CheckModPluginConsistency()
@@ -97,8 +99,8 @@ namespace NPC_Bundler
             {
                 if (npc.RequiresFacegenData())
                     yield return new BuildWarning(
-                        $"{npc.EditorId} '{npc.Name}' uses a plugin with face overrides but doesn't have any face " +
-                        $"mod selected.");
+                        BuildWarningId.FaceModNotSpecified,
+                        WarningMessages.FaceModNotSpecified(npc.EditorId, npc.Name));
                 yield break;
             }
 
@@ -106,14 +108,14 @@ namespace NPC_Bundler
             if (!modPluginMap.IsModInstalled(npc.FaceModName))
             {
                 yield return new BuildWarning(
-                    $"{npc.EditorId} '{npc.Name}' uses a face mod ({npc.FaceModName}) that is not installed or not " +
-                    "detected.");
+                    BuildWarningId.FaceModNotInstalled,
+                    WarningMessages.FaceModNotInstalled(npc.EditorId, npc.Name, npc.FaceModName));
                 yield break;
             }
             if (!modsProvidingFacePlugin.Contains(npc.FaceModName))
                 yield return new BuildWarning(
-                    $"{npc.EditorId} '{npc.Name}' has mismatched face mod ({npc.FaceModName}) and face plugin " +
-                    $"({npc.FacePluginName}).");
+                    BuildWarningId.FaceModPluginMismatch,
+                    WarningMessages.FaceModPluginMismatch(npc.EditorId, npc.Name, npc.FaceModName, npc.FacePluginName));
             var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
             var hasLooseFacegen = File.Exists(
                 Path.Combine(BundlerSettings.Default.ModRootDirectory, npc.FaceModName, faceMeshFileName));
@@ -126,28 +128,74 @@ namespace NPC_Bundler
                 // This can mean the mod is missing the facegen, but can also happen if the BSA that would normally
                 // include it isn't loaded, i.e. due to the mod or plugin being disabled.
                 yield return new BuildWarning(
-                    $"No FaceGen mesh found for {npc.EditorId} '{npc.Name}' in mod ({npc.FaceModName}).");
+                    BuildWarningId.FaceModMissingFaceGen,
+                    WarningMessages.FaceModMissingFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
             else if (!npc.RequiresFacegenData() && (hasLooseFacegen || hasArchiveFacegen))
                 yield return new BuildWarning(
-                    $"{npc.EditorId} '{npc.Name}' does not override vanilla face attributes, but mod " +
-                    $"({npc.FaceModName}) contains facegen data.");
+                    BuildWarningId.FaceModExtraFaceGen,
+                    WarningMessages.FaceModExtraFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
             else if (hasLooseFacegen && hasArchiveFacegen)
                 yield return new BuildWarning(
-                    $"Mod ({npc.FaceModName}) provides a FaceGen mesh for {npc.EditorId} '{npc.Name}' both as a " +
-                    "loose file AND in an archive. The loose file will take priority.");
+                    BuildWarningId.FaceModMultipleFaceGen,
+                    WarningMessages.FaceModMultipleFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
         }
 
         private IEnumerable<BuildWarning> CheckModSettings()
         {
             var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
             if (string.IsNullOrWhiteSpace(modRootDirectory))
-                yield return new BuildWarning(WarningMessages.ModDirectoryNotSpecified());
+                yield return new BuildWarning(
+                    BuildWarningId.ModDirectoryNotSpecified,
+                    WarningMessages.ModDirectoryNotSpecified());
             else if (!Directory.Exists(modRootDirectory))
-                yield return new BuildWarning(WarningMessages.ModDirectoryNotFound(modRootDirectory));
+                yield return new BuildWarning(
+                    BuildWarningId.ModDirectoryNotFound,
+                    WarningMessages.ModDirectoryNotFound(modRootDirectory));
         }
 
         static class WarningMessages
         {
+            private static readonly string ModRootJustification =
+                "Without direct access to your mod structure, this program can only generate a merged plugin, which " +
+                "will probably break NPC appearances unless you are manually organizing the facegen data.";
+
+            public static string FaceModExtraFaceGen(string editorId, string name, string modName)
+            {
+                return
+                    $"{NpcLabel(editorId, name)} does not override vanilla face attributes, but mod ({modName}) " +
+                    $"contains facegen data.";
+            }
+
+            public static string FaceModMissingFaceGen(string editorId, string name, string modName)
+            {
+                return $"No FaceGen mesh found for {NpcLabel(editorId, name)} in mod ({modName}).";
+            }
+
+            public static string FaceModMultipleFaceGen(string editorId, string name, string modName)
+            {
+                return
+                    $"Mod ({modName}) provides a FaceGen mesh for {NpcLabel(editorId, name)} both as a loose file " +
+                    $"AND in an archive. The loose file will take priority.";
+            }
+
+            public static string FaceModNotInstalled(string editorId, string name, string modName)
+            {
+                return $"{NpcLabel(editorId, name)} uses a face mod ({modName}) that is not installed or not detected.";
+            }
+
+            public static string FaceModNotSpecified(string editorId, string name)
+            {
+                return
+                    $"{NpcLabel(editorId, name)} uses a plugin with face overrides but doesn't have any face mod " +
+                    $"selected.";
+            }
+
+            public static string FaceModPluginMismatch(string editorId, string name, string modName, string pluginName)
+            {
+                return
+                    $"{NpcLabel(editorId, name)} has mismatched face mod ({modName}) and face plugin ({pluginName}).";
+            }
+
             public static string ModDirectoryNotFound(string directoryName)
             {
                 return $"Mod directory {directoryName} doesn't exist. {ModRootJustification}";
@@ -157,15 +205,30 @@ namespace NPC_Bundler
                 return "No mod directory specified in settings. " + ModRootJustification;
             }
 
-            private static readonly string ModRootJustification =
-                "Without direct access to your mod structure, this program can only generate a merged plugin, which " +
-                "will probably break NPC appearances unless you are manually organizing the facegen data.";
+            public static string MultipleArchiveSources(string name, IEnumerable<string> providingMods)
+            {
+                return $"Archive '{name}' is provided by multiple mods: [{string.Join(", ", providingMods)}].";
+            }
+
+            private static string NpcLabel(string editorId, string name)
+            {
+                return $"{editorId} '{name}'";
+            }
         }
     }
 
     public enum BuildWarningId
     {
         Unspecified = 0,
+        ModDirectoryNotSpecified = 1,
+        ModDirectoryNotFound,
+        MultipleArchiveSources,
+        FaceModNotSpecified,
+        FaceModNotInstalled,
+        FaceModPluginMismatch,
+        FaceModMissingFaceGen,
+        FaceModExtraFaceGen,
+        FaceModMultipleFaceGen,
     }
 
     public class BuildWarning
