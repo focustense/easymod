@@ -68,7 +68,20 @@
                                 <Button Name="RecheckProblemsButton" Content="Check again" Margin="0,0,8,0" Click="CheckForProblemsButton_Click"/>
                                 <Button Name="DismissProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Looks good" Click="DismissProblemsButton_Click"/>
                             </ui:SimpleStackPanel>
-                            <ListBox ItemsSource="{Binding Problems}" DisplayMemberPath="Message" ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="0,8,0,0"/>
+                            <Border Style="{StaticResource GroupBorder}" DockPanel.Dock="Right" Width="350" Margin="8,0,0,0" CornerRadius="16" Background="AliceBlue" Visibility="{Binding IsWarningInfoVisible, Converter={StaticResource BoolToVisibility}}">
+                                <GroupBox>
+                                    <GroupBox.Header>
+                                        <ui:SimpleStackPanel>
+                                            <TextBlock FontSize="{DynamicResource GroupBoxHeaderFontSize}">Warning Info</TextBlock>
+                                            <Separator Height="2" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="0,8,0,0"/>
+                                        </ui:SimpleStackPanel>
+                                    </GroupBox.Header>
+                                    <ui:ScrollViewerEx>
+                                        <local:BuildWarningHelp DataContext="{Binding SelectedWarning}"/>
+                                    </ui:ScrollViewerEx>
+                                </GroupBox>
+                            </Border>
+                            <ListBox ItemsSource="{Binding Problems}" DisplayMemberPath="Message" SelectedItem="{Binding SelectedWarning}" ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="0,8,0,0"/>
                         </DockPanel>
                     </Grid>
                 </GroupBox>

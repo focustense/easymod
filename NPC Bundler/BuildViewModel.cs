@@ -20,8 +20,11 @@ namespace NPC_Bundler
         public bool IsProblemCheckerVisible { get; set; } = true;
         public bool IsProblemCheckingCompleted { get; set; }
         public bool IsProblemCheckingInProgress { get; set; }
+        [DependsOn("SelectedWarning")]
+        public bool IsWarningInfoVisible => SelectedWarning != null;
         public IReadOnlyList<NpcConfiguration> Npcs { get; init; }
         public IReadOnlyList<BuildWarning> Problems { get; private set; }
+        public BuildWarning SelectedWarning { get; set; }
 
         private readonly IReadOnlyList<string> loadOrder;
 

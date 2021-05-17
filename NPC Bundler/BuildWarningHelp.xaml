@@ -1,0 +1,262 @@
+﻿<UserControl x:Class="NPC_Bundler.BuildWarningHelp"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:NPC_Bundler" d:DataContext="{d:DesignInstance Type=local:BuildWarning}"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <Style x:Key="HelpTextParagraph" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <DataTemplate x:Key="ModDirectoryNotFound">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>You haven't specified a mod directory in your settings, or the directory you've specified doesn't exist.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>Almost all NPC appearance mods have two parts to them: the plugin (.esm/.esp) and the generated face meshes, AKA facegen data. If you're using a mod manager with mod isolation, such as</Run>
+                    <Hyperlink NavigateUri="https://www.modorganizer.org/">Mod Organizer</Hyperlink>
+                    <Run>(recommended), then we need to know where your installed mods are located, so we can keep the plugins and facegens in sync. If you</Run>
+                    <Run FontStyle="Italic">don't</Run>
+                    <Run>use one of these, then you are probably letting different mods irrecoverably overwrite each other's facegen data, which is extremely fragile and almost always causes in-game bugs.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">How to fix it:</Run>
+                    <Run>Click on the</Run>
+                    <Viewbox MaxHeight="12" MaxWidth="12"><ui:SymbolIcon Foreground="Blue" Symbol="Setting"/></Viewbox><Run>Settings button</Run>
+                    <Run>in the top navigation bar and choose a valid</Run>
+                    <Run FontStyle="Italic">Mod Root Directory</Run>.
+                    <Run>You can still do this even if you don't use Mod Organizer: just create a new folder anywhere on disk, and manually extract your mods into it, giving each mod its own subdirectory.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run>
+                        You can still use this program to generate a merged plugin without doing the above, but without access to the true mod structure, your results may be just as buggy, or even worse,
+                        than simply installing the mods as normal.
+                    </Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="MultipleArchiveSources">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>Your load order includes a plugin with an accompanying archive (BSA), and we found this BSA file in more than one mod.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>It could be harmless, if the reason for it is something like the</Run>
+                    <Hyperlink NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/42045">Sofia BSA Fix</Hyperlink>
+                    <Run>that doesn't add, remove or alter any facegen data. We also can't detect which of your mods are disabled, so if the "extra" BSA comes from one or more disabled mods, then this is also harmless.</Run>
+                    <Run>You only need to be concerned if the two archives have different facegen data, such as a "personal" BSA you may have created in the past to resolve earlier issues.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Recommendation:</Run>
+                    <Run>
+                        If only one of the mods listed above is enabled, no action is needed. If more than one is enabled, and you trust the winning file, then you can hide the losing files from their respective mods in Mod Organizer
+                        in order to make this warning go away. If you're not sure, then you can either hope and pray, or unpack both BSAs using the
+                    </Run>
+                    <Hyperlink NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/974">Bethesda Archive Extractor</Hyperlink>
+                    <Run>or built-in extraction in Mod Organizer, and then use any comparison tool (e.g. WinMerge) to check for inconsistencies in the</Run>
+                    <Run FontFamily="Courier New">meshes\actors\character\facegendata</Run>
+                    <Run>directory of each. If there are no changes, you can ignore the warning. Make sure to delete the extracted files when done.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run>Alternatively, you can just extract both archives,</Run>
+                    <Run FontStyle="Italic">don't</Run> <Run>delete the extracted files, and hide/delete the BSAs instead; we'll be able to automatically detect and handle any NPC-level conflicts.</Run>
+                    <Run>This is the safer option, but too many loose files can slow down the game, so only do this if you intend to repackage the merged mod as a BSA later on with this program.</Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FaceModNotSpecified">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>You've selected a</Run> <Run FontStyle="Italic">plugin (.esm/.esp)</Run> that makes changes to the vanilla or default face, but haven't specified which mod to get facegen data from.
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>Every NPC should have a face mod selected by default; "no mod" isn't an actual option that we give.</Run>
+                    <Run>Seeing this error normally means that we couldn't find</Run> <Run FontStyle="Italic">any face mods at all</Run> <Run>for this NPC.</Run>
+                    <Run>
+                        And that means you've either managed to find a mod that modifies faces without providing its own facegen data, or you've installed a good NPC mod incorrectly. You may also have installed
+                        a patch, update or AIO version of some NPC mod without having the original. All of the above scenarios are extremely likely to cause blackface bugs or crashes once that NPC is loaded.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">How to fix it:</Run>
+                    <Run>Disable the plugin, or disable the mod that provides this plugin.</Run>
+                    <Run>If you think there is</Run> <Run FontStyle="Italic">supposed</Run> <Run>to be facegen data, try reinstalling the offending mod.</Run>
+                    <Run>Do not ignore this error unless you've tested this exact NPC in a pure-vanilla profile with only the one plugin activated.</Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FaceModNotInstalled">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>You've chosen to use a particular mod as the source of facegen data, but the directory where this mod should live doesn't exist.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>We can't merge facegens if we can't find them. If you don't correct the error, we'll have to skip this NPC entirely.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">How to fix it:</Run>
+                    <Run>
+                        Install the mod and try again. If you already have it installed, it might have been given a different name from what's in the Mugshots, and you can resolve this by renaming either the mod
+                        directory or the mugshot directory so that they have the same name. If you choose to rename the mugshots, you'll have to go through the NPC list again and select the new mod name.
+                    </Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FaceModPluginMismatch">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>The combination of face plugin and face mod that you've selected for this NPC don't match.</Run>
+                    <Run>The selected plugin (.esm/.esp) comes from an entirely different mod.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>
+                        If the face edits in the plugin don't match the facegen data provided by the mod, you will get blackface or crashes when the NPC is loaded in game. If the actual source of facegen data is
+                        something you created yourself by exporting from the Creation Kit, then you might be OK; otherwise, this is a serious problem that should never be ignored.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run>
+                        Note: When you select either a face plugin or a face mod in the Profile tab, the matching mod/plugin should be chosen automatically. If you didn't override that selection and are still
+                        seeing this warning, then it can often come up simply because you didn't make any selections at all, and the "defaults" we inferred from your load order aren't perfect.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">How to fix it:</Run>
+                    <Run>Return to the Profile tab, find this NPC, and choose a Face Mod and Face Plugin that are consistent with each other.</Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FaceModMissingFaceGen">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>The plugin selection for this NPC is consistent with the mod selection, but the mod itself doesn't contain any facegen data for this NPC.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>If the face edits in the plugin aren't combined with facegen data provided by the mod, you will get blackface or crashes when the NPC is loaded in game.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">How to fix it:</Run>
+                    <Run>Check to make sure the mod is installed correctly and/or try reinstalling it.</Run>
+                    <Run>If the data is still missing,</Run> <Run FontStyle="Italic">politely</Run> <Run>contact the mod author to request the missing facegens.</Run>
+                    <Run>Otherwise, use a different mod/plugin for that NPC.</Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FaceModExtraFaceGen">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>The plugin selection for this NPC is consistent with the mod selection, but the mod provides facegen data for NPCs that the plugin doesn't actually edit.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>
+                        "Extra" facegen data has essentially the same effect as missing facegen data; if it's not consistent with face edits in the winning plugin, you will usually get blackface or crashes when
+                        the NPC is loaded in game. Some rare exceptions may apply, such as if the warning is coming from a patch/fix mod that corrects broken facegen data in the original mod or the vanilla game.
+                        This should be indicated in the mod's description or release notes.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">How to fix it:</Run>
+                    <Run>
+                        If the face plugin is provided by multiple mods, try selecting one of the other mods for this NPC. You can also continue using the affected mod, but delete or hide the extra facegen files
+                        in Mod Organizer.
+                    </Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FaceModMultipleFaceGen">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>The same facegen data occurs twice in the same mod: once in an archive (BSA), and again as a loose file.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>
+                        The most common reason for this warning is that the mod author originally released a BSA, then provided an update (i.e. to the same mod) as loose files. This might be safe to ignore, as
+                        long as you've installed the plugin and any updates in the correct order. However, if it's the other way around - i.e. the original mod provided loose files and the author released a
+                        totally new version as BSA, and you installed the new version in Mod Organizer as a merge instead of replacing, then the old loose files will take priority over the newer BSA files and
+                        you may end up with blackface or just an incorrect face.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run>
+                        The second most common reason is that the mod was released as a BSA and you yourself extracted the BSA, or the mod came with loose files and you packed a BSA. This is harmless, but
+                        redundant, as the game will ignore what's in the BSA in favor of the loose files.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Recommendation:</Run>
+                    <Run>
+                        Make sure you don't have older and newer versions of the same mod merged into the same directory. If the mod author released partial updates or add-ons, and you installed (merged)
+                        them in the correct order, then this warning is normally safe to ignore. If you personally converted a mod with a BSA to loose files (or vice versa), then delete one or the other
+                        so that it's no longer redundant and ambiguous.
+                    </Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+    <ui:SimpleStackPanel>
+        <TextBlock Style="{StaticResource HelpTextParagraph}">
+            <Run FontWeight="SemiBold">Type ID: </Run>
+            <Run Text="{Binding Id}" d:Text="FaceModNotSpecified"/>
+        </TextBlock>
+        <TextBlock Style="{StaticResource HelpTextParagraph}">
+            <Run FontWeight="SemiBold">Message: </Run>
+            <Run Text="{Binding Message}" d:Text="Some error message"/>
+        </TextBlock>
+        <ContentControl d:ContentTemplate="{StaticResource FaceModMultipleFaceGen}">
+            <ContentControl.Style>
+                <Style>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Id}" Value="ModDirectoryNotSpecified">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource ModDirectoryNotFound}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="ModDirectoryNotFound">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource ModDirectoryNotFound}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="MultipleArchiveSources">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource MultipleArchiveSources}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="FaceModNotSpecified">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModNotSpecified}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="FaceModNotInstalled">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModNotInstalled}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="FaceModPluginMismatch">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModPluginMismatch}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="FaceModMissingFaceGen">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModMissingFaceGen}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="FaceModExtraFaceGen">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModExtraFaceGen}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="FaceModMultipleFaceGen">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModMultipleFaceGen}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
+    </ui:SimpleStackPanel>
+</UserControl>
