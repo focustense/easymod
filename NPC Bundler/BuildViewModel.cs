@@ -15,7 +15,7 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         [DependsOn("Problems")]
-        public bool HasProblems => Problems?.Count > 0;
+        public bool HasProblems => Problems?.Any() ?? false;
         public bool IsProblemCheckerEnabled => !IsProblemCheckingInProgress;
         public bool IsProblemCheckerVisible { get; set; } = true;
         public bool IsProblemCheckingCompleted { get; set; }
@@ -23,7 +23,7 @@ namespace NPC_Bundler
         [DependsOn("SelectedWarning")]
         public bool IsWarningInfoVisible => SelectedWarning != null;
         public IReadOnlyList<NpcConfiguration> Npcs { get; init; }
-        public IReadOnlyList<BuildWarning> Problems { get; private set; }
+        public IEnumerable<BuildWarning> Problems { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
 
         private readonly IReadOnlyList<string> loadOrder;
@@ -34,6 +34,7 @@ namespace NPC_Bundler
             this.loadOrder = loadOrder;
         }
 
+        // TODO: Add a check for missing textures - requires much deeper inspection of both plugins and meshes.
         public async void CheckForProblems()
         {
             IsProblemCheckerVisible = false;
@@ -46,7 +47,12 @@ namespace NPC_Bundler
                 warnings.AddRange(CheckForOverriddenArchives());
                 warnings.AddRange(CheckModPluginConsistency());
             });
-            Problems = warnings.AsReadOnly();
+            var suppressions = GetBuildWarningSuppressions();
+            Problems = warnings
+                .Where(x =>
+                    string.IsNullOrEmpty(x.PluginName) ||
+                    x.Id == null ||
+                    !suppressions[x.PluginName].Contains((BuildWarningId)x.Id));
             IsProblemCheckingInProgress = false;
             IsProblemCheckingCompleted = true;
         }
@@ -117,6 +123,7 @@ namespace NPC_Bundler
             }
             if (!modsProvidingFacePlugin.Contains(npc.FaceModName))
                 yield return new BuildWarning(
+                    npc.FacePluginName,
                     BuildWarningId.FaceModPluginMismatch,
                     WarningMessages.FaceModPluginMismatch(npc.EditorId, npc.Name, npc.FaceModName, npc.FacePluginName));
             var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
@@ -131,14 +138,17 @@ namespace NPC_Bundler
                 // This can mean the mod is missing the facegen, but can also happen if the BSA that would normally
                 // include it isn't loaded, i.e. due to the mod or plugin being disabled.
                 yield return new BuildWarning(
+                    npc.FacePluginName,
                     BuildWarningId.FaceModMissingFaceGen,
                     WarningMessages.FaceModMissingFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
             else if (!npc.RequiresFacegenData() && (hasLooseFacegen || hasArchiveFacegen))
                 yield return new BuildWarning(
+                    npc.FacePluginName,
                     BuildWarningId.FaceModExtraFaceGen,
                     WarningMessages.FaceModExtraFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
             else if (hasLooseFacegen && hasArchiveFacegen)
                 yield return new BuildWarning(
+                    npc.FacePluginName,
                     BuildWarningId.FaceModMultipleFaceGen,
                     WarningMessages.FaceModMultipleFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
         }
@@ -154,6 +164,21 @@ namespace NPC_Bundler
                 yield return new BuildWarning(
                     BuildWarningId.ModDirectoryNotFound,
                     WarningMessages.ModDirectoryNotFound(modRootDirectory));
+        }
+
+        private static ILookup<string, BuildWarningId> GetBuildWarningSuppressions()
+        {
+            return BundlerSettings.Default.BuildWarningWhitelist
+                .Cast<string>()
+                .Select(s => s.Split('='))
+                .Where(items => items.Length == 2)
+                .Select(items => new
+                {
+                    Plugin = items[0],
+                    Warnings = BuildWarningSuppressions.ParseWarnings(items[1])
+                })
+                .SelectMany(x => x.Warnings.Select(id => new { Plugin = x.Plugin, Id = id }))
+                .ToLookup(x => x.Plugin, x => x.Id);
         }
     }
 }

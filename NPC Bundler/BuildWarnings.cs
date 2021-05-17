@@ -24,6 +24,7 @@ namespace NPC_Bundler
         // Used for help links, if provided.
         public BuildWarningId? Id { get; init; }
         public string Message { get; init; }
+        public string PluginName { get; init; }
 
         public BuildWarning() { }
 
@@ -35,6 +36,12 @@ namespace NPC_Bundler
         public BuildWarning(BuildWarningId id, string message) : this(message)
         {
             Id = id;
+        }
+
+        public BuildWarning(string pluginName, BuildWarningId id, string message)
+            : this(id, message)
+        {
+            PluginName = pluginName;
         }
     }
 
