@@ -20,6 +20,7 @@ namespace NPC_Bundler
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
         public string FaceModName { get; private set; }
         public string FacePluginName => faceConfig?.PluginName;
+        public uint FormId => npc.FormId;
         public string LocalFormIdHex => npc.LocalFormIdHex;
         public IReadOnlyList<NpcOverrideConfiguration> Overrides { get; init; }
         public string Name => npc.Name;
@@ -29,14 +30,46 @@ namespace NPC_Bundler
         private NpcOverrideConfiguration defaultConfig;
         private NpcOverrideConfiguration faceConfig;
 
-        public NpcConfiguration(Npc npc)
+        public NpcConfiguration(Npc npc, IReadOnlySet<string> masterNames)
         {
             this.npc = npc;
-            Overrides = GetOverrides().ToList().AsReadOnly();
+            var overrides = GetOverrides().ToList();
+            Overrides = overrides.AsReadOnly();
 
-            var defaultOverride = Overrides.LastOrDefault();
+            // We're never going to make perfect choices on the first run, but we can make a few assumptions.
+            // First, that users have set up their NPC-mod load order to reflect their general preferences - i.e. mods
+            // they'll use the most go last, mods they'll use scarcely go first.
+            // Second, that they've used LOOT or manually organized their full load order so that all the compatibility
+            // and conflict-resolution patches that *don't* deal with body/face mods go nearly last in the load order.
+            //
+            // This gives us an obviously flawed but still fairly good heuristic:
+            // - Choose the last plugin in the load order _which modifies face data_ as the face source.
+            // - Try to choose the very last plugin in the load order as the default source, except...
+            //   - If that plugin is *also* the face source, then keep going up the list until we find either:
+            //     (a) A master (ESM) plugin; these are rare, like USSEP, and we generally shouldn't override; or
+            //     (b) Any plugin that modifies the NPC but does not modify the face, regardless of master.
+            var faceOverride = overrides.LastOrDefault(x => x.HasFaceOverride);
+            var defaultOverride = overrides.LastOrDefault();
+            while (!string.IsNullOrEmpty(defaultOverride.ItpoFileName))
+            {
+                var itpoOverride = overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoFileName);
+                if (itpoOverride != null)   // Should never be null but we still need to check
+                    defaultOverride = itpoOverride;
+            }
+            if (defaultOverride == faceOverride && !masterNames.Contains(defaultOverride.PluginName))
+            {
+                for (int i = overrides.IndexOf(faceOverride) - 1; i >= 0; i--)
+                {
+                    var prevOverride = overrides[i];
+                    if (masterNames.Contains(prevOverride.PluginName) || !prevOverride.HasFaceOverride)
+                    {
+                        defaultOverride = prevOverride;
+                        break;
+                    }
+                }
+            }
             SetDefaultPlugin(defaultOverride);
-            SetFacePlugin(defaultOverride, true);
+            SetFacePlugin(faceOverride, true);
         }
 
         public int GetOverrideCount(bool includeDlc, bool includeNonFaces)
@@ -47,9 +80,9 @@ namespace NPC_Bundler
                 .Count();
         }
 
-        public bool HasFaceOverridesEnabled()
+        public bool HasFaceGenOverridesEnabled()
         {
-            return faceConfig.HasFaceOverride &&
+            return faceConfig.HasFaceGenOverride &&
                 // Base (master) is considered an "override" in order to mark that it has new face data, but for the
                 // purposes of validation we don't want to treat it as a true override, as this program should never be
                 // used to merge the original plugins, just the appearance overhauls.
@@ -58,7 +91,7 @@ namespace NPC_Bundler
 
         public bool RequiresFacegenData()
         {
-            return HasFaceOverridesEnabled() && !FileStructure.IsDlc(FacePluginName);
+            return HasFaceGenOverridesEnabled() && !FileStructure.IsDlc(FacePluginName);
         }
 
         public void SetDefaultPlugin(NpcOverrideConfiguration overrideConfig)
@@ -112,9 +145,16 @@ namespace NPC_Bundler
         private IEnumerable<NpcOverrideConfiguration> GetOverrides()
         {
             // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
-            var sources = npc.Overrides.Select(x => new { x.PluginName, x.HasFaceOverride })
-                .Prepend(new { PluginName = BasePluginName, HasFaceOverride = true });
-            return sources.Select(x => new NpcOverrideConfiguration(this, x.PluginName, x.HasFaceOverride));
+            var sources = npc.Overrides
+                .Select(x => new { x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName })
+                .Prepend(new {
+                    PluginName = BasePluginName,
+                    HasFaceOverride = true,
+                    AffectsFaceGen = true,
+                    ItpoPluginName = (string?)null
+                });
+            return sources.Select(x =>
+                new NpcOverrideConfiguration(this, x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName));
         }
     }
 
@@ -123,19 +163,25 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         public bool HasFaceOverride { get; init; }
+        public bool HasFaceGenOverride { get; init; }
         public bool IsDefaultSource { get; set; }
         public bool IsFaceSource { get; set; }
         public bool IsHighlighted { get; set; }
         public bool IsSelected { get; set; }
+        public string ItpoFileName { get; init; }
         public string PluginName { get; init; }
 
         private readonly NpcConfiguration parentConfig;
 
-        public NpcOverrideConfiguration(NpcConfiguration parentConfig, string pluginName, bool hasFaceOverride)
+        public NpcOverrideConfiguration(
+            NpcConfiguration parentConfig, string pluginName, bool hasFaceOverride, bool hasFaceGenOverride,
+            string? itpoFileName)
         {
             this.parentConfig = parentConfig;
             PluginName = pluginName;
             HasFaceOverride = hasFaceOverride;
+            HasFaceGenOverride = hasFaceGenOverride;
+            ItpoFileName = itpoFileName ?? string.Empty;
         }
 
         public void SetAsDefault()

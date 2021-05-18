@@ -10,11 +10,17 @@
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1200">
     <Page.Resources>
+        <Style x:Key="PluginIconBorderStyle" TargetType="Border">
+            <Setter Property="ToolTipService.InitialShowDelay" Value="50"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
+            <Setter Property="IsHitTestVisible" Value="True"/>
+            <Setter Property="Margin" Value="12,0,0,0"/>
+        </Style>
         <DataTemplate x:Key="OverrideListItemTemplate">
             <ui:SimpleStackPanel Orientation="Vertical">
                 <ui:SimpleStackPanel Orientation="Horizontal">
                     <TextBlock Text="{Binding Path=PluginName}"/>
-                    <Border Background="Transparent" Margin="12,0,0,0" IsHitTestVisible="True" Visibility="{Binding Path=HasFaceOverride, Converter={StaticResource BoolToVisibility}}" ToolTipService.InitialShowDelay="50" ToolTipService.ShowDuration="30000">
+                    <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=HasFaceOverride, Converter={StaticResource BoolToVisibility}}">
                         <Border.ToolTip>
                             <TextBlock>
                             <Bold>Face overrides</Bold> - the NPC record in this plugin has face attributes that are <Italic>different from the master record</Italic>.
@@ -22,7 +28,15 @@
                         </Border.ToolTip>
                         <fa5:SvgAwesome Icon="Regular_SmileWink" Height="16" Width="16" />
                     </Border>
-                    <Border Background="Transparent" Margin="12,0,0,0" IsHitTestVisible="True" Visibility="{Binding Path=IsDefaultSource, Converter={StaticResource BoolToVisibility}}" ToolTipService.InitialShowDelay="50" ToolTipService.ShowDuration="30000">
+                    <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=HasFaceGenOverride, Converter={StaticResource BoolToVisibility}}">
+                        <Border.ToolTip>
+                            <TextBlock>
+                            <Bold>FaceGen Required</Bold> - the NPC record in this plugin makes changes to specific face attributes which generally require the mod to provide facegen data (i.e. head mesh).
+                            </TextBlock>
+                        </Border.ToolTip>
+                        <fa5:SvgAwesome Icon="Solid_MehBlank" Height="16" Width="16" />
+                    </Border>
+                    <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=IsDefaultSource, Converter={StaticResource BoolToVisibility}}">
                         <Border.ToolTip>
                             <TextBlock>
                             <Bold>Default Source</Bold> - where all <Italic>non-appearance</Italic> records (perks, AI, factions, etc.) will be taken from. This should normally be the last mod in
@@ -31,7 +45,7 @@
                         </Border.ToolTip>
                         <fa5:SvgAwesome Foreground="Blue" Icon="Regular_IdCard" Height="16" Width="16" />
                     </Border>
-                    <Border Background="Transparent" Margin="12,0,0,0" IsHitTestVisible="True" Visibility="{Binding Path=IsFaceSource, Converter={StaticResource BoolToVisibility}}" ToolTipService.InitialShowDelay="50" ToolTipService.ShowDuration="30000">
+                    <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=IsFaceSource, Converter={StaticResource BoolToVisibility}}">
                         <Border.ToolTip>
                             <TextBlock>
                             <Bold>Face Source</Bold> - where the character's face will be taken from, overwriting face data in the <Italic>Default Source</Italic>.

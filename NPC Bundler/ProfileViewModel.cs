@@ -35,11 +35,12 @@ namespace NPC_Bundler
 
         private readonly SortedDictionary<uint, NpcConfiguration> npcConfigurations = new();
 
-        public ProfileViewModel(IEnumerable<Npc> npcs)
+        public ProfileViewModel(IEnumerable<Npc> npcs, IEnumerable<string> masterNames)
         {
             var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
+            var masterNameSet = new HashSet<string>(masterNames);
             foreach (var npc in npcsWithOverrides)
-                npcConfigurations.Add(npc.FormId, new NpcConfiguration(npc));
+                npcConfigurations.Add(npc.FormId, new NpcConfiguration(npc, masterNameSet));
         }
 
         public IEnumerable<NpcConfiguration> GetAllNpcConfigurations()

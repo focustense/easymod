@@ -7,7 +7,9 @@ using XeLib.API;
 namespace NPC_Bundler
 {
 #nullable enable
+#pragma warning disable IDE1006 // Naming Styles
     public interface Npc
+#pragma warning restore IDE1006 // Naming Styles
     {
         string BasePluginName { get; }
         string EditorId { get; }
@@ -16,27 +18,47 @@ namespace NPC_Bundler
         string Name { get; }
         IReadOnlyList<NpcOverride> Overrides { get; }
 
-        public static NpcFaceData? GetFaceOverrides(Handle npcRecord)
+        public static NpcFaceData? GetFaceOverrides(
+            Handle npcRecord, Handle file, out bool affectsFaceGen, out string? itpoFileName)
         {
+            itpoFileName = null;
+            if (Records.IsMaster(npcRecord))
+            {
+                affectsFaceGen = false;
+                return null;
+            }
             using var g = new HandleGroup();
+            var previousRecord = g.AddHandle(Records.GetPreviousOverride(npcRecord, file));
+            if (previousRecord.Value != 0 && Records.IsItpo(npcRecord))
+            {
+                var itpoFile = g.AddHandle(Elements.GetElementFile(previousRecord));
+                itpoFileName = FileValues.GetFileName(itpoFile);
+            }
+            else
+                previousRecord = g.AddHandle(Records.GetMasterRecord(npcRecord));
             var overrideFaceData = ReadFaceData(npcRecord, g);
-            var masterRecord = g.AddHandle(Records.GetMasterRecord(npcRecord));
-            var masterFaceData = ReadFaceData(masterRecord, g);
+            var masterFaceData = ReadFaceData(previousRecord, g);
+            affectsFaceGen = !FaceGenDataEquals(overrideFaceData, masterFaceData);
             return !FaceDataEquals(overrideFaceData, masterFaceData) ? overrideFaceData : null;
         }
 
         private static bool FaceDataEquals(NpcFaceData a, NpcFaceData b)
         {
-            // Thanks, Microsoft, for giving us record types with value-equality semantics but not bothering to give us
-            // a collection type that does the same. Brilliant!
+            return FaceGenDataEquals(a, b) &&
+                a.FaceTextureSetId == b.FaceTextureSetId &&
+                a.HairColorId == b.HairColorId &&
+                a.SkinTone == b.SkinTone;
+        }
+
+        private static bool FaceGenDataEquals(NpcFaceData a, NpcFaceData b)
+        {
             return
+                // Edits to Face Texture Set, Face Tints and Hair Color do not seem to trigger facegen conflicts.
+                // Those are ignored here.
+                a.HeadPartIds.SequenceEqual(b.HeadPartIds) &&
                 a.FaceMorphs == b.FaceMorphs &&
                 a.FaceParts == b.FaceParts &&
-                a.FaceTextureSetId == b.FaceTextureSetId &&
-                a.FaceTints.SequenceEqual(b.FaceTints) &&
-                a.HairColorId == b.HairColorId &&
-                a.HeadPartIds.SequenceEqual(b.HeadPartIds) &&
-                a.SkinTone == b.SkinTone;
+                a.FaceTints.SequenceEqual(b.FaceTints);
         }
 
         private static uint? GetFormId(Handle npcRecord, string path, HandleGroup g)
@@ -140,7 +162,7 @@ namespace NPC_Bundler
         }
     }
 
-    public record NpcOverride(string PluginName, NpcFaceData? FaceData)
+    public record NpcOverride(string PluginName, NpcFaceData? FaceData, bool AffectsFaceGen, string? ItpoPluginName)
     {
         public bool HasFaceOverride => FaceData != null;
     }
@@ -163,7 +185,6 @@ namespace NPC_Bundler
 
     public record NpcFaceTintColor(uint Red, uint Green, uint Blue, uint Alpha);
 
-    // TODO: Does skin tone or "texture lighting" actually affect the face?
     public record NpcSkinTone(uint Red, uint Green, uint Blue);
 #nullable restore
 }
