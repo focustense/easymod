@@ -133,7 +133,7 @@ namespace NPC_Bundler
                 Path.Combine(BundlerSettings.Default.ModRootDirectory, npc.FaceModName, faceMeshFileName));
             var hasArchiveFacegen = modPluginMap.GetArchivesForMod(npc.FaceModName)
                 .Select(f => ArchiveFileMap.ContainsFile(f, faceMeshFileName))
-                .Any();
+                .Any(exists => exists);
             // If the selected plugin has overrides, then we want to see facegen data. On the other hand, if the
             // selected plugin does NOT have overrides, then a mod providing facegens will probably break something.
             if (npc.RequiresFacegenData() && !hasLooseFacegen && !hasArchiveFacegen)
