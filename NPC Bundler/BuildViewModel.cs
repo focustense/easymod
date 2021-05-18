@@ -52,7 +52,9 @@ namespace NPC_Bundler
                 .Where(x =>
                     string.IsNullOrEmpty(x.PluginName) ||
                     x.Id == null ||
-                    !suppressions[x.PluginName].Contains((BuildWarningId)x.Id));
+                    !suppressions[x.PluginName].Contains((BuildWarningId)x.Id))
+                .OrderBy(x => x.Id)
+                .ThenBy(x => x.PluginName);
             IsProblemCheckingInProgress = false;
             IsProblemCheckingCompleted = true;
         }
