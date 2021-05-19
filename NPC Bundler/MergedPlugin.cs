@@ -37,27 +37,200 @@ namespace NPC_Bundler
             g.AddHandle(mergeFile);
             Files.NukeFile(mergeFile);
 
-            var header = g.AddHandle(Files.GetFileHeader(mergeFile));
-            ElementValues.SetFlag(header, @"Record Header\Record Flags", "ESL", true);
+            // Key = FormID, value = Record handle
+            var mergedNpcElementCache = new Dictionary<uint, Handle>();
 
+            // TODO: Currently each iteration creates another file handle by calling Files.FileByName. This isn't like
+            // a native Windows "handle", but is there a possibility that it causes problems? If so, we can cache file
+            // handles in a dictionary for this method so that we have at most one handle per file.
             foreach (var npc in npcs)
             {
-                // We only care about actors that have actually been overridden, and not just by DLC. Otherwise they're
-                // just vanilla NPCs and we can ignore them.
-                if ((npc.DefaultPluginName == npc.BasePluginName && npc.FacePluginName == npc.DefaultPluginName) ||
-                    (FileStructure.IsDlc(npc.DefaultPluginName) && FileStructure.IsDlc(npc.FacePluginName)))
+                if (!HasCustomizations(npc))
                     continue;
 
                 var formIdHex = npc.FormId.ToString("X8");
                 var defaultFile = g.AddHandle(Files.FileByName(npc.DefaultPluginName));
                 var defaultNpcElement = g.AddHandle(Elements.GetElement(defaultFile, formIdHex));
                 Masters.AddRequiredMasters(defaultNpcElement, mergeFile);
-                var mergedNpcRecord = g.AddHandle(Elements.CopyElement(defaultNpcElement, mergeFile));
+                var mergedNpcElement = g.AddHandle(Elements.CopyElement(defaultNpcElement, mergeFile));
+                mergedNpcElementCache.Add(npc.FormId, mergedNpcElement);
             }
+
+            // Faces can be tricky; some simple records can just be copied, but the real fun begins when we get to the
+            // references - head parts, texture sets, etc. We are trying to create a merge (i.e. not require or want the
+            // original NPC plugins), but we also don't want to just blindly deep-copy everything, since there will be
+            // several references that are actually vanilla.
+            //
+            // MANY popular NPC mods (probably most) use Editor IDs that are unique, even across their various mods. But
+            // some don't, which makes it probably unsafe to assume that two mods referencing a head part with the same
+            // Editor ID are actually using the same part.
+            //
+            // A reasonable strategy seems to be to to deep-copy any head part that is not already in the merge file's
+            // masters (so i.e. not vanilla), and reuse by file + editor ID or just global form ID. One consequence of
+            // this is that we really need a second pass to do the faces, since the masters aren't fully known until
+            // we've finished the first pass of default/non-head attributes.
+            var importer = new ReferenceImporter(g, mergeFile);
+            foreach (var npc in npcs)
+            {
+                if (!mergedNpcElementCache.TryGetValue(npc.FormId, out Handle mergedNpcElement))
+                    continue;
+
+                Elements.RemoveElementIfExists(mergedNpcElement, "PNAM");
+                Elements.RemoveElementIfExists(mergedNpcElement, "HCLF");
+                Elements.RemoveElementIfExists(mergedNpcElement, "FTST");
+                Elements.RemoveElementIfExists(mergedNpcElement, "NAMA");
+                Elements.RemoveElementIfExists(mergedNpcElement, "NAM9");
+                Elements.RemoveElementIfExists(mergedNpcElement, "QNAM");
+                Elements.RemoveElementIfExists(mergedNpcElement, "TINC");
+                Elements.RemoveElementIfExists(mergedNpcElement, "TINI");
+                Elements.RemoveElementIfExists(mergedNpcElement, "TINV");
+
+                var formIdHex = npc.FormId.ToString("X8");
+                var faceFile = g.AddHandle(Files.FileByName(npc.FacePluginName));
+                var faceNpcElement = g.AddHandle(Elements.GetElement(faceFile, formIdHex));
+
+                // It turns out that xEdit's deep copy isn't exactly a deep copy. If the head part has any Extra Parts,
+                // they'll be added as references to the original as a master, not deep-copied.
+                // We'll clean masters at the end of the build, but for now, we have to manually replace the extra parts
+                // with new copies in order to get rid of the master refs.
+                void MakeHeadPartStandalone(Handle headPart)
+                {
+                    if (Elements.HasElement(headPart, "HNAM"))
+                    {
+                        var extraPartRefs = g.AddHandles(Elements.GetElements(headPart, "HNAM"));
+                        var mergedExtraParts = extraPartRefs.Select(h =>
+                        {
+                            var part = importer.Import(h, out bool isNew);
+                            return new { Handle = part, IsNew = isNew };
+                        }).ToList();
+                        Elements.RemoveElement(headPart, "HNAM");
+                        foreach (var mergedExtraPart in mergedExtraParts)
+                        {
+                            Elements.AddArrayItem(
+                                headPart, "HNAM", "",
+                                ElementValues.GetUIntValue(mergedExtraPart.Handle).ToString("X8"));
+                            if (mergedExtraPart.IsNew)
+                                MakeHeadPartStandalone(mergedExtraPart.Handle);
+                        }
+                    }
+
+                    // Texture set also doesn't get copied.
+                    if (Elements.HasElement(headPart, "TNAM"))
+                    {
+                        var textureSetRef = g.AddHandle(Elements.GetElement(headPart, "TNAM"));
+                        var mergedTextureSet = importer.Import(textureSetRef);
+                        Elements.SetLinksTo(headPart, "TNAM", mergedTextureSet);
+                    }
+                }
+
+                var headPartRefs = Elements.HasElement(faceNpcElement, "PNAM") ?
+                    g.AddHandles(Elements.GetElements(faceNpcElement, "PNAM")) : Array.Empty<Handle>();
+                foreach (var headPartRef in headPartRefs)
+                {
+                    var mergedHeadPart = importer.Import(headPartRef, out bool isNew);
+                    var mergedHeadPartFormId = ElementValues.GetUIntValue(mergedHeadPart);
+                    Elements.AddArrayItem(mergedNpcElement, "PNAM", "", mergedHeadPartFormId.ToString("X8"));
+
+                    if (isNew)
+                        MakeHeadPartStandalone(mergedHeadPart);
+
+                    if (Elements.HasElement(faceNpcElement, "HCLF"))
+                    {
+                        var hairColorRef = g.AddHandle(Elements.GetElement(faceNpcElement, "HCLF"));
+                        var mergedHairColor = importer.Import(hairColorRef);
+                        g.AddHandle(Elements.AddElement(mergedNpcElement, "HCLF"));
+                        Elements.SetLinksTo(mergedNpcElement, "HCLF", mergedHairColor);
+                    }
+
+                    if (Elements.HasElement(faceNpcElement, "FTST"))
+                    {
+                        var faceTextureSetRef = g.AddHandle(Elements.GetElement(faceNpcElement, "FTST"));
+                        var mergedFaceTextureSet = importer.Import(faceTextureSetRef);
+                        g.AddHandle(Elements.AddElement(mergedNpcElement, "FTST"));
+                        Elements.SetLinksTo(mergedNpcElement, "FTST", mergedFaceTextureSet);
+                    }
+
+                    CopyIfExists(faceNpcElement, "NAMA", mergedNpcElement, g);
+                    CopyIfExists(faceNpcElement, "NAM9", mergedNpcElement, g);
+                    CopyIfExists(faceNpcElement, "QNAM", mergedNpcElement, g);
+                    CopyIfExists(faceNpcElement, "Tint Layers", mergedNpcElement, g);
+                }
+            }
+
+            Masters.CleanMasters(mergeFile);
 
             // This doesn't save the file we expect - it will actually have an ".esp.save" extension.
             Files.SaveFile(mergeFile);
             File.Move($"{mergeFilePath}.save", mergeFilePath);
+        }
+
+        private static void CopyIfExists(Handle srcElement, string path, Handle dstElement, HandleGroup g)
+        {
+            if (Elements.HasElement(srcElement, path))
+            {
+                var elementToCopy = g.AddHandle(Elements.GetElement(srcElement, path));
+                Elements.CopyElement(elementToCopy, dstElement);
+            }
+        }
+
+        private static bool HasCustomizations(NpcConfiguration npc)
+        {
+            return
+                (npc.DefaultPluginName != npc.BasePluginName || npc.FacePluginName != npc.DefaultPluginName) &&
+                (!FileStructure.IsDlc(npc.DefaultPluginName) || !FileStructure.IsDlc(npc.FacePluginName));
+        }
+    }
+
+    class ReferenceImporter
+    {
+        private readonly Dictionary<string, Handle> cache = new();
+        private readonly Handle destFile;
+        private readonly HandleGroup g;
+        private readonly HashSet<string> masters;
+
+        public ReferenceImporter(HandleGroup g, Handle destFile)
+        {
+            this.g = g;
+            this.destFile = destFile;
+            masters = new(Masters.GetMasterNames(destFile));
+        }
+
+        public Handle Import(Handle refHandle)
+        {
+            return Import(refHandle, out bool _);
+        }
+
+        public Handle Import(Handle refHandle, out bool isNew)
+        {
+            // If we use GetUIntValue here, XEditLib gives us a "quasi-local" form ID, which has a leading bte for the
+            // load order, but the order is actually an index into that plugin's masters, not the full load order.
+            // On the other hand, the string result produced by GetValue includes a bunch of stuff including the editor
+            // ID and the true load order index, which should be unique enough for our purposes here.
+            var recordKey = ElementValues.GetValue(refHandle);
+            isNew = false;
+            if (!cache.TryGetValue(recordKey, out Handle importedElement))
+            {
+                var sourceElement = ResolveLink(refHandle, out var sourceFile);
+                if (masters.Contains(sourceFile))
+                    importedElement = sourceElement;
+                else
+                {
+                    Masters.AddRequiredMasters(sourceElement, destFile, true);
+                    var mergedElement = g.AddHandle(Elements.CopyElement(sourceElement, destFile, true));
+                    importedElement = mergedElement;
+                    isNew = true;
+                }
+                cache.Add(recordKey, importedElement);
+            }
+            return importedElement;
+        }
+
+        private Handle ResolveLink(Handle link, out string fileName)
+        {
+            var master = g.AddHandle(Elements.GetLinksTo(link, ""));
+            var winningOverride = g.AddHandle(Records.GetWinningOverride(master));
+            fileName = FileValues.GetFileName(g.AddHandle(Elements.GetElementFile(winningOverride)));
+            return winningOverride;
         }
     }
 }

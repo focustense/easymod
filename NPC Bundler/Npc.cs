@@ -37,9 +37,12 @@ namespace NPC_Bundler
             else
                 previousRecord = g.AddHandle(Records.GetMasterRecord(npcRecord));
             var overrideFaceData = ReadFaceData(npcRecord, g);
-            var masterFaceData = ReadFaceData(previousRecord, g);
-            affectsFaceGen = !FaceGenDataEquals(overrideFaceData, masterFaceData);
-            return !FaceDataEquals(overrideFaceData, masterFaceData) ? overrideFaceData : null;
+            var overrideRace = GetFormId(npcRecord, "RNAM", g);
+            var previousFaceData = ReadFaceData(previousRecord, g);
+            var previousRace = GetFormId(previousRecord, "RNAM", g);
+            affectsFaceGen = !FaceGenDataEquals(overrideFaceData, previousFaceData);
+            return (!FaceDataEquals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
+                overrideFaceData : null;
         }
 
         private static bool FaceDataEquals(NpcFaceData a, NpcFaceData b)
