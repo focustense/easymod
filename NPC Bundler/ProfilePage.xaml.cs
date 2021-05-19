@@ -17,6 +17,11 @@ namespace NPC_Bundler
             InitializeComponent();
         }
 
+        private void LoadProfile_Click(object sender, RoutedEventArgs e)
+        {
+            Model.LoadFromFile(Window.GetWindow(this));
+        }
+
         private void MugshotListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left)
@@ -41,6 +46,11 @@ namespace NPC_Bundler
         {
             MugshotListView.SelectedItem = null;
             Model?.SelectOverride(e.AddedItems.Cast<NpcOverrideConfiguration>().FirstOrDefault());
+        }
+
+        private void SaveProfile_Click(object sender, RoutedEventArgs e)
+        {
+            Model.SaveToFile(Window.GetWindow(this));
         }
 
         private void SetDefaultOverrideButton_Click(object sender, RoutedEventArgs e)

@@ -103,6 +103,13 @@ namespace NPC_Bundler
             defaultConfig = overrideConfig;
         }
 
+        public void SetDefaultPlugin(string pluginName)
+        {
+            var foundOverride = FindOverride(pluginName);
+            if (foundOverride != null)
+                SetDefaultPlugin(foundOverride);
+        }
+
         public void SetFaceMod(string modName, bool detectPlugin)
         {
             FaceModName = modName;
@@ -124,22 +131,35 @@ namespace NPC_Bundler
                 SetFacePlugin(lastMatchingPlugin, false);
         }
 
-        public void SetFacePlugin(NpcOverrideConfiguration defaultConfig, bool detectFaceMod)
+        public void SetFacePlugin(NpcOverrideConfiguration faceConfig, bool detectFaceMod)
         {
+            if (this.faceConfig != null)
+                this.faceConfig.IsFaceSource = false;
             if (faceConfig != null)
-                faceConfig.IsFaceSource = false;
-            if (defaultConfig != null)
-                defaultConfig.IsFaceSource = true;
-            faceConfig = defaultConfig;
-            if (!detectFaceMod || defaultConfig == null)
+                faceConfig.IsFaceSource = true;
+            this.faceConfig = faceConfig;
+            if (!detectFaceMod || faceConfig == null)
                 return;
             var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
             var lastMatchingModName = modPluginMap
-                .GetModsForPlugin(defaultConfig.PluginName)
+                .GetModsForPlugin(faceConfig.PluginName)
                 .OrderBy(f => Mugshot.Exists(f, BasePluginName, LocalFormIdHex))
                 .LastOrDefault();
             if (!string.IsNullOrEmpty(lastMatchingModName))
                 SetFaceMod(lastMatchingModName, false);
+        }
+
+        public void SetFacePlugin(string pluginName, bool detectFaceMod)
+        {
+            var foundOverride = FindOverride(pluginName);
+            if (foundOverride != null)
+                SetFacePlugin(foundOverride, detectFaceMod);
+        }
+
+        private NpcOverrideConfiguration FindOverride(string pluginName)
+        {
+            return Overrides.SingleOrDefault(x =>
+                string.Equals(pluginName, x.PluginName, StringComparison.OrdinalIgnoreCase));
         }
 
         private IEnumerable<NpcOverrideConfiguration> GetOverrides()

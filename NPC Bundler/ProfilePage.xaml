@@ -75,11 +75,21 @@
             <RowDefinition Height="250"/>
         </Grid.RowDefinitions>
         <Border Margin="0,0,0,8" Style="{StaticResource GroupBorder}" Grid.Row="0" Grid.ColumnSpan="3">
-            <ui:SimpleStackPanel Orientation="Horizontal">
-                <CheckBox Content="Show DLC Overrides" IsChecked="{Binding ShowDlcOverrides}"/>
-                <CheckBox Content="Show Non-Conflicting Overrides" IsChecked="{Binding ShowSinglePluginOverrides}" Margin="16,0,0,0"/>
-                <CheckBox Content="Only Face Overrides" IsChecked="{Binding OnlyFaceOverrides}" Margin="16,0,0,0"/>
-            </ui:SimpleStackPanel>
+            <Grid>
+                <ui:SimpleStackPanel Orientation="Horizontal">
+                    <CheckBox Content="Show DLC Overrides" IsChecked="{Binding ShowDlcOverrides}"/>
+                    <CheckBox Content="Show Non-Conflicting Overrides" IsChecked="{Binding ShowSinglePluginOverrides}" Margin="16,0,0,0"/>
+                    <CheckBox Content="Only Face Overrides" IsChecked="{Binding OnlyFaceOverrides}" Margin="16,0,0,0"/>
+                </ui:SimpleStackPanel>
+                <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="LoadProfile" ToolTip="Load previous profile" Click="LoadProfile_Click">
+                        <fa5:SvgAwesome Icon="Regular_FolderOpen" Width="19" Height="19"/>
+                    </Button>
+                    <Button x:Name="SaveProfile" ToolTip="Save current profile" Margin="8,0,0,0" Click="SaveProfile_Click">
+                        <fa5:SvgAwesome Icon="Solid_Save" Width="19" Height="19"/>
+                    </Button>
+                </ui:SimpleStackPanel>
+            </Grid>
         </Border>
         <DataGrid x:Name="NpcDataGrid" ItemsSource="{Binding DisplayedNpcs}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" Grid.Column="0" Grid.Row="1" SelectionChanged="NpcDataGrid_SelectionChanged">
             <DataGrid.Columns>

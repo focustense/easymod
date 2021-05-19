@@ -1,4 +1,5 @@
-﻿using PropertyChanged;
+﻿using Ookii.Dialogs.Wpf;
+using PropertyChanged;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -6,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace NPC_Bundler
 {
@@ -46,6 +48,63 @@ namespace NPC_Bundler
         public IEnumerable<NpcConfiguration> GetAllNpcConfigurations()
         {
             return npcConfigurations.Values;
+        }
+
+        public void LoadFromFile(Window dialogOwner)
+        {
+            var dialog = new VistaOpenFileDialog
+            {
+                Title = "Choose saved profile",
+                CheckFileExists = true,
+                DefaultExt = ".txt",
+                Filter = "Text Files (*.txt)|*.txt",
+                Multiselect = false
+            };
+            var result = dialog.ShowDialog(dialogOwner).GetValueOrDefault();
+            if (!result)
+                return;
+            var savedProfile = SavedProfile.LoadFromFile(dialog.FileName);
+            var npcMatches = savedProfile.Npcs
+                .Join(npcConfigurations.Values,
+                    x => Tuple.Create(x.BasePluginName.ToLowerInvariant(), x.LocalFormIdHex),
+                    y => Tuple.Create(y.BasePluginName.ToLowerInvariant(), y.LocalFormIdHex),
+                    (x, y) => new { Saved = x, Current = y });
+            foreach (var match in npcMatches)
+            {
+                if (!string.IsNullOrEmpty(match.Saved.DefaultPluginName))
+                    match.Current.SetDefaultPlugin(match.Saved.DefaultPluginName);
+                if (!string.IsNullOrEmpty(match.Saved.FacePluginName))
+                    match.Current.SetFacePlugin(match.Saved.FacePluginName, true);
+                if (!string.IsNullOrEmpty(match.Saved.FaceModName))
+                    match.Current.SetFaceMod(match.Saved.FaceModName, false);
+            }
+        }
+
+        public void SaveToFile(Window dialogOwner)
+        {
+            var dialog = new VistaSaveFileDialog
+            {
+                Title = "Choose where to save this profile",
+                CheckPathExists = true,
+                DefaultExt = ".txt",
+                Filter = "Text Files (*.txt)|*.txt",
+                OverwritePrompt = true
+            };
+            var result = dialog.ShowDialog(dialogOwner).GetValueOrDefault();
+            if (!result)
+                return;
+            var savedNpcs = npcConfigurations.Values
+                .Select(x => new SavedNpcConfiguration
+                {
+                    BasePluginName = x.BasePluginName,
+                    LocalFormIdHex = x.LocalFormIdHex,
+                    DefaultPluginName = x.DefaultPluginName,
+                    FacePluginName = x.FacePluginName,
+                    FaceModName = x.FaceModName,
+                })
+                .ToList();
+            var savedProfile = new SavedProfile { Npcs = savedNpcs };
+            savedProfile.SaveToFile(dialog.FileName);
         }
 
         public void SelectMugshot(Mugshot mugshot)
