@@ -9,7 +9,6 @@
              KeepAlive="True"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1200">
-
     <Grid DataContext="{Binding Build}">
         <Grid>
             <Grid.RowDefinitions>
@@ -51,7 +50,7 @@
                     </StackPanel>
                 </GroupBox>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemReportVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
                 <GroupBox Header="Checks completed">
                     <Grid>
                         <ui:SimpleStackPanel Visibility="{Binding HasProblems, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
@@ -84,6 +83,22 @@
                             <ListBox ItemsSource="{Binding Problems}" DisplayMemberPath="Message" SelectedItem="{Binding SelectedWarning}" ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="0,8,0,0"/>
                         </DockPanel>
                     </Grid>
+                </GroupBox>
+            </Border>
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3">
+                <GroupBox Header="Ready to build">
+                    <ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
+                            <TextBlock>All checks passed (or ignored). Click "Build" to start.</TextBlock>
+                            <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
+                            </ui:SimpleStackPanel>
+                        </ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock FontWeight="SemiBold" FontSize="14" Text="Build Progress"/>
+                            <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8"/>
+                        </ui:SimpleStackPanel>
+                    </ui:SimpleStackPanel>
                 </GroupBox>
             </Border>
         </Grid>

@@ -16,14 +16,18 @@ namespace NPC_Bundler
 
         [DependsOn("Problems")]
         public bool HasProblems => Problems?.Any() ?? false;
+        [DependsOn("Progress")]
+        public bool IsBuilding => Progress != null;
         public bool IsProblemCheckerEnabled => !IsProblemCheckingInProgress;
         public bool IsProblemCheckerVisible { get; set; } = true;
-        public bool IsProblemCheckingCompleted { get; set; }
         public bool IsProblemCheckingInProgress { get; set; }
+        public bool IsProblemReportVisible { get; set; }
+        public bool IsReadyToBuild { get; set; }
         [DependsOn("SelectedWarning")]
         public bool IsWarningInfoVisible => SelectedWarning != null;
         public IReadOnlyList<NpcConfiguration> Npcs { get; init; }
         public IEnumerable<BuildWarning> Problems { get; private set; }
+        public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
 
         private readonly IReadOnlyList<string> loadOrder;
@@ -34,12 +38,23 @@ namespace NPC_Bundler
             this.loadOrder = loadOrder;
         }
 
+        public async void BeginBuild()
+        {
+            Progress = new BuildProgressViewModel();
+            await Task.Run(() =>
+            {
+                MergedPlugin.Build(Npcs, Progress.MergedPlugin);
+            });
+        }
+
         // TODO: Add a check for missing textures - requires much deeper inspection of both plugins and meshes.
         public async void CheckForProblems()
         {
+            Progress = null;
             IsProblemCheckerVisible = false;
-            IsProblemCheckingCompleted = false;
+            IsProblemReportVisible = false;
             IsProblemCheckingInProgress = true;
+            IsReadyToBuild = false;
             var warnings = new List<BuildWarning>();
             await Task.Run(() =>
             {
@@ -56,12 +71,13 @@ namespace NPC_Bundler
                 .OrderBy(x => x.Id)
                 .ThenBy(x => x.PluginName);
             IsProblemCheckingInProgress = false;
-            IsProblemCheckingCompleted = true;
+            IsProblemReportVisible = true;
         }
 
         public void DismissProblems()
         {
-            IsProblemCheckingCompleted = false;
+            IsProblemReportVisible = false;
+            IsReadyToBuild = true;
         }
 
         private IEnumerable<BuildWarning> CheckForOverriddenArchives()
@@ -182,5 +198,10 @@ namespace NPC_Bundler
                 .SelectMany(x => x.Warnings.Select(id => new { Plugin = x.Plugin, Id = id }))
                 .ToLookup(x => x.Plugin, x => x.Id);
         }
+    }
+
+    public class BuildProgressViewModel
+    {
+        public ProgressViewModel MergedPlugin { get; init; } = new ProgressViewModel("Merged Plugin");
     }
 }

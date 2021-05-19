@@ -32,6 +32,11 @@ namespace NPC_Bundler
             Model.CheckForProblems();
         }
 
+        private void BuildButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.BeginBuild();
+        }
+
         private void CheckForProblemsButton_Click(object sender, RoutedEventArgs e)
         {
             Model.CheckForProblems();

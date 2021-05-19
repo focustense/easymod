@@ -13,8 +13,9 @@ namespace NPC_Bundler
     {
         private static readonly string MergeFileName = "NPC Appearances Merged.esp";
 
-        public static void Build(IEnumerable<NpcConfiguration> npcs)
+        public static void Build(IReadOnlyList<NpcConfiguration> npcs, ProgressViewModel progress)
         {
+            progress.StartStage("Backing up previous merge");
             var dataPath = Meta.GetGlobal("DataPath");
             var mergeFilePath = $@"{dataPath}\{MergeFileName}";
             if (File.Exists(mergeFilePath))
@@ -30,6 +31,7 @@ namespace NPC_Bundler
             //
             // So, at least until more tests can be done and/or some solution is found, this will be single-threaded.
 
+            progress.StartStage("Starting the merge");
             using var g = new HandleGroup();
             var mergeFile = Files.FileByName(MergeFileName);
             if (mergeFile.Value == 0)
@@ -40,11 +42,18 @@ namespace NPC_Bundler
             // Key = FormID, value = Record handle
             var mergedNpcElementCache = new Dictionary<uint, Handle>();
 
+            // Progress calculation is based on 2 iterations for each NPC plus 5% for final cleanup.
+            progress.MaxProgress = (int)Math.Floor(npcs.Count * 2 * 1.05);
+            progress.StartStage("Importing NPC defaults");
+
             // TODO: Currently each iteration creates another file handle by calling Files.FileByName. This isn't like
             // a native Windows "handle", but is there a possibility that it causes problems? If so, we can cache file
             // handles in a dictionary for this method so that we have at most one handle per file.
             foreach (var npc in npcs)
             {
+                progress.ItemName = $"{FormatNpcLabel(npc)}; Source: {npc.DefaultPluginName}";
+                progress.CurrentProgress++;
+
                 if (!HasCustomizations(npc))
                     continue;
 
@@ -70,10 +79,15 @@ namespace NPC_Bundler
             // this is that we really need a second pass to do the faces, since the masters aren't fully known until
             // we've finished the first pass of default/non-head attributes.
             var importer = new ReferenceImporter(g, mergeFile);
+            progress.StartStage("Importing face overrides");
+            progress.MaxProgress -= npcs.Count - mergedNpcElementCache.Count;
             foreach (var npc in npcs)
             {
                 if (!mergedNpcElementCache.TryGetValue(npc.FormId, out Handle mergedNpcElement))
                     continue;
+
+                progress.ItemName = $"{FormatNpcLabel(npc)}; Source: {npc.FacePluginName}";
+                progress.CurrentProgress++;
 
                 Elements.RemoveElementIfExists(mergedNpcElement, "PNAM");
                 Elements.RemoveElementIfExists(mergedNpcElement, "HCLF");
@@ -157,11 +171,18 @@ namespace NPC_Bundler
                 }
             }
 
+            progress.StartStage("Cleaning up");
+            progress.CurrentProgress = (int)Math.Round(progress.MaxProgress * 0.95);
             Masters.CleanMasters(mergeFile);
 
+            progress.StartStage("Saving");
+            progress.CurrentProgress = (int)Math.Floor(progress.MaxProgress * 0.99);
             // This doesn't save the file we expect - it will actually have an ".esp.save" extension.
             Files.SaveFile(mergeFile);
             File.Move($"{mergeFilePath}.save", mergeFilePath);
+
+            progress.StartStage("Done");
+            progress.CurrentProgress = progress.MaxProgress;
         }
 
         private static void CopyIfExists(Handle srcElement, string path, Handle dstElement, HandleGroup g)
@@ -171,6 +192,11 @@ namespace NPC_Bundler
                 var elementToCopy = g.AddHandle(Elements.GetElement(srcElement, path));
                 Elements.CopyElement(elementToCopy, dstElement);
             }
+        }
+
+        private static string FormatNpcLabel(NpcConfiguration npc)
+        {
+            return $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId})";
         }
 
         private static bool HasCustomizations(NpcConfiguration npc)
