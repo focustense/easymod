@@ -18,14 +18,18 @@
                     <DataTrigger Binding="{Binding IsCompleted}" Value="True">
                         <Setter Property="Background" Value="PaleGreen"/>
                     </DataTrigger>
+                    <DataTrigger Binding="{Binding HasError}" Value="True">
+                        <Setter Property="Background" Value="Pink"/>
+                    </DataTrigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>
         <ui:SimpleStackPanel>
             <TextBlock Text="{Binding TaskName}" Foreground="{StaticResource SystemAccentColorBrush}"  FontSize="14" Margin="0,0,0,8" d:Text="Task Name"/>
             <TextBlock Text="{Binding StageName}" d:Text="Current Stage"/>
-            <ui:ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Minimum="0" Maximum="{Binding MaxProgress}" Value="{Binding CurrentProgress}" Margin="0,8" d:IsIndeterminate="true"/>
+            <ui:ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Minimum="0" Maximum="{Binding MaxProgress}" Value="{Binding CurrentProgress}" Margin="0,8" d:IsIndeterminate="true" ShowPaused="{Binding IsPaused}"/>
             <TextBlock Text="{Binding ItemName}" Foreground="DimGray" FontSize="11" d:Text="Current Item"/>
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="DarkRed" FontSize="11" Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" d:Text="Error message"/>
         </ui:SimpleStackPanel>
     </Border>
 </UserControl>
