@@ -12,11 +12,19 @@ namespace NPC_Bundler
         public static readonly string FaceMeshesPath =
             Path.Combine("meshes", "actors", "character", "facegendata", "facegeom");
 
+        public static readonly string FaceTintsPath =
+            Path.Combine("textures", "actors", "character", "facegendata", "facetint");
+
         private static readonly HashSet<string> dlcPluginSet = new(DlcPluginNames, StringComparer.OrdinalIgnoreCase);
 
         public static string GetFaceMeshFileName(string basePluginName, string localFormIdHex)
         {
             return Path.Combine(FaceMeshesPath, basePluginName, $"00{localFormIdHex}.nif");
+        }
+
+        public static string GetFaceTintFileName(string basePluginName, string localFormIdHex)
+        {
+            return Path.Combine(FaceTintsPath, basePluginName, $"00{localFormIdHex}.dds");
         }
 
         // DLCs require some special treatment as. The plugins mostly work like any other plugins, but they don't have
@@ -26,6 +34,12 @@ namespace NPC_Bundler
         public static bool IsDlc(string pluginName)
         {
             return dlcPluginSet.Contains(pluginName);
+        }
+
+        public static bool IsFaceGen(string fileName)
+        {
+            return fileName.StartsWith(FaceMeshesPath, StringComparison.OrdinalIgnoreCase) ||
+                fileName.StartsWith(FaceTintsPath, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

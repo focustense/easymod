@@ -55,7 +55,8 @@ namespace NPC_Bundler
                 .Select(path => new
                 {
                     FileName = Path.GetFileName(path),
-                    FaceGenFiles = Resources.GetContainerFiles(path, FileStructure.FaceMeshesPath),
+                    FaceGenFiles = Resources.GetContainerFiles(path, FileStructure.FaceMeshesPath)
+                        .Concat(Resources.GetContainerFiles(path, FileStructure.FaceTintsPath)),
                 })
                 .ToList();
             Parallel.Invoke(
