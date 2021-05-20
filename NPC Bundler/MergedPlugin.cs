@@ -13,8 +13,9 @@ namespace NPC_Bundler
     {
         private static readonly string MergeFileName = "NPC Appearances Merged.esp";
 
-        public static void Build(IReadOnlyList<NpcConfiguration> npcs, ProgressViewModel progress)
+        public static MergedPluginResult Build(IReadOnlyList<NpcConfiguration> npcs, ProgressViewModel progress)
         {
+
             progress.StartStage("Backing up previous merge");
             var dataPath = Meta.GetGlobal("DataPath");
             var mergeFilePath = $@"{dataPath}\{MergeFileName}";
@@ -175,6 +176,10 @@ namespace NPC_Bundler
             progress.CurrentProgress = (int)Math.Round(progress.MaxProgress * 0.95);
             Masters.CleanMasters(mergeFile);
 
+            progress.StartStage("Building resource list");
+            progress.CurrentProgress = (int)Math.Round(progress.MaxProgress * 0.98);
+            var result = GetResult(mergeFile, g);
+
             progress.StartStage("Saving");
             progress.CurrentProgress = (int)Math.Floor(progress.MaxProgress * 0.99);
             // This doesn't save the file we expect - it will actually have an ".esp.save" extension.
@@ -183,6 +188,8 @@ namespace NPC_Bundler
 
             progress.StartStage("Done");
             progress.CurrentProgress = progress.MaxProgress;
+
+            return result;
         }
 
         private static void CopyIfExists(Handle srcElement, string path, Handle dstElement, HandleGroup g)
@@ -197,6 +204,42 @@ namespace NPC_Bundler
         private static string FormatNpcLabel(NpcConfiguration npc)
         {
             return $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId})";
+        }
+
+        private static MergedPluginResult GetResult(Handle mergeFile, HandleGroup g)
+        {
+            // We COULD pull all of this information as the patch is being generated, and it would probably be a little
+            // faster; this way is cleaner and makes it easier to see where the data comes from.
+            var result = new MergedPluginResult();
+
+            foreach (var npc in g.AddHandles(Elements.GetElements(mergeFile, "NPC_")))
+                result.Npcs.Add(RecordValues.GetEditorId(npc));
+
+            foreach (var headPart in g.AddHandles(Elements.GetElements(mergeFile, "HDPT")))
+            {
+                result.Meshes.Add(ElementValues.GetValue(headPart, "Model\\MODL").PrefixPath("meshes"));
+                // There's also MODS - alternate textures for model - but precisely zero of the 30 or so test mods used
+                // this. If any are found, support should be added.
+
+                var parts = Elements.HasElement(headPart, "Parts") ?
+                    g.AddHandles(Elements.GetElements(headPart, "Parts")) : Array.Empty<Handle>();
+                foreach (var part in parts)
+                    result.Morphs.Add(ElementValues.GetValue(part, "NAM1").PrefixPath("meshes"));
+            }
+
+            foreach (var textureSet in g.AddHandles(Elements.GetElements(mergeFile, "TXST")))
+            {
+                var textures = g.AddHandle(Elements.GetElement(textureSet, "Textures (RGB/A)"));
+                var textureFiles = Enumerable.Range(0, 8)
+                    .Select(i => ElementValues.GetValue(textures, $"TX0{i}"))
+                    .Where(s => !string.IsNullOrEmpty(s));
+                foreach (var textureFile in textureFiles)
+                    result.Textures.Add(textureFile.PrefixPath("textures"));
+            }
+
+            // NPC_ records will reference head parts and texture sets, but don't themselves contain any direct
+            // references to file names.
+            return result;
         }
 
         private static bool HasCustomizations(NpcConfiguration npc)
@@ -258,5 +301,13 @@ namespace NPC_Bundler
             fileName = FileValues.GetFileName(g.AddHandle(Elements.GetElementFile(winningOverride)));
             return winningOverride;
         }
+    }
+
+    public class MergedPluginResult
+    {
+        public ISet<string> Meshes { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        public ISet<string> Morphs { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        public ISet<string> Npcs { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        public ISet<string> Textures { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
 }

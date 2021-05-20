@@ -43,7 +43,8 @@ namespace NPC_Bundler
             Progress = new BuildProgressViewModel();
             await Task.Run(() =>
             {
-                MergedPlugin.Build(Npcs, Progress.MergedPlugin);
+                var mergeInfo = MergedPlugin.Build(Npcs, Progress.MergedPlugin);
+                MergedFolder.Build(Npcs, mergeInfo, Progress.MergedFolder);
             });
         }
 
@@ -202,6 +203,13 @@ namespace NPC_Bundler
 
     public class BuildProgressViewModel
     {
-        public ProgressViewModel MergedPlugin { get; init; } = new ProgressViewModel("Merged Plugin");
+        public ProgressViewModel MergedFolder { get; init; }
+        public ProgressViewModel MergedPlugin { get; init; } 
+
+        public BuildProgressViewModel()
+        {
+            MergedPlugin = new ProgressViewModel("Merged Plugin");
+            MergedFolder = new ProgressViewModel("Merged Folder", true, "Waiting for merged plugin");
+        }
     }
 }

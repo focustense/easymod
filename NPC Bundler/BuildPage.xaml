@@ -96,7 +96,8 @@
                         </ui:SimpleStackPanel>
                         <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock FontWeight="SemiBold" FontSize="14" Text="Build Progress"/>
-                            <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8"/>
+                            <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8,0,0"/>
+                            <local:ProgressViewer DataContext="{Binding Progress.MergedFolder}" Margin="0,8,0,0"/>
                         </ui:SimpleStackPanel>
                     </ui:SimpleStackPanel>
                 </GroupBox>
