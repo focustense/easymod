@@ -18,7 +18,7 @@ namespace NPC_Bundler
         public bool HasProblems => Problems?.Any() ?? false;
         [DependsOn("Progress")]
         public bool IsBuilding => Progress != null;
-        public bool IsProblemCheckerEnabled => !IsProblemCheckingInProgress;
+        public bool IsProblemCheckerEnabled => !IsProblemCheckingInProgress && !IsBuilding;
         public bool IsProblemCheckerVisible { get; set; } = true;
         public bool IsProblemCheckingInProgress { get; set; }
         public bool IsProblemReportVisible { get; set; }
