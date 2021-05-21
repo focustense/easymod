@@ -2,6 +2,7 @@
 
 ## Near-term (0.9 / Beta)
 
+- Placeholder images for face mods without mugshots
 - Auto-save/auto-load profiles
 - Built-in BSA archiving
 - Convert from XeLibSharp to Mutagen
@@ -11,11 +12,13 @@
 - Preserve profile state on tab change (sort, filter, scroll position, etc.)
 - "NoMO" support - plugin only
 - Filter NPCs by Plugin, EditorID, etc. (type to search)
+- Moar Mugshots
 - Bug: ESP/BSA files remain locked until program exit
 
 ## Medium-term (1.0 / Release)
 
 - Windows 7 targeting
+- Support for Outfit (DOFT/SOFT) and Body (WNAM) carryover
 - NifTools integration (i.e. for texture scans)
 - Advanced filters: override names, plugin/mod selections
 - Better MO2 integration - read profiles, mod lists, detect disable mods, etc.
