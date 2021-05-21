@@ -89,7 +89,21 @@
                 <GroupBox Header="Ready to build">
                     <ui:SimpleStackPanel>
                         <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
-                            <TextBlock>All checks passed (or ignored). Click "Build" to start.</TextBlock>
+                            <TextBlock>All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
+                            <TextBlock Text="Mod Name" Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding OutputModName, UpdateSourceTrigger=PropertyChanged}"/>
+                            <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding IsModOverwriteWarningVisible, Converter={StaticResource BoolToVisibility}}">
+                                <fa5:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Icon="Solid_ExclamationTriangle" Width="10" Height="10"/>
+                                <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Text="Mod already exists" Margin="4,0,0,0"/>
+                            </ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}">
+                                Please specify a <Bold>new or empty</Bold> mod. Existing files can interfere with the merge and may also be overwritten or deleted.
+                            </TextBlock>
+                            <TextBlock Text="Plugin Name" Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding OutputPluginName, Mode=OneWay}" IsEnabled="False"/>
+                            <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}">
+                                This is shown for your information. You can't change it.
+                            </TextBlock>
                             <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                 <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
                             </ui:SimpleStackPanel>

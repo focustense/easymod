@@ -18,7 +18,8 @@ namespace NPC_Bundler
                 RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
         public static void Build(
-            IReadOnlyList<NpcConfiguration> npcs, MergedPluginResult mergeInfo, ProgressViewModel progress)
+            IReadOnlyList<NpcConfiguration> npcs, MergedPluginResult mergeInfo, string outputModName,
+            ProgressViewModel progress)
         {
             var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
             if (string.IsNullOrEmpty(modRootDirectory))
@@ -39,7 +40,7 @@ namespace NPC_Bundler
             var dataPath = Meta.GetGlobal("DataPath");
 
             progress.StartStage("Creating merge output directory");
-            var outDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            var outDir = Path.Combine(BundlerSettings.Default.ModRootDirectory, outputModName);
             Directory.CreateDirectory(outDir);
 
             // The best way to avoid making this process obscenely complicated and having to iterate through all the

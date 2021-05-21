@@ -11,14 +11,16 @@ namespace NPC_Bundler
 {
     static class MergedPlugin
     {
-        private static readonly string MergeFileName = "NPC Appearances Merged.esp";
+        public static readonly string MergeFileName = "NPC Appearances Merged.esp";
 
-        public static MergedPluginResult Build(IReadOnlyList<NpcConfiguration> npcs, ProgressViewModel progress)
+        public static MergedPluginResult Build(
+            IReadOnlyList<NpcConfiguration> npcs, string outputModName, ProgressViewModel progress)
         {
 
             progress.StartStage("Backing up previous merge");
             var dataPath = Meta.GetGlobal("DataPath");
-            var mergeFilePath = $@"{dataPath}\{MergeFileName}";
+            var mergeFilePath = Path.Combine(dataPath, MergeFileName);
+            var outFilePath = Path.Combine(BundlerSettings.Default.ModRootDirectory, outputModName, MergeFileName);
             if (File.Exists(mergeFilePath))
                 File.Move(mergeFilePath, $"{mergeFilePath}.{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.bak", true);
 
@@ -184,7 +186,7 @@ namespace NPC_Bundler
             progress.CurrentProgress = (int)Math.Floor(progress.MaxProgress * 0.99);
             // This doesn't save the file we expect - it will actually have an ".esp.save" extension.
             Files.SaveFile(mergeFile);
-            File.Move($"{mergeFilePath}.save", mergeFilePath);
+            File.Move($"{mergeFilePath}.save", outFilePath, true);
 
             progress.StartStage("Done");
             progress.CurrentProgress = progress.MaxProgress;

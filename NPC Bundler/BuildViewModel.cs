@@ -18,6 +18,8 @@ namespace NPC_Bundler
         public bool HasProblems => Problems?.Any() ?? false;
         [DependsOn("Progress")]
         public bool IsBuilding => Progress != null;
+        [DependsOn("OutputModName")]
+        public bool IsModOverwriteWarningVisible => ModDirectoryIsNotEmpty(OutputModName);
         public bool IsProblemCheckerEnabled => !IsProblemCheckingInProgress && !IsBuilding;
         public bool IsProblemCheckerVisible { get; set; } = true;
         public bool IsProblemCheckingInProgress { get; set; }
@@ -26,6 +28,8 @@ namespace NPC_Bundler
         [DependsOn("SelectedWarning")]
         public bool IsWarningInfoVisible => SelectedWarning != null;
         public IReadOnlyList<NpcConfiguration> Npcs { get; init; }
+        public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now.ToString("yyyy-MM-dd")}";
+        public string OutputPluginName => MergedPlugin.MergeFileName;
         public IEnumerable<BuildWarning> Problems { get; private set; }
         public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
@@ -43,8 +47,9 @@ namespace NPC_Bundler
             Progress = new BuildProgressViewModel();
             await Task.Run(() =>
             {
-                var mergeInfo = MergedPlugin.Build(Npcs, Progress.MergedPlugin);
-                MergedFolder.Build(Npcs, mergeInfo, Progress.MergedFolder);
+                Directory.CreateDirectory(Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName));
+                var mergeInfo = MergedPlugin.Build(Npcs, OutputModName, Progress.MergedPlugin);
+                MergedFolder.Build(Npcs, mergeInfo, OutputModName, Progress.MergedFolder);
             });
         }
 
@@ -198,6 +203,13 @@ namespace NPC_Bundler
                 })
                 .SelectMany(x => x.Warnings.Select(id => new { Plugin = x.Plugin, Id = id }))
                 .ToLookup(x => x.Plugin, x => x.Id);
+        }
+
+        private static bool ModDirectoryIsNotEmpty(string modName)
+        {
+            var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
+            var modDirectory = Path.Combine(modRootDirectory, modName);
+            return Directory.Exists(modDirectory) && Directory.EnumerateFiles(modDirectory).Any();
         }
     }
 
