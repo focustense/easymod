@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -16,11 +17,12 @@ namespace NPC_Bundler
 
         [DependsOn("Problems")]
         public bool HasProblems => Problems?.Any() ?? false;
+        public bool IsBuildCompleted { get; private set; }
         [DependsOn("Progress")]
         public bool IsBuilding => Progress != null;
         [DependsOn("OutputModName")]
         public bool IsModOverwriteWarningVisible => ModDirectoryIsNotEmpty(OutputModName);
-        public bool IsProblemCheckerEnabled => !IsProblemCheckingInProgress && !IsBuilding;
+        public bool IsProblemCheckerEnabled => !IsProblemCheckingInProgress && !IsBuilding && !IsBuildCompleted;
         public bool IsProblemCheckerVisible { get; set; } = true;
         public bool IsProblemCheckingInProgress { get; set; }
         public bool IsProblemReportVisible { get; set; }
@@ -28,18 +30,16 @@ namespace NPC_Bundler
         [DependsOn("SelectedWarning")]
         public bool IsWarningInfoVisible => SelectedWarning != null;
         public IReadOnlyList<NpcConfiguration> Npcs { get; init; }
+        public string OutputDirectory { get; private set; }
         public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now.ToString("yyyy-MM-dd")}";
         public string OutputPluginName => MergedPlugin.MergeFileName;
         public IEnumerable<BuildWarning> Problems { get; private set; }
         public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
 
-        private readonly IReadOnlyList<string> loadOrder;
-
-        public BuildViewModel(IEnumerable<NpcConfiguration> npcs, IReadOnlyList<string> loadOrder)
+        public BuildViewModel(IEnumerable<NpcConfiguration> npcs)
         {
             Npcs = npcs.ToList().AsReadOnly();
-            this.loadOrder = loadOrder;
         }
 
         public async void BeginBuild()
@@ -47,10 +47,13 @@ namespace NPC_Bundler
             Progress = new BuildProgressViewModel();
             await Task.Run(() =>
             {
-                Directory.CreateDirectory(Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName));
+                OutputDirectory = Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName);
+                Directory.CreateDirectory(OutputDirectory);
                 var mergeInfo = MergedPlugin.Build(Npcs, OutputModName, Progress.MergedPlugin);
                 MergedFolder.Build(Npcs, mergeInfo, OutputModName, Progress.MergedFolder);
-            });
+            }).ConfigureAwait(true);
+            IsReadyToBuild = false;
+            IsBuildCompleted = true;
         }
 
         // TODO: Add a check for missing textures - requires much deeper inspection of both plugins and meshes.
@@ -84,6 +87,14 @@ namespace NPC_Bundler
         {
             IsProblemReportVisible = false;
             IsReadyToBuild = true;
+        }
+
+        public void OpenBuildOutput()
+        {
+            if (!Directory.Exists(OutputDirectory)) // In case user moved/deleted after the build
+                return;
+            var psi = new ProcessStartInfo() { FileName = OutputDirectory, UseShellExecute = true };
+            Process.Start(psi);
         }
 
         private IEnumerable<BuildWarning> CheckForOverriddenArchives()

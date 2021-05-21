@@ -63,7 +63,7 @@
                     </Run>
                     <Hyperlink NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/974">Bethesda Archive Extractor</Hyperlink>
                     <Run>or built-in extraction in Mod Organizer, and then use any comparison tool (e.g. WinMerge) to check for inconsistencies in the</Run>
-                    <Run FontFamily="Courier New">meshes\actors\character\facegendata</Run>
+                    <Run Style="{StaticResource CodeStyle}">meshes\actors\character\facegendata</Run>
                     <Run>directory of each. If there are no changes, you can ignore the warning. Make sure to delete the extracted files when done.</Run>
                 </TextBlock>
                 <TextBlock Style="{StaticResource HelpTextParagraph}">

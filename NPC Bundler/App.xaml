@@ -25,6 +25,24 @@
                 <Setter Property="BorderBrush" Value="LightGray"/>
                 <Setter Property="Padding" Value="8,4,8,4"/>
             </Style>
+
+            <Style TargetType="TextBlock" x:Key="FormLabelStyle" BasedOn="{StaticResource BodyTextBlockStyle}">
+                <Setter Property="Margin" Value="0,8,0,4"/>
+            </Style>
+            <Style TargetType="TextBlock" x:Key="ParagraphStyle" BasedOn="{StaticResource BodyTextBlockStyle}">
+                <Setter Property="Margin" Value="0,8"/>
+            </Style>
+            <Style TargetType="TextBlock" x:Key="FirstParagraphStyle" BasedOn="{StaticResource ParagraphStyle}">
+                <Setter Property="Margin" Value="0,0,0,8"/>
+            </Style>
+            <Style TargetType="TextBlock" x:Key="SmallHeaderStyle" BasedOn="{StaticResource SubtitleTextBlockStyle}">
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+            </Style>
+
+            <Style TargetType="Run" x:Key="CodeStyle">
+                <Setter Property="FontFamily" Value="Courier New"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

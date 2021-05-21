@@ -33,7 +33,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock FontSize="14" Text="Mod Root Directory" Grid.ColumnSpan="2" Grid.Row="0"/>
+                        <TextBlock Style="{StaticResource FormLabelStyle}" Text="Mod Root Directory" Grid.ColumnSpan="2" Grid.Row="0"/>
                         <TextBox Text="{Binding ModRootDirectory}" Grid.Column="0" Grid.Row="1"/>
                         <Button x:Name="ModRootDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Grid.Row="1" Click="ModRootDirSelectButton_Click">
                             <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
@@ -54,7 +54,7 @@
                             </TextBlock>
                         </Expander>
 
-                        <TextBlock FontSize="14" Margin="0,16,0,0" Text="Face Preview Directory" Grid.ColumnSpan="2" Grid.Row="3"/>
+                        <TextBlock Style="{StaticResource FormLabelStyle}" Text="Face Preview Directory" Grid.ColumnSpan="2" Grid.Row="3"/>
                         <TextBox Text="{Binding MugshotsDirectory}" Grid.Column="0" Grid.Row="4"/>
                         <Button x:Name="MugshotsDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Grid.Row="4" Click="MugshotsDirSelectButton_Click">
                             <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
@@ -63,8 +63,8 @@
                 </GroupBox>
                 <GroupBox Header="Build Settings">
                     <ui:SimpleStackPanel>
-                        <TextBlock FontSize="14" Text="Ignore Warnings" Grid.ColumnSpan="2" Grid.Row="0"/>
-                        <DataGrid x:Name="BuildWarningWhitelistGrid" AutoGenerateColumns="False" ItemsSource="{Binding BuildWarningWhitelist}" Margin="0,8,0,0">
+                        <TextBlock Style="{StaticResource FormLabelStyle}" Margin="0,0,0,8" Text="Ignore Warnings" Grid.ColumnSpan="2" Grid.Row="0"/>
+                        <DataGrid x:Name="BuildWarningWhitelistGrid" AutoGenerateColumns="False" ItemsSource="{Binding BuildWarningWhitelist}">
                             <DataGrid.Resources>
                                 <CollectionViewSource x:Key="AvailablePlugins" Source="{Binding AvailablePlugins}"/>
                             </DataGrid.Resources>

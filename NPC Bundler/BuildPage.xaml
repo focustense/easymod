@@ -20,18 +20,19 @@
             <Button x:Name="AltCheckForProblemsButton" ToolTip="Check for problems" IsEnabled="{Binding IsProblemCheckerEnabled}" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource InvBoolToVisibility}}" Grid.Row="0" Click="AltCheckForProblemsButton_Click">
                 <fa5:SvgAwesome Icon="Solid_Glasses" Width="16" Height="16"/>
             </Button>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1" d:Visibility="Collapsed">
                 <ui:SimpleStackPanel>
-                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,16">
+                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
                         Before you build your NPC package, you should run a check for problems that could cause in-game blackface bugs or crashes. This isn't required, but normally only takes a few seconds and
                         will warn you if you're about to break an actor's face.
-                        <LineBreak/><LineBreak/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParagraphStyle}">
                         <Bold Foreground="OrangeRed">Warning:</Bold> This is not a substitute for properly managing your modlist and load order, e.g. with Mod Organizer, LOOT and user rules/tags. It will <Italic>only</Italic>
                         check for inconsistencies between your plugin selection and available mods/facegen data; it will not detect conflicts or other problems with AI packages, skills, perks, dialogue, or other crazy things that
                         some NPC mods do such as vanilla race edits. When in doubt, check for conflicts in xEdit/zEdit after running this tool, and make sure that the generated plugin isn't overwriting anything you don't want
                         overwritten.
                     </TextBlock>
-                    <ui:SimpleStackPanel Orientation="Horizontal">
+                    <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0">
                         <Button Style="{StaticResource AccentButtonStyle}" x:Name="CheckForProblemsButton" Content="Check for problems" Click="CheckForProblemsButton_Click"/>
                         <Button x:Name="SkipProblemsButton" Content="Skip for this session" Margin="8,0,0,0" Click="SkipProblemsButton_Click"/>
                     </ui:SimpleStackPanel>
@@ -54,13 +55,13 @@
                 <GroupBox Header="Checks completed">
                     <Grid>
                         <ui:SimpleStackPanel Visibility="{Binding HasProblems, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
-                            <TextBlock Text="No problems were found."/>
+                            <TextBlock Text="No problems were found." Style="{StaticResource FirstParagraphStyle}"/>
                             <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
                                 <Button Name="DoneNoProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Done" Click="DoneNoProblemsButton_Click"/>
                             </ui:SimpleStackPanel>
                         </ui:SimpleStackPanel>
                         <DockPanel Visibility="{Binding HasProblems, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock DockPanel.Dock="Top">
+                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource FirstParagraphStyle}">
                                 Potential problems were found. Check the list below for anything serious or game-breaking, and fix if possible. Click on an item for details.
                             </TextBlock>
                             <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0" DockPanel.Dock="Bottom">
@@ -89,8 +90,8 @@
                 <GroupBox Header="Ready to build">
                     <ui:SimpleStackPanel>
                         <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
-                            <TextBlock>All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
-                            <TextBlock Text="Mod Name" Margin="0,8,0,0"/>
+                            <TextBlock Style="{StaticResource FirstParagraphStyle}">All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
+                            <TextBlock Text="Mod Name" Style="{StaticResource BodyTextBlockStyle}" Margin="0,8,0,0"/>
                             <TextBox Text="{Binding OutputModName, UpdateSourceTrigger=PropertyChanged}"/>
                             <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding IsModOverwriteWarningVisible, Converter={StaticResource BoolToVisibility}}">
                                 <fa5:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Icon="Solid_ExclamationTriangle" Width="10" Height="10"/>
@@ -99,7 +100,7 @@
                             <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}">
                                 Please specify a <Bold>new or empty</Bold> mod. Existing files can interfere with the merge and may also be overwritten or deleted.
                             </TextBlock>
-                            <TextBlock Text="Plugin Name" Margin="0,8,0,0"/>
+                            <TextBlock Text="Plugin Name" Style="{StaticResource BodyTextBlockStyle}" Margin="0,8,0,0"/>
                             <TextBox Text="{Binding OutputPluginName, Mode=OneWay}" IsEnabled="False"/>
                             <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}">
                                 This is shown for your information. You can't change it.
@@ -109,10 +110,44 @@
                             </ui:SimpleStackPanel>
                         </ui:SimpleStackPanel>
                         <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock FontWeight="SemiBold" FontSize="14" Text="Build Progress"/>
+                            <TextBlock Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
                             <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8,0,0"/>
                             <local:ProgressViewer DataContext="{Binding Progress.MergedFolder}" Margin="0,8,0,0"/>
                         </ui:SimpleStackPanel>
+                    </ui:SimpleStackPanel>
+                </GroupBox>
+            </Border>
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
+                <GroupBox Header="All done">
+                    <ui:SimpleStackPanel>
+                        <TextBlock Style="{StaticResource FirstParagraphStyle}" Text="Your NPC merge is ready at:"/>
+                        <ui:HyperlinkButton Content="{Binding OutputDirectory}" d:Content="C:\Foo\Bar\Baz" Click="HyperlinkButton_Click"/>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            If you are using Mod Organizer, it should appear in your mod list when you exit this program. If it doesn't, press F5 to refresh. Enable the merge,
+                            and <Bold>disable</Bold> all of the original NPC appearance mods (but not masters, behavior mods, followers, etc.) to avoid conflicts, improve
+                            performance and free up those slots in your load order. The merge includes all required assets from the original mods, so you can disable the entire
+                            mods, not just their plugins.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            If you are <Italic>not</Italic> using Mod Organizer, you will probably have to copy/move the output into your game's data directory.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            After activating the mod, <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/>
+                            should be at or near the bottom of your load order; if it is anywhere else, move it to the bottom, after all other mods that make NPC edits.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            <Bold>LOOT users:</Bold> Add <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/>
+                            to the "Dynamic Patches" group so that it stays near the bottom after each sort.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            <Bold>Wrye Bash users:</Bold> If you built this NPC merge <Italic>with</Italic> your up-to-date Bashed Patch in your load order, then load the NPC merge
+                            <Italic>after</Italic> the Bashed Patch. If you built <Italic>without</Italic> the Bashed Patch, then load the NPC merge <Italic>before</Italic> the Bashed
+                            Patch, and make sure to regenerate the Bashed Patch with
+                            <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> in your load order and enabled.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            You've reached the end and can exit the program now.
+                        </TextBlock>
                     </ui:SimpleStackPanel>
                 </GroupBox>
             </Border>

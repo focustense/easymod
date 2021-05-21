@@ -52,6 +52,11 @@ namespace NPC_Bundler
             Model.DismissProblems();
         }
 
+        private void HyperlinkButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.OpenBuildOutput();
+        }
+
         private void SkipProblemsButton_Click(object sender, RoutedEventArgs e)
         {
             Model.IsProblemCheckerVisible = false;
