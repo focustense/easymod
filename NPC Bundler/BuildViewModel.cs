@@ -39,10 +39,14 @@ namespace NPC_Bundler
         public BuildWarning SelectedWarning { get; set; }
 
         private readonly IMergedPluginBuilder<TKey> builder;
+        private readonly IModPluginMapFactory modPluginMapFactory;
 
-        public BuildViewModel(IMergedPluginBuilder<TKey> builder, IEnumerable<NpcConfiguration<TKey>> npcs)
+        public BuildViewModel(
+            IMergedPluginBuilder<TKey> builder, IModPluginMapFactory modPluginMapFactory,
+            IEnumerable<NpcConfiguration<TKey>> npcs)
         {
             this.builder = builder;
+            this.modPluginMapFactory = modPluginMapFactory;
             Npcs = npcs.ToList().AsReadOnly();
         }
 
@@ -54,7 +58,8 @@ namespace NPC_Bundler
                 OutputDirectory = Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName);
                 Directory.CreateDirectory(OutputDirectory);
                 var mergeInfo = builder.Build(Npcs, OutputModName, Progress.MergedPlugin);
-                MergedFolder.Build(Npcs, mergeInfo, OutputModName, Progress.MergedFolder);
+                var modPluginMap = modPluginMapFactory.DefaultMap();
+                MergedFolder.Build(Npcs, mergeInfo, modPluginMap, OutputModName, Progress.MergedFolder);
             }).ConfigureAwait(true);
             IsReadyToBuild = false;
             IsBuildCompleted = true;
@@ -113,7 +118,7 @@ namespace NPC_Bundler
             // Sofia follower mod that removes a conflicting script, i.e. doesn't affect facegen data at all.
             // So it may be an obscure theoretical problem that never comes up in practice, but if we do see it, then
             // it at least merits a warning, which the user can ignore if it's on purpose.
-            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
+            var modPluginMap = modPluginMapFactory.DefaultMap();
             return Resources.GetLoadedContainers()
                 .AsParallel()
                 .Select(path => Path.GetFileName(path))
@@ -131,7 +136,7 @@ namespace NPC_Bundler
         private IEnumerable<BuildWarning> CheckModPluginConsistency()
         {
             ArchiveFileMap.EnsureInitialized();
-            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
+            var modPluginMap = modPluginMapFactory.DefaultMap();
             return Npcs.AsParallel()
                 .Select(npc => CheckModPluginConsistency(npc, modPluginMap))
                 .SelectMany(warnings => warnings);

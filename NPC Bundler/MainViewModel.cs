@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mutagen.Bethesda;
+using System;
 using System.ComponentModel;
 
 namespace NPC_Bundler
@@ -29,8 +30,9 @@ namespace NPC_Bundler
             Loader = new LoaderViewModel<TKey>(gameDataEditor, Log);
             Loader.Loaded += () => {
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
-                Profile = new ProfileViewModel<TKey>(Loader.Npcs, Loader.LoadedMasterNames);
-                Build = new BuildViewModel<TKey>(mergedPluginBuilder, Profile.GetAllNpcConfigurations());
+                Profile = new ProfileViewModel<TKey>(Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames);
+                Build = new BuildViewModel<TKey>(
+                    mergedPluginBuilder, Loader.ModPluginMapFactory, Profile.GetAllNpcConfigurations());
                 IsReady = true;
             };
         }
@@ -40,6 +42,20 @@ namespace NPC_Bundler
         protected abstract IGameDataEditor<TKey> CreateEditor();
     }
 
+#if MUTAGEN
+    public class MainViewModel : MainViewModel<FormKey>
+    {
+        protected override IGameDataEditor<FormKey> CreateEditor()
+        {
+            return new MutagenAdapter();
+        }
+
+        protected override IMergedPluginBuilder<FormKey> CreateMergedPluginBuilder()
+        {
+            return null;
+        }
+    }
+#else
     public class MainViewModel : MainViewModel<uint>
     {
         protected override IGameDataEditor<uint> CreateEditor()
@@ -52,4 +68,5 @@ namespace NPC_Bundler
             return new XEditMergedPluginBuilder();
         }
     }
+#endif
 }

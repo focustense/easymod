@@ -20,6 +20,7 @@ namespace NPC_Bundler
         public IReadOnlyList<string> LoadedMasterNames { get; private set; }
         public IReadOnlyList<string> LoadedPluginNames { get; private set; }
         public LogViewModel Log { get; init; }
+        public IModPluginMapFactory ModPluginMapFactory => editor.ModPluginMapFactory;
         public IReadOnlyList<INpc<TKey>> Npcs { get; private set; }
         public IReadOnlyList<PluginSetting> Plugins { get; private set; }
         public string Status { get; private set; }
@@ -64,7 +65,8 @@ namespace NPC_Bundler
                 .ToList()
                 .AsReadOnly();
             Status = "Done loading plugins. Building NPC index...";
-            Npcs = new List<INpc<TKey>>(await Task.Run(GetNpcs).ConfigureAwait(true));
+            var loadedNpcs = await Task.Run(GetNpcs).ConfigureAwait(true);
+            Npcs = new List<INpc<TKey>>(loadedNpcs);
             Log.Append("All NPCs loaded.");
 
             Log.Pause();
@@ -83,7 +85,18 @@ namespace NPC_Bundler
                 editor.ReadNpcRecords(pluginName, npcs);
             }
 
-            return npcs.Values.OrderBy(x => x.Key);
+            var loadOrderIndices = npcs.Values
+                .Select(x => x.BasePluginName)
+                .Distinct()
+                .Select(pluginName => new
+                {
+                    PluginName = pluginName,
+                    LoadOrderIndex = editor.GetLoadOrderIndex(pluginName)
+                })
+                .ToDictionary(x => x.PluginName, x => x.LoadOrderIndex);
+            return npcs.Values
+                .OrderBy(x => loadOrderIndices[x.BasePluginName])
+                .ThenBy(x => Convert.ToInt32(x.LocalFormIdHex, 16));
         }
     }
 

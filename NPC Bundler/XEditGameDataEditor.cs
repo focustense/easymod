@@ -9,6 +9,10 @@ namespace NPC_Bundler
 {
     public class XEditGameDataEditor : IGameDataEditor<uint>
     {
+        private readonly IModPluginMapFactory modPluginMapFactory = new XEditModPluginMapFactory();
+
+        public IModPluginMapFactory ModPluginMapFactory => modPluginMapFactory;
+
         public XEditGameDataEditor()
         {
             Meta.Initialize();
@@ -23,6 +27,13 @@ namespace NPC_Bundler
         public IEnumerable<string> GetLoadedPlugins()
         {
             return Setup.GetLoadedFileNames();
+        }
+
+        public int GetLoadOrderIndex(string pluginName)
+        {
+            using var g = new HandleGroup();
+            var file = g.AddHandle(Files.FileByName(pluginName));
+            return Files.GetFileLoadOrder(file);
         }
 
         public bool IsMaster(string pluginName)
@@ -52,7 +63,7 @@ namespace NPC_Bundler
                 {
                     var npc = cache[formId];
                     var faceOverrides =
-                        GetFaceOverrides(file, npcRecord, out bool affectsFaceGen, out string? itpoFileName);
+                        GetFaceOverrides(file, npcRecord, out bool affectsFaceGen, out var itpoFileName);
                     npc.AddOverride(new NpcOverride<uint>(pluginName, faceOverrides, affectsFaceGen, itpoFileName));
                 }
                 else
@@ -127,7 +138,7 @@ namespace NPC_Bundler
                 headPartIds, hairColorId, faceTextureSetId, skinTone, faceMorphs, faceParts, faceTints);
         }
 
-        private static NpcFaceMorphs? ReadFaceMorphs(Handle npcRecord, HandleGroup g)
+        private static NpcFaceMorphs ReadFaceMorphs(Handle npcRecord, HandleGroup g)
         {
             if (!Elements.HasElement(npcRecord, "NAM9"))
                 return null;
@@ -153,7 +164,7 @@ namespace NPC_Bundler
                 ElementValues.GetFloatValue(faceMorphs, "Eyes Farward/Back"));
         }
 
-        private static NpcFaceParts? ReadFaceParts(Handle npcRecord, HandleGroup g)
+        private static NpcFaceParts ReadFaceParts(Handle npcRecord, HandleGroup g)
         {
             if (!Elements.HasElement(npcRecord, "NAMA"))
                 return null;
@@ -188,7 +199,7 @@ namespace NPC_Bundler
                 }).ToArray();
         }
 
-        private static NpcSkinTone? ReadSkinTone(Handle npcRecord, HandleGroup g)
+        private static NpcSkinTone ReadSkinTone(Handle npcRecord, HandleGroup g)
         {
             if (!Elements.HasElement(npcRecord, "QNAM"))
                 return null;

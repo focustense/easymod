@@ -26,13 +26,16 @@ namespace NPC_Bundler
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> Overrides { get; init; }
         public string Name => npc.Name;
 
+        private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly INpc<TKey> npc;
 
         private NpcOverrideConfiguration<TKey> defaultConfig;
         private NpcOverrideConfiguration<TKey> faceConfig;
 
-        public NpcConfiguration(INpc<TKey> npc, IReadOnlySet<string> masterNames)
+        public NpcConfiguration(
+            INpc<TKey> npc, IModPluginMapFactory modPluginMapFactory, IReadOnlySet<string> masterNames)
         {
+            this.modPluginMapFactory = modPluginMapFactory;
             this.npc = npc;
             var overrides = GetOverrides().ToList();
             Overrides = overrides.AsReadOnly();
@@ -122,9 +125,8 @@ namespace NPC_Bundler
             // different things altogether). If this really does happen, the most logical thing to do is to pick the
             // last plugin in the load order which belongs to that mod, which we can assume is the one responsible for
             // any conflict resolution between that mod/plugin and any other ones.
-            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
             var modPlugins = new HashSet<string>(
-                modPluginMap.GetPluginsForMod(modName), StringComparer.OrdinalIgnoreCase);
+                modPluginMapFactory.DefaultMap().GetPluginsForMod(modName), StringComparer.OrdinalIgnoreCase);
             var lastMatchingPlugin = Overrides
                 .Where(x => modPlugins.Contains(x.PluginName))
                 .LastOrDefault();
@@ -141,8 +143,7 @@ namespace NPC_Bundler
             this.faceConfig = faceConfig;
             if (!detectFaceMod || faceConfig == null)
                 return;
-            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
-            var lastMatchingModName = modPluginMap
+            var lastMatchingModName = modPluginMapFactory.DefaultMap()
                 .GetModsForPlugin(faceConfig.PluginName)
                 .OrderBy(f => Mugshot.Exists(f, BasePluginName, LocalFormIdHex))
                 .LastOrDefault();
@@ -172,7 +173,7 @@ namespace NPC_Bundler
                     PluginName = BasePluginName,
                     HasFaceOverride = true,
                     AffectsFaceGen = true,
-                    ItpoPluginName = (string?)null
+                    ItpoPluginName = (string)null
                 });
             return sources.Select(x => new NpcOverrideConfiguration<TKey>(
                 this, x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName));
@@ -197,7 +198,7 @@ namespace NPC_Bundler
 
         public NpcOverrideConfiguration(
             NpcConfiguration<TKey> parentConfig, string pluginName, bool hasFaceOverride, bool hasFaceGenOverride,
-            string? itpoFileName)
+            string itpoFileName)
         {
             this.parentConfig = parentConfig;
             PluginName = pluginName;

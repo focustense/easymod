@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using XeLib.API;
 
 namespace NPC_Bundler
 {
-    class ModPluginMap
+    public class ModPluginMap
     {
         private static readonly Dictionary<string, ModPluginMap> Instances = new();
 
         enum FileType { Unknown, Plugin, Archive };
 
-        public static ModPluginMap ForDirectory(string modRootDirectory)
+        public static ModPluginMap ForDirectory(
+            string modRootDirectory, IEnumerable<string> pluginNames, IEnumerable<string> archiveNames)
         {
             var trimmedDirectory = Path.TrimEndingDirectorySeparator(modRootDirectory);
             if (Instances.TryGetValue(trimmedDirectory, out ModPluginMap cached))
@@ -27,10 +27,8 @@ namespace NPC_Bundler
             // This actually happens, such as with "AIO" plugins created to merge individual replacers that still require
             // the loose files from the original mods.
             // So, this is a little slow, but still probably the best way.
-            var archiveFileNames = new HashSet<string>(
-                Resources.GetLoadedContainers().Select(f => Path.GetFileName(f)),
-                StringComparer.OrdinalIgnoreCase);
-            var pluginFileNames = new HashSet<string>(Setup.GetLoadedFileNames(), StringComparer.OrdinalIgnoreCase);
+            var archiveFileNames = new HashSet<string>(archiveNames, StringComparer.OrdinalIgnoreCase);
+            var pluginFileNames = new HashSet<string>(pluginNames, StringComparer.OrdinalIgnoreCase);
             var modsWithPlugins = Directory.EnumerateDirectories(trimmedDirectory)
                 .Select(modDir => new
                 {

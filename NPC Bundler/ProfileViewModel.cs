@@ -5,11 +5,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-
-using TKey = System.UInt32;
 
 namespace NPC_Bundler
 {
@@ -23,7 +20,7 @@ namespace NPC_Bundler
         {
             get {
                 var minOverrideCount = ShowSinglePluginOverrides ? 1 : 2;
-                return npcConfigurations.Values
+                return GetAllNpcConfigurations()
                     .Where(x => x.GetOverrideCount(ShowDlcOverrides, !OnlyFaceOverrides) >= minOverrideCount);
             }
         }
@@ -38,19 +35,28 @@ namespace NPC_Bundler
         public bool ShowDlcOverrides { get; set; }
         public bool ShowSinglePluginOverrides { get; set; } = true;
 
-        private readonly SortedDictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
+        private readonly IModPluginMapFactory modPluginMapFactory;
+        private readonly Dictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
+        private readonly IReadOnlyList<TKey> npcOrder;
 
-        public ProfileViewModel(IEnumerable<INpc<TKey>> npcs, IEnumerable<string> masterNames)
+        public ProfileViewModel(
+            IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory, IEnumerable<string> masterNames)
         {
+            this.modPluginMapFactory = modPluginMapFactory;
             var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
             var masterNameSet = new HashSet<string>(masterNames);
+            var npcOrder = new List<TKey>();
             foreach (var npc in npcsWithOverrides)
-                npcConfigurations.Add(npc.Key, new NpcConfiguration<TKey>(npc, masterNameSet));
+            {
+                npcOrder.Add(npc.Key);
+                npcConfigurations.Add(npc.Key, new NpcConfiguration<TKey>(npc, modPluginMapFactory, masterNameSet));
+            }
+            this.npcOrder = npcOrder.AsReadOnly();
         }
 
         public IEnumerable<NpcConfiguration<TKey>> GetAllNpcConfigurations()
         {
-            return npcConfigurations.Values;
+            return npcOrder.Select(key => npcConfigurations[key]);
         }
 
         public void LoadFromFile(Window dialogOwner)
@@ -96,7 +102,7 @@ namespace NPC_Bundler
             var result = dialog.ShowDialog(dialogOwner).GetValueOrDefault();
             if (!result)
                 return;
-            var savedNpcs = npcConfigurations.Values
+            var savedNpcs = GetAllNpcConfigurations()
                 .Select(x => new SavedNpcConfiguration
                 {
                     BasePluginName = x.BasePluginName,
@@ -127,7 +133,7 @@ namespace NPC_Bundler
             ClearNpcHighlights();
             SelectedNpc = npc;
             SelectedNpcOverrides = npc.Overrides;
-            Mugshots = Mugshot.GetMugshots(SelectedNpc).ToList().AsReadOnly();
+            Mugshots = Mugshot.GetMugshots(SelectedNpc, modPluginMapFactory.DefaultMap()).ToList().AsReadOnly();
             SyncMugshotMod();
             npc.FaceModChanged += OnNpcFaceModChanged;
         }
@@ -180,14 +186,13 @@ namespace NPC_Bundler
             return File.Exists(path);
         }
 
-        public static IEnumerable<Mugshot> GetMugshots<TKey>(NpcConfiguration<TKey> npc)
+        public static IEnumerable<Mugshot> GetMugshots<TKey>(NpcConfiguration<TKey> npc, ModPluginMap modPluginMap)
             where TKey : struct
         {
             if (npc == null)
                 yield break;
             // TODO: Provide placeholder items for mods that provide the facegen but don't have mugshots, so that users
             // can select them anyway. Also provide placeholder for vanilla/default so that we can unapply a mod.
-            var modPluginMap = ModPluginMap.ForDirectory(BundlerSettings.Default.ModRootDirectory);
             var mugshotModDirs = Directory.GetDirectories(BundlerSettings.Default.MugshotsDirectory);
             var overridingPluginNames = new HashSet<string>(
                 npc.Overrides.Select(x => x.PluginName) ?? Enumerable.Empty<string>(),

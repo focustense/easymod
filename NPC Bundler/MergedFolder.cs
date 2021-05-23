@@ -18,8 +18,8 @@ namespace NPC_Bundler
                 RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
         public static void Build<TKey>(
-            IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, string outputModName,
-            ProgressViewModel progress)
+            IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, ModPluginMap modPluginMap,
+            string outputModName, ProgressViewModel progress)
             where TKey : struct
         {
             var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
@@ -37,7 +37,6 @@ namespace NPC_Bundler
             //   - Facegen meshes/textures: 50%
 
             progress.StartStage("Preparing");
-            var modPluginMap = ModPluginMap.ForDirectory(modRootDirectory);
             var dataPath = Meta.GetGlobal("DataPath");
 
             progress.StartStage("Creating merge output directory");

@@ -22,7 +22,7 @@ namespace NPC_Bundler
     }
 
     public record NpcOverride<TKey>(
-        string PluginName, NpcFaceData<TKey> FaceData, bool AffectsFaceGen, string? ItpoPluginName)
+        string PluginName, NpcFaceData<TKey> FaceData, bool AffectsFaceGen, string ItpoPluginName)
         where TKey : struct
     {
         public bool HasFaceOverride => FaceData != null;
@@ -56,13 +56,18 @@ namespace NPC_Bundler
             TKey[] HeadPartIds, TKey? HairColorId, TKey? FaceTextureSetId, NpcSkinTone SkinTone,
             NpcFaceMorphs FaceMorphs, NpcFaceParts FaceParts, NpcFaceTint[] FaceTints)
         where TKey : struct
-    { }
+    {
+        public NpcFaceData() : this(Array.Empty<TKey>(), null, null, null, null, null, Array.Empty<NpcFaceTint>()) { }
+    }
 
     public record NpcFaceMorphs(
         double NoseLongShort, double NoseUpDown, double JawUpDown, double JawNarrowWide, double JawForwardBack,
         double CheeksUpDown, double CheeksForwardBack, double EyesUpDown, double EyesInOut, double BrowsUpDown,
         double BrowsInOut, double BrowsForwardBack, double LipsUpDown, double LipsInOut, double ChinThinWide,
-        double ChinUpDown, double ChinUnderbiteOverbite, double EyesForwardBack); // Ignore the "unknown" value.
+        double ChinUpDown, double ChinUnderbiteOverbite, double EyesForwardBack) // Ignore the "unknown" value
+    {
+        public NpcFaceMorphs() : this(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) { }
+    }
 
     // Excludes the "unknown" value.
     public record NpcFaceParts(uint Nose, uint Eyes, uint Mouth);
