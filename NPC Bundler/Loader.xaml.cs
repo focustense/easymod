@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+
+using TKey = System.UInt32;
 
 namespace NPC_Bundler
 {
@@ -25,7 +18,7 @@ namespace NPC_Bundler
             InitializeComponent();
         }
 
-        protected LoaderViewModel Model => (LoaderViewModel)DataContext;
+        protected LoaderViewModel<TKey> Model => (LoaderViewModel<TKey>)DataContext;
 
         private void ConfirmLoad_Click(object sender, RoutedEventArgs e)
         {

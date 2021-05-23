@@ -11,7 +11,8 @@ using XeLib.API;
 
 namespace NPC_Bundler
 {
-    public class BuildViewModel : INotifyPropertyChanged
+    public class BuildViewModel<TKey> : INotifyPropertyChanged
+        where TKey : struct
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -29,16 +30,19 @@ namespace NPC_Bundler
         public bool IsReadyToBuild { get; set; }
         [DependsOn("SelectedWarning")]
         public bool IsWarningInfoVisible => SelectedWarning != null;
-        public IReadOnlyList<NpcConfiguration> Npcs { get; init; }
+        public IReadOnlyList<NpcConfiguration<TKey>> Npcs { get; init; }
         public string OutputDirectory { get; private set; }
         public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now.ToString("yyyy-MM-dd")}";
-        public string OutputPluginName => MergedPlugin.MergeFileName;
+        public string OutputPluginName => XEditMergedPluginBuilder.MergeFileName;
         public IEnumerable<BuildWarning> Problems { get; private set; }
         public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
 
-        public BuildViewModel(IEnumerable<NpcConfiguration> npcs)
+        private readonly IMergedPluginBuilder<TKey> builder;
+
+        public BuildViewModel(IMergedPluginBuilder<TKey> builder, IEnumerable<NpcConfiguration<TKey>> npcs)
         {
+            this.builder = builder;
             Npcs = npcs.ToList().AsReadOnly();
         }
 
@@ -49,7 +53,7 @@ namespace NPC_Bundler
             {
                 OutputDirectory = Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName);
                 Directory.CreateDirectory(OutputDirectory);
-                var mergeInfo = MergedPlugin.Build(Npcs, OutputModName, Progress.MergedPlugin);
+                var mergeInfo = builder.Build(Npcs, OutputModName, Progress.MergedPlugin);
                 MergedFolder.Build(Npcs, mergeInfo, OutputModName, Progress.MergedFolder);
             }).ConfigureAwait(true);
             IsReadyToBuild = false;
@@ -133,7 +137,8 @@ namespace NPC_Bundler
                 .SelectMany(warnings => warnings);
         }
 
-        private IEnumerable<BuildWarning> CheckModPluginConsistency(NpcConfiguration npc, ModPluginMap modPluginMap)
+        private IEnumerable<BuildWarning> CheckModPluginConsistency(
+            NpcConfiguration<TKey> npc, ModPluginMap modPluginMap)
         {
             // Our job is to keep NPC records and facegen data consistent. That means we do NOT care about any NPCs that
             // are either still using the master/vanilla plugin as the face source, or have identical face attributes,

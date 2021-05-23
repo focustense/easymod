@@ -2,19 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XeLib;
 using XeLib.API;
 
 namespace NPC_Bundler
 {
-    static class MergedPlugin
+    public class XEditMergedPluginBuilder : IMergedPluginBuilder<uint>
     {
         public static readonly string MergeFileName = "NPC Appearances Merged.esp";
 
-        public static MergedPluginResult Build(
-            IReadOnlyList<NpcConfiguration> npcs, string outputModName, ProgressViewModel progress)
+        public MergedPluginResult Build(
+            IReadOnlyList<NpcConfiguration<uint>> npcs, string outputModName, ProgressViewModel progress)
         {
 
             progress.StartStage("Backing up previous merge");
@@ -60,12 +58,12 @@ namespace NPC_Bundler
                 if (!HasCustomizations(npc))
                     continue;
 
-                var formIdHex = npc.FormId.ToString("X8");
+                var formIdHex = npc.Key.ToString("X8");
                 var defaultFile = g.AddHandle(Files.FileByName(npc.DefaultPluginName));
                 var defaultNpcElement = g.AddHandle(Elements.GetElement(defaultFile, formIdHex));
                 Masters.AddRequiredMasters(defaultNpcElement, mergeFile);
                 var mergedNpcElement = g.AddHandle(Elements.CopyElement(defaultNpcElement, mergeFile));
-                mergedNpcElementCache.Add(npc.FormId, mergedNpcElement);
+                mergedNpcElementCache.Add(npc.Key, mergedNpcElement);
             }
 
             // Faces can be tricky; some simple records can just be copied, but the real fun begins when we get to the
@@ -86,7 +84,7 @@ namespace NPC_Bundler
             progress.MaxProgress -= npcs.Count - mergedNpcElementCache.Count;
             foreach (var npc in npcs)
             {
-                if (!mergedNpcElementCache.TryGetValue(npc.FormId, out Handle mergedNpcElement))
+                if (!mergedNpcElementCache.TryGetValue(npc.Key, out Handle mergedNpcElement))
                     continue;
 
                 progress.ItemName = $"{FormatNpcLabel(npc)}; Source: {npc.FacePluginName}";
@@ -102,7 +100,7 @@ namespace NPC_Bundler
                 Elements.RemoveElementIfExists(mergedNpcElement, "TINI");
                 Elements.RemoveElementIfExists(mergedNpcElement, "TINV");
 
-                var formIdHex = npc.FormId.ToString("X8");
+                var formIdHex = npc.Key.ToString("X8");
                 var faceFile = g.AddHandle(Files.FileByName(npc.FacePluginName));
                 var faceNpcElement = g.AddHandle(Elements.GetElement(faceFile, formIdHex));
 
@@ -203,7 +201,7 @@ namespace NPC_Bundler
             }
         }
 
-        private static string FormatNpcLabel(NpcConfiguration npc)
+        private static string FormatNpcLabel(NpcConfiguration<uint> npc)
         {
             return $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId})";
         }
@@ -244,7 +242,7 @@ namespace NPC_Bundler
             return result;
         }
 
-        private static bool HasCustomizations(NpcConfiguration npc)
+        private static bool HasCustomizations(NpcConfiguration<uint> npc)
         {
             return
                 (npc.DefaultPluginName != npc.BasePluginName || npc.FacePluginName != npc.DefaultPluginName) &&
@@ -303,13 +301,5 @@ namespace NPC_Bundler
             fileName = FileValues.GetFileName(g.AddHandle(Elements.GetElementFile(winningOverride)));
             return winningOverride;
         }
-    }
-
-    public class MergedPluginResult
-    {
-        public ISet<string> Meshes { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        public ISet<string> Morphs { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        public ISet<string> Npcs { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        public ISet<string> Textures { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
 }

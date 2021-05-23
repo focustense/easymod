@@ -17,9 +17,10 @@ namespace NPC_Bundler
                 @"[\w\s\p{P}]+\.dds",
                 RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public static void Build(
-            IReadOnlyList<NpcConfiguration> npcs, MergedPluginResult mergeInfo, string outputModName,
+        public static void Build<TKey>(
+            IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, string outputModName,
             ProgressViewModel progress)
+            where TKey : struct
         {
             var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
             if (string.IsNullOrEmpty(modRootDirectory))

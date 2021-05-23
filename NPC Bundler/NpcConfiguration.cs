@@ -5,7 +5,8 @@ using System.Linq;
 
 namespace NPC_Bundler
 {
-    public class NpcConfiguration : INotifyPropertyChanged
+    public class NpcConfiguration<TKey> : INotifyPropertyChanged
+        where TKey : struct
     {
         private static readonly HashSet<string> DlcPluginNames = new HashSet<string>(
             new[] { "Update.esm", "Dawnguard.esm", "Dragonborn.esm", "HearthFires.esm" },
@@ -20,17 +21,17 @@ namespace NPC_Bundler
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
         public string FaceModName { get; private set; }
         public string FacePluginName => faceConfig?.PluginName;
-        public uint FormId => npc.FormId;
+        public TKey Key => npc.Key;
         public string LocalFormIdHex => npc.LocalFormIdHex;
-        public IReadOnlyList<NpcOverrideConfiguration> Overrides { get; init; }
+        public IReadOnlyList<NpcOverrideConfiguration<TKey>> Overrides { get; init; }
         public string Name => npc.Name;
 
-        private readonly Npc npc;
+        private readonly INpc<TKey> npc;
 
-        private NpcOverrideConfiguration defaultConfig;
-        private NpcOverrideConfiguration faceConfig;
+        private NpcOverrideConfiguration<TKey> defaultConfig;
+        private NpcOverrideConfiguration<TKey> faceConfig;
 
-        public NpcConfiguration(Npc npc, IReadOnlySet<string> masterNames)
+        public NpcConfiguration(INpc<TKey> npc, IReadOnlySet<string> masterNames)
         {
             this.npc = npc;
             var overrides = GetOverrides().ToList();
@@ -94,7 +95,7 @@ namespace NPC_Bundler
             return HasFaceGenOverridesEnabled() && !FileStructure.IsDlc(FacePluginName);
         }
 
-        public void SetDefaultPlugin(NpcOverrideConfiguration overrideConfig)
+        public void SetDefaultPlugin(NpcOverrideConfiguration<TKey> overrideConfig)
         {
             if (defaultConfig != null)
                 defaultConfig.IsDefaultSource = false;
@@ -131,7 +132,7 @@ namespace NPC_Bundler
                 SetFacePlugin(lastMatchingPlugin, false);
         }
 
-        public void SetFacePlugin(NpcOverrideConfiguration faceConfig, bool detectFaceMod)
+        public void SetFacePlugin(NpcOverrideConfiguration<TKey> faceConfig, bool detectFaceMod)
         {
             if (this.faceConfig != null)
                 this.faceConfig.IsFaceSource = false;
@@ -156,13 +157,13 @@ namespace NPC_Bundler
                 SetFacePlugin(foundOverride, detectFaceMod);
         }
 
-        private NpcOverrideConfiguration FindOverride(string pluginName)
+        private NpcOverrideConfiguration<TKey> FindOverride(string pluginName)
         {
             return Overrides.SingleOrDefault(x =>
                 string.Equals(pluginName, x.PluginName, StringComparison.OrdinalIgnoreCase));
         }
 
-        private IEnumerable<NpcOverrideConfiguration> GetOverrides()
+        private IEnumerable<NpcOverrideConfiguration<TKey>> GetOverrides()
         {
             // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
             var sources = npc.Overrides
@@ -173,12 +174,13 @@ namespace NPC_Bundler
                     AffectsFaceGen = true,
                     ItpoPluginName = (string?)null
                 });
-            return sources.Select(x =>
-                new NpcOverrideConfiguration(this, x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName));
+            return sources.Select(x => new NpcOverrideConfiguration<TKey>(
+                this, x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName));
         }
     }
 
-    public class NpcOverrideConfiguration : INotifyPropertyChanged
+    public class NpcOverrideConfiguration<TKey> : INotifyPropertyChanged
+        where TKey : struct
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -191,10 +193,10 @@ namespace NPC_Bundler
         public string ItpoFileName { get; init; }
         public string PluginName { get; init; }
 
-        private readonly NpcConfiguration parentConfig;
+        private readonly NpcConfiguration<TKey> parentConfig;
 
         public NpcOverrideConfiguration(
-            NpcConfiguration parentConfig, string pluginName, bool hasFaceOverride, bool hasFaceGenOverride,
+            NpcConfiguration<TKey> parentConfig, string pluginName, bool hasFaceOverride, bool hasFaceGenOverride,
             string? itpoFileName)
         {
             this.parentConfig = parentConfig;

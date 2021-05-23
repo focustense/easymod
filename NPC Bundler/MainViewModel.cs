@@ -1,35 +1,55 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NPC_Bundler
 {
-    public class MainViewModel : INotifyPropertyChanged
+    public abstract class MainViewModel<TKey> : INotifyPropertyChanged
+        where TKey : struct
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public BuildViewModel Build { get; private set; }
+        public BuildViewModel<TKey> Build { get; private set; }
         public bool IsReady { get; private set; }
-        public LoaderViewModel Loader { get; init; }
+        public LoaderViewModel<TKey> Loader { get; init; }
         public LogViewModel Log { get; init; }
-        public ProfileViewModel Profile { get; private set; }
+        public ProfileViewModel<TKey> Profile { get; private set; }
         public string PageTitle { get; set; }
         public SettingsViewModel Settings { get; init; }
 
+        private readonly IGameDataEditor<TKey> gameDataEditor;
+        private readonly IMergedPluginBuilder<TKey> mergedPluginBuilder;
+
         public MainViewModel()
         {
+            gameDataEditor = CreateEditor();
+            mergedPluginBuilder = CreateMergedPluginBuilder();
+
             Log = new LogViewModel();
             Settings = new SettingsViewModel();
-            Loader = new LoaderViewModel(Log);
+            Loader = new LoaderViewModel<TKey>(gameDataEditor, Log);
             Loader.Loaded += () => {
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
-                Profile = new ProfileViewModel(Loader.Npcs, Loader.LoadedMasterNames);
-                Build = new BuildViewModel(Profile.GetAllNpcConfigurations());
+                Profile = new ProfileViewModel<TKey>(Loader.Npcs, Loader.LoadedMasterNames);
+                Build = new BuildViewModel<TKey>(mergedPluginBuilder, Profile.GetAllNpcConfigurations());
                 IsReady = true;
             };
+        }
+
+        protected abstract IMergedPluginBuilder<TKey> CreateMergedPluginBuilder();
+
+        protected abstract IGameDataEditor<TKey> CreateEditor();
+    }
+
+    public class MainViewModel : MainViewModel<uint>
+    {
+        protected override IGameDataEditor<uint> CreateEditor()
+        {
+            return new XEditGameDataEditor();
+        }
+
+        protected override IMergedPluginBuilder<uint> CreateMergedPluginBuilder()
+        {
+            return new XEditMergedPluginBuilder();
         }
     }
 }

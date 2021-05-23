@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+using TKey = System.UInt32;
+
 namespace NPC_Bundler
 {
     /// <summary>
@@ -10,7 +12,7 @@ namespace NPC_Bundler
     /// </summary>
     public partial class ProfilePage : ModernWpf.Controls.Page
     {
-        protected ProfileViewModel Model => ((MainViewModel)DataContext)?.Profile;
+        protected ProfileViewModel<TKey> Model => ((MainViewModel)DataContext)?.Profile;
 
         public ProfilePage()
         {
@@ -39,13 +41,13 @@ namespace NPC_Bundler
 
         private void NpcDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Model?.SelectNpc(e.AddedItems.Cast<NpcConfiguration>().FirstOrDefault());
+            Model?.SelectNpc(e.AddedItems.Cast<NpcConfiguration<TKey>>().FirstOrDefault());
         }
 
         private void OverrideListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             MugshotListView.SelectedItem = null;
-            Model?.SelectOverride(e.AddedItems.Cast<NpcOverrideConfiguration>().FirstOrDefault());
+            Model?.SelectOverride(e.AddedItems.Cast<NpcOverrideConfiguration<TKey>>().FirstOrDefault());
         }
 
         private void SaveProfile_Click(object sender, RoutedEventArgs e)
@@ -55,13 +57,13 @@ namespace NPC_Bundler
 
         private void SetDefaultOverrideButton_Click(object sender, RoutedEventArgs e)
         {
-            var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration;
+            var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration<TKey>;
             overrideConfig?.SetAsDefault();
         }
 
         private void SetFaceOverrideButton_Click(object sender, RoutedEventArgs e)
         {
-            var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration;
+            var overrideConfig = ((FrameworkElement)e.Source).Tag as NpcOverrideConfiguration<TKey>;
             bool detectPlugin = !Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl);
             overrideConfig?.SetAsFace(detectPlugin);
         }

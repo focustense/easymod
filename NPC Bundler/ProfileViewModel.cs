@@ -9,14 +9,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
+using TKey = System.UInt32;
+
 namespace NPC_Bundler
 {
-    public class ProfileViewModel : INotifyPropertyChanged
+    public class ProfileViewModel<TKey> : INotifyPropertyChanged
+        where TKey : struct
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
         [DependsOn("NpcConfigurations", "OnlyFaceOverrides", "ShowDlcOverrides", "ShowSinglePluginOverrides")]
-        public IEnumerable<NpcConfiguration> DisplayedNpcs
+        public IEnumerable<NpcConfiguration<TKey>> DisplayedNpcs
         {
             get {
                 var minOverrideCount = ShowSinglePluginOverrides ? 1 : 2;
@@ -29,23 +32,23 @@ namespace NPC_Bundler
         public bool HasSelectedNpc => SelectedNpc != null;
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
         public bool OnlyFaceOverrides { get; set; }
-        public NpcOverrideConfiguration SelectedOverrideConfig { get; private set; }
-        public NpcConfiguration SelectedNpc { get; private set; }
-        public IReadOnlyList<NpcOverrideConfiguration> SelectedNpcOverrides { get; private set; }
+        public NpcOverrideConfiguration<TKey> SelectedOverrideConfig { get; private set; }
+        public NpcConfiguration<TKey> SelectedNpc { get; private set; }
+        public IReadOnlyList<NpcOverrideConfiguration<TKey>> SelectedNpcOverrides { get; private set; }
         public bool ShowDlcOverrides { get; set; }
         public bool ShowSinglePluginOverrides { get; set; } = true;
 
-        private readonly SortedDictionary<uint, NpcConfiguration> npcConfigurations = new();
+        private readonly SortedDictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
 
-        public ProfileViewModel(IEnumerable<Npc> npcs, IEnumerable<string> masterNames)
+        public ProfileViewModel(IEnumerable<INpc<TKey>> npcs, IEnumerable<string> masterNames)
         {
             var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
             var masterNameSet = new HashSet<string>(masterNames);
             foreach (var npc in npcsWithOverrides)
-                npcConfigurations.Add(npc.FormId, new NpcConfiguration(npc, masterNameSet));
+                npcConfigurations.Add(npc.Key, new NpcConfiguration<TKey>(npc, masterNameSet));
         }
 
-        public IEnumerable<NpcConfiguration> GetAllNpcConfigurations()
+        public IEnumerable<NpcConfiguration<TKey>> GetAllNpcConfigurations()
         {
             return npcConfigurations.Values;
         }
@@ -111,13 +114,13 @@ namespace NPC_Bundler
         {
             foreach (var ms in Mugshots ?? Enumerable.Empty<Mugshot>())
                 ms.IsHighlighted = false;
-            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration>())
+            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration<TKey>>())
                 overrideConfig.IsHighlighted =
                     mugshot?.ProvidingPlugins?.Contains(overrideConfig.PluginName, StringComparer.OrdinalIgnoreCase) ??
                     false;
         }
 
-        public void SelectNpc(NpcConfiguration npc)
+        public void SelectNpc(NpcConfiguration<TKey> npc)
         {
             if (SelectedNpc != null)
                 SelectedNpc.FaceModChanged -= OnNpcFaceModChanged;
@@ -129,7 +132,7 @@ namespace NPC_Bundler
             npc.FaceModChanged += OnNpcFaceModChanged;
         }
 
-        public void SelectOverride(NpcOverrideConfiguration overrideConfig)
+        public void SelectOverride(NpcOverrideConfiguration<TKey> overrideConfig)
         {
             ClearNpcHighlights();
             foreach (var mugshot in Mugshots ?? Enumerable.Empty<Mugshot>())
@@ -147,7 +150,7 @@ namespace NPC_Bundler
 
         private void ClearNpcHighlights()
         {
-            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration>())
+            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration<TKey>>())
                 overrideConfig.IsSelected = overrideConfig.IsHighlighted = false;
         }
 
@@ -177,7 +180,8 @@ namespace NPC_Bundler
             return File.Exists(path);
         }
 
-        public static IEnumerable<Mugshot> GetMugshots(NpcConfiguration npc)
+        public static IEnumerable<Mugshot> GetMugshots<TKey>(NpcConfiguration<TKey> npc)
+            where TKey : struct
         {
             if (npc == null)
                 yield break;
