@@ -31,15 +31,16 @@ namespace NPC_Bundler
             Loader.Loaded += () => {
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
                 Profile = new ProfileViewModel<TKey>(Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames);
+                var archiveFileMap = new ArchiveFileMap(gameDataEditor.ArchiveProvider);
                 Build = new BuildViewModel<TKey>(
-                    mergedPluginBuilder, Loader.ModPluginMapFactory, Profile.GetAllNpcConfigurations());
+                    gameDataEditor.ArchiveProvider, mergedPluginBuilder, Loader.ModPluginMapFactory,
+                    Profile.GetAllNpcConfigurations(), archiveFileMap);
                 IsReady = true;
             };
         }
 
-        protected abstract IMergedPluginBuilder<TKey> CreateMergedPluginBuilder();
-
         protected abstract IGameDataEditor<TKey> CreateEditor();
+        protected abstract IMergedPluginBuilder<TKey> CreateMergedPluginBuilder();
     }
 
 #if MUTAGEN

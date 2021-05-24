@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using XeLib;
@@ -9,8 +10,10 @@ namespace NPC_Bundler
 {
     public class XEditGameDataEditor : IGameDataEditor<uint>
     {
+        private readonly IArchiveProvider archiveProvider = new XEditArchiveProvider();
         private readonly IModPluginMapFactory modPluginMapFactory = new XEditModPluginMapFactory();
 
+        public IArchiveProvider ArchiveProvider => archiveProvider;
         public IModPluginMapFactory ModPluginMapFactory => modPluginMapFactory;
 
         public XEditGameDataEditor()

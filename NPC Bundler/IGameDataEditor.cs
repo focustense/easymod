@@ -6,6 +6,7 @@ namespace NPC_Bundler
     public interface IGameDataEditor<TKey>
         where TKey : struct
     {
+        IArchiveProvider ArchiveProvider { get; }
         IModPluginMapFactory ModPluginMapFactory { get; }
 
         IEnumerable<string> GetAvailablePlugins();

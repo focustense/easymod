@@ -10,6 +10,7 @@ namespace NPC_Bundler
 {
     public class MutagenAdapter : IGameDataEditor<FormKey>
     {
+        public IArchiveProvider ArchiveProvider { get; private set; }
         public GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> Environment { get; private set; }
         public string GameDataFolder { get; private set; }
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod);
@@ -26,12 +27,6 @@ namespace NPC_Bundler
         {
             return LoadOrder.GetListings(GameRelease.SkyrimSE, GameDataFolder, true)
                 .Select(x => x.ModKey.FileName);
-        }
-
-        public IEnumerable<string> GetLoadedArchives()
-        {
-            return Environment.LoadOrder
-                .SelectMany(x => Archive.GetApplicableArchivePaths(GameRelease.SkyrimSE, GameDataFolder, x.Key));
         }
 
         public IEnumerable<string> GetLoadedPlugins()
@@ -62,6 +57,7 @@ namespace NPC_Bundler
                 Environment =
                     new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(GameDataFolder, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
+                ArchiveProvider = new MutagenArchiveProvider(Environment);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment);
             });
         }
@@ -117,8 +113,7 @@ namespace NPC_Bundler
             if (npcRecord.Equals(previousOverride.Record))
                 itpoPluginName = previousOverride.ModKey.FileName;
             var previousNpcRecord = !string.IsNullOrEmpty(itpoPluginName) ?
-                Environment.LoadOrder.GetIfEnabled(npcRecord.FormKey.ModKey).Mod.Npcs.TryGetValue(npcRecord.FormKey) :
-                previousOverride.Record;
+                Environment.LoadOrder.GetMasterNpc(npcRecord.FormKey) : previousOverride.Record;
 
 
             var overrideFaceData = ReadFaceData(npcRecord);

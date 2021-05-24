@@ -1,5 +1,6 @@
 ﻿using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
+using System.IO;
 using System.Linq;
 
 namespace NPC_Bundler
@@ -16,8 +17,9 @@ namespace NPC_Bundler
         public ModPluginMap CreateForDirectory(string modRootDirectory)
         {
             var pluginNames = environment.LoadOrder.Select(x => x.Key.FileName);
-            var archiveNames = environment.LoadOrder.SelectMany(x =>
-                Archive.GetApplicableArchivePaths(GameRelease.SkyrimSE, environment.GameFolderPath, x.Key));
+            var archiveNames = Archive
+                .GetApplicableArchivePaths(GameRelease.SkyrimSE, environment.GameFolderPath, ModKey.Null)
+                .Select(f => Path.GetFileName(f));
             return ModPluginMap.ForDirectory(modRootDirectory, pluginNames, archiveNames);
         }
     }

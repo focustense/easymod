@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeLib.API;
 
 namespace NPC_Bundler
 {
@@ -38,14 +37,18 @@ namespace NPC_Bundler
         public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
 
+        private readonly ArchiveFileMap archiveFileMap;
+        private readonly IArchiveProvider archiveProvider;
         private readonly IMergedPluginBuilder<TKey> builder;
         private readonly IModPluginMapFactory modPluginMapFactory;
 
         public BuildViewModel(
-            IMergedPluginBuilder<TKey> builder, IModPluginMapFactory modPluginMapFactory,
-            IEnumerable<NpcConfiguration<TKey>> npcs)
+            IArchiveProvider archiveProvider, IMergedPluginBuilder<TKey> builder, IModPluginMapFactory modPluginMapFactory,
+            IEnumerable<NpcConfiguration<TKey>> npcs, ArchiveFileMap archiveFileMap)
         {
+            this.archiveFileMap = archiveFileMap;
             this.builder = builder;
+            this.archiveProvider = archiveProvider;
             this.modPluginMapFactory = modPluginMapFactory;
             Npcs = npcs.ToList().AsReadOnly();
         }
@@ -119,7 +122,7 @@ namespace NPC_Bundler
             // So it may be an obscure theoretical problem that never comes up in practice, but if we do see it, then
             // it at least merits a warning, which the user can ignore if it's on purpose.
             var modPluginMap = modPluginMapFactory.DefaultMap();
-            return Resources.GetLoadedContainers()
+            return archiveProvider.GetLoadedArchivePaths()
                 .AsParallel()
                 .Select(path => Path.GetFileName(path))
                 .Select(f => new
@@ -135,7 +138,7 @@ namespace NPC_Bundler
 
         private IEnumerable<BuildWarning> CheckModPluginConsistency()
         {
-            ArchiveFileMap.EnsureInitialized();
+            archiveFileMap.EnsureInitialized();
             var modPluginMap = modPluginMapFactory.DefaultMap();
             return Npcs.AsParallel()
                 .Select(npc => CheckModPluginConsistency(npc, modPluginMap))
@@ -175,7 +178,7 @@ namespace NPC_Bundler
             var hasLooseFacegen = File.Exists(
                 Path.Combine(BundlerSettings.Default.ModRootDirectory, npc.FaceModName, faceMeshFileName));
             var hasArchiveFacegen = modPluginMap.GetArchivesForMod(npc.FaceModName)
-                .Select(f => ArchiveFileMap.ContainsFile(f, faceMeshFileName))
+                .Select(f => archiveFileMap.ContainsFile(f, faceMeshFileName))
                 .Any(exists => exists);
             // If the selected plugin has overrides, then we want to see facegen data. On the other hand, if the
             // selected plugin does NOT have overrides, then a mod providing facegens will probably break something.
