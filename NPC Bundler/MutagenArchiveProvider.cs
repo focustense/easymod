@@ -2,6 +2,7 @@
 using Mutagen.Bethesda.Skyrim;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace NPC_Bundler
@@ -13,6 +14,21 @@ namespace NPC_Bundler
         public MutagenArchiveProvider(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment)
         {
             this.environment = environment;
+        }
+
+        public void CopyToFile(string archivePath, string archiveFilePath, string outFilePath)
+        {
+            var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
+            var folderName = Path.GetDirectoryName(archiveFilePath).ToLower();  // Mutagen is case-sensitive
+            if (!reader.TryGetFolder(folderName, out var folder))
+                throw new Exception($"Couldn't find folder {folderName} in archive {archivePath}");
+            var file = folder.Files
+                .SingleOrDefault(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
+            if (file == null)
+                throw new Exception($"Couldn't find file {archiveFilePath} in archive {archivePath}");
+            using var fs = File.Create(outFilePath);
+            file.CopyDataTo(fs);
+            fs.Flush(); // Is it necessary?
         }
 
         public IEnumerable<string> GetArchiveFileNames(string archivePath, string path)
@@ -28,6 +44,11 @@ namespace NPC_Bundler
             // Currently, GetApplicableArchivePaths ignores the ModKey entirely and just reads every available BSA.
             // This is actually fine for our purposes, but the code has to be aware of this to avoid duplication.
             return Archive.GetApplicableArchivePaths(GameRelease.SkyrimSE, environment.GameFolderPath, ModKey.Null);
+        }
+
+        public string ResolvePath(string archiveName)
+        {
+            return Path.Combine(environment.GameFolderPath, archiveName);
         }
     }
 }

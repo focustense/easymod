@@ -62,7 +62,8 @@ namespace NPC_Bundler
                 Directory.CreateDirectory(OutputDirectory);
                 var mergeInfo = builder.Build(Npcs, OutputModName, Progress.MergedPlugin);
                 var modPluginMap = modPluginMapFactory.DefaultMap();
-                MergedFolder.Build(Npcs, mergeInfo, modPluginMap, OutputModName, Progress.MergedFolder);
+                MergedFolder.Build(
+                    Npcs, mergeInfo, archiveProvider, modPluginMap, OutputModName, Progress.MergedFolder);
             }).ConfigureAwait(true);
             IsReadyToBuild = false;
             IsBuildCompleted = true;

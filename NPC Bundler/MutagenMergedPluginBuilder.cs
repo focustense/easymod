@@ -30,6 +30,7 @@ namespace NPC_Bundler
 
             progress.StartStage("Starting the merge");
             var mergedMod = new SkyrimMod(ModKey.FromNameAndExtension(MergeFileName), SkyrimRelease.SkyrimSE);
+            var result = new MergedPluginResult();
 
             var customizedNpcs = new List<Tuple<NpcConfiguration<FormKey>, Npc>>();
             var masters = new HashSet<ModKey>();
@@ -129,7 +130,32 @@ namespace NPC_Bundler
 
             return new MergedPluginResult
             {
-                Npcs = new HashSet<string>(npcs.Select(x => x.EditorId)),
+                Meshes = mergedMod.HeadParts
+                    .Where(x => x.Model != null)
+                    .Select(x => x.Model.File.PrefixPath("meshes"))
+                    .ToHashSet(),
+                Morphs = mergedMod.HeadParts
+                    .SelectMany(x => x.Parts)
+                    .Select(x => x.FileName)
+                    .Where(f => !string.IsNullOrEmpty(f))
+                    .Select(x => x.PrefixPath("meshes"))
+                    .ToHashSet(),
+                Npcs = customizedNpcs.Select(x => x.Item1.EditorId).ToHashSet(),
+                Textures = mergedMod.TextureSets
+                    .SelectMany(x => new[]
+                    {
+                        x.Diffuse,
+                        x.NormalOrGloss,
+                        x.EnvironmentMaskOrSubsurfaceTint,
+                        x.GlowOrDetailMap,
+                        x.Height,
+                        x.Environment,
+                        x.Multilayer,
+                        x.BacklightMaskOrSpecular,
+                    })
+                    .Where(f => !string.IsNullOrEmpty(f))
+                    .Select(x => x.PrefixPath("textures"))
+                    .ToHashSet(),
             };
         }
     }

@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using XeLib.API;
 
 namespace NPC_Bundler
 {
@@ -18,8 +16,8 @@ namespace NPC_Bundler
                 RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
         public static void Build<TKey>(
-            IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, ModPluginMap modPluginMap,
-            string outputModName, ProgressViewModel progress)
+            IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, IArchiveProvider archiveProvider,
+            ModPluginMap modPluginMap, string outputModName, ProgressViewModel progress)
             where TKey : struct
         {
             var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
@@ -35,9 +33,6 @@ namespace NPC_Bundler
             //   - Support meshes/morphs: 20%
             //   - Support textures: 20%
             //   - Facegen meshes/textures: 50%
-
-            progress.StartStage("Preparing");
-            var dataPath = Meta.GetGlobal("DataPath");
 
             progress.StartStage("Creating merge output directory");
             var outDir = Path.Combine(BundlerSettings.Default.ModRootDirectory, outputModName);
@@ -67,12 +62,12 @@ namespace NPC_Bundler
                                 .Select(fileName => Path.GetRelativePath(modPath, fileName)),
                             StringComparer.OrdinalIgnoreCase),
                         ArchiveFiles = modPluginMap.GetArchivesForMod(modName)
-                            .Select(archiveName => Path.Combine(dataPath, archiveName))
+                            .Select(archiveName => archiveProvider.ResolvePath(archiveName))
                             .Select(archivePath => new
                             {
                                 ArchivePath = archivePath,
                                 Files = new HashSet<string>(
-                                    Resources.GetContainerFiles(archivePath, ""),
+                                    archiveProvider.GetArchiveFileNames(archivePath),
                                     StringComparer.OrdinalIgnoreCase) as IReadOnlySet<string>
                             })
                             .ToDictionary(x => x.ArchivePath, x => x.Files)
@@ -98,7 +93,7 @@ namespace NPC_Bundler
                 }
 
                 var containingArchiveFile = index.ArchiveFiles
-                    .Where(x => x.Value.Contains(relativePath))
+                    .Where(x => x.Value.Contains(relativePath, StringComparer.OrdinalIgnoreCase))
                     .Select(x => x.Key)
                     .FirstOrDefault();
                 if (!string.IsNullOrEmpty(containingArchiveFile))
@@ -106,7 +101,7 @@ namespace NPC_Bundler
                     var archiveShortName = Path.GetFileName(containingArchiveFile);
                     progress.ItemName = $"[{index.ModName}] - {archiveShortName} - {relativePath}";
                     Directory.CreateDirectory(Path.GetDirectoryName(outFileName));
-                    Resources.ExtractFile(containingArchiveFile, relativePath, outFileName);
+                    archiveProvider.CopyToFile(containingArchiveFile, relativePath, outFileName);
                     if (incProgress)
                         progress.CurrentProgress++;
                     return true;
