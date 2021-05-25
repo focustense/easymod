@@ -52,10 +52,10 @@ namespace NPC_Bundler
             // handles in a dictionary for this method so that we have at most one handle per file.
             foreach (var npc in npcs)
             {
-                progress.ItemName = $"{FormatNpcLabel(npc)}; Source: {npc.DefaultPluginName}";
+                progress.ItemName = $"{npc.DescriptiveLabel}; Source: {npc.DefaultPluginName}";
                 progress.CurrentProgress++;
 
-                if (!HasCustomizations(npc))
+                if (!npc.HasCustomizations())
                     continue;
 
                 var formIdHex = npc.Key.ToString("X8");
@@ -87,7 +87,7 @@ namespace NPC_Bundler
                 if (!mergedNpcElementCache.TryGetValue(npc.Key, out Handle mergedNpcElement))
                     continue;
 
-                progress.ItemName = $"{FormatNpcLabel(npc)}; Source: {npc.FacePluginName}";
+                progress.ItemName = $"{npc.DescriptiveLabel}; Source: {npc.FacePluginName}";
                 progress.CurrentProgress++;
 
                 Elements.RemoveElementIfExists(mergedNpcElement, "PNAM");
@@ -201,11 +201,6 @@ namespace NPC_Bundler
             }
         }
 
-        private static string FormatNpcLabel(NpcConfiguration<uint> npc)
-        {
-            return $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId})";
-        }
-
         private static MergedPluginResult GetResult(Handle mergeFile, HandleGroup g)
         {
             // We COULD pull all of this information as the patch is being generated, and it would probably be a little
@@ -240,13 +235,6 @@ namespace NPC_Bundler
             // NPC_ records will reference head parts and texture sets, but don't themselves contain any direct
             // references to file names.
             return result;
-        }
-
-        private static bool HasCustomizations(NpcConfiguration<uint> npc)
-        {
-            return
-                (npc.DefaultPluginName != npc.BasePluginName || npc.FacePluginName != npc.DefaultPluginName) &&
-                (!FileStructure.IsDlc(npc.DefaultPluginName) || !FileStructure.IsDlc(npc.FacePluginName));
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace NPC_Bundler
@@ -7,9 +8,10 @@ namespace NPC_Bundler
         where TKey : struct
     {
         IArchiveProvider ArchiveProvider { get; }
+        IMergedPluginBuilder<TKey> MergedPluginBuilder { get; }
         IModPluginMapFactory ModPluginMapFactory { get; }
 
-        IEnumerable<string> GetAvailablePlugins();
+        IEnumerable<Tuple<string, bool>> GetAvailablePlugins();
         IEnumerable<string> GetLoadedPlugins();
         int GetLoadOrderIndex(string pluginName);
         bool IsMaster(string pluginName);

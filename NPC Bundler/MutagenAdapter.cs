@@ -13,6 +13,7 @@ namespace NPC_Bundler
         public IArchiveProvider ArchiveProvider { get; private set; }
         public GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> Environment { get; private set; }
         public string GameDataFolder { get; private set; }
+        public IMergedPluginBuilder<FormKey> MergedPluginBuilder { get; private set; }
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod);
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }
 
@@ -23,10 +24,10 @@ namespace NPC_Bundler
             GameDataFolder = dataFolder;
         }
 
-        public IEnumerable<string> GetAvailablePlugins()
+        public IEnumerable<Tuple<string, bool>> GetAvailablePlugins()
         {
             return LoadOrder.GetListings(GameRelease.SkyrimSE, GameDataFolder, true)
-                .Select(x => x.ModKey.FileName);
+                .Select(x => Tuple.Create(x.ModKey.FileName, x.Enabled));
         }
 
         public IEnumerable<string> GetLoadedPlugins()
@@ -58,6 +59,7 @@ namespace NPC_Bundler
                     new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(GameDataFolder, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
                 ArchiveProvider = new MutagenArchiveProvider(Environment);
+                MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment);
             });
         }

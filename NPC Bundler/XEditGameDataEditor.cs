@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using XeLib;
@@ -11,9 +10,11 @@ namespace NPC_Bundler
     public class XEditGameDataEditor : IGameDataEditor<uint>
     {
         private readonly IArchiveProvider archiveProvider = new XEditArchiveProvider();
+        private readonly IMergedPluginBuilder<uint> mergedPluginBuilder = new XEditMergedPluginBuilder();
         private readonly IModPluginMapFactory modPluginMapFactory = new XEditModPluginMapFactory();
 
         public IArchiveProvider ArchiveProvider => archiveProvider;
+        public IMergedPluginBuilder<uint> MergedPluginBuilder => mergedPluginBuilder;
         public IModPluginMapFactory ModPluginMapFactory => modPluginMapFactory;
 
         public XEditGameDataEditor()
@@ -22,9 +23,11 @@ namespace NPC_Bundler
             Setup.SetGameMode(Setup.GameMode.SSE);
         }
 
-        public IEnumerable<string> GetAvailablePlugins()
+        public IEnumerable<Tuple<string, bool>> GetAvailablePlugins()
         {
-            return Setup.GetActivePlugins().Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            return Setup.GetActivePlugins()
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(f => Tuple.Create(f, true));
         }
 
         public IEnumerable<string> GetLoadedPlugins()

@@ -17,6 +17,7 @@ namespace NPC_Bundler
 
         public string BasePluginName => npc.BasePluginName;
         public string DefaultPluginName => defaultConfig?.PluginName;
+        public string DescriptiveLabel => $"'{Name}' ({BasePluginName} - {EditorId})";
         public string EditorId => npc.EditorId;
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
         public string FaceModName { get; private set; }
@@ -82,6 +83,12 @@ namespace NPC_Bundler
                 .Where(x => includeDlc || !DlcPluginNames.Contains(x.PluginName))
                 .Where(x => includeNonFaces || x.FaceData != null)
                 .Count();
+        }
+
+        public bool HasCustomizations()
+        {
+            return (DefaultPluginName != BasePluginName || FacePluginName != DefaultPluginName) &&
+                (!FileStructure.IsDlc(DefaultPluginName) || !FileStructure.IsDlc(FacePluginName));
         }
 
         public bool HasFaceGenOverridesEnabled()

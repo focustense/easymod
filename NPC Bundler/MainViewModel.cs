@@ -23,7 +23,6 @@ namespace NPC_Bundler
         public MainViewModel()
         {
             gameDataEditor = CreateEditor();
-            mergedPluginBuilder = CreateMergedPluginBuilder();
 
             Log = new LogViewModel();
             Settings = new SettingsViewModel();
@@ -33,14 +32,13 @@ namespace NPC_Bundler
                 Profile = new ProfileViewModel<TKey>(Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames);
                 var archiveFileMap = new ArchiveFileMap(gameDataEditor.ArchiveProvider);
                 Build = new BuildViewModel<TKey>(
-                    gameDataEditor.ArchiveProvider, mergedPluginBuilder, Loader.ModPluginMapFactory,
+                    gameDataEditor.ArchiveProvider, gameDataEditor.MergedPluginBuilder, Loader.ModPluginMapFactory,
                     Profile.GetAllNpcConfigurations(), archiveFileMap);
                 IsReady = true;
             };
         }
 
         protected abstract IGameDataEditor<TKey> CreateEditor();
-        protected abstract IMergedPluginBuilder<TKey> CreateMergedPluginBuilder();
     }
 
 #if MUTAGEN
@@ -50,11 +48,6 @@ namespace NPC_Bundler
         {
             return new MutagenAdapter();
         }
-
-        protected override IMergedPluginBuilder<FormKey> CreateMergedPluginBuilder()
-        {
-            return null;
-        }
     }
 #else
     public class MainViewModel : MainViewModel<uint>
@@ -62,11 +55,6 @@ namespace NPC_Bundler
         protected override IGameDataEditor<uint> CreateEditor()
         {
             return new XEditGameDataEditor();
-        }
-
-        protected override IMergedPluginBuilder<uint> CreateMergedPluginBuilder()
-        {
-            return new XEditMergedPluginBuilder();
         }
     }
 #endif
