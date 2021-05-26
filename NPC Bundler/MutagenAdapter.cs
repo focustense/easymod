@@ -13,6 +13,9 @@ namespace NPC_Bundler
         public IArchiveProvider ArchiveProvider { get; private set; }
         public GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> Environment { get; private set; }
         public string GameDataFolder { get; private set; }
+        // Mutagen doesn't have an internal log, like XEdit Lib. (Because it doesn't need to, as it's a .NET library and
+        // works with ordinary exception handling)
+        public IExternalLog Log { get; init; } = new NullExternalLog();
         public IMergedPluginBuilder<FormKey> MergedPluginBuilder { get; private set; }
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod);
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }

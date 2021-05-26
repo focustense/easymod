@@ -14,10 +14,13 @@ namespace NPC_Bundler
         public int PollInterval { get; set; } = 100;
         public string Text { get; private set; } = "";
 
+        private readonly IExternalLog externalLog;
+
         private bool isActive = false;
 
-        public LogViewModel()
+        public LogViewModel(IExternalLog externalLog)
         {
+            this.externalLog = externalLog;
         }
 
         public void Append(string message)
@@ -25,7 +28,7 @@ namespace NPC_Bundler
             // In case we're not actively monitoring, this preserves chronological order between xEdit messages and
             // app-originated messages.
             if (!isActive)
-                RefreshMessages();
+                RefreshExternalMessages();
             Text += $"[NpcBundler] {message}\n";
         }
 
@@ -39,25 +42,23 @@ namespace NPC_Bundler
             if (isActive)
                 return;
             isActive = true;
-            Task.Run(MonitorXeLibMessages);
+            Task.Run(MonitorExternalMessages);
         }
 
-        private void RefreshMessages()
-        {
-            var newMessages = Messages.GetMessages();
-            if (!string.IsNullOrEmpty(newMessages))
-                Text += string.Join('\n', newMessages
-                    .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(msg => $"[XeLib] {msg}")) + '\n';
-        }
-
-        private async Task MonitorXeLibMessages()
+        private async Task MonitorExternalMessages()
         {
             while (isActive)
             {
-                RefreshMessages();
+                RefreshExternalMessages();
                 await Task.Delay(PollInterval);
             }
+        }
+
+        private void RefreshExternalMessages()
+        {
+            var externalText = string.Join(Environment.NewLine, externalLog.GetMessages());
+            if (!string.IsNullOrEmpty(externalText))
+                Text += externalText + Environment.NewLine;
         }
     }
 }

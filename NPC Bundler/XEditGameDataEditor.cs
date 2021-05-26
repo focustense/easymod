@@ -9,13 +9,10 @@ namespace NPC_Bundler
 {
     public class XEditGameDataEditor : IGameDataEditor<uint>
     {
-        private readonly IArchiveProvider archiveProvider = new XEditArchiveProvider();
-        private readonly IMergedPluginBuilder<uint> mergedPluginBuilder = new XEditMergedPluginBuilder();
-        private readonly IModPluginMapFactory modPluginMapFactory = new XEditModPluginMapFactory();
-
-        public IArchiveProvider ArchiveProvider => archiveProvider;
-        public IMergedPluginBuilder<uint> MergedPluginBuilder => mergedPluginBuilder;
-        public IModPluginMapFactory ModPluginMapFactory => modPluginMapFactory;
+        public IArchiveProvider ArchiveProvider { get; init; } = new XEditArchiveProvider();
+        public IExternalLog Log { get; init; } = new XEditLog();
+        public IMergedPluginBuilder<uint> MergedPluginBuilder { get; init; } = new XEditMergedPluginBuilder();
+        public IModPluginMapFactory ModPluginMapFactory { get; init; } = new XEditModPluginMapFactory();
 
         public XEditGameDataEditor()
         {

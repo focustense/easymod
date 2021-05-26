@@ -24,7 +24,7 @@ namespace NPC_Bundler
         {
             gameDataEditor = CreateEditor();
 
-            Log = new LogViewModel();
+            Log = new LogViewModel(gameDataEditor.Log);
             Settings = new SettingsViewModel();
             Loader = new LoaderViewModel<TKey>(gameDataEditor, Log);
             Loader.Loaded += () => {

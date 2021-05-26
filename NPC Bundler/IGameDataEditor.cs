@@ -8,6 +8,7 @@ namespace NPC_Bundler
         where TKey : struct
     {
         IArchiveProvider ArchiveProvider { get; }
+        IExternalLog Log { get; }
         IMergedPluginBuilder<TKey> MergedPluginBuilder { get; }
         IModPluginMapFactory ModPluginMapFactory { get; }
 
