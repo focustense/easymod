@@ -179,9 +179,7 @@ namespace NPC_Bundler
         }
     }
 
-    public record Mugshot(
-        string ProvidingMod, bool IsModInstalled, string[] ProvidingPlugins, string FileName, bool IsGeneric)
-        : INotifyPropertyChanged
+    public class Mugshot : INotifyPropertyChanged
     {
         private static readonly string AssetsDirectory = Path.Combine(
             Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
@@ -227,7 +225,7 @@ namespace NPC_Bundler
                 var modNames = modPluginMap.GetModsForPlugin(pluginName)
                     .Where(modName => !handledModNames.Contains(modName));
                 var isVanillaOrDlc = FileStructure.IsVanilla(pluginName) || FileStructure.IsDlc(pluginName);
-                if (isVanillaOrDlc)
+                if (isVanillaOrDlc && !modNames.Any())
                     modNames = modNames.Concat(new[] { "" });
                 foreach (var modName in modNames.Distinct())
                 {
@@ -240,11 +238,25 @@ namespace NPC_Bundler
             }
         }
 
-        public string ModDisplayName => !string.IsNullOrEmpty(ProvidingMod) ? ProvidingMod : "Default Vanilla";
+        public Mugshot(string providingMod, bool isModInstalled, string[] providingPlugins, string fileName, bool isGeneric)
+        {
+            ProvidingMod = providingMod;
+            IsModInstalled = isModInstalled;
+            ProvidingPlugins = providingPlugins;
+            FileName = fileName;
+            IsGeneric = isGeneric;
+        }
+
+        public bool IsGeneric { get; init; }
         public bool IsHighlighted { get; set; }
+        public bool IsModInstalled { get; init; }
         public bool IsModMissing => !IsModInstalled;
         public bool IsPluginLoaded => ProvidingPlugins.Length > 0;
         public bool IsPluginMissing => ProvidingPlugins.Length == 0;
         public bool IsSelectedSource { get; set; }
+        public string FileName { get; init; }
+        public string ModDisplayName => !string.IsNullOrEmpty(ProvidingMod) ? ProvidingMod : "Default (Vanilla)";
+        public string ProvidingMod { get; init; }
+        public string[] ProvidingPlugins { get; init; }
     }
 }

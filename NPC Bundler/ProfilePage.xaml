@@ -152,7 +152,8 @@
                         </StackPanel>
                         <Grid>
                             <Image x:Name="MugshotImage" Source="{Binding Path=FileName}" Stretch="Uniform" StretchDirection="DownOnly"/>
-                            <fa5:SvgAwesome Icon="Solid_CheckCircle" Foreground="Green" Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Visibility="{Binding IsSelectedSource, Converter={StaticResource BoolToVisibility}}"/>
+                            <fa5:SvgAwesome Icon="Solid_CheckCircle" Foreground="Green" Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                                            Visibility="{Binding IsSelectedSource, Converter={StaticResource BoolToVisibility}}"/>
                         </Grid>
                     </DockPanel>
                 </DataTemplate>
