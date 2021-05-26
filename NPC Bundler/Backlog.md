@@ -2,10 +2,8 @@
 
 ## Near-term (0.9 / Beta)
 
-- Placeholder images for face mods without mugshots
 - Auto-save/auto-load profiles
 - Built-in BSA archiving
-- Convert from XeLibSharp to Mutagen
 - Build operations should output to app log
 - Secondary log (logfile) in case of program crashes
   - On crash detected, try to read and copy last bits of XEdit log
@@ -13,6 +11,7 @@
 - "NoMO" support - plugin only
 - Filter NPCs by Plugin, EditorID, etc. (type to search)
 - Moar Mugshots
+- Mugshot "redirects", e.g. if Hair Physics Version looks same as original
 - Bug: ESP/BSA files remain locked until program exit
 
 ## Medium-term (1.0 / Release)
@@ -23,6 +22,7 @@
 - Advanced filters: override names, plugin/mod selections
 - Better MO2 integration - read profiles, mod lists, detect disable mods, etc.
 - "Easy Mode" - hide plugin/mod distinction unless there's a conflict
+- Incremental merges - i.e. for new mod installs, or minor tweaks to profiles
 
 ## Long-term (2.0+)
 
@@ -37,3 +37,5 @@
 ## Done
 
 - Alpha prototype
+- Convert from XeLibSharp to Mutagen
+- Placeholder images for face mods without mugshots

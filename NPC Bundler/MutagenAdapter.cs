@@ -87,6 +87,7 @@ namespace NPC_Bundler
                     {
                         BasePluginName = modKey.FileName,
                         EditorId = npcContext.Record.EditorID,
+                        IsFemale = npcContext.Record.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                         Key = formKey,
                         LocalFormIdHex = formKey.ID.ToString("X6"),
                         Name = npcContext.Record.Name?.ToString(),

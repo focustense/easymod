@@ -14,6 +14,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="assets\female-silhouette.png" />
+    <None Remove="assets\male-silhouette.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets\female-silhouette.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="assets\male-silhouette.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Fody" Version="6.5.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -41,5 +41,10 @@ namespace NPC_Bundler
             return fileName.StartsWith(FaceMeshesPath, StringComparison.OrdinalIgnoreCase) ||
                 fileName.StartsWith(FaceTintsPath, StringComparison.OrdinalIgnoreCase);
         }
+
+        public static bool IsVanilla(string pluginName)
+        {
+            return string.Equals(pluginName, "Skyrim.esm", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

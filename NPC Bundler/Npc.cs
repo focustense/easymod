@@ -9,6 +9,7 @@ namespace NPC_Bundler
     {
         string BasePluginName { get; }
         string EditorId { get; }
+        bool IsFemale { get; }
         TKey Key { get; }
         string LocalFormIdHex { get; }
         string Name { get; }

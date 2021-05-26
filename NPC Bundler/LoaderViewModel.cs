@@ -122,6 +122,7 @@ namespace NPC_Bundler
         public string BasePluginName { get; set; }
         public string EditorId { get; set; }
         public TKey Key { get; set; }
+        public bool IsFemale { get; set; }
         public string LocalFormIdHex { get; set; }
         public string Name { get; set; }
         public List<NpcOverride<TKey>> Overrides { get; set; } = new List<NpcOverride<TKey>>();

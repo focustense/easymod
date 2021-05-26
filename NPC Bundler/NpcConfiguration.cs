@@ -23,6 +23,7 @@ namespace NPC_Bundler
         public string FaceModName { get; private set; }
         public string FacePluginName => faceConfig?.PluginName;
         public TKey Key => npc.Key;
+        public bool IsFemale => npc.IsFemale;
         public string LocalFormIdHex => npc.LocalFormIdHex;
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> Overrides { get; init; }
         public string Name => npc.Name;
@@ -125,8 +126,11 @@ namespace NPC_Bundler
         {
             FaceModName = modName;
             FaceModChanged?.Invoke();
-            if (!detectPlugin || string.IsNullOrEmpty(FaceModName))
+            if (!detectPlugin)
                 return;
+            // Null/empty mod name is used as a special case to indicate default, which may not have a "mod" if vanilla
+            if (string.IsNullOrEmpty(FaceModName))
+                SetFacePlugin(npc.BasePluginName, false);
             // It should be rare for the same mugshot to correspond to two plugins *with that NPC* in the load order.
             // A single mod might provide several optional add-on plugins that all modify different NPCs (or do totally
             // different things altogether). If this really does happen, the most logical thing to do is to pick the

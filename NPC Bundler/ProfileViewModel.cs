@@ -3,6 +3,7 @@ using PropertyChanged;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -133,7 +134,10 @@ namespace NPC_Bundler
             ClearNpcHighlights();
             SelectedNpc = npc;
             SelectedNpcOverrides = npc.Overrides;
-            Mugshots = Mugshot.GetMugshots(SelectedNpc, modPluginMapFactory.DefaultMap()).ToList().AsReadOnly();
+            Mugshots = Mugshot.GetMugshots(SelectedNpc, modPluginMapFactory.DefaultMap())
+                .OrderBy(x => x.ProvidingMod)
+                .ToList()
+                .AsReadOnly();
             SyncMugshotMod();
             npc.FaceModChanged += OnNpcFaceModChanged;
         }
@@ -169,14 +173,20 @@ namespace NPC_Bundler
         private void SyncMugshotMod()
         {
             foreach (var ms in Mugshots)
-                ms.IsSelectedSource = ms.ProvidingMod == SelectedNpc?.FaceModName;
+                ms.IsSelectedSource =
+                    ms.ProvidingMod == SelectedNpc?.FaceModName ||
+                    (string.IsNullOrEmpty(ms.ProvidingMod) && string.IsNullOrEmpty(SelectedNpc?.FaceModName));
         }
     }
 
     public record Mugshot(
-        string ProvidingMod, bool IsModInstalled, string[] ProvidingPlugins, string FileName)
+        string ProvidingMod, bool IsModInstalled, string[] ProvidingPlugins, string FileName, bool IsGeneric)
         : INotifyPropertyChanged
     {
+        private static readonly string AssetsDirectory = Path.Combine(
+            Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
+            "assets");
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public static bool Exists(string modName, string basePluginName, string localFormIdHex)
@@ -197,6 +207,7 @@ namespace NPC_Bundler
             var overridingPluginNames = new HashSet<string>(
                 npc.Overrides.Select(x => x.PluginName) ?? Enumerable.Empty<string>(),
                 StringComparer.OrdinalIgnoreCase);
+            var handledModNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var mugshotModDir in mugshotModDirs)
             {
                 var fileName =
@@ -207,14 +218,29 @@ namespace NPC_Bundler
                     var matchingPluginNames =
                         modPluginMap.GetPluginsForMod(modName).Where(f => overridingPluginNames.Contains(f)).ToArray();
                     yield return new Mugshot(
-                        modName,
-                        modPluginMap.IsModInstalled(modName),
-                        matchingPluginNames,
-                        fileName);
+                        modName, modPluginMap.IsModInstalled(modName), matchingPluginNames, fileName, false);
+                    handledModNames.Add(modName);
+                }
+            }
+            foreach (var pluginName in npc.Overrides.Select(x => x.PluginName))
+            {
+                var modNames = modPluginMap.GetModsForPlugin(pluginName)
+                    .Where(modName => !handledModNames.Contains(modName));
+                var isVanillaOrDlc = FileStructure.IsVanilla(pluginName) || FileStructure.IsDlc(pluginName);
+                if (isVanillaOrDlc)
+                    modNames = modNames.Concat(new[] { "" });
+                foreach (var modName in modNames.Distinct())
+                {
+                    var filePrefix = npc.IsFemale ? "female" : "male";
+                    var fileName = Path.Combine(AssetsDirectory, $"{filePrefix}-silhouette.png");
+                    yield return new Mugshot(
+                            modName, isVanillaOrDlc || modPluginMap.IsModInstalled(modName), new[] { pluginName },
+                            fileName, true);
                 }
             }
         }
 
+        public string ModDisplayName => !string.IsNullOrEmpty(ProvidingMod) ? ProvidingMod : "Default Vanilla";
         public bool IsHighlighted { get; set; }
         public bool IsModMissing => !IsModInstalled;
         public bool IsPluginLoaded => ProvidingPlugins.Length > 0;
