@@ -8,8 +8,23 @@
         mc:Ignorable="d"
         ui:WindowHelper.UseModernWindowStyle="True"
         Title="SSE NPC Bundler" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate x:Key="LoaderTemplate" DataType="local:MainViewModel">
+            <local:Loader DataContext="{Binding Loader}"/>
+        </DataTemplate>
+    </Window.Resources>
     <Grid>
-        <local:Loader DataContext="{Binding Path=Loader}" Visibility="{Binding Path=IsLoading, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+        <ContentControl Content="{Binding}">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsReady}" Value="False">
+                            <Setter Property="ContentTemplate" Value="{StaticResource LoaderTemplate}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
         <ui:NavigationView Header="{Binding Path=PageTitle}" Visibility="{Binding Path=IsReady, Converter={StaticResource BoolToVisibility}}" PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" SelectionChanged="NavigationView_SelectionChanged">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Tag="profile" Content="Profile" IsSelected="True"></ui:NavigationViewItem>

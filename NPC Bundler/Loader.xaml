@@ -6,7 +6,7 @@
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
              xmlns:local="clr-namespace:NPC_Bundler"
              xmlns:ui="http://schemas.modernwpf.com/2019"
-             d:DataContext="{d:DesignInstance Type=local:LoaderViewModel}"
+             d:DataContext="{d:DesignInstance Type=local:LoaderViewModel`1}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>

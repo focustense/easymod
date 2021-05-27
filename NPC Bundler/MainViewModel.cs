@@ -12,11 +12,11 @@ namespace NPC_Bundler
 
         public BuildViewModel<TKey> Build { get; private set; }
         public bool IsReady { get; private set; }
-        public LoaderViewModel<TKey> Loader { get; init; }
+        public LoaderViewModel<TKey> Loader { get; private init; }
         public LogViewModel Log { get; init; }
         public ProfileViewModel<TKey> Profile { get; private set; }
         public string PageTitle { get; set; }
-        public SettingsViewModel Settings { get; init; }
+        public SettingsViewModel Settings { get; private init; }
 
         private readonly IGameDataEditor<TKey> gameDataEditor;
 
