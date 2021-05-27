@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,9 +18,11 @@ namespace NPC_Bundler
 
         public static void Build<TKey>(
             IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, IArchiveProvider archiveProvider,
-            ModPluginMap modPluginMap, string outputModName, ProgressViewModel progress)
+            ModPluginMap modPluginMap, string outputModName, ProgressViewModel progress, ILogger logger)
             where TKey : struct
         {
+            var log = logger.ForContext("Type", "MergedFolder");
+
             var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
             if (string.IsNullOrEmpty(modRootDirectory))
             {
@@ -37,6 +40,7 @@ namespace NPC_Bundler
             progress.StartStage("Creating merge output directory");
             var outDir = Path.Combine(BundlerSettings.Default.ModRootDirectory, outputModName);
             Directory.CreateDirectory(outDir);
+            log.Information("Merge folder is ready at {MergeDirectoryName}", outDir);
 
             // The best way to avoid making this process obscenely complicated and having to iterate through all the
             // mod directories and BSAs multiple times is build an index of ALL of the files in ALL included mods ahead
@@ -74,19 +78,34 @@ namespace NPC_Bundler
                     };
                 })
                 .ToList();
+            log.Information(
+                "{ModCount} mods indexed containing {LooseFileCount} loose and {ArchiveFileCount} archived files",
+                fileIndices.Count,
+                fileIndices.Sum(x => x.LooseFiles.Count),
+                fileIndices.Sum(x => x.ArchiveFiles.Sum(a => a.Value.Count)));
             progress.JumpTo(0.05f);
 
             bool TryMergeFile(ModFileIndex index, string relativePath, out string outFileName, bool incProgress = true)
             {
+                log.Debug("Processing file: {SourceFileName}", relativePath);
                 outFileName = Path.Combine(outDir, relativePath);
                 if (File.Exists(outFileName))
-                    return false;
+                {
+                    log.Warning("File {MergeFileName} already exists and will be skipped.", outFileName);
+                    return true;
+                }
 
                 if (index.LooseFiles.Contains(relativePath))
                 {
+                    log.Debug(
+                        "File {SourceFileName} found as loose file in mod {ModName}",
+                        relativePath, index.ModName);
                     progress.ItemName = $"[{index.ModName}] - Loose - {relativePath}";
                     Directory.CreateDirectory(Path.GetDirectoryName(outFileName));
                     File.Copy(Path.Combine(index.ModPath, relativePath), outFileName);
+                    log.Information(
+                        "Copied {SourceFileName} from {ModPath} to {MergeFileName}",
+                        relativePath, index.ModPath, outFileName);
                     if (incProgress)
                         progress.CurrentProgress++;
                     return true;
@@ -98,15 +117,22 @@ namespace NPC_Bundler
                     .FirstOrDefault();
                 if (!string.IsNullOrEmpty(containingArchiveFile))
                 {
+                    log.Debug(
+                        "File {SourceFileName} found in archive {ArchiveName} belonging to mod {ModName}",
+                        relativePath, Path.GetFileName(containingArchiveFile), index.ModName);
                     var archiveShortName = Path.GetFileName(containingArchiveFile);
                     progress.ItemName = $"[{index.ModName}] - {archiveShortName} - {relativePath}";
                     Directory.CreateDirectory(Path.GetDirectoryName(outFileName));
                     archiveProvider.CopyToFile(containingArchiveFile, relativePath, outFileName);
+                    log.Information(
+                        "Extracted {SourceFileName} from {ArchiveName} in {ModPath} to {MergeFileName}",
+                        relativePath, Path.GetFileName(containingArchiveFile), index.ModPath, outFileName);
                     if (incProgress)
                         progress.CurrentProgress++;
                     return true;
                 }
 
+                log.Debug("File {SourceFileName} not found in mod {ModName}", relativePath, index.ModName);
                 return false;
             }
 
@@ -117,16 +143,45 @@ namespace NPC_Bundler
             // So, just make a copy of each set.
             var meshFileNames = new HashSet<string>(mergeInfo.Meshes);
             var morphFileNames = new HashSet<string>(mergeInfo.Morphs);
-            var textureFileNames = new HashSet<string>(mergeInfo.Textures);
+            var textureFileNames = mergeInfo.Textures
+                .Where(f => !FileStructure.IsFaceGen(f)) // FaceGen already covered in its own subtask
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var processedFaceTints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var referencedFaceTints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            void AddReferencedTextures(string meshFileName)
+            {
+                foreach (var rawRexturePath in GetReferencedTexturePaths(meshFileName))
+                {
+                    // Face tints are a little weird in terms of the rules we want to apply and the warnings we want to
+                    // generate. Missing facetints won't cause blackface like other facegen inconsistencies, they just
+                    // won't do anything at all (i.e. no "makeup" or warpaint). It is normal for a mod to edit an NPCs
+                    // face, and supply a head mesh, but no tint; it is also somewhat common, albeit annoying, for head
+                    // meshes to reference completely bogus and invalid face tints, which modders sometimes don't notice
+                    // because the game only looks at the facetint that *does* exist in the usual facegen path.
+                    //
+                    // What this all boils down to is that we should never expect a face tint texture to exist, *unless*
+                    // it is specifically referenced explicitly in the plugin's NPC_ record (i.e. already in the
+                    // textureFileNames), or implicitly in the head mesh. But the former is likely to be "somewhat bad"
+                    // in the sense of producing unwanted/unexpected results, whereas the latter is just an oddity and
+                    // we have no idea if it's really a problem. So we have to treat these two scenarios differently,
+                    // and track the "implicitly referenced but not present" face tints from those in NPC records.
+                    var texturePath = rawRexturePath.PrefixPath("textures");
+                    if (FileStructure.IsFaceGen(texturePath))
+                        referencedFaceTints.Add(texturePath);
+                    else
+                        textureFileNames.Add(texturePath);
+                }
+            }
+
             foreach (var index in fileIndices)
             {
-                progress.ItemName = $"[{index.ModName}]";
+                progress.ItemName = $"[{index.ModName}] - Checking requirements";
                 IterateAndDrain(meshFileNames, meshFileName =>
                 {
                     if (TryMergeFile(index, meshFileName, out var outFileName))
                     {
-                        foreach (var texturePath in GetReferencedTexturePaths(outFileName))
-                            textureFileNames.Add(texturePath.PrefixPath("textures"));
+                        AddReferencedTextures(outFileName);
                         return true;
                     }
                     return false;
@@ -146,13 +201,14 @@ namespace NPC_Bundler
                 {
                     var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
                     if (TryMergeFile(index, faceMeshFileName, out var outFaceMeshFileName, false))
-                    {
-                        foreach (var texturePath in GetReferencedTexturePaths(outFaceMeshFileName))
-                            textureFileNames.Add(texturePath.PrefixPath("textures"));
-                    }
+                        AddReferencedTextures(outFaceMeshFileName);
 
                     var faceTintFileName = FileStructure.GetFaceTintFileName(npc.BasePluginName, npc.LocalFormIdHex);
-                    TryMergeFile(index, faceTintFileName, out var _, false);
+                    if (TryMergeFile(index, faceTintFileName, out var _, false))
+                    {
+                        processedFaceTints.Add(faceTintFileName);
+                        textureFileNames.Remove(faceTintFileName);
+                    }
                 }
                 progress.CurrentProgress++;
             }
@@ -162,10 +218,27 @@ namespace NPC_Bundler
             progress.AdjustRemaining(textureFileNames.Count, 0.2f); // 95% when done
             foreach (var index in fileIndices)
             {
-                progress.ItemName = $"[{index.ModName}]";
-                IterateAndDrain(textureFileNames, textureFileName => TryMergeFile(index, textureFileName, out var _));
+                progress.ItemName = $"[{index.ModName}] - Checking requirements";
+                IterateAndDrain(textureFileNames, textureFileName =>
+                    processedFaceTints.Contains(textureFileName) || TryMergeFile(index, textureFileName, out var _));
             }
             progress.JumpTo(0.95f);
+
+            progress.StartStage("Checking for problems");
+            // Since we drain the sets as we copy files, anything left in the sets was by definition not found.
+            var missingFiles = meshFileNames.Concat(morphFileNames).Concat(textureFileNames);
+            foreach (var sourceFileName in missingFiles)
+                log.Warning("Couldn't find a source for file {SourceFileName} in any included mods.", sourceFileName);
+            if (missingFiles.Any())
+                log.Warning(MissingFileWarningHelpText);
+
+            referencedFaceTints.ExceptWith(processedFaceTints);
+            foreach (var sourceFileName in referencedFaceTints)
+                log.Information(
+                    "Face tint file {SourceFileName} is implicitly referenced by the head mesh in its chosen mod, " +
+                    "but is not provided by that mod. This is often harmless but MAY produce unexpected results, " +
+                    "such as missing makeup/warpaint.",
+                    sourceFileName);
 
             progress.StartStage("Done");
             progress.CurrentProgress = progress.MaxProgress;
@@ -195,6 +268,20 @@ namespace NPC_Bundler
             }
             set.ExceptWith(processed);
         }
+
+        private static readonly string MissingFileWarningHelpText = @"
+***** IMPORTANT: Missing files are NOT necessarily errors! *****
+
+These warnings are for debugging purposes only, and simply mean that the merged mod will not carry its own version of
+the file; instead, the game will obtain it from the winning mod in your mod order.
+
+This is completely normal for mods that depend on vanilla assets or other asset-providing mods, such as Beards or KS
+Hairdos. Most NPC overhauls do NOT repackage shared assets, so these warnings are expected. As long as the required mods
+are installed, you won't have any problems.
+
+Use these warnings as a guide if you experience CTDs, blackface, or texture bugs (purple/white textures), and ensure
+that the resource mods are installed correctly. If you aren't having such issues, you can ignore the warnings.
+";
     }
 
     class ModFileIndex

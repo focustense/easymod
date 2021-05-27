@@ -63,9 +63,19 @@ namespace NPC_Bundler
             LogCurrentStage();
         }
 
+        protected void OnErrorMessageChanged()
+        {
+            LogError();
+        }
+
         private void LogCurrentStage()
         {
             log?.Information("[{TaskName}] - {StageName}", TaskName, StageName);
+        }
+
+        private void LogError()
+        {
+            log?.Error("[{TaskName}] - {StageName} - {ErrorMessage}", TaskName, StageName, ErrorMessage);
         }
     }
 }

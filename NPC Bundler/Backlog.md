@@ -4,9 +4,6 @@
 
 - Auto-save/auto-load profiles
 - Built-in BSA archiving
-- Build operations should output to app log
-- Secondary log (logfile) in case of program crashes
-  - On crash detected, try to read and copy last bits of XEdit log
 - Preserve profile state on tab change (sort, filter, scroll position, etc.)
 - "NoMO" support - plugin only
 - Filter NPCs by Plugin, EditorID, etc. (type to search)
@@ -39,3 +36,6 @@
 - Alpha prototype
 - Convert from XeLibSharp to Mutagen
 - Placeholder images for face mods without mugshots
+- Build operations should output to app log
+- Secondary log (logfile) in case of program crashes
+  - ~~On crash detected, try to read and copy last bits of XEdit log~~

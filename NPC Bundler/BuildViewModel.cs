@@ -41,7 +41,7 @@ namespace NPC_Bundler
         private readonly ArchiveFileMap archiveFileMap;
         private readonly IArchiveProvider archiveProvider;
         private readonly IMergedPluginBuilder<TKey> builder;
-        private readonly ILogger logger;
+        private readonly ILogger log;
         private readonly IModPluginMapFactory modPluginMapFactory;
 
         public BuildViewModel(
@@ -51,14 +51,14 @@ namespace NPC_Bundler
             this.archiveFileMap = archiveFileMap;
             this.builder = builder;
             this.archiveProvider = archiveProvider;
-            this.logger = logger.ForContext<BuildViewModel<TKey>>();
+            this.log = logger.ForContext<BuildViewModel<TKey>>();
             this.modPluginMapFactory = modPluginMapFactory;
             Npcs = npcs.ToList().AsReadOnly();
         }
 
         public async void BeginBuild()
         {
-            Progress = new BuildProgressViewModel(logger);
+            Progress = new BuildProgressViewModel(log);
             await Task.Run(() =>
             {
                 OutputDirectory = Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName);
@@ -66,7 +66,7 @@ namespace NPC_Bundler
                 var mergeInfo = builder.Build(Npcs, OutputModName, Progress.MergedPlugin);
                 var modPluginMap = modPluginMapFactory.DefaultMap();
                 MergedFolder.Build(
-                    Npcs, mergeInfo, archiveProvider, modPluginMap, OutputModName, Progress.MergedFolder);
+                    Npcs, mergeInfo, archiveProvider, modPluginMap, OutputModName, Progress.MergedFolder, log);
             }).ConfigureAwait(true);
             IsReadyToBuild = false;
             IsBuildCompleted = true;
