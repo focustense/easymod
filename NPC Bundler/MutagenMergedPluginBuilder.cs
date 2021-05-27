@@ -1,5 +1,7 @@
 ﻿using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
+using Serilog;
+using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,10 +16,12 @@ namespace NPC_Bundler
         public static readonly string MergeFileName = "NPC Appearances Merged.esp";
 
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
+        private readonly ILogger log;
 
-        public MutagenMergedPluginBuilder(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment)
+        public MutagenMergedPluginBuilder(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, ILogger log)
         {
             this.environment = environment;
+            this.log = log.ForContext<MutagenMergedPluginBuilder>();
         }
 
         public MergedPluginResult Build(
@@ -26,7 +30,12 @@ namespace NPC_Bundler
             progress.StartStage("Backing up previous merge");
             var mergeFilePath = Path.Combine(environment.GameFolderPath, MergeFileName);
             if (File.Exists(mergeFilePath))
-                File.Move(mergeFilePath, $"{mergeFilePath}.{DateTime.Now:yyyyMMdd_hhmmss}.bak", true);
+            {
+                var backupPath = $"{mergeFilePath}.{DateTime.Now:yyyyMMdd_hhmmss}.bak";
+                log.Debug("Moved {mergeFilePath} to {backupPath}", mergeFilePath, backupPath);
+                File.Move(mergeFilePath, backupPath, true);
+                log.Information("Moved {mergeFilePath} to {backupPath}", mergeFilePath, backupPath);
+            }
 
             progress.StartStage("Starting the merge");
             var mergedMod = new SkyrimMod(ModKey.FromNameAndExtension(MergeFileName), SkyrimRelease.SkyrimSE);
@@ -38,17 +47,29 @@ namespace NPC_Bundler
             progress.MaxProgress = (int)Math.Floor(npcs.Count * 2 * 1.05);
             progress.StartStage("Importing NPC defaults");
             foreach (var npc in npcs)
-            {
-                progress.CurrentProgress++;
-                if (!npc.HasCustomizations())
-                    continue;
-                progress.ItemName = $"{npc.DescriptiveLabel}; Source: {npc.DefaultPluginName}";
-                var defaultModKey = ModKey.FromNameAndExtension(npc.DefaultPluginName);
-                var defaultNpc = environment.LoadOrder.GetModNpc(defaultModKey, npc.Key);
-                var mergedNpcRecord = mergedMod.Npcs.GetOrAddAsOverride(defaultNpc);
-                customizedNpcs.Add(Tuple.Create(npc, mergedNpcRecord));
-                masters.Add(ModKey.FromNameAndExtension(npc.DefaultPluginName));
-            }
+                using (LogContext.PushProperty("NPC", new { npc.Key, npc.EditorId, npc.Name }))
+                using (LogContext.PushProperty("DefaultPluginName", npc.DefaultPluginName))
+                {
+                    log.Debug("" +
+                        "Importing NPC defaults for {NpcLabel} from {DefaultPluginName}",
+                        npc.DescriptiveLabel, npc.DefaultPluginName);
+                    progress.CurrentProgress++;
+                    if (!npc.HasCustomizations())
+                    {
+                        log.Debug("NPC has no customizations and will be skipped.");
+                        continue;
+                    }
+                    log.Debug("Copying NPC defaults", npc.DefaultPluginName);
+                    progress.ItemName = $"{npc.DescriptiveLabel}; Source: {npc.DefaultPluginName}";
+                    var defaultModKey = ModKey.FromNameAndExtension(npc.DefaultPluginName);
+                    var defaultNpc = environment.LoadOrder.GetModNpc(defaultModKey, npc.Key);
+                    var mergedNpcRecord = mergedMod.Npcs.GetOrAddAsOverride(defaultNpc);
+                    customizedNpcs.Add(Tuple.Create(npc, mergedNpcRecord));
+                    masters.Add(ModKey.FromNameAndExtension(npc.DefaultPluginName));
+                    log.Information(
+                        "Imported NPC defaults for {NpcLabel} from {DefaultPluginName}",
+                        npc.DescriptiveLabel, npc.DefaultPluginName);
+                }
             progress.JumpTo(0.25f);
 
             // Merge-specific state, for tracking which records have been/still need to be duplicated.
@@ -61,23 +82,43 @@ namespace NPC_Bundler
             {
                 if (link.FormKeyNullable == null)
                     return null;
-                else if (masters.Contains(link.FormKey.ModKey))
+
+                log.Debug("Clone requested for {Type} ({FormKey})", link.Type.Name, link.FormKey);
+                if (masters.Contains(link.FormKey.ModKey))
+                {
+                    log.Debug("Record {FormKey} is already provided by the merged plugin's masters.", link.FormKey);
                     return link.FormKey;
+                }
                 else if (duplicatedRecords.TryGetValue(link.FormKey, out var cachedCopy))
+                {
+                    log.Debug(
+                        "Record {FormKey} has already been cloned as {ClonedFormKey}.",
+                        link.FormKey, cachedCopy.FormKey);
                     return cachedCopy.FormKey;
+                }
                 else
                 {
+                    log.Debug("Beginning clone for record {FormKey}", link.FormKey);
                     var sourceRecord = link.Resolve(environment.LinkCache);
                     var duplicateRecord = group.AddNew();
                     duplicateRecord.DeepCopyIn(sourceRecord);
                     duplicatedRecords.Add(link.FormKey, duplicateRecord);
+                    log.Debug(
+                        "Clone completed for {FormKey} -> {ClonedFormKey}; performing additional setup",
+                        link.FormKey, duplicateRecord.FormKey);
                     setup?.Invoke(duplicateRecord);
+                    log.Information(
+                        "Cloned {Type} '{EditorId}' ({FormKey}) as {ClonedFormKey}",
+                        link.Type.Name, sourceRecord.EditorID, link.FormKey, duplicateRecord.FormKey);
                     return duplicateRecord.FormKey;
                 }
             }
 
             void MakeHeadPartStandalone(HeadPart headPart)
             {
+                log.Debug(
+                    "Processing head part {FormKey} '{EditorId}' for cloning",
+                    headPart.FormKey, headPart.EditorID);
                 headPart.TextureSet.SetTo(MakeStandalone(headPart.TextureSet, mergedMod.TextureSets));
                 var mergedExtraParts = headPart.ExtraParts
                     .Select(x => MakeStandalone(x, mergedMod.HeadParts, hp => MakeHeadPartStandalone(hp)))
@@ -86,6 +127,9 @@ namespace NPC_Bundler
                     .ToList();
                 headPart.ExtraParts.Clear();
                 headPart.ExtraParts.AddRange(mergedExtraParts);
+                log.Information(
+                    "Finished processing cloned head part {FormKey} '{EditorId}'",
+                    headPart.EditorID, headPart.FormKey);
             }
 
             progress.StartStage("Importing face overrides");
@@ -95,28 +139,41 @@ namespace NPC_Bundler
             {
                 var npc = npcTuple.Item1;
                 var mergedNpcRecord = npcTuple.Item2;
-                progress.ItemName = $"{npc.DescriptiveLabel}; Source: {npc.FacePluginName}";
-                var faceModKey = ModKey.FromNameAndExtension(npc.FacePluginName);
-                var faceMod = environment.LoadOrder.GetIfEnabled(faceModKey).Mod;
-                var faceNpcRecord = environment.LoadOrder.GetModNpc(faceModKey, npc.Key);
-                // "Deep copy" doesn't copy dependencies, so we only do this for non-referential attributes.
-                mergedNpcRecord.DeepCopyIn(faceNpcRecord, new Npc.TranslationMask(defaultOn: false)
+                using (LogContext.PushProperty("NPC", new { npc.Key, npc.EditorId, npc.Name }))
+                using (LogContext.PushProperty("FacePluginName", npc.FacePluginName))
                 {
-                    FaceMorph = true,
-                    FaceParts = true,
-                    HairColor = true,
-                    TextureLighting = true,
-                    TintLayers = true,
-                });
-                mergedNpcRecord.HeadParts.Clear();                    
-                foreach (var sourceHeadPart in faceNpcRecord.HeadParts)
-                {
-                    var mergedHeadPart =
-                        MakeStandalone(sourceHeadPart, mergedMod.HeadParts, hp => MakeHeadPartStandalone(hp));
-                    mergedNpcRecord.HeadParts.Add(mergedHeadPart.Value);
+                    log.Debug(
+                        "Importing NPC face attributes for {NpcLabel} from {FacePluginName}",
+                        npc.DescriptiveLabel, npc.FacePluginName);
+                    progress.ItemName = $"{npc.DescriptiveLabel}; Source: {npc.FacePluginName}";
+                    var faceModKey = ModKey.FromNameAndExtension(npc.FacePluginName);
+                    var faceMod = environment.LoadOrder.GetIfEnabled(faceModKey).Mod;
+                    var faceNpcRecord = environment.LoadOrder.GetModNpc(faceModKey, npc.Key);
+                    log.Debug("Importing shallow overrides", npc.FacePluginName);
+                    // "Deep copy" doesn't copy dependencies, so we only do this for non-referential attributes.
+                    mergedNpcRecord.DeepCopyIn(faceNpcRecord, new Npc.TranslationMask(defaultOn: false)
+                    {
+                        FaceMorph = true,
+                        FaceParts = true,
+                        HairColor = true,
+                        TextureLighting = true,
+                        TintLayers = true,
+                    });
+                    log.Debug("Importing head parts", npc.FacePluginName);
+                    mergedNpcRecord.HeadParts.Clear();
+                    foreach (var sourceHeadPart in faceNpcRecord.HeadParts)
+                    {
+                        var mergedHeadPart =
+                            MakeStandalone(sourceHeadPart, mergedMod.HeadParts, hp => MakeHeadPartStandalone(hp));
+                        mergedNpcRecord.HeadParts.Add(mergedHeadPart.Value);
+                    }
+                    log.Debug("Importing face texture", npc.FacePluginName);
+                    mergedNpcRecord.HeadTexture.SetTo(MakeStandalone(faceNpcRecord.HeadTexture, mergedMod.TextureSets));
+                    log.Information(
+                        "Completed face import for {NpcLabel} from {FacePluginName}",
+                        npc.DescriptiveLabel, npc.FacePluginName);
+                    progress.CurrentProgress++;
                 }
-                mergedNpcRecord.HeadTexture.SetTo(MakeStandalone(faceNpcRecord.HeadTexture, mergedMod.TextureSets));
-                progress.CurrentProgress++;
             }
             progress.JumpTo(0.95f);
 

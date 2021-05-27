@@ -18,26 +18,34 @@ namespace NPC_Bundler
         public string PageTitle { get; set; }
         public SettingsViewModel Settings { get; private init; }
 
+        protected ILogger Logger { get; init; }
+
         private readonly IGameDataEditor<TKey> gameDataEditor;
 
         public MainViewModel()
         {
             var logViewModelSink = new LogViewModelSink();
-            var logger = new LoggerConfiguration()
+            Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
-                .WriteTo.File(ProgramData.GetLogFileName())
+                .WriteTo.File(ProgramData.GetLogFileName(),
+                    buffered: true,
+                    flushToDiskInterval: TimeSpan.FromMilliseconds(500))
                 .WriteTo.Sink(logViewModelSink)
                 .CreateLogger();
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                Logger.Error(e.ExceptionObject as Exception, "Exception was not handled");
+            };
 
             gameDataEditor = CreateEditor();
 
             Log = new LogViewModel(gameDataEditor.Log);
             logViewModelSink.ViewModel = Log;
-            logger.Information("Initialized");
+            Logger.Information("Initialized");
             Log.ResumeExternalMonitoring();
 
             Settings = new SettingsViewModel();
-            Loader = new LoaderViewModel<TKey>(gameDataEditor, Log, logger);
+            Loader = new LoaderViewModel<TKey>(gameDataEditor, Log, Logger);
             Loader.Loaded += () => {
                 Log.PauseExternalMonitoring();
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
@@ -45,7 +53,7 @@ namespace NPC_Bundler
                 var archiveFileMap = new ArchiveFileMap(gameDataEditor.ArchiveProvider);
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, gameDataEditor.MergedPluginBuilder, Loader.ModPluginMapFactory,
-                    Profile.GetAllNpcConfigurations(), archiveFileMap);
+                    Profile.GetAllNpcConfigurations(), archiveFileMap, Logger);
                 IsReady = true;
             };
         }
@@ -58,7 +66,7 @@ namespace NPC_Bundler
     {
         protected override IGameDataEditor<FormKey> CreateEditor()
         {
-            return new MutagenAdapter();
+            return new MutagenAdapter(Logger);
         }
     }
 #else

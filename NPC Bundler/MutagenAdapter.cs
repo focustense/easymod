@@ -1,5 +1,6 @@
 ﻿using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -20,11 +21,14 @@ namespace NPC_Bundler
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod);
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }
 
-        public MutagenAdapter()
+        private readonly ILogger log;
+
+        public MutagenAdapter(ILogger log)
         {
             if (!GameLocations.TryGetDataFolder(GameRelease.SkyrimSE, out var dataFolder))
                 throw new Exception("Couldn't find SkyrimSE game data folder");
             GameDataFolder = dataFolder;
+            this.log = log;
         }
 
         public IEnumerable<Tuple<string, bool>> GetAvailablePlugins()
@@ -62,7 +66,7 @@ namespace NPC_Bundler
                     new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(GameDataFolder, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
                 ArchiveProvider = new MutagenArchiveProvider(Environment);
-                MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment);
+                MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment);
             });
         }

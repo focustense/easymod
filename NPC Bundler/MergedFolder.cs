@@ -167,6 +167,7 @@ namespace NPC_Bundler
             }
             progress.JumpTo(0.95f);
 
+            progress.StartStage("Done");
             progress.CurrentProgress = progress.MaxProgress;
         }
 

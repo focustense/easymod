@@ -1,4 +1,5 @@
 ﻿using PropertyChanged;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -40,22 +41,24 @@ namespace NPC_Bundler
         private readonly ArchiveFileMap archiveFileMap;
         private readonly IArchiveProvider archiveProvider;
         private readonly IMergedPluginBuilder<TKey> builder;
+        private readonly ILogger logger;
         private readonly IModPluginMapFactory modPluginMapFactory;
 
         public BuildViewModel(
             IArchiveProvider archiveProvider, IMergedPluginBuilder<TKey> builder, IModPluginMapFactory modPluginMapFactory,
-            IEnumerable<NpcConfiguration<TKey>> npcs, ArchiveFileMap archiveFileMap)
+            IEnumerable<NpcConfiguration<TKey>> npcs, ArchiveFileMap archiveFileMap, ILogger logger)
         {
             this.archiveFileMap = archiveFileMap;
             this.builder = builder;
             this.archiveProvider = archiveProvider;
+            this.logger = logger.ForContext<BuildViewModel<TKey>>();
             this.modPluginMapFactory = modPluginMapFactory;
             Npcs = npcs.ToList().AsReadOnly();
         }
 
         public async void BeginBuild()
         {
-            Progress = new BuildProgressViewModel();
+            Progress = new BuildProgressViewModel(logger);
             await Task.Run(() =>
             {
                 OutputDirectory = Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName);
@@ -243,10 +246,11 @@ namespace NPC_Bundler
         public ProgressViewModel MergedFolder { get; init; }
         public ProgressViewModel MergedPlugin { get; init; } 
 
-        public BuildProgressViewModel()
+        public BuildProgressViewModel(ILogger logger)
         {
-            MergedPlugin = new ProgressViewModel("Merged Plugin");
-            MergedFolder = new ProgressViewModel("Merged Folder", true, "Waiting for merged plugin");
+            MergedPlugin = new ProgressViewModel("Merged Plugin", logger.ForContext("TaskName", "Merged Plugin"));
+            MergedFolder = new ProgressViewModel(
+                "Merged Folder", logger.ForContext("TaskName", "Merged Folder"), true, "Waiting for merged plugin");
         }
     }
 }

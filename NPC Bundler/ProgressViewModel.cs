@@ -1,4 +1,5 @@
 ﻿using PropertyChanged;
+using Serilog;
 using System;
 using System.ComponentModel;
 
@@ -22,13 +23,20 @@ namespace NPC_Bundler
         [DependsOn("CurrentProgress", "MaxProgress")]
         public float ProgressPercent => MaxProgress != 0 ? (float)CurrentProgress / MaxProgress : 0;
         public string StageName { get; set; }
-        public string TaskName { get; init; }
+        public string TaskName { get; private init; }
 
-        public ProgressViewModel(string taskName, bool startPaused = false, string defaultStageName = "Not started")
+        private readonly ILogger log;
+
+        public ProgressViewModel(
+            string taskName, ILogger log = null, bool startPaused = false, string defaultStageName = "Not started")
         {
             TaskName = taskName;
             StageName = defaultStageName;
             IsPaused = startPaused;
+            this.log = log;
+
+            if (!string.IsNullOrEmpty(defaultStageName))
+                LogCurrentStage();
         }
 
         public void AdjustRemaining(int remainingProgress, float percentOfTotal)
@@ -52,6 +60,12 @@ namespace NPC_Bundler
             IsPaused = false;
             StageName = stageName;
             ItemName = itemName;
+            LogCurrentStage();
+        }
+
+        private void LogCurrentStage()
+        {
+            log?.Information("[{TaskName}] - {StageName}", TaskName, StageName);
         }
     }
 }
