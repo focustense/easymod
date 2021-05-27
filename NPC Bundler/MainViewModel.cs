@@ -1,4 +1,5 @@
 ﻿using Mutagen.Bethesda;
+using Serilog;
 using System;
 using System.ComponentModel;
 
@@ -18,16 +19,27 @@ namespace NPC_Bundler
         public SettingsViewModel Settings { get; init; }
 
         private readonly IGameDataEditor<TKey> gameDataEditor;
-        private readonly IMergedPluginBuilder<TKey> mergedPluginBuilder;
 
         public MainViewModel()
         {
+            var logViewModelSink = new LogViewModelSink();
+            var logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .WriteTo.File(ProgramData.GetLogFileName())
+                .WriteTo.Sink(logViewModelSink)
+                .CreateLogger();
+
             gameDataEditor = CreateEditor();
 
             Log = new LogViewModel(gameDataEditor.Log);
+            logViewModelSink.ViewModel = Log;
+            logger.Information("Initialized");
+            Log.ResumeExternalMonitoring();
+
             Settings = new SettingsViewModel();
-            Loader = new LoaderViewModel<TKey>(gameDataEditor, Log);
+            Loader = new LoaderViewModel<TKey>(gameDataEditor, Log, logger);
             Loader.Loaded += () => {
+                Log.PauseExternalMonitoring();
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
                 Profile = new ProfileViewModel<TKey>(Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames);
                 var archiveFileMap = new ArchiveFileMap(gameDataEditor.ArchiveProvider);

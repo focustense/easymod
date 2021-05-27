@@ -18,12 +18,12 @@ namespace NPC_Bundler
         private void Page_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (e.NewValue == null && e.OldValue is MainViewModel model)
-                model.Log.Pause();
+                model.Log.PauseExternalMonitoring();
         }
 
         private void Page_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            Model.Resume();
+            Model.ResumeExternalMonitoring();
         }
     }
 }

@@ -16,7 +16,7 @@ namespace NPC_Bundler
 
         private readonly IExternalLog externalLog;
 
-        private bool isActive = false;
+        private bool isExternalMonitoringActive = false;
 
         public LogViewModel(IExternalLog externalLog)
         {
@@ -27,27 +27,27 @@ namespace NPC_Bundler
         {
             // In case we're not actively monitoring, this preserves chronological order between xEdit messages and
             // app-originated messages.
-            if (!isActive)
+            if (!isExternalMonitoringActive)
                 RefreshExternalMessages();
             Text += $"[NpcBundler] {message}\n";
         }
 
-        public void Pause()
+        public void PauseExternalMonitoring()
         {
-            isActive = false;
+            isExternalMonitoringActive = false;
         }
 
-        public void Resume()
+        public void ResumeExternalMonitoring()
         {
-            if (isActive)
+            if (isExternalMonitoringActive)
                 return;
-            isActive = true;
+            isExternalMonitoringActive = true;
             Task.Run(MonitorExternalMessages);
         }
 
         private async Task MonitorExternalMessages()
         {
-            while (isActive)
+            while (isExternalMonitoringActive)
             {
                 RefreshExternalMessages();
                 await Task.Delay(PollInterval);
