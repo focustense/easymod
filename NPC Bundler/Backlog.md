@@ -6,7 +6,6 @@
 - Built-in BSA archiving
 - Preserve profile state on tab change (sort, filter, scroll position, etc.)
 - "NoMO" support - plugin only
-- Filter NPCs by Plugin, EditorID, etc. (type to search)
 - Moar Mugshots
 - Mugshot "redirects", e.g. if Hair Physics Version looks same as original
 - Bug: ESP/BSA files remain locked until program exit
@@ -39,3 +38,4 @@
 - Build operations should output to app log
 - Secondary log (logfile) in case of program crashes
   - ~~On crash detected, try to read and copy last bits of XEdit log~~
+- Filter NPCs by Plugin, EditorID, etc. (type to search)

@@ -91,12 +91,52 @@
                 </ui:SimpleStackPanel>
             </Grid>
         </Border>
-        <DataGrid x:Name="NpcDataGrid" ItemsSource="{Binding DisplayedNpcs}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" Grid.Column="0" Grid.Row="1" SelectionChanged="NpcDataGrid_SelectionChanged">
+        <DataGrid x:Name="NpcDataGrid" ItemsSource="{Binding DisplayedNpcs}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" Grid.Column="0" Grid.Row="1" Loaded="NpcDataGrid_Loaded" SelectionChanged="NpcDataGrid_SelectionChanged">
+            <DataGrid.Resources>
+                <DataTemplate x:Key="HeaderFilterTemplate">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="{Binding HeaderText, Mode=OneWay}" Grid.Row="0"/>
+                        <local:MiniSearchBox Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" d:Text="test"/>
+                    </Grid>
+                </DataTemplate>
+                <Style x:Key="NpcDataGridHeaderStyle" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Style.Resources>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        </Style>
+                    </Style.Resources>
+                </Style>
+            </DataGrid.Resources>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Base Plugin" Width="180" Binding="{Binding BasePluginName}"/>
-                <DataGridTextColumn Header="Form ID" Width="100" Binding="{Binding LocalFormIdHex}"/>
-                <DataGridTextColumn Header="Editor ID" Width="200" Binding="{Binding EditorId}"/>
-                <DataGridTextColumn Header="Name" Width="*" Binding="{Binding Name}"/>
+                <DataGridTextColumn HeaderStyle="{StaticResource NpcDataGridHeaderStyle}" Width="180" Binding="{Binding BasePluginName}">
+                    <DataGridTextColumn.Header>
+                        <ContentPresenter ContentTemplate="{StaticResource HeaderFilterTemplate}"
+                                          Content="{Binding DataContext.Columns.BasePluginName, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+                <DataGridTextColumn Width="100" Binding="{Binding LocalFormIdHex}">
+                    <DataGridTextColumn.Header>
+                        <ContentPresenter ContentTemplate="{StaticResource HeaderFilterTemplate}"
+                                          Content="{Binding DataContext.Columns.LocalFormIdHex, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+                <DataGridTextColumn Width="200" Binding="{Binding EditorId}">
+                    <DataGridTextColumn.Header>
+                        <ContentPresenter ContentTemplate="{StaticResource HeaderFilterTemplate}"
+                                          Content="{Binding DataContext.Columns.EditorId, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+                <DataGridTextColumn Width="*" Binding="{Binding Name}">
+                    <DataGridTextColumn.Header>
+                        <ContentPresenter ContentTemplate="{StaticResource HeaderFilterTemplate}"
+                                          Content="{Binding DataContext.Columns.Name, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
         <GridSplitter HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5" Margin="4,0" Grid.Column="1" Grid.Row="1"></GridSplitter>

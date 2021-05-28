@@ -40,6 +40,20 @@
                 <Setter Property="FontWeight" Value="Medium"/>
             </Style>
 
+            <Style TargetType="TextBox" x:Key="MiniSearchBoxStyle" BasedOn="{StaticResource DefaultTextBoxStyle}">
+                <Setter Property="BorderBrush" Value="CornflowerBlue"/>
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="Foreground" Value="CornflowerBlue"/>
+                <Setter Property="MinHeight" Value="0"/>
+                <Setter Property="Margin" Value="0,2,0,4"/>
+                <Setter Property="Padding" Value="3"/>
+                <Style.Triggers>
+                    <Trigger Property="Text" Value="">
+                        <Setter Property="BorderBrush" Value="{StaticResource SystemControlBackgroundBaseMediumLowRevealBorderBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
             <Style TargetType="Run" x:Key="CodeStyle">
                 <Setter Property="FontFamily" Value="Courier New"/>
             </Style>

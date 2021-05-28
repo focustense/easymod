@@ -16,12 +16,21 @@ namespace NPC_Bundler
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [DependsOn("NpcConfigurations", "OnlyFaceOverrides", "ShowDlcOverrides", "ShowSinglePluginOverrides")]
+        public ColumnDefinitions Columns { get; private init; }
+
+        [DependsOn(
+            "NpcConfigurations", "OnlyFaceOverrides", "ShowDlcOverrides", "ShowSinglePluginOverrides",
+            "DisplayedNpcsSentinel")]
         public IEnumerable<NpcConfiguration<TKey>> DisplayedNpcs
         {
             get {
                 var minOverrideCount = ShowSinglePluginOverrides ? 1 : 2;
-                return GetAllNpcConfigurations()
+                var displayedNpcs = GetAllNpcConfigurations();
+                ApplyFilter(ref displayedNpcs, Columns.BasePluginName, x => x.BasePluginName);
+                ApplyFilter(ref displayedNpcs, Columns.LocalFormIdHex, x => x.LocalFormIdHex);
+                ApplyFilter(ref displayedNpcs, Columns.EditorId, x => x.EditorId);
+                ApplyFilter(ref displayedNpcs, Columns.Name, x => x.Name);
+                return displayedNpcs
                     .Where(x => x.GetOverrideCount(ShowDlcOverrides, !OnlyFaceOverrides) >= minOverrideCount);
             }
         }
@@ -35,6 +44,10 @@ namespace NPC_Bundler
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> SelectedNpcOverrides { get; private set; }
         public bool ShowDlcOverrides { get; set; }
         public bool ShowSinglePluginOverrides { get; set; } = true;
+
+        // PropertyChanged.Fody doesn't have supported for "nested" properties, so this is a convenient way for an
+        // internal handler to force the DisplayedNpcs to update (just invert the value).
+        protected bool DisplayedNpcsSentinel { get; private set; }
 
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly Dictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
@@ -53,6 +66,14 @@ namespace NPC_Bundler
                 npcConfigurations.Add(npc.Key, new NpcConfiguration<TKey>(npc, modPluginMapFactory, masterNameSet));
             }
             this.npcOrder = npcOrder.AsReadOnly();
+
+            Columns = new()
+            {
+                BasePluginName = RegisterNpcGridColumn("Base Plugin"),
+                EditorId = RegisterNpcGridColumn("Editor ID"),
+                LocalFormIdHex = RegisterNpcGridColumn("Form ID"),
+                Name = RegisterNpcGridColumn("Name"),
+            };
         }
 
         public IEnumerable<NpcConfiguration<TKey>> GetAllNpcConfigurations()
@@ -133,13 +154,14 @@ namespace NPC_Bundler
                 SelectedNpc.FaceModChanged -= OnNpcFaceModChanged;
             ClearNpcHighlights();
             SelectedNpc = npc;
-            SelectedNpcOverrides = npc.Overrides;
+            SelectedNpcOverrides = npc?.Overrides;
             Mugshots = Mugshot.GetMugshots(SelectedNpc, modPluginMapFactory.DefaultMap())
                 .OrderBy(x => x.ProvidingMod)
                 .ToList()
                 .AsReadOnly();
             SyncMugshotMod();
-            npc.FaceModChanged += OnNpcFaceModChanged;
+            if (npc != null)
+                npc.FaceModChanged += OnNpcFaceModChanged;
         }
 
         public void SelectOverride(NpcOverrideConfiguration<TKey> overrideConfig)
@@ -158,6 +180,16 @@ namespace NPC_Bundler
             SyncMugshotMod();
         }
 
+        private static void ApplyFilter(
+            ref IEnumerable<NpcConfiguration<TKey>> npcs, DataGridColumn column,
+            Func<NpcConfiguration<TKey>, string> propertySelector)
+        {
+            if (string.IsNullOrEmpty(column?.FilterText))
+                return;
+            npcs = npcs.Where(x =>
+                propertySelector(x)?.Contains(column.FilterText, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
         private void ClearNpcHighlights()
         {
             foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration<TKey>>())
@@ -170,12 +202,32 @@ namespace NPC_Bundler
             SyncMugshotMod();
         }
 
+        private DataGridColumn RegisterNpcGridColumn(string headerText)
+        {
+            var column = new DataGridColumn(headerText);
+            column.PropertyChanged += (_, _) => UpdateNpcColumnFilters();
+            return column;
+        }
+
         private void SyncMugshotMod()
         {
             foreach (var ms in Mugshots)
                 ms.IsSelectedSource =
                     ms.ProvidingMod == SelectedNpc?.FaceModName ||
                     (string.IsNullOrEmpty(ms.ProvidingMod) && string.IsNullOrEmpty(SelectedNpc?.FaceModName));
+        }
+
+        private void UpdateNpcColumnFilters()
+        {
+            DisplayedNpcsSentinel = !DisplayedNpcsSentinel;
+        }
+
+        public class ColumnDefinitions
+        {
+            public DataGridColumn BasePluginName { get; init; }
+            public DataGridColumn LocalFormIdHex { get; init; }
+            public DataGridColumn EditorId { get; init; }
+            public DataGridColumn Name { get; init; }
         }
     }
 
