@@ -49,23 +49,43 @@ namespace NPC_Bundler
         // internal handler to force the DisplayedNpcs to update (just invert the value).
         protected bool DisplayedNpcsSentinel { get; private set; }
 
+        private readonly ProfileEventLog profileEventLog;
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly Dictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
         private readonly IReadOnlyList<TKey> npcOrder;
 
         public ProfileViewModel(
-            IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory, IEnumerable<string> masterNames)
+            IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory, IEnumerable<string> masterNames,
+            string eventLogFileName)
         {
             this.modPluginMapFactory = modPluginMapFactory;
             var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
             var masterNameSet = new HashSet<string>(masterNames);
+
             var npcOrder = new List<TKey>();
             foreach (var npc in npcsWithOverrides)
             {
                 npcOrder.Add(npc.Key);
-                npcConfigurations.Add(npc.Key, new NpcConfiguration<TKey>(npc, modPluginMapFactory, masterNameSet));
+                var npcConfig = new NpcConfiguration<TKey>(npc, modPluginMapFactory, masterNameSet);
+                npcConfigurations.Add(npc.Key, npcConfig);
             }
             this.npcOrder = npcOrder.AsReadOnly();
+
+            var restored = RestoreProfileAutosave(eventLogFileName).ToLookup(x => x.Item1.Key, x => x.Item2);
+            profileEventLog = new ProfileEventLog(eventLogFileName);
+            var allProfileFields = Enum.GetValues<NpcProfileField>();
+            foreach (var npcConfig in npcConfigurations.Values)
+            {
+                // This event handler is added but never removed or disposed - because NPC configurations have the same
+                // lifetime as the app itself. The entries themselves are mutable, but the list of NPCs can't change and
+                // is never reloaded.
+                npcConfig.ProfilePropertyChanged += OnNpcProfilePropertyChanged;
+
+                // With the event handler now hooked up, we need to simulate "new" events for any fields that aren't in
+                // the autosave, so that they won't be subject to load-order changes on subsequent starts.
+                var newFields = allProfileFields.Except(restored[npcConfig.Key]);
+                npcConfig.EmitProfileEvents(newFields);
+            }
 
             Columns = new()
             {
@@ -74,6 +94,25 @@ namespace NPC_Bundler
                 LocalFormIdHex = RegisterNpcGridColumn("Form ID"),
                 Name = RegisterNpcGridColumn("Name"),
             };
+        }
+
+        private IEnumerable<Tuple<NpcConfiguration<TKey>, NpcProfileField>> RestoreProfileAutosave(
+            string eventLogFileName)
+        {
+            // Mutagen keys can be derived directly from the master plugin name and we don't really need the extra
+            // dictionary for it, but XEdit doesn't, so until it's removed, this has to be explicit.
+            var npcConfigurationsByPluginKey = npcConfigurations.Values
+                .ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
+            var restoredProfileEvents = ProfileEventLog.ReadEventsFromFile(eventLogFileName);
+            foreach (var e in restoredProfileEvents)
+            {
+                var npcKey = Tuple.Create(e.BasePluginName, e.LocalFormIdHex);
+                if (npcConfigurationsByPluginKey.TryGetValue(npcKey, out var npcConfig))
+                {
+                    npcConfig.RestoreFromProfileEvent(e);
+                    yield return Tuple.Create(npcConfig, e.Field);
+                }
+            }
         }
 
         public IEnumerable<NpcConfiguration<TKey>> GetAllNpcConfigurations()
@@ -200,6 +239,12 @@ namespace NPC_Bundler
         private void OnNpcFaceModChanged()
         {
             SyncMugshotMod();
+        }
+
+        [SuppressPropertyChangedWarnings]
+        private void OnNpcProfilePropertyChanged(object sender, ProfileEvent e)
+        {
+            profileEventLog.Append(e);
         }
 
         private DataGridColumn RegisterNpcGridColumn(string headerText)

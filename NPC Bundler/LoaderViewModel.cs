@@ -71,7 +71,7 @@ namespace NPC_Bundler
             Npcs = new List<INpc<TKey>>(loadedNpcs);
             logger.Information("All NPCs loaded.");
 
-            Status = "All done.";
+            Status = "Preparing game profile...";
             IsSpinnerVisible = false;
             IsLoading = false;
             Loaded?.Invoke();

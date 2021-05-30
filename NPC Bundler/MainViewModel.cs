@@ -49,7 +49,9 @@ namespace NPC_Bundler
             Loader.Loaded += () => {
                 Log.PauseExternalMonitoring();
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
-                Profile = new ProfileViewModel<TKey>(Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames);
+                Profile = new ProfileViewModel<TKey>(
+                    Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames,
+                    ProgramData.GetProfileLogFileName());
                 var archiveFileMap = new ArchiveFileMap(gameDataEditor.ArchiveProvider);
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, gameDataEditor.MergedPluginBuilder, Loader.ModPluginMapFactory,

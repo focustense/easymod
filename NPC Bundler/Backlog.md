@@ -2,13 +2,13 @@
 
 ## Near-term (0.9 / Beta)
 
-- Auto-save/auto-load profiles
 - Built-in BSA archiving
 - Preserve profile state on tab change (sort, filter, scroll position, etc.)
 - "NoMO" support - plugin only
 - Moar Mugshots
 - Mugshot "redirects", e.g. if Hair Physics Version looks same as original
 - Bug: ESP/BSA files remain locked until program exit
+  - May be obsolete with Mutagen migration
 
 ## Medium-term (1.0 / Release)
 
@@ -39,3 +39,4 @@
 - Secondary log (logfile) in case of program crashes
   - ~~On crash detected, try to read and copy last bits of XEdit log~~
 - Filter NPCs by Plugin, EditorID, etc. (type to search)
+- Auto-save/auto-load profiles

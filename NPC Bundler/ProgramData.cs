@@ -13,5 +13,10 @@ namespace NPC_Bundler
         {
             return Path.Combine(DirectoryPath, $"Log_{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.txt");
         }
+
+        public static string GetProfileLogFileName()
+        {
+            return Path.Combine(DirectoryPath, "Profile.log");
+        }
     }
 }

@@ -13,6 +13,7 @@ namespace NPC_Bundler
             StringComparer.OrdinalIgnoreCase);
 
         public event Action FaceModChanged;
+        public event EventHandler<ProfileEvent> ProfilePropertyChanged;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string BasePluginName => npc.BasePluginName;
@@ -106,13 +107,37 @@ namespace NPC_Bundler
             return HasFaceGenOverridesEnabled() && !FileStructure.IsDlc(FacePluginName);
         }
 
+        public void RestoreFromProfileEvent(ProfileEvent e)
+        {
+            switch (e.Field)
+            {
+                // When a setter has optional side effects (e.g. face mod inferred from face plugin and vice versa),
+                // we never want to activate these in restore mode, because there will be separate events for each,
+                // and allowing the side effects could lead to an end state that's different from what was saved.
+                case NpcProfileField.DefaultPlugin:
+                    SetDefaultPlugin(e.NewValue);
+                    break;
+                case NpcProfileField.FaceMod:
+                    SetFaceMod(e.NewValue, false);
+                    break;
+                case NpcProfileField.FacePlugin:
+                    SetFacePlugin(e.NewValue, false);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(e), $"Unexpected field type: {Enum.GetName(typeof(ProfileEvent), e.Field)}");
+            }
+        }
+
         public void SetDefaultPlugin(NpcOverrideConfiguration<TKey> overrideConfig)
         {
+            var oldValue = defaultConfig?.PluginName;
             if (defaultConfig != null)
                 defaultConfig.IsDefaultSource = false;
             if (overrideConfig != null)
                 overrideConfig.IsDefaultSource = true;
             defaultConfig = overrideConfig;
+            LogProfileEvent(NpcProfileField.DefaultPlugin, oldValue, overrideConfig?.PluginName);
         }
 
         public void SetDefaultPlugin(string pluginName)
@@ -124,8 +149,10 @@ namespace NPC_Bundler
 
         public void SetFaceMod(string modName, bool detectPlugin)
         {
+            var oldValue = FaceModName;
             FaceModName = modName;
             FaceModChanged?.Invoke();
+            LogProfileEvent(NpcProfileField.FaceMod, oldValue, modName);
             if (!detectPlugin)
                 return;
             // Null/empty mod name is used as a special case to indicate default, which may not have a "mod" if vanilla
@@ -147,11 +174,13 @@ namespace NPC_Bundler
 
         public void SetFacePlugin(NpcOverrideConfiguration<TKey> faceConfig, bool detectFaceMod)
         {
+            var oldValue = this.faceConfig?.PluginName;
             if (this.faceConfig != null)
                 this.faceConfig.IsFaceSource = false;
             if (faceConfig != null)
                 faceConfig.IsFaceSource = true;
             this.faceConfig = faceConfig;
+            LogProfileEvent(NpcProfileField.FacePlugin, oldValue, faceConfig?.PluginName);
             if (!detectFaceMod || faceConfig == null)
                 return;
             var lastMatchingModName = modPluginMapFactory.DefaultMap()
@@ -167,6 +196,31 @@ namespace NPC_Bundler
             var foundOverride = FindOverride(pluginName);
             if (foundOverride != null)
                 SetFacePlugin(foundOverride, detectFaceMod);
+        }
+
+        protected void LogProfileEvent(NpcProfileField field, string oldValue, string newValue)
+        {
+            // For efficiency, don't log events that don't actually change anything.
+            // These "re-sets" may have an effect in the UI, but don't affect the outcome or the profile.
+            if (Equals(newValue, oldValue))
+                return;
+            ProfilePropertyChanged?.Invoke(this, new ProfileEvent
+            {
+                BasePluginName = BasePluginName,
+                LocalFormIdHex = LocalFormIdHex,
+                Timestamp = DateTime.Now,
+                Field = field,
+                OldValue = oldValue,
+                NewValue = newValue,
+            });
+        }
+
+        // This should rarely be called; it's mainly useful on first run, and on subsequent startups if there are new
+        // NPCs (i.e. due to new mods) or new fields (i.e. code change).
+        internal void EmitProfileEvents(IEnumerable<NpcProfileField> fields)
+        {
+            foreach (var field in fields)
+                LogProfileEvent(field, null, ToFieldGetter(field)(this));
         }
 
         private NpcOverrideConfiguration<TKey> FindOverride(string pluginName)
@@ -189,6 +243,15 @@ namespace NPC_Bundler
             return sources.Select(x => new NpcOverrideConfiguration<TKey>(
                 this, x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName));
         }
+
+        private static Func<NpcConfiguration<TKey>, string> ToFieldGetter(NpcProfileField field) => field switch
+        {
+            NpcProfileField.DefaultPlugin => x => x.DefaultPluginName,
+            NpcProfileField.FaceMod => x => x.FaceModName,
+            NpcProfileField.FacePlugin => x => x.FacePluginName,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(field), $"Unexpected field type: {Enum.GetName(typeof(ProfileEvent), field)}")
+        };
     }
 
     public class NpcOverrideConfiguration<TKey> : INotifyPropertyChanged
