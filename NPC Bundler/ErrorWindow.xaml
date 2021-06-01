@@ -1,0 +1,52 @@
+﻿<Window x:Class="NPC_Bundler.ErrorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:fa5="http://schemas.fontawesome.com/icons/"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NPC_Bundler"
+        xmlns:ui="http://schemas.modernwpf.com/2019" d:DataContext="{d:DesignInstance Type=local:CrashViewModel}"
+        mc:Ignorable="d"
+        Title="Application Error" Height="450" Width="800"
+        ui:WindowHelper.UseModernWindowStyle="True" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" Topmost="True">
+    <Border Padding="16">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <fa5:SvgAwesome Icon="Solid_Bug" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Height="48" Grid.Row="0" Grid.Column="0"/>
+            <TextBlock Margin="16,0,0,0" FontSize="36" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1">
+                Something went wrong
+            </TextBlock>
+            <ui:SimpleStackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
+                <TextBlock Style="{StaticResource ParagraphStyle}">
+                    Looks like you've uncovered a bug. Sorry about that, but what's done is done, and it's no longer safe for this application to keep running.
+                    Once you close this message, it will shut down.
+                </TextBlock>
+                <TextBlock Style="{StaticResource ParagraphStyle}">
+                    Changes you make are saved automatically, so your latest edits have <Italic>not</Italic> been lost. If you restart the program, it should load in the same
+                    state it was in before whichever action caused the crash. However, if you were in the middle of a build, and any mod output was produced (ESPs, BSAs, loose
+                    meshes or textures), then you should throw it away, because it is incomplete and likely to crash your game if you activate it.
+                </TextBlock>
+                <TextBlock Style="{StaticResource ParagraphStyle}">
+                    To submit a bug report or request support, please describe what you were trying to do, and attach the log file named
+                    <Run FontWeight="SemiBold" Text="{Binding LogFileName, Mode=OneWay}" d:Text="Log_20212121_21212121.txt"/> located in:
+                </TextBlock>
+                <ui:HyperlinkButton x:Name="LogDirectoryLink" Padding="0" Content="{Binding LogDirectory}" d:Content="C:\Foo\Bar\Baz" VerticalAlignment="Top" Click="LogDirectoryLink_Click"/>
+                <TextBlock Style="{StaticResource ParagraphStyle}">
+                    Please <Italic>don't</Italic> include a description or screenshot of this error message; unlike the log file, it does not contain any information that will
+                    help a developer identify or fix the bug.
+                </TextBlock>
+            </ui:SimpleStackPanel>
+            <ui:SimpleStackPanel Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right">
+                <Button x:Name="ExitButton" HorizontalAlignment="Right" MinWidth="100" Click="ExitButton_Click">Exit</Button>
+            </ui:SimpleStackPanel>
+        </Grid>
+    </Border>
+</Window>

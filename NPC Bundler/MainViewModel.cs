@@ -13,12 +13,11 @@ namespace NPC_Bundler
         public BuildViewModel<TKey> Build { get; private set; }
         public bool IsReady { get; private set; }
         public LoaderViewModel<TKey> Loader { get; private init; }
-        public LogViewModel Log { get; init; }
+        public LogViewModel Log { get; private init; }
+        public ILogger Logger { get; private init; }
         public ProfileViewModel<TKey> Profile { get; private set; }
         public string PageTitle { get; set; }
         public SettingsViewModel Settings { get; private init; }
-
-        protected ILogger Logger { get; init; }
 
         private readonly IGameDataEditor<TKey> gameDataEditor;
 
@@ -32,10 +31,6 @@ namespace NPC_Bundler
                     flushToDiskInterval: TimeSpan.FromMilliseconds(500))
                 .WriteTo.Sink(logViewModelSink)
                 .CreateLogger();
-            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
-            {
-                Logger.Error(e.ExceptionObject as Exception, "Exception was not handled");
-            };
 
             gameDataEditor = CreateEditor();
 
