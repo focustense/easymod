@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NPC Bundler", "NPC Bundler\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeLibSharp", "..\XeLibSharp\XeLibSharp\XeLibSharp.csproj", "{13A01625-D0DC-4E60-B965-0EB949CDE14E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BsaUtilWrapper", "BsaUtilWrapper\BsaUtilWrapper.vcxproj", "{966CEACA-7551-4138-898B-8BA36ACD735A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,16 +41,6 @@ Global
 		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|x64.Build.0 = Release|Any CPU
 		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|x86.ActiveCfg = Release|Any CPU
 		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|x86.Build.0 = Release|Any CPU
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Debug|x64.ActiveCfg = Debug|x64
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Debug|x64.Build.0 = Debug|x64
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Debug|x86.ActiveCfg = Debug|Win32
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Debug|x86.Build.0 = Debug|Win32
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Release|Any CPU.ActiveCfg = Release|Win32
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Release|x64.ActiveCfg = Release|x64
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Release|x64.Build.0 = Release|x64
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Release|x86.ActiveCfg = Release|Win32
-		{966CEACA-7551-4138-898B-8BA36ACD735A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
