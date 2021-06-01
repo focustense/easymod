@@ -37,12 +37,6 @@ namespace NPC_Bundler
             Model.SetFaceOverride(mugshot, detectPlugin);
         }
 
-        private void MugshotListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            OverrideListView.SelectedItem = null;
-            Model.SelectMugshot(e.AddedItems.Cast<Mugshot>().FirstOrDefault());
-        }
-
         private void NpcDataGrid_Loaded(object sender, RoutedEventArgs e)
         {
             // I hate this code-behind hack, but the way ModernWpf defines its templates, plus some kind of apparent bug
@@ -62,13 +56,8 @@ namespace NPC_Bundler
 
         private void NpcDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Model?.SelectNpc(e.AddedItems.Cast<NpcConfiguration<TKey>>().FirstOrDefault());
-        }
-
-        private void OverrideListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            MugshotListView.SelectedItem = null;
-            Model?.SelectOverride(e.AddedItems.Cast<NpcOverrideConfiguration<TKey>>().FirstOrDefault());
+            if (NpcDataGrid.SelectedItem != null)
+                NpcDataGrid.ScrollIntoView(NpcDataGrid.SelectedItem);
         }
 
         private void SaveProfile_Click(object sender, RoutedEventArgs e)

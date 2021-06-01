@@ -3,7 +3,6 @@
 ## Near-term (0.9 / Beta)
 
 - Built-in BSA archiving
-- Preserve profile state on tab change (sort, filter, scroll position, etc.)
 - "NoMO" support - plugin only
 - Moar Mugshots
 - Mugshot "redirects", e.g. if Hair Physics Version looks same as original
@@ -40,3 +39,4 @@
   - ~~On crash detected, try to read and copy last bits of XEdit log~~
 - Filter NPCs by Plugin, EditorID, etc. (type to search)
 - Auto-save/auto-load profiles
+- Preserve profile state on tab change (sort, filter, scroll position, etc.)

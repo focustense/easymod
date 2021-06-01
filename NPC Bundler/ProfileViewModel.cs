@@ -35,12 +35,14 @@ namespace NPC_Bundler
             }
         }
 
+        public Mugshot FocusedMugshot { get; set; }
+        public NpcOverrideConfiguration<TKey> FocusedNpcOverride { get; set; }
         [DependsOn("SelectedNpc")]
         public bool HasSelectedNpc => SelectedNpc != null;
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
         public bool OnlyFaceOverrides { get; set; }
         public NpcOverrideConfiguration<TKey> SelectedOverrideConfig { get; private set; }
-        public NpcConfiguration<TKey> SelectedNpc { get; private set; }
+        public NpcConfiguration<TKey> SelectedNpc { get; set; }
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> SelectedNpcOverrides { get; private set; }
         public bool ShowDlcOverrides { get; set; }
         public bool ShowSinglePluginOverrides { get; set; } = true;
@@ -177,46 +179,57 @@ namespace NPC_Bundler
             savedProfile.SaveToFile(dialog.FileName);
         }
 
-        public void SelectMugshot(Mugshot mugshot)
-        {
-            foreach (var ms in Mugshots ?? Enumerable.Empty<Mugshot>())
-                ms.IsHighlighted = false;
-            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration<TKey>>())
-                overrideConfig.IsHighlighted =
-                    mugshot?.ProvidingPlugins?.Contains(overrideConfig.PluginName, StringComparer.OrdinalIgnoreCase) ??
-                    false;
-        }
-
-        public void SelectNpc(NpcConfiguration<TKey> npc)
-        {
-            if (SelectedNpc != null)
-                SelectedNpc.FaceModChanged -= OnNpcFaceModChanged;
-            ClearNpcHighlights();
-            SelectedNpc = npc;
-            SelectedNpcOverrides = npc?.Overrides;
-            Mugshots = Mugshot.GetMugshots(SelectedNpc, modPluginMapFactory.DefaultMap())
-                .OrderBy(x => x.ProvidingMod)
-                .ToList()
-                .AsReadOnly();
-            SyncMugshotMod();
-            if (npc != null)
-                npc.FaceModChanged += OnNpcFaceModChanged;
-        }
-
-        public void SelectOverride(NpcOverrideConfiguration<TKey> overrideConfig)
-        {
-            ClearNpcHighlights();
-            foreach (var mugshot in Mugshots ?? Enumerable.Empty<Mugshot>())
-                mugshot.IsHighlighted =
-                    mugshot.ProvidingPlugins.Contains(overrideConfig?.PluginName, StringComparer.OrdinalIgnoreCase);
-            if (overrideConfig != null)
-                overrideConfig.IsSelected = true;
-        }
-
         public void SetFaceOverride(Mugshot mugshot, bool detectPlugin = false)
         {
             SelectedNpc?.SetFaceMod(mugshot?.ProvidingMod, detectPlugin);
             SyncMugshotMod();
+        }
+
+        protected void OnFocusedMugshotChanged()
+        {
+            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration<TKey>>())
+                overrideConfig.IsHighlighted =
+                    FocusedMugshot?.ProvidingPlugins?.Contains(
+                        overrideConfig.PluginName, StringComparer.OrdinalIgnoreCase) ??
+                    false;
+            if (FocusedMugshot != null)
+            {
+                foreach (var ms in Mugshots ?? Enumerable.Empty<Mugshot>())
+                    ms.IsHighlighted = false;
+                FocusedNpcOverride = null;
+            }
+        }
+
+        protected void OnFocusedNpcOverrideChanged()
+        {
+            ClearNpcSelections();
+            foreach (var mugshot in Mugshots ?? Enumerable.Empty<Mugshot>())
+                mugshot.IsHighlighted =
+                    mugshot.ProvidingPlugins.Contains(FocusedNpcOverride?.PluginName, StringComparer.OrdinalIgnoreCase);
+            if (FocusedNpcOverride != null)
+            {
+                ClearNpcHighlights();
+                FocusedNpcOverride.IsSelected = true;
+                FocusedMugshot = null;
+            }
+        }
+
+        protected void OnSelectedNpcChanged(object before, object after)
+        {
+            var next = after as NpcConfiguration<TKey>;
+            if (before is NpcConfiguration<TKey> previous)
+                previous.FaceModChanged -= OnNpcFaceModChanged;
+            ClearNpcHighlights();
+            ClearNpcSelections();
+            SelectedNpcOverrides = next?.Overrides;
+            Mugshots = Mugshot.GetMugshots(next, modPluginMapFactory.DefaultMap())
+                .OrderBy(x => x.ProvidingMod)
+                .ToList()
+                .AsReadOnly();
+            SyncMugshotMod();
+            FocusedMugshot = null;
+            if (next != null)
+                next.FaceModChanged += OnNpcFaceModChanged;
         }
 
         private static void ApplyFilter(
@@ -232,7 +245,13 @@ namespace NPC_Bundler
         private void ClearNpcHighlights()
         {
             foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration<TKey>>())
-                overrideConfig.IsSelected = overrideConfig.IsHighlighted = false;
+                overrideConfig.IsHighlighted = false;
+        }
+
+        private void ClearNpcSelections()
+        {
+            foreach (var overrideConfig in SelectedNpcOverrides ?? Enumerable.Empty<NpcOverrideConfiguration<TKey>>())
+                overrideConfig.IsSelected = false;
         }
 
         [SuppressPropertyChangedWarnings]

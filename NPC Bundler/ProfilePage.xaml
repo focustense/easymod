@@ -91,7 +91,16 @@
                 </ui:SimpleStackPanel>
             </Grid>
         </Border>
-        <DataGrid x:Name="NpcDataGrid" ItemsSource="{Binding DisplayedNpcs}" AutoGenerateColumns="False" SelectionMode="Single" IsReadOnly="True" Grid.Column="0" Grid.Row="1" Loaded="NpcDataGrid_Loaded" SelectionChanged="NpcDataGrid_SelectionChanged">
+        <DataGrid x:Name="NpcDataGrid"
+                  AutoGenerateColumns="False"
+                  ItemsSource="{Binding DisplayedNpcs}"
+                  SelectionMode="Single"
+                  SelectedItem="{Binding SelectedNpc}"
+                  IsReadOnly="True"
+                  Grid.Column="0"
+                  Grid.Row="1"
+                  Loaded="NpcDataGrid_Loaded"
+                  SelectionChanged="NpcDataGrid_SelectionChanged">
             <DataGrid.Resources>
                 <DataTemplate x:Key="HeaderFilterTemplate">
                     <Grid>
@@ -99,8 +108,8 @@
                             <RowDefinition/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <TextBlock Text="{Binding HeaderText, Mode=OneWay}" Grid.Row="0"/>
-                        <local:MiniSearchBox Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" d:Text="test"/>
+                        <TextBlock Text="{Binding HeaderText, Mode=OneWay}" Grid.Row="0" d:Text="Column Name"/>
+                        <local:MiniSearchBox Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1"/>
                     </Grid>
                 </DataTemplate>
                 <Style x:Key="NpcDataGridHeaderStyle" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
@@ -142,7 +151,7 @@
         <GridSplitter HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5" Margin="4,0" Grid.Column="1" Grid.Row="1"></GridSplitter>
         <GroupBox Header="Provided/Overridden In" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.Column="2" Grid.Row="1">
             <ui:ScrollViewerEx>
-                <ui:ListView Name="OverrideListView" ItemsSource="{Binding Path=SelectedNpcOverrides}" SelectionMode="Single" ItemTemplate="{StaticResource OverrideListItemTemplate}" SelectionChanged="OverrideListView_SelectionChanged">
+                <ui:ListView Name="OverrideListView" ItemsSource="{Binding Path=SelectedNpcOverrides}" SelectionMode="Single" SelectedItem="{Binding FocusedNpcOverride}" ItemTemplate="{StaticResource OverrideListItemTemplate}">
                     <ui:ListView.ItemContainerStyle>
                         <Style TargetType="ui:ListViewItem">
                             <Setter Property="Padding" Value="12,10"/>
@@ -157,7 +166,15 @@
             </ui:ScrollViewerEx>
         </GroupBox>
         <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5" Margin="0,4" Grid.ColumnSpan="3" Grid.Row="2"></GridSplitter>
-        <ui:ListView Name="MugshotListView" ItemsSource="{Binding Path=Mugshots}" SelectionMode="Single" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}" Grid.ColumnSpan="3" Grid.Row="3" SelectionChanged="MugshotListView_SelectionChanged">
+        <ui:ListView Name="MugshotListView"
+                     ItemsSource="{Binding Path=Mugshots}"
+                     SelectionMode="Single"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}"
+                     Grid.ColumnSpan="3"
+                     Grid.Row="3"
+                     SelectedItem="{Binding FocusedMugshot}">
             <ui:ListView.ItemContainerStyle>
                 <Style TargetType="ui:ListViewItem">
                     <EventSetter Event="MouseDoubleClick" Handler="MugshotListViewItem_MouseDoubleClick"/>
