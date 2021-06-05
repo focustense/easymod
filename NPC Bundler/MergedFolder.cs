@@ -18,7 +18,8 @@ namespace NPC_Bundler
 
         public static void Build<TKey>(
             IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, IArchiveProvider archiveProvider,
-            ModPluginMap modPluginMap, string outputModName, ProgressViewModel progress, ILogger logger)
+            IFaceGenEditor faceGenEditor, ModPluginMap modPluginMap, BuildSettings<TKey> buildSettings,
+            ProgressViewModel progress, ILogger logger)
             where TKey : struct
         {
             var log = logger.ForContext("Type", "MergedFolder");
@@ -38,7 +39,7 @@ namespace NPC_Bundler
             //   - Facegen meshes/textures: 50%
 
             progress.StartStage("Creating merge output directory");
-            var outDir = Path.Combine(BundlerSettings.Default.ModRootDirectory, outputModName);
+            var outDir = Path.Combine(BundlerSettings.Default.ModRootDirectory, buildSettings.OutputModName);
             Directory.CreateDirectory(outDir);
             log.Information("Merge folder is ready at {MergeDirectoryName}", outDir);
 
@@ -190,8 +191,11 @@ namespace NPC_Bundler
             }
             progress.JumpTo(0.25f);
 
+            // TODO: Improve the ProgressViewModel so we don't need this stuff. Allow to define stages, stage weights,
+            // and stage sizes, and have it do the rest automatically.
+            float facegenStageSize = buildSettings.EnableDewiggify ? 0.3f : 0.5f;
             progress.StartStage("Copying FaceGen data");
-            progress.AdjustRemaining(npcs.Count, 0.5f); // 75% when done
+            progress.AdjustRemaining(npcs.Count, facegenStageSize); // 75% when done
             foreach (var npc in npcs)
             {
                 progress.ItemName = $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId})";
@@ -212,7 +216,26 @@ namespace NPC_Bundler
                 }
                 progress.CurrentProgress++;
             }
-            progress.JumpTo(0.75f);
+            progress.JumpTo(0.25f + facegenStageSize);
+
+            if (buildSettings.EnableDewiggify)
+            {
+                progress.StartStage("Processing wig conversions");
+                progress.AdjustRemaining(mergeInfo.WigConversions.Count, 0.2f);
+                var npcsByFormId = npcs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
+                Parallel.ForEach(mergeInfo.WigConversions, wigConversion =>
+                {
+                    var npcKey = Tuple.Create(wigConversion.BasePluginName, wigConversion.LocalFormIdHex);
+                    var npc = npcsByFormId[npcKey];
+                    var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
+                    var faceGenPath = Path.Combine(buildSettings.OutputDirectory, faceMeshFileName);
+                    progress.ItemName = $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId}) -- {faceMeshFileName}";
+                    faceGenEditor.ReplaceHeadParts(
+                        faceGenPath, wigConversion.RemovedHeadParts, wigConversion.AddedHeadParts, archiveProvider);
+                    progress.CurrentProgress++;
+                });
+                progress.JumpTo(0.75f);
+            }
 
             progress.StartStage("Copying textures");
             progress.AdjustRemaining(textureFileNames.Count, 0.2f); // 95% when done

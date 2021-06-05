@@ -3,11 +3,17 @@
 ## Near-term (0.9 / Beta)
 
 - Built-in BSA archiving
-- "NoMO" support - plugin only
 - Moar Mugshots
+- Make de-wiggification optional on build and/or settings screen
+  - Try to give coherent explanation of pros and cons
 - Mugshot "redirects", e.g. if Hair Physics Version looks same as original
 - Bug: ESP/BSA files remain locked until program exit
   - May be obsolete with Mutagen migration
+- Advanced operations
+  - Log file maintenance
+  - Autosave maintenance (clear history)
+  - Rescan defaults / evolve to load order
+  - View full history
 
 ## Medium-term (1.0 / Release)
 
@@ -18,6 +24,7 @@
 - Better MO2 integration - read profiles, mod lists, detect disable mods, etc.
 - "Easy Mode" - hide plugin/mod distinction unless there's a conflict
 - Incremental merges - i.e. for new mod installs, or minor tweaks to profiles
+- Undo/redo
 
 ## Long-term (2.0+)
 
@@ -28,6 +35,11 @@
 - Facegen creation, if that's even possible
   - Automating the CK is not; but it might be possible to "mix" facegen files
     by e.g. taking the head node from one and hair from another.
+- Automatic hair physics replacement (when available)
+
+## Punted
+
+- "NoMO" support - plugin only
 
 ## Done
 
@@ -40,3 +52,6 @@
 - Filter NPCs by Plugin, EditorID, etc. (type to search)
 - Auto-save/auto-load profiles
 - Preserve profile state on tab change (sort, filter, scroll position, etc.)
+- De-wiggify
+  - High Poly NPC Overhauls seem to use bald hair with wigs
+  - May be able to "fix" this with mesh manipulation alone, i.e. no CK

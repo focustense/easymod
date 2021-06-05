@@ -17,6 +17,8 @@ namespace NPC_Bundler
         FaceModMissingFaceGen,
         FaceModExtraFaceGen,
         FaceModMultipleFaceGen,
+        FaceModWigNotMatched,
+        FaceModWigNotMatchedBald,
     }
 
     public class BuildWarning
@@ -100,6 +102,20 @@ namespace NPC_Bundler
         {
             return
                 $"{NpcLabel(editorId, name)} has mismatched face mod ({modName}) and face plugin ({pluginName}).";
+        }
+
+        public static string FaceModWigNotMatched(string editorId, string name, string pluginName, string modelName)
+        {
+            return
+                $"{NpcLabel(editorId, name)} in face plugin {pluginName} uses a wig with model name '{modelName}', " +
+                $"which could not be matched to any known hair type. This NPC will revert to their default hair.";
+        }
+
+        public static string FaceModWigNotMatchedBald(string editorId, string name, string pluginName, string modelName)
+        {
+            return
+                $"{NpcLabel(editorId, name)} in face plugin {pluginName} has no hair and uses a wig with model name " +
+                $"'{modelName}', which could not be matched to any known hair type. This NPC will be bald.";
         }
 
         public static string ModDirectoryNotFound(string directoryName)

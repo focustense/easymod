@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,6 +15,7 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         public bool CanLoad { get; private set; }
+        public IReadOnlyList<Hair<TKey>> Hairs { get; private set; }
         public bool IsLoading { get; private set; } = true;
         public bool IsLogVisible { get; private set; }
         public bool IsPluginListVisible { get; private set; }
@@ -66,7 +68,13 @@ namespace NPC_Bundler
                 .Where(pluginName => editor.IsMaster(pluginName))
                 .ToList()
                 .AsReadOnly();
-            Status = "Done loading plugins. Building NPC index...";
+            Status = "Done loading plugins. Collecting head part info...";
+            Hairs = LoadedPluginNames
+                .SelectMany(pluginName => editor.ReadHairRecords(pluginName))
+                .Where(x => !string.IsNullOrEmpty(x.ModelFileName))
+                .ToList()
+                .AsReadOnly();
+            Status = "Done loading head parts. Building NPC index...";
             var loadedNpcs = await Task.Run(GetNpcs).ConfigureAwait(true);
             Npcs = new List<INpc<TKey>>(loadedNpcs);
             logger.Information("All NPCs loaded.");

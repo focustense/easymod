@@ -7,7 +7,7 @@ namespace NPC_Bundler
         where TKey : struct
     {
         MergedPluginResult Build(
-            IReadOnlyList<NpcConfiguration<TKey>> npcs, string outputModName, ProgressViewModel progress);
+            IReadOnlyList<NpcConfiguration<TKey>> npcs, BuildSettings<TKey> buildSettings, ProgressViewModel progress);
     }
 
     public class MergedPluginResult
@@ -16,5 +16,20 @@ namespace NPC_Bundler
         public ISet<string> Morphs { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         public ISet<string> Npcs { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         public ISet<string> Textures { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        public IReadOnlyList<NpcWigConversion> WigConversions { get; init; }
+    }
+
+    public class NpcWigConversion
+    {
+        public string BasePluginName { get; init; }
+        public string LocalFormIdHex { get; init; }
+        public IReadOnlyList<HeadPartInfo> AddedHeadParts { get; init; }
+        public IReadOnlyList<HeadPartInfo> RemovedHeadParts { get; init; }
+    }
+
+    public class HeadPartInfo
+    {
+        public string EditorId { get; init; }
+        public string FileName { get; init; }
     }
 }

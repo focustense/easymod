@@ -27,6 +27,11 @@ namespace NPC_Bundler
                 .Select(f => Tuple.Create(f, true));
         }
 
+        public IEnumerable<Hair<uint>> ReadHairRecords(string pluginName)
+        {
+            return Enumerable.Empty<Hair<uint>>();
+        }
+
         public IEnumerable<string> GetLoadedPlugins()
         {
             return Setup.GetLoadedFileNames();

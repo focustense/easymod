@@ -23,7 +23,8 @@ namespace NPC_Bundler
     }
 
     public record NpcOverride<TKey>(
-        string PluginName, NpcFaceData<TKey> FaceData, bool AffectsFaceGen, string ItpoPluginName)
+        string PluginName, NpcFaceData<TKey> FaceData, bool AffectsFaceGen, string ItpoPluginName,
+        NpcWigInfo<TKey> Wig = null)
         where TKey : struct
     {
         public bool HasFaceOverride => FaceData != null;
@@ -79,4 +80,10 @@ namespace NPC_Bundler
     public record NpcFaceTintColor(uint Red, uint Green, uint Blue, uint Alpha);
 
     public record NpcSkinTone(uint Red, uint Green, uint Blue);
+
+    // Baldness heuristic only matters for safety checks. If we fail to de-wiggify a character, and their wig is simply
+    // covering up an actual hair headpart, then they'll still end up with some kind of hair when we don't carry over
+    // the Worn Armor. However, if they're bald underneath the wig, then they'll be just plain bald in the merge, and we
+    // don't want to give the user a bunch of bald female NPCs - at least, not without warning them.
+    public record NpcWigInfo<TKey>(TKey Key, string ModelName, bool IsBald);
 }

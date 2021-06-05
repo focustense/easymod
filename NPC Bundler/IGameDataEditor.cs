@@ -17,6 +17,7 @@ namespace NPC_Bundler
         int GetLoadOrderIndex(string pluginName);
         bool IsMaster(string pluginName);
         Task Load(IEnumerable<string> pluginNames);
+        IEnumerable<Hair<TKey>> ReadHairRecords(string pluginName);
         void ReadNpcRecords(string pluginName, IDictionary<TKey, IMutableNpc<TKey>> cache);
     }
 }

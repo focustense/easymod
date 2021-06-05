@@ -26,7 +26,7 @@ namespace NPC_Bundler
             var logViewModelSink = new LogViewModelSink();
             Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
-                .WriteTo.File(ProgramData.GetLogFileName(),
+                .WriteTo.File(ProgramData.LogFileName,
                     buffered: true,
                     flushToDiskInterval: TimeSpan.FromMilliseconds(500))
                 .WriteTo.Sink(logViewModelSink)
@@ -48,9 +48,11 @@ namespace NPC_Bundler
                     Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames,
                     ProgramData.GetProfileLogFileName());
                 var archiveFileMap = new ArchiveFileMap(gameDataEditor.ArchiveProvider);
+                var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
+                var faceGenEditor = new NiflyFaceGenEditor(Logger);
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, gameDataEditor.MergedPluginBuilder, Loader.ModPluginMapFactory,
-                    Profile.GetAllNpcConfigurations(), archiveFileMap, Logger);
+                    Profile.GetAllNpcConfigurations(), wigResolver, faceGenEditor, archiveFileMap, Logger);
                 IsReady = true;
             };
         }

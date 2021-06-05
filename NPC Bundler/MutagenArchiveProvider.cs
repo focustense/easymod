@@ -16,6 +16,12 @@ namespace NPC_Bundler
             this.environment = environment;
         }
 
+        public bool ContainsFile(string archivePath, string archiveFilePath)
+        {
+            var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
+            return reader.Files.Any(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
+        }
+
         public void CopyToFile(string archivePath, string archiveFilePath, string outFilePath)
         {
             var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
@@ -29,6 +35,11 @@ namespace NPC_Bundler
             using var fs = File.Create(outFilePath);
             file.CopyDataTo(fs);
             fs.Flush(); // Is it necessary?
+        }
+
+        public IGameFileProvider CreateGameFileProvider()
+        {
+            return new VirtualGameFileProvider(environment.GameFolderPath, this);
         }
 
         public IEnumerable<string> GetArchiveFileNames(string archivePath, string path)

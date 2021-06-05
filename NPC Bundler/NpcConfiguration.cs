@@ -17,10 +17,12 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string BasePluginName => npc.BasePluginName;
+        public NpcOverrideConfiguration<TKey> DefaultConfiguration => defaultConfig;
         public string DefaultPluginName => defaultConfig?.PluginName;
         public string DescriptiveLabel => $"'{Name}' ({BasePluginName} - {EditorId})";
         public string EditorId => npc.EditorId;
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
+        public NpcOverrideConfiguration<TKey> FaceConfiguration => faceConfig;
         public string FaceModName { get; private set; }
         public string FacePluginName => faceConfig?.PluginName;
         public TKey Key => npc.Key;
@@ -231,17 +233,10 @@ namespace NPC_Bundler
 
         private IEnumerable<NpcOverrideConfiguration<TKey>> GetOverrides()
         {
+            var sources = npc.Overrides.Select(x => new NpcOverrideConfiguration<TKey>(this, x));
             // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
-            var sources = npc.Overrides
-                .Select(x => new { x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName })
-                .Prepend(new {
-                    PluginName = BasePluginName,
-                    HasFaceOverride = true,
-                    AffectsFaceGen = true,
-                    ItpoPluginName = (string)null
-                });
-            return sources.Select(x => new NpcOverrideConfiguration<TKey>(
-                this, x.PluginName, x.HasFaceOverride, x.AffectsFaceGen, x.ItpoPluginName));
+            var master = new NpcOverrideConfiguration<TKey>(this, BasePluginName);
+            return sources.Prepend(master);
         }
 
         private static Func<NpcConfiguration<TKey>, string> ToFieldGetter(NpcProfileField field) => field switch
@@ -259,26 +254,39 @@ namespace NPC_Bundler
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public bool HasFaceOverride { get; init; }
-        public bool HasFaceGenOverride { get; init; }
+        public bool HasFaceOverride { get; private init; }
+        public bool HasFaceGenOverride { get; private init; }
         public bool IsDefaultSource { get; set; }
         public bool IsFaceSource { get; set; }
         public bool IsHighlighted { get; set; }
         public bool IsSelected { get; set; }
-        public string ItpoFileName { get; init; }
-        public string PluginName { get; init; }
+        public string ItpoFileName { get; private init; }
+        public string PluginName { get; private init; }
+        public NpcWigInfo<TKey> Wig { get; private init; }
 
         private readonly NpcConfiguration<TKey> parentConfig;
 
-        public NpcOverrideConfiguration(
-            NpcConfiguration<TKey> parentConfig, string pluginName, bool hasFaceOverride, bool hasFaceGenOverride,
-            string itpoFileName)
+        public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, string pluginName)
+            : this(parentConfig)
+        {
+            PluginName = pluginName;
+            HasFaceOverride = true;
+            HasFaceGenOverride = true;
+        }
+
+        public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, NpcOverride<TKey> @override)
+            : this(parentConfig)
+        {
+            PluginName = @override.PluginName;
+            HasFaceOverride = @override.HasFaceOverride;
+            HasFaceGenOverride = @override.AffectsFaceGen;
+            ItpoFileName = @override.ItpoPluginName;
+            Wig = @override.Wig;
+        }
+
+        public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig)
         {
             this.parentConfig = parentConfig;
-            PluginName = pluginName;
-            HasFaceOverride = hasFaceOverride;
-            HasFaceGenOverride = hasFaceGenOverride;
-            ItpoFileName = itpoFileName ?? string.Empty;
         }
 
         public void SetAsDefault()

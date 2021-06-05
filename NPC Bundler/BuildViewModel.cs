@@ -41,18 +41,23 @@ namespace NPC_Bundler
         private readonly ArchiveFileMap archiveFileMap;
         private readonly IArchiveProvider archiveProvider;
         private readonly IMergedPluginBuilder<TKey> builder;
+        private readonly IFaceGenEditor faceGenEditor;
         private readonly ILogger log;
         private readonly IModPluginMapFactory modPluginMapFactory;
+        private readonly IWigResolver<TKey> wigResolver;
 
         public BuildViewModel(
-            IArchiveProvider archiveProvider, IMergedPluginBuilder<TKey> builder, IModPluginMapFactory modPluginMapFactory,
-            IEnumerable<NpcConfiguration<TKey>> npcs, ArchiveFileMap archiveFileMap, ILogger logger)
+            IArchiveProvider archiveProvider, IMergedPluginBuilder<TKey> builder,
+            IModPluginMapFactory modPluginMapFactory, IEnumerable<NpcConfiguration<TKey>> npcs,
+            IWigResolver<TKey> wigResolver, IFaceGenEditor faceGenEditor, ArchiveFileMap archiveFileMap, ILogger logger)
         {
             this.archiveFileMap = archiveFileMap;
             this.builder = builder;
             this.archiveProvider = archiveProvider;
+            this.faceGenEditor = faceGenEditor;
             this.log = logger.ForContext<BuildViewModel<TKey>>();
             this.modPluginMapFactory = modPluginMapFactory;
+            this.wigResolver = wigResolver;
             Npcs = npcs.ToList().AsReadOnly();
         }
 
@@ -63,10 +68,18 @@ namespace NPC_Bundler
             {
                 OutputDirectory = Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName);
                 Directory.CreateDirectory(OutputDirectory);
-                var mergeInfo = builder.Build(Npcs, OutputModName, Progress.MergedPlugin);
+                var buildSettings = new BuildSettings<TKey>
+                {
+                    EnableDewiggify = true, // TODO: Make optional
+                    OutputModName = OutputModName,
+                    OutputDirectory = OutputDirectory,
+                    WigResolver = wigResolver,
+                };
+                var mergeInfo = builder.Build(Npcs, buildSettings, Progress.MergedPlugin);
                 var modPluginMap = modPluginMapFactory.DefaultMap();
                 MergedFolder.Build(
-                    Npcs, mergeInfo, archiveProvider, modPluginMap, OutputModName, Progress.MergedFolder, log);
+                    Npcs, mergeInfo, archiveProvider, faceGenEditor, modPluginMap, buildSettings, Progress.MergedFolder,
+                    log);
             }).ConfigureAwait(true);
             IsReadyToBuild = false;
             IsBuildCompleted = true;
@@ -86,6 +99,7 @@ namespace NPC_Bundler
                 warnings.AddRange(CheckModSettings());
                 warnings.AddRange(CheckForOverriddenArchives());
                 warnings.AddRange(CheckModPluginConsistency());
+                warnings.AddRange(CheckWigs());
             });
             var suppressions = GetBuildWarningSuppressions();
             Problems = warnings
@@ -216,6 +230,26 @@ namespace NPC_Bundler
                 yield return new BuildWarning(
                     BuildWarningId.ModDirectoryNotFound,
                     WarningMessages.ModDirectoryNotFound(modRootDirectory));
+        }
+
+        private IEnumerable<BuildWarning> CheckWigs()
+        {
+            var wigKeys = Npcs.Select(x => x.FaceConfiguration?.Wig).Where(x => x != null).Distinct();
+            var matchedWigKeys = wigResolver.ResolveAll(wigKeys)
+                .Where(x => x.HairKeys.Any())
+                .Select(x => x.WigKey)
+                .ToHashSet();
+            return Npcs
+                .Select(x => new { Npc = x, x.FaceConfiguration?.Wig })
+                .Where(x => x.Wig != null && !matchedWigKeys.Contains(x.Wig.Key))
+                .Select(x => new BuildWarning(
+                    x.Wig.IsBald ? BuildWarningId.FaceModWigNotMatchedBald : BuildWarningId.FaceModWigNotMatched,
+                    x.Wig.IsBald ?
+                        WarningMessages.FaceModWigNotMatchedBald(
+                            x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.ModelName) :
+                        WarningMessages.FaceModWigNotMatched(
+                            x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.ModelName)
+                    ));
         }
 
         private static ILookup<string, BuildWarningId> GetBuildWarningSuppressions()

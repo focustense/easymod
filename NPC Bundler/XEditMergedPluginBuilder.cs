@@ -12,13 +12,14 @@ namespace NPC_Bundler
         public static readonly string MergeFileName = "NPC Appearances Merged.esp";
 
         public MergedPluginResult Build(
-            IReadOnlyList<NpcConfiguration<uint>> npcs, string outputModName, ProgressViewModel progress)
+            IReadOnlyList<NpcConfiguration<uint>> npcs, BuildSettings<uint> buildSettings, ProgressViewModel progress)
         {
 
             progress.StartStage("Backing up previous merge");
             var dataPath = Meta.GetGlobal("DataPath");
             var mergeFilePath = Path.Combine(dataPath, MergeFileName);
-            var outFilePath = Path.Combine(BundlerSettings.Default.ModRootDirectory, outputModName, MergeFileName);
+            var outFilePath = Path.Combine(
+                BundlerSettings.Default.ModRootDirectory, buildSettings.OutputModName, MergeFileName);
             if (File.Exists(mergeFilePath))
                 File.Move(mergeFilePath, $"{mergeFilePath}.{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.bak", true);
 

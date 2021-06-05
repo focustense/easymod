@@ -29,7 +29,7 @@ namespace NPC_Bundler
                 {
                     model.Logger.Error(e.ExceptionObject as Exception, "Exception was not handled");
                     var crashViewModel = new CrashViewModel(
-                        ProgramData.DirectoryPath, Path.GetFileName(ProgramData.GetLogFileName()));
+                        ProgramData.DirectoryPath, Path.GetFileName(ProgramData.LogFileName));
                     var errorWindow = new ErrorWindow { DataContext = crashViewModel, Owner = this };
                     errorWindow.ShowDialog();
                 }

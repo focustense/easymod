@@ -4,6 +4,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -71,6 +72,24 @@ namespace NPC_Bundler
             });
         }
 
+        public IEnumerable<Hair<FormKey>> ReadHairRecords(string pluginName)
+        {
+            var modKey = ModKey.FromNameAndExtension(pluginName);
+            var listing = Environment.LoadOrder.GetIfEnabled(modKey);
+            return listing?.Mod?.HeadParts
+                ?.Where(x => x.Type == HeadPart.TypeEnum.Hair && !x.Flags.HasFlag(HeadPart.Flag.IsExtraPart))
+                ?.Select(x => new Hair<FormKey>
+                {
+                    Key = x.FormKey,
+                    EditorId = x.EditorID,
+                    Name = x.Name?.ToString(),
+                    ModelFileName = x.Model?.File,
+                    IsFemale = x.Flags.HasFlag(HeadPart.Flag.Female),
+                    IsMale = x.Flags.HasFlag(HeadPart.Flag.Male),
+                    ValidRaces = GetValidRaces(x).ToHashSet(),
+                });
+        }
+
         public void ReadNpcRecords(string pluginName, IDictionary<FormKey, IMutableNpc<FormKey>> cache)
         {
             var modKey = ModKey.FromNameAndExtension(pluginName);
@@ -86,7 +105,9 @@ namespace NPC_Bundler
                 {
                     var npc = cache[formKey];
                     var faceOverrides = GetFaceOverrides(npcContext, out bool affectsFaceGen, out var itpoFileName);
-                    npc.AddOverride(new NpcOverride<FormKey>(modKey.FileName, faceOverrides, affectsFaceGen, itpoFileName));
+                    var wigInfo = GetWigInfo(npcContext.Record);
+                    npc.AddOverride(new NpcOverride<FormKey>(
+                        modKey.FileName, faceOverrides, affectsFaceGen, itpoFileName, wigInfo));
                 }
                 else
                 {
@@ -133,6 +154,58 @@ namespace NPC_Bundler
             affectsFaceGen = !NpcFaceData.EqualsForFaceGen(overrideFaceData, previousFaceData);
             return (!NpcFaceData.Equals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
                 overrideFaceData : null;
+        }
+
+        private IEnumerable<VanillaRace> GetValidRaces(IHeadPartGetter headPart)
+        {
+            if (headPart.ValidRaces.IsNull)
+                return Enumerable.Empty<VanillaRace>();
+            var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>().Resolve(Environment.LinkCache);
+            return raceList.Items
+                .Select(x => x.FormKey.AsLink<IRaceGetter>().Resolve(Environment.LinkCache))
+                .Select(x => InferRace(x.EditorID));
+        }
+
+        private NpcWigInfo<FormKey> GetWigInfo(INpcGetter npc)
+        {
+            if (npc.WornArmor.IsNull)
+                return null;
+            var isBald = npc.HeadParts
+                .Select(x => x.FormKey.AsLink<IHeadPartGetter>().Resolve(Environment.LinkCache))
+                .Where(x => x.Type == HeadPart.TypeEnum.Hair)
+                .All(x => string.IsNullOrEmpty(x.Model?.File));
+            var wornArmor = npc.WornArmor.Resolve(Environment.LinkCache);
+            return wornArmor.Armature
+                .Select(fk => fk.Resolve(Environment.LinkCache))
+                .Where(x =>
+                    // Search for ONLY hair, because some sadistic modders add hair flags to other parts.
+                    x.BodyTemplate.FirstPersonFlags == BipedObjectFlag.Hair ||
+                    x.BodyTemplate.FirstPersonFlags == BipedObjectFlag.LongHair ||
+                    x.BodyTemplate.FirstPersonFlags == (BipedObjectFlag.Hair | BipedObjectFlag.LongHair))
+                .Select(x => {
+                    var modelFileName = x.WorldModel?.Where(x => x != null)?.FirstOrDefault()?.File;
+                    var modelName = !string.IsNullOrEmpty(modelFileName) ?
+                        Path.GetFileNameWithoutExtension(modelFileName) : null;
+                    return new NpcWigInfo<FormKey>(x.FormKey, modelName, isBald);
+                })
+                .FirstOrDefault();
+        }
+
+        private static VanillaRace InferRace(string editorId)
+        {
+            return editorId switch
+            {
+                "NordRace" => VanillaRace.Nord,
+                "ImperialRace" => VanillaRace.Imperial,
+                "RedguardRace" => VanillaRace.Redguard,
+                "BretonRace" => VanillaRace.Breton,
+                "HighElfRace" => VanillaRace.HighElf,
+                "DarkElfRace" => VanillaRace.DarkElf,
+                "WoodElfRace" => VanillaRace.WoodElf,
+                "OrcRace" => VanillaRace.Orc,
+                "ElderRace" => VanillaRace.Elder,
+                _ => 0,
+            };
         }
 
         private static NpcFaceData<FormKey> ReadFaceData(INpcGetter npc)
