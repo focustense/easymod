@@ -8,7 +8,7 @@
         xmlns:ui="http://schemas.modernwpf.com/2019" d:DataContext="{d:DesignInstance Type=local:CrashViewModel}"
         mc:Ignorable="d"
         Title="Application Error" Height="450" Width="800"
-        ui:WindowHelper.UseModernWindowStyle="True" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" Topmost="True">
+        ui:WindowHelper.UseModernWindowStyle="True" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
     <Border Padding="16">
         <Grid>
             <Grid.ColumnDefinitions>
