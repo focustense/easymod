@@ -231,7 +231,8 @@ namespace NPC_Bundler
                     var faceGenPath = Path.Combine(buildSettings.OutputDirectory, faceMeshFileName);
                     progress.ItemName = $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId}) -- {faceMeshFileName}";
                     faceGenEditor.ReplaceHeadParts(
-                        faceGenPath, wigConversion.RemovedHeadParts, wigConversion.AddedHeadParts, archiveProvider);
+                        faceGenPath, wigConversion.RemovedHeadParts, wigConversion.AddedHeadParts,
+                        wigConversion.HairColor, archiveProvider);
                     progress.CurrentProgress++;
                 });
                 progress.JumpTo(0.75f);

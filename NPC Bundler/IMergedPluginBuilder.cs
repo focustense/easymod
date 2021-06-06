@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace NPC_Bundler
 {
@@ -23,6 +24,7 @@ namespace NPC_Bundler
     {
         public string BasePluginName { get; init; }
         public string LocalFormIdHex { get; init; }
+        public Color? HairColor { get; init; }
         public IReadOnlyList<HeadPartInfo> AddedHeadParts { get; init; }
         public IReadOnlyList<HeadPartInfo> RemovedHeadParts { get; init; }
     }

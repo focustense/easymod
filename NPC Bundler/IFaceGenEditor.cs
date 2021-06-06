@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace NPC_Bundler
 {
@@ -7,6 +8,6 @@ namespace NPC_Bundler
     {
         void ReplaceHeadParts(
             string faceGenPath, IEnumerable<HeadPartInfo> removedParts, IEnumerable<HeadPartInfo> addedParts,
-            IArchiveProvider archiveProvider);
+            Color? hairColor, IArchiveProvider archiveProvider);
     }
 }

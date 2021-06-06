@@ -4,6 +4,7 @@ using Serilog;
 using Serilog.Context;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -162,6 +163,7 @@ namespace NPC_Bundler
                         {
                             BasePluginName = npc.BasePluginName,
                             LocalFormIdHex = npc.LocalFormIdHex,
+                            HairColor = GetHairColor(mergedNpcRecord),
                             AddedHeadParts = DescribeHeadParts(mergedHair.Value, context).ToList().AsReadOnly(),
                             RemovedHeadParts = oldHairParts
                                 .SelectMany(x => DescribeHeadParts(x.FormKey, context))
@@ -224,6 +226,14 @@ namespace NPC_Bundler
                     EditorId = headPart.EditorID,
                     FileName = headPart.Model?.File?.PrefixPath("meshes")
                 });
+        }
+
+        private Color? GetHairColor(INpcGetter npc)
+        {
+            if (npc.HairColor.IsNull)
+                return null;
+            var colorRecord = npc.HairColor.Resolve(environment.LinkCache);
+            return colorRecord.Color;
         }
 
         class MergeContext

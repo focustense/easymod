@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using nifly;
@@ -18,7 +19,7 @@ namespace NPC_Bundler
 
         public void ReplaceHeadParts(
             string faceGenPath, IEnumerable<HeadPartInfo> removedParts, IEnumerable<HeadPartInfo> addedParts,
-            IArchiveProvider archiveProvider)
+            Color? hairColorNullable, IArchiveProvider archiveProvider)
         {
             if (!File.Exists(faceGenPath))
             {
@@ -55,6 +56,13 @@ namespace NPC_Bundler
                     continue;
                 var headPartClone = faceGenFile.CloneShape(mainShape, addedPart.EditorId, modelFile);
                 faceGenFile.SetParentNode(headPartClone, faceGenNode);
+                if (hairColorNullable is Color hairColor && headPartClone.HasShaderProperty() &&
+                    faceGenFile.GetHeader().GetBlockById(headPartClone.ShaderPropertyRef().index)
+                        is BSLightingShaderProperty shader &&
+                    shader.bslspShaderType == 6 /* hair tint */)
+                {
+                    shader.hairTintColor = new Vector3(hairColor.R / 255f, hairColor.G / 255f, hairColor.B / 255f);
+                }
             }
             faceGenFile.Save(faceGenPath);
         }
