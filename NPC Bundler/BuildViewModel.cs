@@ -33,7 +33,7 @@ namespace NPC_Bundler
         public IReadOnlyList<NpcConfiguration<TKey>> Npcs { get; init; }
         public string OutputDirectory { get; private set; }
         public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now.ToString("yyyy-MM-dd")}";
-        public string OutputPluginName => XEditMergedPluginBuilder.MergeFileName;
+        public string OutputPluginName => FileStructure.MergeFileName;
         public IEnumerable<BuildWarning> Problems { get; private set; }
         public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }

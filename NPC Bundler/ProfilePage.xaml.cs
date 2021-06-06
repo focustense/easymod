@@ -3,11 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-#if MUTAGEN
 using TKey = Mutagen.Bethesda.FormKey;
-#else
-using TKey = System.UInt32;
-#endif
 
 namespace NPC_Bundler
 {

@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NPC Bundler", "NPC Bundler\NPC Bundler.csproj", "{CCD530CF-0A07-4BBA-B305-F6C7957AB647}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeLibSharp", "..\XeLibSharp\XeLibSharp\XeLibSharp.csproj", "{13A01625-D0DC-4E60-B965-0EB949CDE14E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,18 +27,6 @@ Global
 		{CCD530CF-0A07-4BBA-B305-F6C7957AB647}.Release|x64.Build.0 = Release|Any CPU
 		{CCD530CF-0A07-4BBA-B305-F6C7957AB647}.Release|x86.ActiveCfg = Release|Any CPU
 		{CCD530CF-0A07-4BBA-B305-F6C7957AB647}.Release|x86.Build.0 = Release|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Debug|x64.Build.0 = Debug|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Debug|x86.Build.0 = Debug|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|x64.ActiveCfg = Release|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|x64.Build.0 = Release|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|x86.ActiveCfg = Release|Any CPU
-		{13A01625-D0DC-4E60-B965-0EB949CDE14E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

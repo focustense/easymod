@@ -60,7 +60,6 @@ namespace NPC_Bundler
         protected abstract IGameDataEditor<TKey> CreateEditor();
     }
 
-#if MUTAGEN
     public class MainViewModel : MainViewModel<FormKey>
     {
         protected override IGameDataEditor<FormKey> CreateEditor()
@@ -68,13 +67,4 @@ namespace NPC_Bundler
             return new MutagenAdapter(Logger);
         }
     }
-#else
-    public class MainViewModel : MainViewModel<uint>
-    {
-        protected override IGameDataEditor<uint> CreateEditor()
-        {
-            return new XEditGameDataEditor();
-        }
-    }
-#endif
 }

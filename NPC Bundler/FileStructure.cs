@@ -15,6 +15,8 @@ namespace NPC_Bundler
         public static readonly string FaceTintsPath =
             Path.Combine("textures", "actors", "character", "facegendata", "facetint");
 
+        public static readonly string MergeFileName = "NPC Appearances Merged.esp";
+
         private static readonly HashSet<string> dlcPluginSet = new(DlcPluginNames, StringComparer.OrdinalIgnoreCase);
 
         public static string GetFaceMeshFileName(string basePluginName, string localFormIdHex)
