@@ -29,6 +29,7 @@
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Tag="profile" Content="Profile" IsSelected="True"></ui:NavigationViewItem>
                 <ui:NavigationViewItem Tag="build" Content="Build"></ui:NavigationViewItem>
+                <ui:NavigationViewItem Tag="maintenance" Content="Maintenance"></ui:NavigationViewItem>
                 <ui:NavigationViewItem Tag="log" Content="Log"></ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
             <ui:Frame Name="PageFrame" Padding="12,0,12,24" IsTabStop="True" NavigationUIVisibility="Hidden"/>

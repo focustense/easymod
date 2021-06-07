@@ -58,7 +58,7 @@ namespace NPC_Bundler
 
         public ProfileViewModel(
             IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory, IEnumerable<string> masterNames,
-            string eventLogFileName)
+            ProfileEventLog profileEventLog)
         {
             this.modPluginMapFactory = modPluginMapFactory;
             var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
@@ -73,8 +73,8 @@ namespace NPC_Bundler
             }
             this.npcOrder = npcOrder.AsReadOnly();
 
-            var restored = RestoreProfileAutosave(eventLogFileName).ToLookup(x => x.Item1.Key, x => x.Item2);
-            profileEventLog = new ProfileEventLog(eventLogFileName);
+            this.profileEventLog = profileEventLog;
+            var restored = RestoreProfileAutosave(profileEventLog.FileName).ToLookup(x => x.Item1.Key, x => x.Item2);
             var allProfileFields = Enum.GetValues<NpcProfileField>();
             foreach (var npcConfig in npcConfigurations.Values)
             {

@@ -14,6 +14,7 @@ namespace NPC_Bundler
         {
             { "profile", new NavLink("Profile", typeof(ProfilePage), x => x.Profile) },
             { "build", new NavLink("Build", typeof(BuildPage), x => x.Build) },
+            { "maintenance", new NavLink("Maintenance", typeof(MaintenancePage), x => x.Maintenance) },
             { "log", new NavLink("Log", typeof(LogPage), x => x.Log) },
             { "settings", new NavLink("Settings", typeof(SettingsPage), x => x.Settings) },
         };

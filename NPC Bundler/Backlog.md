@@ -9,10 +9,7 @@
 - Mugshot "redirects", e.g. if Hair Physics Version looks same as original
 - Bug: ESP/BSA files remain locked until program exit
   - May be obsolete with Mutagen migration
-- Advanced operations
-  - Log file maintenance
-  - Autosave maintenance (clear history)
-  - Rescan defaults / evolve to load order
+- More advanced operations
   - View full history
 
 ## Medium-term (1.0 / Release)
@@ -35,7 +32,15 @@
 - Facegen creation, if that's even possible
   - Automating the CK is not; but it might be possible to "mix" facegen files
     by e.g. taking the head node from one and hair from another.
+  - De-wiggify project has proven that this *is* possible in limited scope.
+- Hair-only mod support (VHR, ApachiiHair3DNPC, etc.)
+  - Unsure how to "preview" this, but execution seems possible now with NIF edits
 - Automatic hair physics replacement (when available)
+  - i.e. given an original ESP and a physics version, replace all of the form
+    links and facegen sub-meshes for some or all NPCs.
+- General utilities not directly related to merge
+  - Could make use of the code already here for some community-neglected areas
+  - Check for missing textures (in plugins AND facegens)
 
 ## Punted
 
@@ -55,3 +60,7 @@
 - De-wiggify
   - High Poly NPC Overhauls seem to use bald hair with wigs
   - May be able to "fix" this with mesh manipulation alone, i.e. no CK
+- Advanced operations
+  - Log file maintenance
+  - Autosave maintenance (clear history)
+  - Rescan defaults / evolve to load order

@@ -5,6 +5,9 @@
     <TargetFramework>net5.0-windows10.0.19041</TargetFramework>
     <RootNamespace>NPC_Bundler</RootNamespace>
     <UseWPF>true</UseWPF>
+    <AssemblyName>NPC Bundler</AssemblyName>
+    <Product>SSE Tools</Product>
+    <AssemblyTitle>Easy NPC</AssemblyTitle>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

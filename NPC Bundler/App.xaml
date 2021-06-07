@@ -11,6 +11,11 @@
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
 
+            <x:Static x:Key="AppName" Member="local:AssemblyProperties.Name"/>
+            <x:Static x:Key="AppProduct" Member="local:AssemblyProperties.Product"/>
+            <x:Static x:Key="AppTitle" Member="local:AssemblyProperties.Title"/>
+            <x:Static x:Key="AppVersion" Member="local:AssemblyProperties.Version"/>
+
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
             <local:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>

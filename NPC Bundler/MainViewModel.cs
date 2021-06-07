@@ -15,6 +15,7 @@ namespace NPC_Bundler
         public LoaderViewModel<TKey> Loader { get; private init; }
         public LogViewModel Log { get; private init; }
         public ILogger Logger { get; private init; }
+        public MaintenanceViewModel<TKey> Maintenance { get; private set; }
         public ProfileViewModel<TKey> Profile { get; private set; }
         public string PageTitle { get; set; }
         public SettingsViewModel Settings { get; private init; }
@@ -44,9 +45,10 @@ namespace NPC_Bundler
             Loader.Loaded += () => {
                 Log.PauseExternalMonitoring();
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
+                var profileEventLog = new ProfileEventLog(ProgramData.GetProfileLogFileName());
                 Profile = new ProfileViewModel<TKey>(
-                    Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames,
-                    ProgramData.GetProfileLogFileName());
+                    Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames, profileEventLog);
+                Maintenance = new MaintenanceViewModel<TKey>(Profile.GetAllNpcConfigurations(), profileEventLog);
                 var archiveFileMap = new ArchiveFileMap(gameDataEditor.ArchiveProvider);
                 var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
                 var faceGenEditor = new NiflyFaceGenEditor(Logger);

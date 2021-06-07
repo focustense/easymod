@@ -10,19 +10,22 @@ namespace NPC_Bundler
         {
             if (!File.Exists(fileName))
                 yield break;
-            using var fs = File.OpenRead(fileName);
+            using var fs = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new StreamReader(fs);
             string line;
             while ((line = reader.ReadLine()) != null)
                 yield return ProfileEvent.Deserialize(line);
         }
 
+        public string FileName { get; private init; }
+
         private bool disposed = false;
-        private readonly StreamWriter writer;
+        private StreamWriter writer;
 
         public ProfileEventLog(string fileName)
         {
-            writer = new StreamWriter(fileName, true);
+            FileName = fileName;
+            OpenLogFile();
         }
 
         ~ProfileEventLog()
@@ -43,6 +46,14 @@ namespace NPC_Bundler
             writer.Flush();
         }
 
+        public void Erase()
+        {
+            writer.Dispose();
+            var backupName = Path.ChangeExtension(FileName, $".{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.bak");
+            File.Move(FileName, backupName);
+            OpenLogFile();
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
@@ -51,6 +62,12 @@ namespace NPC_Bundler
                     writer.Dispose();
                 disposed = true;
             }
+        }
+
+        private void OpenLogFile()
+        {
+            var fs = File.Open(FileName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+            writer = new StreamWriter(fs);
         }
     }
 }

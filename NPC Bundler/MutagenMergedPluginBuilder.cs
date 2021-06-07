@@ -33,7 +33,7 @@ namespace NPC_Bundler
             var mergeFilePath = Path.Combine(environment.GameFolderPath, MergeFileName);
             if (File.Exists(mergeFilePath))
             {
-                var backupPath = $"{mergeFilePath}.{DateTime.Now:yyyyMMdd_hhmmss}.bak";
+                var backupPath = $"{mergeFilePath}.{DateTime.Now:yyyyMMdd_HHmmss}.bak";
                 log.Debug("Moved {mergeFilePath} to {backupPath}", mergeFilePath, backupPath);
                 File.Move(mergeFilePath, backupPath, true);
                 log.Information("Moved {mergeFilePath} to {backupPath}", mergeFilePath, backupPath);

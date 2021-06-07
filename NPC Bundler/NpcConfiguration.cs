@@ -31,6 +31,8 @@ namespace NPC_Bundler
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> Overrides { get; init; }
         public string Name => npc.Name;
 
+        private readonly Func<NpcOverrideConfiguration<TKey>, int> indexOfOverride;
+        private readonly IReadOnlySet<string> masterNames;
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly INpc<TKey> npc;
 
@@ -40,45 +42,15 @@ namespace NPC_Bundler
         public NpcConfiguration(
             INpc<TKey> npc, IModPluginMapFactory modPluginMapFactory, IReadOnlySet<string> masterNames)
         {
+            this.masterNames = masterNames;
             this.modPluginMapFactory = modPluginMapFactory;
             this.npc = npc;
             var overrides = GetOverrides().ToList();
             Overrides = overrides.AsReadOnly();
-
-            // We're never going to make perfect choices on the first run, but we can make a few assumptions.
-            // First, that users have set up their NPC-mod load order to reflect their general preferences - i.e. mods
-            // they'll use the most go last, mods they'll use scarcely go first.
-            // Second, that they've used LOOT or manually organized their full load order so that all the compatibility
-            // and conflict-resolution patches that *don't* deal with body/face mods go nearly last in the load order.
-            //
-            // This gives us an obviously flawed but still fairly good heuristic:
-            // - Choose the last plugin in the load order _which modifies face data_ as the face source.
-            // - Try to choose the very last plugin in the load order as the default source, except...
-            //   - If that plugin is *also* the face source, then keep going up the list until we find either:
-            //     (a) A master (ESM) plugin; these are rare, like USSEP, and we generally shouldn't override; or
-            //     (b) Any plugin that modifies the NPC but does not modify the face, regardless of master.
-            var faceOverride = overrides.LastOrDefault(x => x.HasFaceOverride);
-            var defaultOverride = overrides.LastOrDefault();
-            while (!string.IsNullOrEmpty(defaultOverride.ItpoFileName))
-            {
-                var itpoOverride = overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoFileName);
-                if (itpoOverride != null)   // Should never be null but we still need to check
-                    defaultOverride = itpoOverride;
-            }
-            if (defaultOverride == faceOverride && !masterNames.Contains(defaultOverride.PluginName))
-            {
-                for (int i = overrides.IndexOf(faceOverride) - 1; i >= 0; i--)
-                {
-                    var prevOverride = overrides[i];
-                    if (masterNames.Contains(prevOverride.PluginName) || !prevOverride.HasFaceOverride)
-                    {
-                        defaultOverride = prevOverride;
-                        break;
-                    }
-                }
-            }
-            SetDefaultPlugin(defaultOverride);
-            SetFacePlugin(faceOverride, true);
+            // It's really silly that we have to store this, but for no particular reason, IReadOnlyList<T> does not
+            // have the IndexOf method.
+            indexOfOverride = @override => overrides.IndexOf(@override);
+            Reset(true);
         }
 
         public int GetOverrideCount(bool includeDlc, bool includeNonFaces)
@@ -107,6 +79,45 @@ namespace NPC_Bundler
         public bool RequiresFacegenData()
         {
             return HasFaceGenOverridesEnabled() && !FileStructure.IsDlc(FacePluginName);
+        }
+
+        public void Reset(bool includeFacePlugin = false)
+        {
+            // We're never going to make perfect choices on the first run, but we can make a few assumptions.
+            // First, that users have set up their NPC-mod load order to reflect their general preferences - i.e. mods
+            // they'll use the most go last, mods they'll use scarcely go first.
+            // Second, that they've used LOOT or manually organized their full load order so that all the compatibility
+            // and conflict-resolution patches that *don't* deal with body/face mods go nearly last in the load order.
+            //
+            // This gives us an obviously flawed but still fairly good heuristic:
+            // - Choose the last plugin in the load order _which modifies face data_ as the face source.
+            // - Try to choose the very last plugin in the load order as the default source, except...
+            //   - If that plugin is *also* the face source, then keep going up the list until we find either:
+            //     (a) A master (ESM) plugin; these are rare, like USSEP, and we generally shouldn't override; or
+            //     (b) Any plugin that modifies the NPC but does not modify the face, regardless of master.
+            var faceOverride = Overrides.LastOrDefault(x => x.HasFaceOverride);
+            var defaultOverride = Overrides[Overrides.Count - 1];
+            while (!string.IsNullOrEmpty(defaultOverride.ItpoFileName))
+            {
+                var itpoOverride = Overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoFileName);
+                if (itpoOverride != null)   // Should never be null but we still need to check
+                    defaultOverride = itpoOverride;
+            }
+            if (defaultOverride == faceOverride && !masterNames.Contains(defaultOverride.PluginName))
+            {
+                for (int i = indexOfOverride(faceOverride) - 1; i >= 0; i--)
+                {
+                    var prevOverride = Overrides[i];
+                    if (masterNames.Contains(prevOverride.PluginName) || !prevOverride.HasFaceOverride)
+                    {
+                        defaultOverride = prevOverride;
+                        break;
+                    }
+                }
+            }
+            SetDefaultPlugin(defaultOverride);
+            if (includeFacePlugin)
+                SetFacePlugin(faceOverride, true);
         }
 
         public void RestoreFromProfileEvent(ProfileEvent e)
