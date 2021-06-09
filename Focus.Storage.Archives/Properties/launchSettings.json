@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Focus.Storage.Archives": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}
