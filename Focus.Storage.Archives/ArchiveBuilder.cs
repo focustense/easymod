@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Focus.Storage.Archives
 {
@@ -43,8 +44,11 @@ namespace Focus.Storage.Archives
             Functions.BsaShareDataSet(archive, shouldShareData);
             var manifest = new ArchiveManifest().AddAll(fileEntries.Select(x => x.PathInArchive));
             Functions.BsaCreateArchive(archive, outputFileName, type, manifest.Handle);
-            foreach (var fileEntry in fileEntries)
-                Functions.BsaAddFileFromDisk(archive, fileEntry.PathInArchive, fileEntry.LocalFilePath);
+            // We probably don't get amazing throughput from this, because the writes are synchronized in libbsarch
+            // (which is also why this is thread-safe). However, we do get some, because the files are compressed, which
+            // is not trivial on CPU and can happen at the same time as writes.
+            Parallel.ForEach(fileEntries, fileEntry =>
+                Functions.BsaAddFileFromDisk(archive, fileEntry.PathInArchive, fileEntry.LocalFilePath));                
             Functions.BsaSave(archive);
             return new Archive(archive);
         }
