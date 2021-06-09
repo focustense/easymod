@@ -2,6 +2,9 @@
 
 ## Near-term (0.9 / Beta)
 
+- Deal with ModPluginMap startup dependency when selecting defaults
+  - Users won't have a mod directory defined on first run
+  - Either need to have "initial setup" or rescan defaults after changing settings
 - Built-in BSA archiving
 - Moar Mugshots
 - Make de-wiggification optional on build and/or settings screen
@@ -16,7 +19,6 @@
 
 - Windows 7 targeting
 - Support for Outfit (DOFT/SOFT) and Body (WNAM) carryover
-- NifTools integration (i.e. for texture scans)
 - Advanced filters: override names, plugin/mod selections
 - Better MO2 integration - read profiles, mod lists, detect disable mods, etc.
 - "Easy Mode" - hide plugin/mod distinction unless there's a conflict
@@ -28,6 +30,7 @@
 - Advanced safety checks, e.g. comparison of NPC headparts to facegens
 - Facegen live previews - replace labor-intensive mugshots
   - **OR:** tools for modders to auto-generate them for their mods
+  - This may be a pipe dream; NIF is insanely complex, no libraries for rendering.
 - Additional Bethesda games support
 - Facegen creation, if that's even possible
   - Automating the CK is not; but it might be possible to "mix" facegen files
@@ -64,3 +67,6 @@
   - Log file maintenance
   - Autosave maintenance (clear history)
   - Rescan defaults / evolve to load order
+- ~~NifTools integration (i.e. for texture scans)~~
+  - Nifly is in use, but it seems very slow; regex hack might be better.
+  - To revisit this, would need async, which isn't supported by SWIG wrapper.

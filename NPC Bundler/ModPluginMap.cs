@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +9,9 @@ namespace NPC_Bundler
 {
     public class ModPluginMap
     {
+        private static readonly ModPluginMap Empty = new(
+            EmptyDictionary<string, string>(), EmptyDictionary<string, string>(),
+            EmptyDictionary<string, string>(), EmptyDictionary<string, string>());
         private static readonly Dictionary<string, ModPluginMap> Instances = new();
 
         enum FileType { Unknown, Plugin, Archive };
@@ -16,6 +20,8 @@ namespace NPC_Bundler
             string modRootDirectory, IEnumerable<string> pluginNames, IEnumerable<string> archiveNames)
         {
             var trimmedDirectory = Path.TrimEndingDirectorySeparator(modRootDirectory);
+            if (string.IsNullOrEmpty(trimmedDirectory))
+                return Empty;
             if (Instances.TryGetValue(trimmedDirectory, out ModPluginMap cached))
                 return cached;
 
@@ -84,21 +90,25 @@ namespace NPC_Bundler
                     foreach (var plugin in pluginFileNames)
                         pluginsToMods.TryAdd(plugin, Enumerable.Empty<string>());
                 });
-            var map = new ModPluginMap(modsToPlugins, pluginsToMods, modsToArchives, archivesToMods);
+            var map = new ModPluginMap(
+                new ReadOnlyDictionary<string, IEnumerable<string>>(modsToPlugins),
+                new ReadOnlyDictionary<string, IEnumerable<string>>(pluginsToMods),
+                new ReadOnlyDictionary<string, IEnumerable<string>>(modsToArchives),
+                new ReadOnlyDictionary<string, IEnumerable<string>>(archivesToMods));
             Instances.TryAdd(modRootDirectory, map);
             return map;
         }
 
-        private readonly IDictionary<string, IEnumerable<string>> archivesToMods;
-        private readonly IDictionary<string, IEnumerable<string>> modsToArchives;
-        private readonly IDictionary<string, IEnumerable<string>> modsToPlugins;
-        private readonly IDictionary<string, IEnumerable<string>> pluginsToMods;
+        private readonly IReadOnlyDictionary<string, IEnumerable<string>> archivesToMods;
+        private readonly IReadOnlyDictionary<string, IEnumerable<string>> modsToArchives;
+        private readonly IReadOnlyDictionary<string, IEnumerable<string>> modsToPlugins;
+        private readonly IReadOnlyDictionary<string, IEnumerable<string>> pluginsToMods;
 
         private ModPluginMap(
-            IDictionary<string, IEnumerable<string>> modsToPlugins,
-            IDictionary<string, IEnumerable<string>> pluginsToMods,
-            IDictionary<string, IEnumerable<string>> modsToArchives,
-            IDictionary<string, IEnumerable<string>> archivesToMods)
+            IReadOnlyDictionary<string, IEnumerable<string>> modsToPlugins,
+            IReadOnlyDictionary<string, IEnumerable<string>> pluginsToMods,
+            IReadOnlyDictionary<string, IEnumerable<string>> modsToArchives,
+            IReadOnlyDictionary<string, IEnumerable<string>> archivesToMods)
         {
             this.modsToPlugins = modsToPlugins;
             this.pluginsToMods = pluginsToMods;
@@ -133,6 +143,11 @@ namespace NPC_Bundler
         public bool IsModInstalled(string modName)
         {
             return modsToPlugins.ContainsKey(modName);
+        }
+
+        private static IReadOnlyDictionary<TKey, IEnumerable<TValue>> EmptyDictionary<TKey, TValue>()
+        {
+            return new ReadOnlyDictionary<TKey, IEnumerable<TValue>>(new Dictionary<TKey, IEnumerable<TValue>>());
         }
     }
 }
