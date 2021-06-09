@@ -218,7 +218,7 @@ namespace NPC_Bundler
             }
             progress.JumpTo(0.25f + facegenStageSize);
 
-            if (buildSettings.EnableDewiggify)
+            if (buildSettings.EnableDewiggify && mergeInfo.WigConversions.Count > 0)
             {
                 progress.StartStage("Processing wig conversions");
                 progress.AdjustRemaining(mergeInfo.WigConversions.Count, 0.2f);

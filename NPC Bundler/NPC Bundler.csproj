@@ -51,6 +51,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Focus.Storage.Archives\Focus.Storage.Archives.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="BundlerSettings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>

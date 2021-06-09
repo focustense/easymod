@@ -42,7 +42,6 @@ namespace NPC_Bundler
             progress.StartStage("Starting the merge");
             var mergedMod = new SkyrimMod(ModKey.FromNameAndExtension(MergeFileName), SkyrimRelease.SkyrimSE);
             var context = new MergeContext(environment, mergedMod, log);
-            var result = new MergedPluginResult();
 
             var customizedNpcs = new List<Tuple<NpcConfiguration<FormKey>, Npc>>();
             progress.MaxProgress = customizedNpcs.Count;
@@ -135,7 +134,8 @@ namespace NPC_Bundler
                         x.Item1.FaceConfiguration.Wig != null &&
                         wigMatches.ContainsKey(x.Item1.FaceConfiguration.Wig.Key))
                     .ToList();
-                progress.AdjustRemaining(npcsWithMatchedWigs.Count, 0.05f);
+                if (npcsWithMatchedWigs.Count > 0)
+                    progress.AdjustRemaining(npcsWithMatchedWigs.Count, 0.05f);
                 foreach (var npcTuple in npcsWithMatchedWigs)
                 {
                     var npc = npcTuple.Item1;

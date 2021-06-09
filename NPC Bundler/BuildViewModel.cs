@@ -1,4 +1,5 @@
-﻿using PropertyChanged;
+﻿using Focus.Storage.Archives;
+using PropertyChanged;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace NPC_Bundler
         public bool IsWarningInfoVisible => SelectedWarning != null;
         public IReadOnlyList<NpcConfiguration<TKey>> Npcs { get; init; }
         public string OutputDirectory { get; private set; }
-        public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now.ToString("yyyy-MM-dd")}";
+        public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now:yyyy-MM-dd}";
         public string OutputPluginName => FileStructure.MergeFileName;
         public IEnumerable<BuildWarning> Problems { get; private set; }
         public BuildProgressViewModel Progress { get; private set; }
@@ -80,6 +81,7 @@ namespace NPC_Bundler
                 MergedFolder.Build(
                     Npcs, mergeInfo, archiveProvider, faceGenEditor, modPluginMap, buildSettings, Progress.MergedFolder,
                     log);
+                BuildArchive();
             }).ConfigureAwait(true);
             IsReadyToBuild = false;
             IsBuildCompleted = true;
@@ -125,6 +127,41 @@ namespace NPC_Bundler
                 return;
             var psi = new ProcessStartInfo() { FileName = OutputDirectory, UseShellExecute = true };
             Process.Start(psi);
+        }
+
+        private void BuildArchive()
+        {
+            Progress.Archive.StartStage("Packing loose files into archive");
+            try
+            {
+                void BuildFilteredArchive(string name, string relativePath)
+                {
+                    var outputFileName = Path.Combine(OutputDirectory, name) + ".bsa";
+                    new ArchiveBuilder(ArchiveType.SSE)
+                        .AddDirectory(Path.Combine(OutputDirectory, relativePath), relativePath)
+                        .Compress(true)
+                        .ShareData(true)
+                        .Build(outputFileName);
+                }
+
+                var baseName = Path.GetFileNameWithoutExtension(OutputPluginName);
+                Task.WaitAll(
+                    Task.Run(() => BuildFilteredArchive(baseName, "meshes")),
+                    Task.Run(() => BuildFilteredArchive($"{baseName} - Textures", "textures")));
+
+                Progress.Archive.StartStage("Cleaning up loose files");
+                Directory.Delete(Path.Combine(OutputDirectory, "meshes"), true);
+                Directory.Delete(Path.Combine(OutputDirectory, "textures"), true);
+
+                Progress.Archive.StartStage("Done");
+                Progress.Archive.CurrentProgress = Progress.Archive.MaxProgress = 1;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Failed to build BSA archive");
+                Progress.Archive.ErrorMessage = ex.Message;
+                throw;
+            }
         }
 
         private IEnumerable<BuildWarning> CheckForOverriddenArchives()
@@ -277,11 +314,14 @@ namespace NPC_Bundler
 
     public class BuildProgressViewModel
     {
+        public ProgressViewModel Archive { get; init; }
         public ProgressViewModel MergedFolder { get; init; }
         public ProgressViewModel MergedPlugin { get; init; } 
 
         public BuildProgressViewModel(ILogger logger)
         {
+            Archive = new ProgressViewModel(
+                "Pack Archive", logger.ForContext("TaskName", "Archive"), true, "Waiting for merged folder");
             MergedPlugin = new ProgressViewModel("Merged Plugin", logger.ForContext("TaskName", "Merged Plugin"));
             MergedFolder = new ProgressViewModel(
                 "Merged Folder", logger.ForContext("TaskName", "Merged Folder"), true, "Waiting for merged plugin");

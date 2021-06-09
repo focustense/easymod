@@ -113,6 +113,7 @@
                             <TextBlock Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
                             <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8,0,0"/>
                             <local:ProgressViewer DataContext="{Binding Progress.MergedFolder}" Margin="0,8,0,0"/>
+                            <local:ProgressViewer DataContext="{Binding Progress.Archive}" Margin="0,8,0,0"/>
                         </ui:SimpleStackPanel>
                     </ui:SimpleStackPanel>
                 </GroupBox>

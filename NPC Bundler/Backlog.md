@@ -5,7 +5,6 @@
 - Deal with ModPluginMap startup dependency when selecting defaults
   - Users won't have a mod directory defined on first run
   - Either need to have "initial setup" or rescan defaults after changing settings
-- Built-in BSA archiving
 - Moar Mugshots
 - Make de-wiggification optional on build and/or settings screen
   - Try to give coherent explanation of pros and cons
@@ -70,3 +69,4 @@
 - ~~NifTools integration (i.e. for texture scans)~~
   - Nifly is in use, but it seems very slow; regex hack might be better.
   - To revisit this, would need async, which isn't supported by SWIG wrapper.
+- Built-in BSA archiving
