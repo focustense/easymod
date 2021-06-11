@@ -21,6 +21,7 @@ namespace NPC_Bundler
 
         public IEnumerable<string> AvailablePlugins { get; set; }
         public ObservableCollection<BuildWarningSuppressions> BuildWarningWhitelist { get; init; }
+        public string MugshotsDirectoryPlaceholderText => ProgramData.DefaultMugshotsPath;
 
         public SettingsViewModel()
         {

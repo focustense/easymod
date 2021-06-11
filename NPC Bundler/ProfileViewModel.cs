@@ -305,8 +305,9 @@ namespace NPC_Bundler
 
         public static bool Exists(string modName, string basePluginName, string localFormIdHex)
         {
-            var path = Path.Combine(
-                BundlerSettings.Default.MugshotsDirectory, modName, basePluginName, $"00{localFormIdHex}.png");
+            var mugshotsDirectory = !string.IsNullOrEmpty(BundlerSettings.Default.MugshotsDirectory) ?
+                BundlerSettings.Default.MugshotsDirectory : ProgramData.DefaultMugshotsPath;
+            var path = Path.Combine(mugshotsDirectory, modName, basePluginName, $"00{localFormIdHex}.png");
             return File.Exists(path);
         }
 

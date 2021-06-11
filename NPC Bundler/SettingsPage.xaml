@@ -17,8 +17,8 @@
     </Page.Resources>
     <Grid DataContext="{Binding Path=Settings}">
         <!-- We have to add padding on the right here, otherwise the scroll bar masks part of the buttons (even when hidden). -->
-        <ui:ScrollViewerEx Padding="0,0,16,0">
-            <ui:SimpleStackPanel>
+        <ui:ScrollViewerEx>
+            <ui:SimpleStackPanel Margin="0,0,4,0">
                 <GroupBox Header="Paths">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -26,6 +26,7 @@
                             <ColumnDefinition Width="48"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -55,7 +56,25 @@
                         </Expander>
 
                         <TextBlock Style="{StaticResource FormLabelStyle}" Text="Face Preview Directory" Grid.ColumnSpan="2" Grid.Row="3"/>
-                        <TextBox Text="{Binding MugshotsDirectory}" Grid.Column="0" Grid.Row="4"/>
+                        <TextBox x:Name="MugshotsDirectoryTextBox" Text="{Binding MugshotsDirectory}" Grid.Column="0" Grid.Row="4"/>
+                        <TextBox Background="Transparent" IsHitTestVisible="False" IsEnabled="False" Text="{Binding MugshotsDirectoryPlaceholderText, Mode=OneWay}" Grid.Column="0" Grid.Row="4">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsFocused, ElementName=MugshotsDirectoryTextBox}" Value="false"/>
+                                                <Condition Binding="{Binding Text, ElementName=MugshotsDirectoryTextBox}" Value=""/>
+                                            </MultiDataTrigger.Conditions>
+                                            <MultiDataTrigger.Setters>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </MultiDataTrigger.Setters>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
                         <Button x:Name="MugshotsDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Grid.Row="4" Click="MugshotsDirSelectButton_Click">
                             <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
                         </Button>

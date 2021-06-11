@@ -6,6 +6,7 @@ namespace NPC_Bundler
     static class ProgramData
     {
         public static string AppName = "SSE NPC Bundler";
+        public static string DefaultMugshotsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mugshots");
         public static string DirectoryPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName);
         public static string LogFileName =
