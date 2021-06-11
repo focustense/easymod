@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.GameData.Files
 {
     // Maintains a global bidirectional map of archives (i.e. BSAs) to facegen files in those archives.
     //

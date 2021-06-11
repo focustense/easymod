@@ -1,4 +1,5 @@
-﻿using Mutagen.Bethesda;
+﻿using Focus.Apps.EasyNpc.GameData.Files;
+using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
 using System.IO;
 using System.Linq;

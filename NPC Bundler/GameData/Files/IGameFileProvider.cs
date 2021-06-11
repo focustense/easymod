@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.GameData.Files
 {
     public interface IGameFileProvider : IDisposable
     {

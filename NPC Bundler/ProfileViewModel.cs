@@ -1,4 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
+using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Records;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
 using System;

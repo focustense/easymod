@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.GameData.Files
 {
     public class ModPluginMap
     {

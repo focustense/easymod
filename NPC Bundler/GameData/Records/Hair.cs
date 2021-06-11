@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.GameData.Records
 {
     public class Hair<TKey>
     {

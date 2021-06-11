@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Records;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;

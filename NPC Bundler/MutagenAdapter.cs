@@ -1,4 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Debug;
+using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Records;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
@@ -8,6 +10,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using NpcFaceParts = Focus.Apps.EasyNpc.GameData.Records.NpcFaceParts;
 
 namespace Focus.Apps.EasyNpc
 {

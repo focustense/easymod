@@ -1,4 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Debug;
+using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Records;
 using Serilog;
 using System;
 using System.Collections.Generic;

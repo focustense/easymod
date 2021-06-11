@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.GameData.Files
 {
     public class VirtualGameFileProvider : IGameFileProvider
     {

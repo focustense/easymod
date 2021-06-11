@@ -1,6 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.GameData.Files
 {
     public interface IModPluginMapFactory
     {
