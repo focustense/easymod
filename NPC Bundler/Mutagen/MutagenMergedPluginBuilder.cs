@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Mutagen
 {
     public class MutagenMergedPluginBuilder : IMergedPluginBuilder<FormKey>
     {

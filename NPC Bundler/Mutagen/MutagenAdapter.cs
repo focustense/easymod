@@ -12,7 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using NpcFaceParts = Focus.Apps.EasyNpc.GameData.Records.NpcFaceParts;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Mutagen
 {
     public class MutagenAdapter : IGameDataEditor<FormKey>
     {

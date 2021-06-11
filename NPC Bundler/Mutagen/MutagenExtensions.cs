@@ -2,7 +2,7 @@
 using Mutagen.Bethesda.Skyrim;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Mutagen
 {
     static class MutagenExtensions
     {
