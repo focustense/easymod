@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Data;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Build
 {
     public enum BuildWarningId
     {

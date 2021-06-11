@@ -1,5 +1,6 @@
 ﻿<Application x:Class="Focus.Apps.EasyNpc.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
              xmlns:config="clr-namespace:Focus.Apps.EasyNpc.Configuration"
              xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -19,7 +20,7 @@
 
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-            <local:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>
+            <build:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>
 
             <Style TargetType="DataGrid" BasedOn="{StaticResource DefaultDataGridStyle}">
                 <Setter Property="BorderThickness" Value="1"/>

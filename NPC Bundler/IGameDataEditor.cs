@@ -1,4 +1,5 @@
-﻿using Focus.Apps.EasyNpc.Debug;
+﻿using Focus.Apps.EasyNpc.Build;
+using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
 using System;

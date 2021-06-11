@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Build
 {
     public interface IMergedPluginBuilder<TKey>
         where TKey : struct

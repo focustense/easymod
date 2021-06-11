@@ -1,4 +1,5 @@
-﻿using Focus.Apps.EasyNpc.Configuration;
+﻿using Focus.Apps.EasyNpc.Build;
+using Focus.Apps.EasyNpc.Configuration;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;

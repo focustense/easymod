@@ -3,7 +3,7 @@ using System.Windows;
 
 using TKey = Mutagen.Bethesda.FormKey;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Build
 {
     /// <summary>
     /// Interaction logic for BuildPage.xaml

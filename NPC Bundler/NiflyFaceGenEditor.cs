@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.GameData.Files;
 using nifly;
 using Serilog;
