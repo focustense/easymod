@@ -2,15 +2,10 @@
 
 ## Near-term (0.9 / Beta)
 
-- Deal with ModPluginMap startup dependency when selecting defaults
-  - Users won't have a mod directory defined on first run
-  - Either need to have "initial setup" or rescan defaults after changing settings
 - Moar Mugshots
 - Make de-wiggification optional on build and/or settings screen
   - Try to give coherent explanation of pros and cons
 - Mugshot "redirects", e.g. if Hair Physics Version looks same as original
-- Bug: ESP/BSA files remain locked until program exit
-  - May be obsolete with Mutagen migration
 - More advanced operations
   - View full history
 
@@ -70,3 +65,9 @@
   - Nifly is in use, but it seems very slow; regex hack might be better.
   - To revisit this, would need async, which isn't supported by SWIG wrapper.
 - Built-in BSA archiving
+- ~~Bug: ESP/BSA files remain locked until program exit~~
+  - ~~May be obsolete with Mutagen migration~~
+  - No evidence of this anymore; reopen if it's an issue.
+- Deal with ModPluginMap startup dependency when selecting defaults
+  - Users won't have a mod directory defined on first run
+  - Either need to have "initial setup" or rescan defaults after changing settings

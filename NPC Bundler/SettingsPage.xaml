@@ -16,9 +16,26 @@
         </Style>
     </Page.Resources>
     <Grid DataContext="{Binding Path=Settings}">
-        <!-- We have to add padding on the right here, otherwise the scroll bar masks part of the buttons (even when hidden). -->
         <ui:ScrollViewerEx>
-            <ui:SimpleStackPanel Margin="0,0,4,0">
+            <!-- We have to add padding on the right here, otherwise the scroll bar masks part of the buttons (even when hidden). -->
+            <ui:SimpleStackPanel Margin="0,0,16,0">
+                <Border Background="LightGoldenrodYellow" Padding="8" Margin="0,8,0,16" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
+                    <ui:SimpleStackPanel>
+                        <TextBlock Style="{StaticResource TitleTextBlockStyle}">Welcome!</TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                        Looks like this is your first time running <Run Text="{StaticResource AppTitle}"/>. A starting profile will be generated based on your load order, but first you'll
+                        need to specify where your mods are located, so that we know which ones are actually installed. If you use Mod Organizer, this is normally the "mods" folder inside
+                        your Mod Organizer installation folder.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                        <Run FontWeight="Bold">Do not</Run> point this at your Skyrim data directory. If you're confused, click on the "What's this?" link further down.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                        If you haven't already, you should also browse the "Getting Started" section of the how-to guide for how to set up your load order for first-time use. In general:
+                        Put your NPC overhauls last, order them from least to most favorite, and disable any compatibility patches or AIOs for them. For more details, see the guide.
+                        </TextBlock>
+                    </ui:SimpleStackPanel>
+                </Border>
                 <GroupBox Header="Paths">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -49,9 +66,10 @@
                             highly recommended if you're modifying hundreds of NPCs with high-poly faces.
                             <LineBreak/><LineBreak/>
                             Even if you don't use Mod Organizer, you can still use this feature by extracting all your NPC mods to a single directory that
-                            lives <Italic>outside</Italic> your SSE data directory - just extract each mod to its own folder.
+                            lives <Italic>outside</Italic> your SSE data directory - just extract each mod to its own folder. Vortex also uses this structure
+                            for its mod staging directory, although the exact mod directory names it chooses may be different.
                             <LineBreak/><LineBreak/>
-                            <Bold>Do not use your Skyrim data directory here.</Bold> It won't work, and could cause bad side effects.
+                            <Bold>Do not use your Skyrim data directory here.</Bold> It won't work, and could cause bad side effects that break your game.
                             </TextBlock>
                         </Expander>
 
@@ -80,7 +98,7 @@
                         </Button>
                     </Grid>
                 </GroupBox>
-                <GroupBox Header="Build Settings">
+                <GroupBox Header="Build Settings" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource InvBoolToVisibility}}">
                     <ui:SimpleStackPanel>
                         <TextBlock Style="{StaticResource FormLabelStyle}" Margin="0,0,0,8" Text="Ignore Warnings" Grid.ColumnSpan="2" Grid.Row="0"/>
                         <DataGrid x:Name="BuildWarningWhitelistGrid" AutoGenerateColumns="False" ItemsSource="{Binding BuildWarningWhitelist}">
@@ -148,6 +166,9 @@
                         </Button>
                     </ui:SimpleStackPanel>
                 </GroupBox>
+                <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource BoolToVisibility}}">
+                    <Button x:Name="WelcomeDoneButton" Style="{StaticResource AccentButtonStyle}" FontSize="20" Click="WelcomeDoneButton_Click">I'm Done</Button>
+                </ui:SimpleStackPanel>
             </ui:SimpleStackPanel>
         </ui:ScrollViewerEx>
     </Grid>

@@ -1,4 +1,5 @@
 ﻿using Mutagen.Bethesda;
+using PropertyChanged;
 using Serilog;
 using System;
 using System.ComponentModel;
@@ -11,7 +12,12 @@ namespace NPC_Bundler
         public event PropertyChangedEventHandler PropertyChanged;
 
         public BuildViewModel<TKey> Build { get; private set; }
-        public bool IsReady { get; private set; }
+        public bool IsFirstLaunch { get; private set; }
+        public bool IsLoaded { get; private set; }
+        [DependsOn("IsFirstLaunch")]
+        public bool IsNavigationVisible => !IsFirstLaunch;
+        [DependsOn("IsFirstLaunch", "IsLoaded")]
+        public bool IsReady => IsLoaded || IsFirstLaunch;
         public LoaderViewModel<TKey> Loader { get; private init; }
         public LogViewModel Log { get; private init; }
         public ILogger Logger { get; private init; }
@@ -22,8 +28,10 @@ namespace NPC_Bundler
 
         private readonly IGameDataEditor<TKey> gameDataEditor;
 
-        public MainViewModel()
+        public MainViewModel(bool isFirstLaunch)
         {
+            IsFirstLaunch = isFirstLaunch;
+
             var logViewModelSink = new LogViewModelSink();
             Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -40,12 +48,16 @@ namespace NPC_Bundler
             Logger.Information("Initialized");
             Log.ResumeExternalMonitoring();
 
-            Settings = new SettingsViewModel();
+            Settings = new SettingsViewModel { IsWelcomeScreen = isFirstLaunch };
+            Settings.WelcomeAcked += (sender, e) =>
+            {
+                IsFirstLaunch = false;
+            };
             Loader = new LoaderViewModel<TKey>(gameDataEditor, Log, Logger);
             Loader.Loaded += () => {
                 Log.PauseExternalMonitoring();
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
-                var profileEventLog = new ProfileEventLog(ProgramData.GetProfileLogFileName());
+                var profileEventLog = new ProfileEventLog(ProgramData.ProfileLogFileName);
                 Profile = new ProfileViewModel<TKey>(
                     Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames, profileEventLog);
                 Maintenance = new MaintenanceViewModel<TKey>(Profile.GetAllNpcConfigurations(), profileEventLog);
@@ -55,7 +67,7 @@ namespace NPC_Bundler
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, gameDataEditor.MergedPluginBuilder, Loader.ModPluginMapFactory,
                     Profile.GetAllNpcConfigurations(), wigResolver, faceGenEditor, archiveFileMap, Logger);
-                IsReady = true;
+                IsLoaded = true;
             };
         }
 
@@ -64,6 +76,9 @@ namespace NPC_Bundler
 
     public class MainViewModel : MainViewModel<FormKey>
     {
+        public MainViewModel(bool isFirstLaunch = false)
+            : base(isFirstLaunch) { }
+
         protected override IGameDataEditor<FormKey> CreateEditor()
         {
             return new MutagenAdapter(Logger);

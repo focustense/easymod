@@ -7,16 +7,18 @@
         xmlns:ui="http://schemas.modernwpf.com/2019"
         mc:Ignorable="d"
         ui:WindowHelper.UseModernWindowStyle="True"
-        Title="SSE NPC Bundler" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
+        Title="{StaticResource AppTitle}" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <DataTemplate x:Key="LoaderTemplate" DataType="local:MainViewModel">
             <local:Loader DataContext="{Binding Loader}"/>
         </DataTemplate>
+        <DataTemplate x:Key="EmptyTemplate"></DataTemplate>
     </Window.Resources>
     <Grid>
         <ContentControl Content="{Binding}">
             <ContentControl.Style>
                 <Style TargetType="ContentControl">
+                    <Setter Property="ContentTemplate" Value="{StaticResource EmptyTemplate}"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsReady}" Value="False">
                             <Setter Property="ContentTemplate" Value="{StaticResource LoaderTemplate}"/>
@@ -25,14 +27,21 @@
                 </Style>
             </ContentControl.Style>
         </ContentControl>
-        <ui:NavigationView Header="{Binding Path=PageTitle}" Visibility="{Binding Path=IsReady, Converter={StaticResource BoolToVisibility}}" PaneDisplayMode="Top" IsBackButtonVisible="Collapsed" SelectionChanged="NavigationView_SelectionChanged">
+        <ui:NavigationView x:Name="MainNavigationView"
+                           Header="{Binding Path=PageTitle}"
+                           Visibility="{Binding Path=IsReady, Converter={StaticResource BoolToVisibility}}"
+                           PaneDisplayMode="Top"
+                           IsBackButtonVisible="Collapsed"
+                           AlwaysShowHeader="{Binding IsNavigationVisible}"
+                           IsPaneVisible="{Binding IsNavigationVisible}"
+                           SelectionChanged="NavigationView_SelectionChanged">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Tag="profile" Content="Profile" IsSelected="True"></ui:NavigationViewItem>
                 <ui:NavigationViewItem Tag="build" Content="Build"></ui:NavigationViewItem>
                 <ui:NavigationViewItem Tag="maintenance" Content="Maintenance"></ui:NavigationViewItem>
                 <ui:NavigationViewItem Tag="log" Content="Log"></ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
-            <ui:Frame Name="PageFrame" Padding="12,0,12,24" IsTabStop="True" NavigationUIVisibility="Hidden"/>
+            <ui:Frame x:Name="PageFrame" Padding="12,0,12,24" IsTabStop="True" NavigationUIVisibility="Hidden"/>
         </ui:NavigationView>
     </Grid>
 </Window>

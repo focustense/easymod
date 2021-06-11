@@ -4,12 +4,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Data;
 
 namespace NPC_Bundler
 {
@@ -18,9 +14,11 @@ namespace NPC_Bundler
         private static readonly BundlerSettings Settings = BundlerSettings.Default;
 
         public event PropertyChangedEventHandler PropertyChanged;
+        public event EventHandler WelcomeAcked;
 
-        public IEnumerable<string> AvailablePlugins { get; set; }
+        public IEnumerable<string> AvailablePlugins { get; set; } = Enumerable.Empty<string>();
         public ObservableCollection<BuildWarningSuppressions> BuildWarningWhitelist { get; init; }
+        public bool IsWelcomeScreen { get; set; }
         public string MugshotsDirectoryPlaceholderText => ProgramData.DefaultMugshotsPath;
 
         public SettingsViewModel()
@@ -54,6 +52,12 @@ namespace NPC_Bundler
                 Settings.MugshotsDirectory = value;
                 Settings.Save();
             }
+        }
+
+        public void AckWelcome()
+        {
+            IsWelcomeScreen = false;
+            WelcomeAcked?.Invoke(this, EventArgs.Empty);
         }
 
         public void AddBuildWarningSuppression()

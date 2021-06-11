@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ModernWpf.Controls;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
@@ -21,7 +22,7 @@ namespace NPC_Bundler
 
         private readonly MainViewModel model;
 
-        public MainWindow()
+        public MainWindow(MainViewModel model)
         {
             InitializeComponent();
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
@@ -40,7 +41,15 @@ namespace NPC_Bundler
                 }
                 Application.Current.Shutdown();
             };
-            DataContext = model = new MainViewModel();
+            DataContext = this.model = model;
+            if (model.IsFirstLaunch)
+            {
+                foreach (NavigationViewItem navItem in MainNavigationView.MenuItems)
+                    navItem.IsSelected = false;
+                Navigate("settings");
+                model.Settings.WelcomeAcked += (sender, e) =>
+                    (MainNavigationView.MenuItems[0] as NavigationViewItem).IsSelected = true;
+            }
         }
 
         private void Navigate(string pageName)
@@ -52,7 +61,7 @@ namespace NPC_Bundler
             }
         }
 
-        private void NavigationView_SelectionChanged(ModernWpf.Controls.NavigationView sender, ModernWpf.Controls.NavigationViewSelectionChangedEventArgs args)
+        private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
             if (args.IsSettingsSelected)
                 Navigate("settings");

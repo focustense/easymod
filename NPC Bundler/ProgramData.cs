@@ -5,16 +5,12 @@ namespace NPC_Bundler
 {
     static class ProgramData
     {
-        public static string AppName = "SSE NPC Bundler";
-        public static string DefaultMugshotsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mugshots");
-        public static string DirectoryPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName);
-        public static string LogFileName =
+        public static readonly string DefaultMugshotsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mugshots");
+        public static readonly string DirectoryPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AssemblyProperties.Name);
+        public static readonly string LogFileName =
             Path.Combine(DirectoryPath, $"Log_{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.txt");
-
-        public static string GetProfileLogFileName()
-        {
-            return Path.Combine(DirectoryPath, "Profile.log");
-        }
+        public static readonly string ProfileLogFileName =
+            Path.Combine(DirectoryPath, "Profile.log");
     }
 }

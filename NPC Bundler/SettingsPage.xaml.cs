@@ -44,5 +44,10 @@ namespace NPC_Bundler
             var suppressions = (sender as FrameworkElement).DataContext as BuildWarningSuppressions;
             Model.RemoveBuildWarningSuppression(suppressions);
         }
+
+        private void WelcomeDoneButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.AckWelcome();
+        }
     }
 }

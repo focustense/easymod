@@ -113,7 +113,7 @@ namespace NPC_Bundler
 
         private void RefreshProfileStats()
         {
-            var profileEvents = ProfileEventLog.ReadEventsFromFile(ProgramData.GetProfileLogFileName()).ToList();
+            var profileEvents = ProfileEventLog.ReadEventsFromFile(ProgramData.ProfileLogFileName).ToList();
             AutosaveRecordCount = profileEvents.Count;
             AutosaveInvalidNpcCount = profileEvents
                 .Where(x => !npcKeys.Contains(Tuple.Create(x.BasePluginName, x.LocalFormIdHex)))
