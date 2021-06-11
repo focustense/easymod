@@ -2,6 +2,7 @@
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
+using Focus.Apps.EasyNpc.Main;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;

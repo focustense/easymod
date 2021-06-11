@@ -1,16 +1,18 @@
-﻿<Window x:Class="Focus.Apps.EasyNpc.MainWindow"
+﻿<Window x:Class="Focus.Apps.EasyNpc.Main.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Focus.Apps.EasyNpc" d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+        xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+        xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
         ui:WindowHelper.UseModernWindowStyle="True"
         Title="{StaticResource AppTitle}" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
     <Window.Resources>
-        <DataTemplate x:Key="LoaderTemplate" DataType="local:MainViewModel">
-            <local:Loader DataContext="{Binding Loader}"/>
+        <DataTemplate x:Key="LoaderTemplate" DataType="main:MainViewModel">
+            <main:Loader DataContext="{Binding Loader}"/>
         </DataTemplate>
         <DataTemplate x:Key="EmptyTemplate"></DataTemplate>
     </Window.Resources>

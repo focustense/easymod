@@ -12,7 +12,7 @@ namespace Focus.Apps.EasyNpc.Profile
     /// </summary>
     public partial class ProfilePage : ModernWpf.Controls.Page
     {
-        protected ProfileViewModel<TKey> Model => ((MainViewModel)DataContext)?.Profile;
+        protected ProfileViewModel<TKey> Model => ((IProfileContainer<TKey>)DataContext)?.Profile;
 
         public ProfilePage()
         {

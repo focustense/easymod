@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Main
 {
     public interface IGameDataEditor<TKey>
         where TKey : struct

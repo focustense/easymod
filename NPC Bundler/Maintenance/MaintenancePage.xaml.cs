@@ -4,14 +4,14 @@ using System.Windows;
 
 using TKey = Mutagen.Bethesda.FormKey;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Maintenance
 {
     /// <summary>
     /// Interaction logic for MaintenancePage.xaml
     /// </summary>
     public partial class MaintenancePage : ModernWpf.Controls.Page
     {
-        protected MaintenanceViewModel<TKey> Model => ((MainViewModel)DataContext)?.Maintenance;
+        protected MaintenanceViewModel<TKey> Model => ((IMaintenanceContainer<TKey>)DataContext)?.Maintenance;
 
         public MaintenancePage()
         {

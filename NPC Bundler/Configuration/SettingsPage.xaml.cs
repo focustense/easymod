@@ -7,7 +7,7 @@ namespace Focus.Apps.EasyNpc.Configuration
     /// </summary>
     public partial class SettingsPage : ModernWpf.Controls.Page
     {
-        protected SettingsViewModel Model => ((MainViewModel)DataContext).Settings;
+        protected SettingsViewModel Model => ((ISettingsContainer)DataContext).Settings;
 
         public SettingsPage()
         {

@@ -6,7 +6,7 @@ using System.Windows.Input;
 
 using TKey = Mutagen.Bethesda.FormKey;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Main
 {
     /// <summary>
     /// Interaction logic for Loader.xaml

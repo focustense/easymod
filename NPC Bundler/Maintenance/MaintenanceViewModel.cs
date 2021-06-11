@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Maintenance
 {
     public class MaintenanceViewModel<TKey> : INotifyPropertyChanged
         where TKey : struct

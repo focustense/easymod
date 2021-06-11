@@ -2,6 +2,7 @@
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Mutagen;
 using Focus.Apps.EasyNpc.Profile;
 using Mutagen.Bethesda;
@@ -10,9 +11,11 @@ using Serilog;
 using System;
 using System.ComponentModel;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Main
 {
-    public abstract class MainViewModel<TKey> : INotifyPropertyChanged
+    public abstract class MainViewModel<TKey> :
+        INotifyPropertyChanged, IBuildContainer<TKey>, ILogContainer, IMaintenanceContainer<TKey>,
+        IProfileContainer<TKey>, ISettingsContainer
         where TKey : struct
     {
         public event PropertyChangedEventHandler PropertyChanged;

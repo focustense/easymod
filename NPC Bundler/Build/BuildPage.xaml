@@ -1,16 +1,17 @@
 ﻿<ui:Page x:Class="Focus.Apps.EasyNpc.Build.BuildPage"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
-             xmlns:fa5="http://schemas.fontawesome.com/icons/"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
-             xmlns:ui="http://schemas.modernwpf.com/2019"
-             KeepAlive="True"
-             mc:Ignorable="d" 
-             d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
-             d:DesignHeight="700" d:DesignWidth="1200">
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
+         xmlns:fa5="http://schemas.fontawesome.com/icons/"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+         xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+         xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
+         xmlns:ui="http://schemas.modernwpf.com/2019"
+         KeepAlive="True"
+         mc:Ignorable="d" 
+         d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
+         d:DesignHeight="700" d:DesignWidth="1200">
     <Grid DataContext="{Binding Build}">
         <Grid>
             <Grid.RowDefinitions>

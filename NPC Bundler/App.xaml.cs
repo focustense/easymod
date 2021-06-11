@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
+using Focus.Apps.EasyNpc.Main;
 using System;
 using System.IO;
 using System.Linq;

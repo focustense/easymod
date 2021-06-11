@@ -9,7 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Main
 {
     public class LoaderViewModel<TKey> : INotifyPropertyChanged
         where TKey : struct
