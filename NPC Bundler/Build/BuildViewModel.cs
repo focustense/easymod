@@ -20,8 +20,10 @@ namespace Focus.Apps.EasyNpc.Build
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public bool EnableDewiggify { get; set; } = true;
         [DependsOn("Problems")]
         public bool HasProblems => Problems?.Any() ?? false;
+        public bool HasWigs { get; private set; }
         public bool IsBuildCompleted { get; private set; }
         [DependsOn("Progress")]
         public bool IsBuilding => Progress != null;
@@ -74,7 +76,7 @@ namespace Focus.Apps.EasyNpc.Build
                 Directory.CreateDirectory(OutputDirectory);
                 var buildSettings = new BuildSettings<TKey>
                 {
-                    EnableDewiggify = true, // TODO: Make optional
+                    EnableDewiggify = EnableDewiggify,
                     OutputModName = OutputModName,
                     OutputDirectory = OutputDirectory,
                     WigResolver = wigResolver,
@@ -130,6 +132,11 @@ namespace Focus.Apps.EasyNpc.Build
                 return;
             var psi = new ProcessStartInfo() { FileName = OutputDirectory, UseShellExecute = true };
             Process.Start(psi);
+        }
+
+        public void QuickRefresh()
+        {
+            HasWigs = Npcs.Any(x => x.FaceConfiguration?.Wig != null);
         }
 
         private void BuildArchive()
@@ -281,15 +288,20 @@ namespace Focus.Apps.EasyNpc.Build
                 .ToHashSet();
             return Npcs
                 .Select(x => new { Npc = x, x.FaceConfiguration?.Wig })
-                .Where(x => x.Wig != null && !matchedWigKeys.Contains(x.Wig.Key))
-                .Select(x => new BuildWarning(
-                    x.Wig.IsBald ? BuildWarningId.FaceModWigNotMatchedBald : BuildWarningId.FaceModWigNotMatched,
-                    x.Wig.IsBald ?
-                        WarningMessages.FaceModWigNotMatchedBald(
-                            x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.ModelName) :
-                        WarningMessages.FaceModWigNotMatched(
-                            x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.ModelName)
-                    ));
+                .Where(x => x.Wig != null && (!EnableDewiggify || !matchedWigKeys.Contains(x.Wig.Key)))
+                .Select(x => EnableDewiggify ?
+                    new BuildWarning(
+                        x.Wig.IsBald ? BuildWarningId.FaceModWigNotMatchedBald : BuildWarningId.FaceModWigNotMatched,
+                        x.Wig.IsBald ?
+                            WarningMessages.FaceModWigNotMatchedBald(
+                                x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.ModelName) :
+                            WarningMessages.FaceModWigNotMatched(
+                                x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.ModelName)
+                        ) :
+                        new BuildWarning(
+                            BuildWarningId.FaceModWigConversionDisabled,
+                            WarningMessages.FaceModWigConversionDisabled(
+                                x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.IsBald)));
         }
 
         private static ILookup<string, BuildWarningId> GetBuildWarningSuppressions()

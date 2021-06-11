@@ -11,7 +11,7 @@
          KeepAlive="True"
          mc:Ignorable="d" 
          d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
-         d:DesignHeight="700" d:DesignWidth="1200">
+         d:DesignHeight="700" d:DesignWidth="1200" Loaded="Page_Loaded">
     <Grid DataContext="{Binding Build}">
         <Grid>
             <Grid.RowDefinitions>
@@ -23,18 +23,41 @@
             <Button x:Name="AltCheckForProblemsButton" ToolTip="Check for problems" IsEnabled="{Binding IsProblemCheckerEnabled}" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource InvBoolToVisibility}}" Grid.Row="0" Click="AltCheckForProblemsButton_Click">
                 <fa5:SvgAwesome Icon="Solid_Glasses" Width="16" Height="16"/>
             </Button>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1" d:Visibility="Collapsed">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1" d:Visibility="Visible">
                 <ui:SimpleStackPanel>
                     <TextBlock Style="{StaticResource FirstParagraphStyle}">
                         Before you build your NPC package, you should run a check for problems that could cause in-game blackface bugs or crashes. This isn't required, but normally only takes a few seconds and
                         will warn you if you're about to break an actor's face.
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParagraphStyle}">
-                        <Bold Foreground="OrangeRed">Warning:</Bold> This is not a substitute for properly managing your modlist and load order, e.g. with Mod Organizer, LOOT and user rules/tags. It will <Italic>only</Italic>
+                        <Bold Foreground="OrangeRed">Important:</Bold> This is not a substitute for properly managing your modlist and load order, e.g. with Mod Organizer, LOOT and user rules/tags. It will <Italic>only</Italic>
                         check for inconsistencies between your plugin selection and available mods/facegen data; it will not detect conflicts or other problems with AI packages, skills, perks, dialogue, or other crazy things that
                         some NPC mods do such as vanilla race edits. When in doubt, check for conflicts in xEdit/zEdit after running this tool, and make sure that the generated plugin isn't overwriting anything you don't want
                         overwritten.
                     </TextBlock>
+                    <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding HasWigs, Converter={StaticResource BoolToVisibility}}">
+                        <CheckBox x:Name="DewiggifyCheckBox" IsChecked="{Binding EnableDewiggify}">
+                            Attempt de-wiggification for NPCs with wigs
+                        </CheckBox>
+                        <ContentControl Style="{StaticResource HelpIconStyle}" Margin="8,0,0,0">
+                            <ContentControl.ToolTip>
+                                <TextBlock>
+                                    Some of your NPC choices point to records that use wigs (i.e. armor) for hair instead of standard head parts.
+                                    <LineBreak/><LineBreak/>
+                                    <Run Text="{StaticResource AppTitle}"/> can attempt to convert these to hairs, but note that <Run FontWeight="SemiBold">this feature is experimental</Run>, and may not work on every NPC or
+                                    produce great results for the NPCs it does work on. In addition, it requires that you have the original hair resource installed (e.g. KS Hairdos if the NPC overhaul uses KS Wigs) and will
+                                    not be able to tell the difference between that resource not being installed vs. the wig being un-convertible.
+                                    <LineBreak/><LineBreak/>
+                                    On the other hand, if you <Run FontStyle="Italic">don't</Run> enable this feature and still choose to import NPCs with wigs, they will either be bald or have the wrong hair in-game.
+                                    <LineBreak/><LineBreak/>
+                                    The best option for compatibility is not to use these mods at all. If you can't live without them, you should leave this box checked, but expect some bugs. Advanced users who are proficient
+                                    with xEdit/zEdit and really want to keep the wigs can disable this option and manually forward the NPC's WNAM property to restore them, although there is usually no downside to attempting
+                                    conversion anyway - if it can't find a matching head part, then you'll get the same bald NPC you would have had without the conversion, but at least <Run FontStyle="Italic">some</Run>
+                                    NPCs may successfully convert and you'll have fewer records to manually patch.
+                                </TextBlock>
+                            </ContentControl.ToolTip>
+                        </ContentControl>
+                    </ui:SimpleStackPanel>
                     <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0">
                         <Button Style="{StaticResource AccentButtonStyle}" x:Name="CheckForProblemsButton" Content="Check for problems" Click="CheckForProblemsButton_Click"/>
                         <Button x:Name="SkipProblemsButton" Content="Skip for this session" Margin="8,0,0,0" Click="SkipProblemsButton_Click"/>

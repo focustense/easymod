@@ -47,6 +47,11 @@ namespace Focus.Apps.EasyNpc.Build
             Model.OpenBuildOutput();
         }
 
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            Model?.QuickRefresh();
+        }
+
         private void SkipProblemsButton_Click(object sender, RoutedEventArgs e)
         {
             Model.IsProblemCheckerVisible = false;

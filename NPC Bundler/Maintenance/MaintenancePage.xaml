@@ -10,15 +10,6 @@
       d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
       d:DesignHeight="700" d:DesignWidth="1200"
       Title="MaintenancePage" Loaded="Page_Loaded">
-    <ui:Page.Resources>
-        <Style x:Key="HelpIconStyle" TargetType="Border">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="ToolTipService.InitialShowDelay" Value="50"/>
-            <Setter Property="ToolTipService.ShowDuration" Value="60000"/>
-            <Setter Property="IsHitTestVisible" Value="True"/>
-            <Setter Property="Height" Value="12"/>
-        </Style>
-    </ui:Page.Resources>
     <ui:SimpleStackPanel DataContext="{Binding Maintenance, Mode=OneWay}">
         <TextBlock Style="{StaticResource FirstParagraphStyle}">
             Use this page to perform maintenance tasks related to <Run Text="{StaticResource AppTitle}"/>. You generally only need these if you use the
@@ -31,8 +22,8 @@
                         If you've added or removed mods that change NPC behavior or other non-visual aspects since the last time you ran
                         <Run Text="{StaticResource AppTitle}"/>, then these changes won't be reflected in your current profile. To avoid introducing
                         new conflicts or compatibility issues, you may need to sync the Default Plugins to your current load order.
-                        <Border Style="{StaticResource HelpIconStyle}">
-                            <Border.ToolTip>
+                        <ContentControl Style="{StaticResource HelpIconStyle}">
+                            <ContentControl.ToolTip>
                                 <TextBlock>
                                     Choosing to reset will affect <Run FontWeight="Bold">all</Run> NPCs, even if you had previously changed their
                                     Default Plugin to something other than the auto-detected default.
@@ -41,9 +32,8 @@
                                     affected, it is often better to manually update the defaults for them. You should only use this bulk reset if
                                     you've made sweeping changes that affect a large or unknown number of NPCs.
                                 </TextBlock>
-                            </Border.ToolTip>
-                            <fa:SvgAwesome Foreground="Blue" Icon="Solid_InfoCircle" IsHitTestVisible="False"/>
-                        </Border>
+                            </ContentControl.ToolTip>
+                        </ContentControl>
                     </TextBlock>
                     <ui:SimpleStackPanel Orientation="Horizontal">
                         <Button x:Name="EvolveToLoadOrderButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanResetNpcDefaults}" Click="EvolveToLoadOrderButton_Click">Reset NPC Defaults</Button>
@@ -59,10 +49,8 @@
                         You have <Run FontWeight="SemiBold" Text="{Binding LogFileCount, Mode=OneWay}" d:Text="42"/> old log files taking up
                         <Run FontWeight="SemiBold" Text="{Binding LogFileSizeMb, Mode=OneWay}" d:Text="57.8"/> <Run FontWeight="SemiBold">MB</Run>
                         of disk space.
-                        <Border Style="{StaticResource HelpIconStyle}"
-                                ToolTip="Log files have no effect on app performance but can be deleted to free up space.">
-                            <fa:SvgAwesome Foreground="Blue" Icon="Solid_InfoCircle" IsHitTestVisible="False"/>
-                        </Border>
+                        <ContentControl Style="{StaticResource HelpIconStyle}"
+                                        ToolTip="Log files have no effect on app performance but can be deleted to free up space."/>
                     </TextBlock>
                     <ui:SimpleStackPanel Orientation="Horizontal">
                         <Button x:Name="DeleteLogsButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanDeleteLogFiles}" Click="DeleteLogsButton_Click">Delete Logs</Button>
@@ -79,8 +67,8 @@
                         <Run FontWeight="SemiBold" Text="{Binding AutoSaveRedundantRecordCount, Mode=OneWay}" d:Text="678"/> are redundant and
                         <Run FontWeight="SemiBold" Text="{Binding AutosaveInvalidNpcCount, Mode=OneWay}" d:Text="22"/> reference NPCs that no longer exist or have no
                         overrides in the current load order.
-                        <Border Style="{StaticResource HelpIconStyle}">
-                            <Border.ToolTip>
+                        <ContentControl Style="{StaticResource HelpIconStyle}">
+                            <ContentControl.ToolTip>
                                 <TextBlock>
                                     Trim your autosave if you're noticing the app loading slowly. This will not improve build times, only load times.
                                     <LineBreak/><LineBreak/>
@@ -90,9 +78,8 @@
                                     Even on a slow machine, trimming will generally only make a difference if more than 50-75% of your change entries are
                                     redundant.
                                 </TextBlock>
-                            </Border.ToolTip>
-                            <fa:SvgAwesome Foreground="Blue" Icon="Solid_InfoCircle" Height="12" IsHitTestVisible="False"/>
-                        </Border>
+                            </ContentControl.ToolTip>
+                        </ContentControl>
                     </TextBlock>
                     <ui:SimpleStackPanel Orientation="Horizontal">
                         <Button x:Name="TrimAutosaveButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanTrimAutoSave}" Click="TrimAutosaveButton_Click">Trim Autosave</Button>

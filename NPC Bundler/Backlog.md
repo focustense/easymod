@@ -3,8 +3,9 @@
 ## Near-term (0.9 / Beta)
 
 - Moar Mugshots
-- Make de-wiggification optional on build and/or settings screen
-  - Try to give coherent explanation of pros and cons
+- Report missing plugins in build checks
+  - i.e. if a specific plugin was supposed to have been chosen by Profile load
+    or autosave restore, but isn't in the load order anymore.
 - Mugshot "redirects", e.g. if Hair Physics Version looks same as original
 - More advanced operations
   - View full history
@@ -71,3 +72,5 @@
 - Deal with ModPluginMap startup dependency when selecting defaults
   - Users won't have a mod directory defined on first run
   - Either need to have "initial setup" or rescan defaults after changing settings
+- Make de-wiggification optional on build and/or settings screen
+  - Try to give coherent explanation of pros and cons

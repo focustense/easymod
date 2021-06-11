@@ -19,6 +19,7 @@ namespace Focus.Apps.EasyNpc.Build
         FaceModMultipleFaceGen,
         FaceModWigNotMatched,
         FaceModWigNotMatchedBald,
+        FaceModWigConversionDisabled,
     }
 
     public class BuildWarning
@@ -102,6 +103,14 @@ namespace Focus.Apps.EasyNpc.Build
         {
             return
                 $"{NpcLabel(editorId, name)} has mismatched face mod ({modName}) and face plugin ({pluginName}).";
+        }
+
+        public static string FaceModWigConversionDisabled(string editorId, string name, string pluginName, bool isBald)
+        {
+            var outcomeText = isBald ? "be bald" : "revert to their default hair";
+            return
+                $"{NpcLabel(editorId, name)} in face plugin {pluginName} uses a wig, and you have de-wiggification " +
+                $"disabled. This character will {outcomeText}.";
         }
 
         public static string FaceModWigNotMatched(string editorId, string name, string pluginName, string modelName)
