@@ -55,25 +55,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="BundlerSettings.Designer.cs">
+    <Compile Update="Configuration\BundlerSettings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
       <DependentUpon>BundlerSettings.settings</DependentUpon>
     </Compile>
-    <Compile Update="SettingsPage.xaml.cs">
+    <Compile Update="Configuration\SettingsPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="BundlerSettings.settings">
+    <None Update="Configuration\BundlerSettings.settings">
       <Generator>PublicSettingsSingleFileGenerator</Generator>
       <LastGenOutput>BundlerSettings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="SettingsPage.xaml">
+    <Page Update="Configuration\SettingsPage.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
     </Page>

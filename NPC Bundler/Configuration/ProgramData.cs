@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Focus.Apps.EasyNpc.Configuration;
+using System;
 using System.IO;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Configuration
 {
     static class ProgramData
     {
@@ -10,7 +11,6 @@ namespace Focus.Apps.EasyNpc
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AssemblyProperties.Name);
         public static readonly string LogFileName =
             Path.Combine(DirectoryPath, $"Log_{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.txt");
-        public static readonly string ProfileLogFileName =
-            Path.Combine(DirectoryPath, "Profile.log");
+        public static readonly string ProfileLogFileName = Path.Combine(DirectoryPath, "Profile.log");
     }
 }

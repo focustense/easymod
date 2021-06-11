@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Configuration
 {
     public static class AssemblyProperties
     {

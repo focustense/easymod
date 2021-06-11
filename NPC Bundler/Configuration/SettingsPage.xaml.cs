@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Configuration
 {
     /// <summary>
     /// Interaction logic for SettingsPage.xaml

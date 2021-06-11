@@ -1,4 +1,5 @@
-﻿using Ookii.Dialogs.Wpf;
+﻿using Focus.Apps.EasyNpc.Configuration;
+using Ookii.Dialogs.Wpf;
 using PropertyChanged;
 using System;
 using System.Collections.Generic;

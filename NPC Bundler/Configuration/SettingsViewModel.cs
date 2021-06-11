@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Configuration
 {
     public class SettingsViewModel : INotifyPropertyChanged
     {

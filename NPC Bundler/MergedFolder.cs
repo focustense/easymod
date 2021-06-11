@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using Focus.Apps.EasyNpc.Configuration;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;

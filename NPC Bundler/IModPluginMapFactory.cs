@@ -1,4 +1,6 @@
-﻿namespace Focus.Apps.EasyNpc
+﻿using Focus.Apps.EasyNpc.Configuration;
+
+namespace Focus.Apps.EasyNpc
 {
     public interface IModPluginMapFactory
     {

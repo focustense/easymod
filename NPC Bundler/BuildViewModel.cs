@@ -1,4 +1,5 @@
-﻿using Focus.Storage.Archives;
+﻿using Focus.Apps.EasyNpc.Configuration;
+using Focus.Storage.Archives;
 using PropertyChanged;
 using Serilog;
 using System;

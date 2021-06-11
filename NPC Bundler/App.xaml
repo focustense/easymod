@@ -1,5 +1,6 @@
 ﻿<Application x:Class="Focus.Apps.EasyNpc.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:config="clr-namespace:Focus.Apps.EasyNpc.Configuration"
              xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -11,10 +12,10 @@
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
 
-            <x:Static x:Key="AppName" Member="local:AssemblyProperties.Name"/>
-            <x:Static x:Key="AppProduct" Member="local:AssemblyProperties.Product"/>
-            <x:Static x:Key="AppTitle" Member="local:AssemblyProperties.Title"/>
-            <x:Static x:Key="AppVersion" Member="local:AssemblyProperties.Version"/>
+            <x:Static x:Key="AppName" Member="config:AssemblyProperties.Name"/>
+            <x:Static x:Key="AppProduct" Member="config:AssemblyProperties.Product"/>
+            <x:Static x:Key="AppTitle" Member="config:AssemblyProperties.Title"/>
+            <x:Static x:Key="AppVersion" Member="config:AssemblyProperties.Version"/>
 
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
