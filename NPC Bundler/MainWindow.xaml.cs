@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
+using Focus.Apps.EasyNpc.Profile;
 using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;

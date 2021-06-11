@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Profile
 {
     public class ProfileEventLog : IDisposable
     {

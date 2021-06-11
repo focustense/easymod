@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Focus.Apps.EasyNpc.Profile;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 

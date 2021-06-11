@@ -5,7 +5,7 @@ using System.Windows.Input;
 
 using TKey = Mutagen.Bethesda.FormKey;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Profile
 {
     /// <summary>
     /// Interaction logic for ProfilePage.xaml

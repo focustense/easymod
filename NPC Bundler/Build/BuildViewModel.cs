@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.Profile;
 using Focus.Storage.Archives;
 using PropertyChanged;
 using Serilog;

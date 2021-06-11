@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
+using Focus.Apps.EasyNpc.Profile;
 using PropertyChanged;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-﻿<ui:Page x:Class="Focus.Apps.EasyNpc.ProfilePage"
+﻿<ui:Page x:Class="Focus.Apps.EasyNpc.Profile.ProfilePage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

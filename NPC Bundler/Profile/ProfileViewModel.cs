@@ -12,7 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Profile
 {
     public class ProfileViewModel<TKey> : INotifyPropertyChanged
         where TKey : struct

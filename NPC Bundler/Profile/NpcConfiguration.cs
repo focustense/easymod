@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Profile
 {
     public class NpcConfiguration<TKey> : INotifyPropertyChanged
         where TKey : struct

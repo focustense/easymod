@@ -3,6 +3,7 @@ using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Mutagen;
+using Focus.Apps.EasyNpc.Profile;
 using Mutagen.Bethesda;
 using PropertyChanged;
 using Serilog;

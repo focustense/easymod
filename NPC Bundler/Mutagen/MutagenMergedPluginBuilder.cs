@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Configuration;
+using Focus.Apps.EasyNpc.Profile;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
@@ -9,8 +10,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Mutagen
 {
