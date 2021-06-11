@@ -8,7 +8,7 @@ using Focus.Apps.EasyNpc.GameData.Files;
 using nifly;
 using Serilog;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Nifly
 {
     public class NiflyFaceGenEditor : IFaceGenEditor
     {
