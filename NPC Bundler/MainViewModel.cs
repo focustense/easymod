@@ -4,7 +4,7 @@ using Serilog;
 using System;
 using System.ComponentModel;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public abstract class MainViewModel<TKey> : INotifyPropertyChanged
         where TKey : struct

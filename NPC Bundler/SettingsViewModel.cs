@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class SettingsViewModel : INotifyPropertyChanged
     {

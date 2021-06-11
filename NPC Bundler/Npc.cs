@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public interface INpc<TKey>
         where TKey : struct

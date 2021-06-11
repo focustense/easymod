@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public enum VanillaRace
     {

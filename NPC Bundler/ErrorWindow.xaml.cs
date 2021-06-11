@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     /// <summary>
     /// Interaction logic for ErrorWindow.xaml

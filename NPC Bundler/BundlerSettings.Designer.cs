@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace NPC_Bundler {
+namespace Focus.Apps.EasyNpc {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class CrashViewModel
     {

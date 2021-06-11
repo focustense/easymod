@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     static class MergedFolder
     {

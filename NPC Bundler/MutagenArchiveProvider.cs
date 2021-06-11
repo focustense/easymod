@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class MutagenArchiveProvider : IArchiveProvider
     {

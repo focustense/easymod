@@ -2,7 +2,7 @@
 using Serilog.Events;
 using System;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class LogViewModelSink : ILogEventSink
     {

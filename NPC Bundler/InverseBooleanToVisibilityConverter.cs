@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public sealed class InverseBooleanToVisibilityConverter : IValueConverter
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     static class UIExtensions
     {

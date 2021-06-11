@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     /// <summary>
     /// Interaction logic for MiniSearchBox.xaml

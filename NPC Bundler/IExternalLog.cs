@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public interface IExternalLog
     {

@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class MutagenAdapter : IGameDataEditor<FormKey>
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class NpcConfiguration<TKey> : INotifyPropertyChanged
         where TKey : struct

@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <AssemblyName>Focus.Storage.Archives</AssemblyName>
+    <AssemblyTitle>Bethesda Archive Utilities</AssemblyTitle>
+    <Product>Focus Modding Tools</Product>
   </PropertyGroup>
 
   <ItemGroup>

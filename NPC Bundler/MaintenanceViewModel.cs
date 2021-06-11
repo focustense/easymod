@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class MaintenanceViewModel<TKey> : INotifyPropertyChanged
         where TKey : struct

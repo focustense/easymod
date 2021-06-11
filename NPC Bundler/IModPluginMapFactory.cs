@@ -1,4 +1,4 @@
-﻿namespace NPC_Bundler
+﻿namespace Focus.Apps.EasyNpc
 {
     public interface IModPluginMapFactory
     {

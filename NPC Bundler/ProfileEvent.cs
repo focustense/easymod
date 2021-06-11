@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Converters;
 using System;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public enum NpcProfileField { DefaultPlugin, FaceMod, FacePlugin };
 

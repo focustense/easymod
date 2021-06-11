@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

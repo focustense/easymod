@@ -1,8 +1,7 @@
 {
   "profiles": {
     "NPC Bundler": {
-      "commandName": "Project",
-      "commandLineArgs": "/forceintro"
+      "commandName": "Project"
     }
   }
 }

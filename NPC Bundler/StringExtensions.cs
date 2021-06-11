@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     static class StringExtensions
     {

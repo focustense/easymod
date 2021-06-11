@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     /// <summary>
     /// Interaction logic for ProgressViewer.xaml

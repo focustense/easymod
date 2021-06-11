@@ -6,7 +6,7 @@ using System.Linq;
 using nifly;
 using Serilog;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class NiflyFaceGenEditor : IFaceGenEditor
     {

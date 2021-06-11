@@ -4,7 +4,7 @@ using System.Windows;
 
 using TKey = Mutagen.Bethesda.FormKey;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     /// <summary>
     /// Interaction logic for MaintenancePage.xaml

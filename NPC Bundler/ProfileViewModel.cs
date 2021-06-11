@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class ProfileViewModel<TKey> : INotifyPropertyChanged
         where TKey : struct

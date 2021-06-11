@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NPC_Bundler
+namespace Focus.Apps.EasyNpc
 {
     public class MutagenMergedPluginBuilder : IMergedPluginBuilder<FormKey>
     {
