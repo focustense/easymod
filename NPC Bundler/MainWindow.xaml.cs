@@ -1,4 +1,5 @@
-﻿using ModernWpf.Controls;
+﻿using Focus.Apps.EasyNpc.Debug;
+using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Controls;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Debug
 {
     public class ScrollingTextBox : TextBox
     {

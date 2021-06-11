@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Debug
 {
     public class LogViewModel : INotifyPropertyChanged
     {

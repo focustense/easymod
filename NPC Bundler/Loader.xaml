@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:debug="clr-namespace:Focus.Apps.EasyNpc.Debug"
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
              xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -42,7 +43,7 @@
                         <DataGridTextColumn Header="File Name" Width="*" Binding="{Binding FileName}" IsReadOnly="True"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <local:ScrollingTextBox Margin="8,0,8,0" Visibility="{Binding Path=IsLogVisible, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed" IsReadOnly="True" Text="{Binding Path=Log.Text, Mode=OneWay}"></local:ScrollingTextBox>
+                <debug:ScrollingTextBox Margin="8,0,8,0" Visibility="{Binding Path=IsLogVisible, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed" IsReadOnly="True" Text="{Binding Path=Log.Text, Mode=OneWay}"></debug:ScrollingTextBox>
             </Grid>
         </DockPanel>
     </Grid>

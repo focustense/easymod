@@ -2,7 +2,7 @@
 using Serilog.Events;
 using System;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Debug
 {
     public class LogViewModelSink : ILogEventSink
     {

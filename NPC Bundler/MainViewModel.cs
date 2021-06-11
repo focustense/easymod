@@ -1,4 +1,5 @@
-﻿using Mutagen.Bethesda;
+﻿using Focus.Apps.EasyNpc.Debug;
+using Mutagen.Bethesda;
 using PropertyChanged;
 using Serilog;
 using System;

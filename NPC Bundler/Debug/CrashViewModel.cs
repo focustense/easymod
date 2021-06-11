@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Debug
 {
     public class CrashViewModel
     {

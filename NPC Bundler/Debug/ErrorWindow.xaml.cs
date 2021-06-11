@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus.Apps.EasyNpc.Debug
 {
     /// <summary>
     /// Interaction logic for ErrorWindow.xaml
