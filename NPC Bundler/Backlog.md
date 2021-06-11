@@ -14,7 +14,7 @@
 
 - Windows 7 targeting
 - Support for Outfit (DOFT/SOFT) and Body (WNAM) carryover
-- Advanced filters: override names, plugin/mod selections
+- Advanced filters: override names, plugin/mod selections, wigs, conflicts
 - Better MO2 integration - read profiles, mod lists, detect disable mods, etc.
 - "Easy Mode" - hide plugin/mod distinction unless there's a conflict
 - Incremental merges - i.e. for new mod installs, or minor tweaks to profiles

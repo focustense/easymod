@@ -30,6 +30,15 @@
                         </Border.ToolTip>
                         <fa5:SvgAwesome Icon="Regular_SmileWink" Height="16" Width="16" />
                     </Border>
+                    <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=HasWig, Converter={StaticResource BoolToVisibility}}">
+                        <Border.ToolTip>
+                            <TextBlock>
+                                <Bold Foreground="{StaticResource SystemControlErrorTextForegroundBrush}">Wears wig</Bold> - this plugin uses a wig to modify the NPC's hair, which may cause
+                                build problems.
+                            </TextBlock>
+                        </Border.ToolTip>
+                        <fa5:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Icon="Solid_HatCowboy" Height="16" Width="16" />
+                    </Border>
                     <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=HasFaceGenOverride, Converter={StaticResource BoolToVisibility}}">
                         <Border.ToolTip>
                             <TextBlock>
@@ -66,7 +75,7 @@
     </Page.Resources>
     <Grid DataContext="{Binding Path=Profile}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="800px"/>
+            <ColumnDefinition Width="750px"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>

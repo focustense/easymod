@@ -125,7 +125,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             {
                 progress.StartStage("Converting wigs");
                 var wigs = customizedNpcs
-                    .Where(x => x.Item1.FaceConfiguration.Wig != null)
+                    .Where(x => x.Item1.FaceConfiguration.HasWig)
                     .Select(x => x.Item1.FaceConfiguration.Wig);
                 var wigMatches = buildSettings.WigResolver.ResolveAll(wigs)
                     .Where(x => x.HairKeys.Count > 0)

@@ -269,6 +269,7 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public bool HasFaceOverride { get; private init; }
         public bool HasFaceGenOverride { get; private init; }
+        public bool HasWig => Wig != null;
         public bool IsDefaultSource { get; set; }
         public bool IsFaceSource { get; set; }
         public bool IsHighlighted { get; set; }
