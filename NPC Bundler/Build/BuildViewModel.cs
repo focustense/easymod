@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Build
@@ -141,30 +142,45 @@ namespace Focus.Apps.EasyNpc.Build
 
         private void BuildArchive()
         {
-            Progress.Archive.StartStage("Packing loose files into archive");
+            var progress = Progress.Archive;
+            progress.StartStage("Packing loose files into archive");
+            progress.MaxProgress = 1;
             try
             {
-                void BuildFilteredArchive(string name, string relativePath)
+                void BuildFilteredArchive(string name, string relativePath, int progressWeight = 1)
                 {
                     var outputFileName = Path.Combine(OutputDirectory, name) + ".bsa";
                     new ArchiveBuilder(ArchiveType.SSE)
                         .AddDirectory(Path.Combine(OutputDirectory, relativePath), relativePath)
                         .Compress(true)
                         .ShareData(true)
+                        .OnBeforeBuild(entries =>
+                        {
+                            // Technically, this addition ISN'T thread safe since it's a read-modify-write op.
+                            lock (progress)
+                                // Textures are considerably more expensive to add due to the the type of compression,
+                                // so applying a higher weight to them avoids "rushing" the progress while the meshes
+                                // are running in parallel. We'll still get some rushing due to .NET's Parallel
+                                // implementation that creates a large backlog.
+                                progress.MaxProgress += (int)Math.Ceiling(entries.Count * progressWeight / 0.99);
+                        })
+                        .OnPacking(entry => progress.ItemName = $"[{name}.bsa] <- {entry.PathInArchive}")
+                        .OnPacked(entry => progress.CurrentProgress += progressWeight)
                         .Build(outputFileName);
                 }
 
                 var baseName = Path.GetFileNameWithoutExtension(OutputPluginName);
                 Task.WaitAll(
                     Task.Run(() => BuildFilteredArchive(baseName, "meshes")),
-                    Task.Run(() => BuildFilteredArchive($"{baseName} - Textures", "textures")));
+                    Task.Run(() => BuildFilteredArchive($"{baseName} - Textures", "textures", 3)));
+                progress.JumpTo(0.99f);
 
-                Progress.Archive.StartStage("Cleaning up loose files");
+                progress.StartStage("Cleaning up loose files");
                 Directory.Delete(Path.Combine(OutputDirectory, "meshes"), true);
                 Directory.Delete(Path.Combine(OutputDirectory, "textures"), true);
 
-                Progress.Archive.StartStage("Done");
-                Progress.Archive.CurrentProgress = Progress.Archive.MaxProgress = 1;
+                progress.StartStage("Done");
+                progress.CurrentProgress = progress.MaxProgress;
             }
             catch (Exception ex)
             {

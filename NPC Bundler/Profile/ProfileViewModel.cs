@@ -308,20 +308,19 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public static bool Exists(string modName, string basePluginName, string localFormIdHex)
         {
-            var mugshotsDirectory = !string.IsNullOrEmpty(BundlerSettings.Default.MugshotsDirectory) ?
-                BundlerSettings.Default.MugshotsDirectory : ProgramData.DefaultMugshotsPath;
-            var path = Path.Combine(mugshotsDirectory, modName, basePluginName, $"00{localFormIdHex}.png");
+            var path = Path.Combine(
+                ProgramData.ConfiguredMugshotsPath, modName, basePluginName, $"00{localFormIdHex}.png");
             return File.Exists(path);
         }
 
         public static IEnumerable<Mugshot> GetMugshots<TKey>(NpcConfiguration<TKey> npc, ModPluginMap modPluginMap)
             where TKey : struct
         {
-            if (npc == null)
+            if (npc == null || !Directory.Exists(ProgramData.ConfiguredMugshotsPath))
                 yield break;
             // TODO: Provide placeholder items for mods that provide the facegen but don't have mugshots, so that users
             // can select them anyway. Also provide placeholder for vanilla/default so that we can unapply a mod.
-            var mugshotModDirs = Directory.GetDirectories(BundlerSettings.Default.MugshotsDirectory);
+            var mugshotModDirs = Directory.GetDirectories(ProgramData.ConfiguredMugshotsPath);
             var overridingPluginNames = new HashSet<string>(
                 npc.Overrides.Select(x => x.PluginName) ?? Enumerable.Empty<string>(),
                 StringComparer.OrdinalIgnoreCase);

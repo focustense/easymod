@@ -8,6 +8,9 @@ namespace Focus.Storage.Archives
 {
     public class ArchiveBuilder
     {
+        private readonly List<Action<FileEntry>> addedActions = new();
+        private readonly List<Action<FileEntry>> addingActions = new();
+        private readonly List<Action<IReadOnlyList<FileEntry>>> beforeBuildActions = new();
         private readonly List<FileEntry> fileEntries = new();
         private readonly ArchiveType type;
 
@@ -39,6 +42,8 @@ namespace Focus.Storage.Archives
 
         public Archive Build(string outputFileName)
         {
+            foreach (var beforeBuildAction in beforeBuildActions)
+                beforeBuildAction(fileEntries.AsReadOnly());
             var archive = Functions.BsaCreate();
             Functions.BsaCompressSet(archive, shouldCompress);
             Functions.BsaShareDataSet(archive, shouldShareData);
@@ -48,7 +53,13 @@ namespace Focus.Storage.Archives
             // (which is also why this is thread-safe). However, we do get some, because the files are compressed, which
             // is not trivial on CPU and can happen at the same time as writes.
             Parallel.ForEach(fileEntries, fileEntry =>
-                Functions.BsaAddFileFromDisk(archive, fileEntry.PathInArchive, fileEntry.LocalFilePath));                
+            {
+                foreach (var addingAction in addingActions)
+                    addingAction(fileEntry);
+                Functions.BsaAddFileFromDisk(archive, fileEntry.PathInArchive, fileEntry.LocalFilePath);
+                foreach (var addedAction in addedActions)
+                    addedAction(fileEntry);
+            });
             Functions.BsaSave(archive);
             return new Archive(archive);
         }
@@ -58,6 +69,24 @@ namespace Focus.Storage.Archives
             shouldCompress = compress;
             return this;
         }
+        
+        public ArchiveBuilder OnBeforeBuild(Action<IReadOnlyList<FileEntry>> action)
+        {
+            beforeBuildActions.Add(action);
+            return this;
+        }
+
+        public ArchiveBuilder OnPacked(Action<FileEntry> action)
+        {
+            addedActions.Add(action);
+            return this;
+        }
+
+        public ArchiveBuilder OnPacking(Action<FileEntry> action)
+        {
+            addingActions.Add(action);
+            return this;
+        }
 
         public ArchiveBuilder ShareData(bool shareData)
         {
@@ -65,7 +94,7 @@ namespace Focus.Storage.Archives
             return this;
         }
 
-        class FileEntry
+        public class FileEntry
         {
             public string LocalFilePath { get; init; }
             public string PathInArchive { get; init; }

@@ -1,7 +1,8 @@
 {
   "profiles": {
     "NPC Bundler": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "nativeDebugging": false
     }
   }
 }

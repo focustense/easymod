@@ -6,6 +6,9 @@ namespace Focus.Apps.EasyNpc.Configuration
 {
     static class ProgramData
     {
+        public static string ConfiguredMugshotsPath => !string.IsNullOrEmpty(BundlerSettings.Default.MugshotsDirectory) ?
+            BundlerSettings.Default.MugshotsDirectory : DefaultMugshotsPath;
+
         public static readonly string DefaultMugshotsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mugshots");
         public static readonly string DirectoryPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AssemblyProperties.Name);
