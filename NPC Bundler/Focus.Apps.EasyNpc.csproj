@@ -5,7 +5,7 @@
     <TargetFramework>net5.0-windows10.0.19041</TargetFramework>
     <RootNamespace>Focus.Apps.EasyNpc</RootNamespace>
     <UseWPF>true</UseWPF>
-    <AssemblyName>Focus.Apps.EasyNpc</AssemblyName>
+    <AssemblyName>EasyNPC</AssemblyName>
     <AssemblyTitle>Easy NPC</AssemblyTitle>
     <Product>Focus Modding Tools</Product>
   </PropertyGroup>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Focus.Apps.EasyNpc.Configuration;
+using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 
@@ -26,7 +27,7 @@ namespace Focus.Apps.EasyNpc.Debug
             // app-originated messages.
             if (!isExternalMonitoringActive)
                 RefreshExternalMessages();
-            Text += $"[NpcBundler] {message}\n";
+            Text += $"[{AssemblyProperties.Name}] {message}\n";
         }
 
         public void PauseExternalMonitoring()
