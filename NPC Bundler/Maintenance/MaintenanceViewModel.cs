@@ -19,12 +19,12 @@ namespace Focus.Apps.EasyNpc.Maintenance
         public int AutoSaveRedundantRecordCount { get; private set; }
         [DependsOn("IsDeletingLogFiles")]
         public bool CanDeleteLogFiles => !IsDeletingLogFiles;
-        [DependsOn("IsResettingNpcDefaults")]
-        public bool CanResetNpcDefaults => !IsResettingNpcDefaults;
+        [DependsOn("IsResettingNpcs")]
+        public bool CanResetNpcs => !IsResettingNpcs;
         [DependsOn("IsTrimmingAutoSave")]
         public bool CanTrimAutoSave => !IsTrimmingAutoSave;
         public bool IsDeletingLogFiles { get; private set; }
-        public bool IsResettingNpcDefaults { get; private set; }
+        public bool IsResettingNpcs { get; private set; }
         public bool IsTrimmingAutoSave { get; private set; }
         public int LogFileCount { get; private set; }
         public decimal LogFileSizeMb { get; private set; }
@@ -66,7 +66,7 @@ namespace Focus.Apps.EasyNpc.Maintenance
 
         public void ResetNpcDefaults()
         {
-            IsResettingNpcDefaults = true;
+            IsResettingNpcs = true;
             try
             {
                 // This is only going to work on configurations that are actually loaded, i.e. for NPCs that are present
@@ -78,11 +78,26 @@ namespace Focus.Apps.EasyNpc.Maintenance
                 // Resetting is distinct from trimming; if someone has made major changes to their load order and wants
                 // to ensure that their profile/autosave is absolutely squeaky clean, they should trim, THEN reset.
                 foreach (var npcConfig in npcConfigs)
-                    npcConfig.Reset();
+                    npcConfig.Reset(defaults: true, faces: false);
             }
             finally
             {
-                IsResettingNpcDefaults = false;
+                IsResettingNpcs = false;
+            }
+        }
+
+        public void ResetNpcFaces()
+        {
+            IsResettingNpcs = true;
+            try
+            {
+                // Refer to caveats in ResetNpcDefaults.
+                foreach (var npcConfig in npcConfigs)
+                    npcConfig.Reset(defaults: false, faces: true);
+            }
+            finally
+            {
+                IsResettingNpcs = false;
             }
         }
 

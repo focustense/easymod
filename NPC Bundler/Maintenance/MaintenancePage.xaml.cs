@@ -35,6 +35,12 @@ namespace Focus.Apps.EasyNpc.Maintenance
             Task.Run(() => model?.ResetNpcDefaults());
         }
 
+        private void ResetFacesButton_Click(object sender, RoutedEventArgs e)
+        {
+            var model = Model;
+            Task.Run(() => model?.ResetNpcFaces());
+        }
+
         private void TrimAutosaveButton_Click(object sender, RoutedEventArgs e)
         {
             var model = Model;

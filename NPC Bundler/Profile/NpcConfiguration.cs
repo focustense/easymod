@@ -52,7 +52,7 @@ namespace Focus.Apps.EasyNpc.Profile
             // It's really silly that we have to store this, but for no particular reason, IReadOnlyList<T> does not
             // have the IndexOf method.
             indexOfOverride = @override => overrides.IndexOf(@override);
-            Reset(true);
+            Reset(defaults: true, faces: true);
         }
 
         public int GetOverrideCount(bool includeDlc, bool includeNonFaces)
@@ -83,8 +83,11 @@ namespace Focus.Apps.EasyNpc.Profile
             return HasFaceGenOverridesEnabled() && !FileStructure.IsDlc(FacePluginName);
         }
 
-        public void Reset(bool includeFacePlugin = false)
+        public void Reset(bool defaults = true, bool faces = true)
         {
+            if (!defaults && !faces)
+                return;
+
             // We're never going to make perfect choices on the first run, but we can make a few assumptions.
             // First, that users have set up their NPC-mod load order to reflect their general preferences - i.e. mods
             // they'll use the most go last, mods they'll use scarcely go first.
@@ -98,27 +101,31 @@ namespace Focus.Apps.EasyNpc.Profile
             //     (a) A master (ESM) plugin; these are rare, like USSEP, and we generally shouldn't override; or
             //     (b) Any plugin that modifies the NPC but does not modify the face, regardless of master.
             var faceOverride = Overrides.LastOrDefault(x => x.HasFaceOverride);
-            var defaultOverride = Overrides[Overrides.Count - 1];
-            while (!string.IsNullOrEmpty(defaultOverride.ItpoFileName))
+            if (defaults)
             {
-                var itpoOverride = Overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoFileName);
-                if (itpoOverride != null)   // Should never be null but we still need to check
-                    defaultOverride = itpoOverride;
-            }
-            if (defaultOverride == faceOverride && !masterNames.Contains(defaultOverride.PluginName))
-            {
-                for (int i = indexOfOverride(faceOverride) - 1; i >= 0; i--)
+                var defaultOverride = Overrides[Overrides.Count - 1];
+                while (!string.IsNullOrEmpty(defaultOverride.ItpoFileName))
                 {
-                    var prevOverride = Overrides[i];
-                    if (masterNames.Contains(prevOverride.PluginName) || !prevOverride.HasFaceOverride)
+                    var itpoOverride = Overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoFileName);
+                    if (itpoOverride != null)   // Should never be null but we still need to check
+                        defaultOverride = itpoOverride;
+                }
+                if (defaultOverride == faceOverride && !masterNames.Contains(defaultOverride.PluginName))
+                {
+                    for (int i = indexOfOverride(faceOverride) - 1; i >= 0; i--)
                     {
-                        defaultOverride = prevOverride;
-                        break;
+                        var prevOverride = Overrides[i];
+                        if (masterNames.Contains(prevOverride.PluginName) || !prevOverride.HasFaceOverride)
+                        {
+                            defaultOverride = prevOverride;
+                            break;
+                        }
                     }
                 }
+                SetDefaultPlugin(defaultOverride);
             }
-            SetDefaultPlugin(defaultOverride);
-            if (includeFacePlugin)
+
+            if (faces)
                 SetFacePlugin(faceOverride, true);
         }
 

@@ -2,6 +2,7 @@
 
 ## Near-term (0.9 / Beta)
 
+- Detect when previous merge is already in the load order/mods.
 - Moar Mugshots
 - Report missing plugins in build checks
   - i.e. if a specific plugin was supposed to have been chosen by Profile load
@@ -15,6 +16,9 @@
 - Windows 7 targeting
 - Support for Outfit (DOFT/SOFT) and Body (WNAM) carryover
 - Advanced filters: override names, plugin/mod selections, wigs, conflicts
+- Hair-only mod support (VHR, ApachiiHair3DNPC, etc.)
+  - Unsure how to "preview" this, but execution seems possible now with NIF edits
+  - Another idea: hair randomizer for non-customized NPCs (needs a config system)
 - Better MO2 integration - read profiles, mod lists, detect disable mods, etc.
 - "Easy Mode" - hide plugin/mod distinction unless there's a conflict
 - Incremental merges - i.e. for new mod installs, or minor tweaks to profiles
@@ -31,8 +35,6 @@
   - Automating the CK is not; but it might be possible to "mix" facegen files
     by e.g. taking the head node from one and hair from another.
   - De-wiggify project has proven that this *is* possible in limited scope.
-- Hair-only mod support (VHR, ApachiiHair3DNPC, etc.)
-  - Unsure how to "preview" this, but execution seems possible now with NIF edits
 - Automatic hair physics replacement (when available)
   - i.e. given an original ESP and a physics version, replace all of the form
     links and facegen sub-meshes for some or all NPCs.
@@ -74,3 +76,4 @@
   - Either need to have "initial setup" or rescan defaults after changing settings
 - Make de-wiggification optional on build and/or settings screen
   - Try to give coherent explanation of pros and cons
+- Reset Faces in maintenance page

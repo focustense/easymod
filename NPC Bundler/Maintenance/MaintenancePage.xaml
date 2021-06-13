@@ -13,7 +13,7 @@
     <ui:SimpleStackPanel DataContext="{Binding Maintenance, Mode=OneWay}">
         <TextBlock Style="{StaticResource FirstParagraphStyle}">
             Use this page to perform maintenance tasks related to <Run Text="{StaticResource AppTitle}"/>. You generally only need these if you use the
-            program very heavily or have made drastic changes to your mod list.
+            program very often or have made drastic changes to your mod list.
         </TextBlock>
         <Border Style="{StaticResource GroupBorder}" Margin="0,8,0,0" Padding="8">
             <GroupBox Header="Load order sync" Padding="0,0,0,4">
@@ -35,9 +35,14 @@
                             </ContentControl.ToolTip>
                         </ContentControl>
                     </TextBlock>
+                    <TextBlock Style="{StaticResource ParagraphStyle}">
+                        You can also reset the face selections, which will replace all your current choices with the last overhaul (per NPC) in
+                        your current load order.
+                    </TextBlock>
                     <ui:SimpleStackPanel Orientation="Horizontal">
-                        <Button x:Name="EvolveToLoadOrderButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanResetNpcDefaults}" Click="EvolveToLoadOrderButton_Click">Reset NPC Defaults</Button>
-                        <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsResettingNpcDefaults, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+                        <Button x:Name="EvolveToLoadOrderButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanResetNpcs}" Click="EvolveToLoadOrderButton_Click">Reset NPC Defaults</Button>
+                        <Button x:Name="ResetFacesButton" Margin="8,0,0,0" IsEnabled="{Binding CanResetNpcs}" Click="ResetFacesButton_Click">Reset Face Selections</Button>
+                        <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsResettingNpcs, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
                     </ui:SimpleStackPanel>
                 </ui:SimpleStackPanel>
             </GroupBox>
