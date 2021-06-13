@@ -10,6 +10,7 @@ namespace Focus.Apps.EasyNpc.Build
     {
         MergedPluginResult Build(
             IReadOnlyList<NpcConfiguration<TKey>> npcs, BuildSettings<TKey> buildSettings, ProgressViewModel progress);
+        void CreateDummyPlugin(string fileName);
     }
 
     public class MergedPluginResult

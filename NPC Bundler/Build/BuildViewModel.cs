@@ -147,13 +147,15 @@ namespace Focus.Apps.EasyNpc.Build
             progress.MaxProgress = 1;
             try
             {
-                void BuildFilteredArchive(string name, string relativePath, int progressWeight = 1)
+                ArchiveBuilder.BuildResult BuildFilteredArchive(
+                    string name, string relativePath, long maxUncompressedSize, int progressWeight = 1)
                 {
                     var outputFileName = Path.Combine(OutputDirectory, name) + ".bsa";
-                    new ArchiveBuilder(ArchiveType.SSE)
+                    return new ArchiveBuilder(ArchiveType.SSE)
                         .AddDirectory(Path.Combine(OutputDirectory, relativePath), relativePath)
                         .Compress(true)
                         .ShareData(true)
+                        .MaxUncompressedSize(maxUncompressedSize)
                         .OnBeforeBuild(entries =>
                         {
                             // Technically, this addition ISN'T thread safe since it's a read-modify-write op.
@@ -169,11 +171,30 @@ namespace Focus.Apps.EasyNpc.Build
                         .Build(outputFileName);
                 }
 
+                long GB = 1024 * 1024 * 1024;
                 var baseName = Path.GetFileNameWithoutExtension(OutputPluginName);
-                Task.WaitAll(
-                    Task.Run(() => BuildFilteredArchive(baseName, "meshes")),
-                    Task.Run(() => BuildFilteredArchive($"{baseName} - Textures", "textures", 3)));
+                // Meshes tend to compress at around 50%, so 3 GB should be plenty of headroom.
+                var meshesTask = Task.Run(() => BuildFilteredArchive(baseName, "meshes", 3 * GB));
+                // Textures can compress to 10% or less of their original size, but don't always assume best-case.
+                // A 15 GB limit gives us an expected max compressed size of 1.5 GB, which is the same margin of
+                // error as the mesh settings.
+                var texturesTask =
+                    Task.Run(() => BuildFilteredArchive($"{baseName} - Textures", "textures", 15 * GB, 3));
+                Task.WaitAll(meshesTask, texturesTask);
                 progress.JumpTo(0.99f);
+
+                progress.StartStage("Adding dummy plugins");
+                var archiveFileNames = meshesTask.Result.ArchiveResults
+                    .Concat(texturesTask.Result.ArchiveResults)
+                    .Select(x => x.FileName);
+                foreach (var archiveFileName in archiveFileNames)
+                {
+                    var archiveBaseName = Path.GetFileNameWithoutExtension(archiveFileName);
+                    // Neither the default archive (with same name as merge) nor the standard textures archive need
+                    // dummy plugins; the game recognizes these automatically.
+                    if (archiveBaseName != baseName && archiveBaseName != $"{baseName} - Textures")
+                        builder.CreateDummyPlugin(Path.ChangeExtension(archiveFileName, ".esp"));
+                }
 
                 progress.StartStage("Cleaning up loose files");
                 Directory.Delete(Path.Combine(OutputDirectory, "meshes"), true);

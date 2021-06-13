@@ -218,6 +218,16 @@ namespace Focus.Apps.EasyNpc.Mutagen
             };
         }
 
+        public void CreateDummyPlugin(string fileName)
+        {
+            if (File.Exists(fileName))
+                return;
+            var modKey = ModKey.FromNameAndExtension(Path.GetFileName(fileName));
+            var dummyMod = new SkyrimMod(modKey, SkyrimRelease.SkyrimSE);
+            dummyMod.ModHeader.Flags |= SkyrimModHeader.HeaderFlag.LightMaster;
+            dummyMod.WriteToBinary(fileName);
+        }
+
         private IEnumerable<HeadPartInfo> DescribeHeadParts(FormKey formKey, MergeContext context)
         {
             var headPart = context.Resolve<IHeadPartGetter>(formKey);
