@@ -138,6 +138,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             itpoPluginName = null;
 
             var npcRecord = npcContext.Record;
+            var editorId = npcRecord.EditorID;
             var formLink = npcRecord.FormKey.AsLink<INpcGetter>();
             var previousOverride = formLink
                 .ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>(Environment.LinkCache)
@@ -147,7 +148,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
             if (previousOverride == null)   // We were already on the master
                 return null;
-            if (npcRecord.Equals(previousOverride.Record))
+            if (NpcsSame(npcRecord, previousOverride.Record))
                 itpoPluginName = previousOverride.ModKey.FileName;
             var previousNpcRecord = !string.IsNullOrEmpty(itpoPluginName) ?
                 Environment.LoadOrder.GetMasterNpc(npcRecord.FormKey) : previousOverride.Record;
@@ -212,6 +213,28 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 "ElderRace" => VanillaRace.Elder,
                 _ => 0,
             };
+        }
+
+        private static bool NpcsSame(INpcGetter x, INpcGetter y)
+        {
+            var workingEquals = x.Equals(y, new Npc.TranslationMask(true)
+            {
+                Factions = false,
+                Packages = false,
+                PlayerSkills = false,
+            });
+            return workingEquals &&
+                x.Factions.SequenceEqual(y.Factions) &&
+                x.Packages.SequenceEqual(y.Packages) &&
+                x.PlayerSkills.Equals(y.PlayerSkills, new PlayerSkills.TranslationMask(true)
+                {
+                    SkillOffsets = false,
+                    SkillValues = false,
+                    Unused = false,
+                    Unused2 = false,
+                }) &&
+                x.PlayerSkills.SkillOffsets.SequenceEqual(y.PlayerSkills.SkillOffsets) &&
+                x.PlayerSkills.SkillValues.SequenceEqual(y.PlayerSkills.SkillValues);
         }
 
         private static NpcFaceData<FormKey> ReadFaceData(INpcGetter npc)
