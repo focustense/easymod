@@ -7,6 +7,8 @@ Painlessly mix, merge, and resolve conflicts and compatibility issues for all of
 - [Getting Started](#Getting-Started)
 - [Reporting Issues](#Reporting-Issues)
 
+![Screenshot](Docs/images/profile.png)
+
 ## Introduction
 
 Bethesda games - and in particular, Skyrim Special Edition, which this app is currently targeting - have extremely active modding communities and exceptionally high-quality NPC overhauls. But the modding system is fragile, even with the excellent [Mod Organizer](https://github.com/ModOrganizer2/modorganizer). Here are just a few of the problems facing the novice to intermediate mod user:
@@ -75,6 +77,8 @@ Refer to the [Getting Started](Docs/getting-started.md) guide.
 
 EasyNPC produces log files for all of its major operations. If the program crashes, a dialog should open with a link to the log directory and the name of the current session's log file. Please include this in any bug report.
 
-In the unlikely event of a crash happening before any log output can be produced, check the Windows event log: Start Menu -> Event Viewer -> Windows Logs -> Application. Look for an error with a Source of `.NET Runtime`, whose first line says `Application: EasyNPC.exe`. Copy the details of this into the issue report; without this information, it may not be possible to fix.
+In the unlikely event of a crash happening before any log output can be produced, check the Windows event log:
 
-The in-app Maintenance tab includes a few other useful troubleshooting utilities specific to the app, the most important one being the "Reset" actions. Since EasyNPC uses an autosave system, this is the quickest way to fix a seriously compromised profile, or incorporate significant changes to a mod list/load order.
+> Start/Windows Menu -> Event Viewer -> Windows Logs -> Application.
+ 
+Look for an error with a Source of `.NET Runtime`, whose first line says `Application: EasyNPC.exe`. Copy the details of this into the issue report; without this information, it may not be possible to fix.
