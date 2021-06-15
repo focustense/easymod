@@ -6,12 +6,8 @@ Currently includes the following projects:
 
 ## Apps
 
-### EasyNPC
-
-Painlessly mix, merge, and resolve conflicts and compatibility issues for all of your NPC overhauls. [[Details]](Focus.Apps.EasyNpc/README.md)
+* [EasyNPC](Focus.Apps.EasyNpc/): Painlessly mix, merge, and resolve conflicts and compatibility issues for all of your NPC overhauls.
 
 ## Libraries
 
-### Archives
-
-.NET library for reading, extracting and creating Bethesda archives (BSA). [[Details]](Focus.Storage.Archives/README.md)
+* [Focus.Storage.Archives](Focus.Storage.Archives/): .NET library for reading, extracting and creating Bethesda archives (BSA). 

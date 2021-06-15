@@ -25,7 +25,7 @@ foreach (var pathInArchive in archive.GetFileNames())
 
 ## Example: Creating a new archive
 
-Bethesda archives are immutable (see [[BSA Facts]], so a separate API is provided to create them, instead of adding these methods to the `Archive` itself.
+Bethesda archives are immutable (see [BSA Facts](bsa-facts.md)), so a separate API is provided to create them, instead of adding these methods to the `Archive` itself.
 
 ```c#
 using var archive = new ArchiveBuilder(ArchiveType.SSE)
@@ -43,7 +43,7 @@ Some important facts about the archive builder:
 - Nothing actually gets created until `Build` is called, so builder instances can be reused, passed around, etc. Unlike the `Archive`, these objects don't require any special care.
 - The order that the non-`Build` methods (`AddFile`, `AddDirectory`, `Compress`, `ShareData`, etc.) are called in does not matter.
 - You can't get around the immutability constraint by holding onto a builder instance, adding one more file and then building it again. It will just build an entirely new archive.
-- File compression is highly parallelizable, other operations are generally not (see [[BSA Facts]]. This means that creating an archive with many files and `Compress(true)` will generally use all available cores, but creating an uncompressed archive will generally only use one.
+- File compression is highly parallelizable, other operations are generally not (see [BSA Facts](bsa-facts.md)). This means that creating an archive with many files and `Compress(true)` will generally use all available cores, but creating an uncompressed archive will generally only use one.
 
 ## Archive Splitting
 
