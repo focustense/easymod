@@ -18,7 +18,8 @@ namespace Focus.Apps.EasyNpc
                 e.Args.Contains("/forceintro", StringComparer.OrdinalIgnoreCase) ||
                 (string.IsNullOrEmpty(BundlerSettings.Default.ModRootDirectory) &&
                     !File.Exists(ProgramData.ProfileLogFileName));
-            var mainViewModel = new MainViewModel(isFirstLaunch);
+            var debugMode = e.Args.Contains("/debug", StringComparer.OrdinalIgnoreCase);
+            var mainViewModel = new MainViewModel(isFirstLaunch, debugMode);
             var mainWindow = new MainWindow(mainViewModel);
             mainWindow.Show();
         }

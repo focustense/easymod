@@ -9,6 +9,8 @@ using Focus.Apps.EasyNpc.Profile;
 using Mutagen.Bethesda;
 using PropertyChanged;
 using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using System;
 using System.ComponentModel;
 
@@ -38,18 +40,23 @@ namespace Focus.Apps.EasyNpc.Main
 
         private readonly IGameDataEditor<TKey> gameDataEditor;
 
-        public MainViewModel(bool isFirstLaunch)
+        public MainViewModel(bool isFirstLaunch, bool debugMode)
         {
             IsFirstLaunch = isFirstLaunch;
 
+            var loggingLevelSwitch =
+                new LoggingLevelSwitch(debugMode ? LogEventLevel.Debug : LogEventLevel.Information);
             var logViewModelSink = new LogViewModelSink();
             Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
+                .MinimumLevel.ControlledBy(loggingLevelSwitch)
                 .WriteTo.File(ProgramData.LogFileName,
                     buffered: true,
                     flushToDiskInterval: TimeSpan.FromMilliseconds(500))
                 .WriteTo.Sink(logViewModelSink)
                 .CreateLogger();
+
+            if (debugMode)
+                Logger.Debug("Debug mode enabled");
 
             gameDataEditor = CreateEditor();
 
@@ -86,8 +93,8 @@ namespace Focus.Apps.EasyNpc.Main
 
     public class MainViewModel : MainViewModel<FormKey>
     {
-        public MainViewModel(bool isFirstLaunch = false)
-            : base(isFirstLaunch) { }
+        public MainViewModel(bool isFirstLaunch = false, bool debugMode = false)
+            : base(isFirstLaunch, debugMode) { }
 
         protected override IGameDataEditor<FormKey> CreateEditor()
         {
