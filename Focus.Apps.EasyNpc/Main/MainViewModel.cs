@@ -6,7 +6,7 @@ using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Mutagen;
 using Focus.Apps.EasyNpc.Nifly;
 using Focus.Apps.EasyNpc.Profile;
-using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
 using PropertyChanged;
 using Serilog;
 using Serilog.Core;

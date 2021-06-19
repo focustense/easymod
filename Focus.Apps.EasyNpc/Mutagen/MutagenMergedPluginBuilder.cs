@@ -2,6 +2,8 @@
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Profile;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
 using Serilog.Context;
@@ -31,7 +33,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             ProgressViewModel progress)
         {
             progress.StartStage("Backing up previous merge");
-            var mergeFilePath = Path.Combine(environment.GameFolderPath, MergeFileName);
+            var mergeFilePath = Path.Combine(environment.DataFolderPath, MergeFileName);
             if (File.Exists(mergeFilePath))
             {
                 var backupPath = $"{mergeFilePath}.{DateTime.Now:yyyyMMdd_HHmmss}.bak";

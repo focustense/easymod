@@ -7,7 +7,8 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>EasyNPC</AssemblyName>
     <AssemblyTitle>Easy NPC</AssemblyTitle>
-    <Product>Focus Modding Tools</Product>
+    <Product>EasyMod</Product>
+    <Version>0.1.1</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -37,8 +38,8 @@
     </PackageReference>
     <PackageReference Include="FontAwesome5" Version="2.1.1" />
     <PackageReference Include="ModernWpfUI" Version="0.9.4" />
-    <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.29.3" />
-    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.29.3" />
+    <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.30.4" />
+    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.30.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="niflysharp" Version="1.2.8" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="3.1.0" />

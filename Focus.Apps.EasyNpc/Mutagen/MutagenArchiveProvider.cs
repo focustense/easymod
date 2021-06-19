@@ -1,6 +1,9 @@
 ﻿using Focus.Apps.EasyNpc.GameData.Files;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Archives;
+using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
+using Noggog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,13 +37,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
             if (file == null)
                 throw new Exception($"Couldn't find file {archiveFilePath} in archive {archivePath}");
             using var fs = File.Create(outFilePath);
-            file.CopyDataTo(fs);
+            fs.Write(file.GetSpan());
             fs.Flush(); // Is it necessary?
         }
 
         public IGameFileProvider CreateGameFileProvider()
         {
-            return new VirtualGameFileProvider(environment.GameFolderPath, this);
+            return new VirtualGameFileProvider(environment.DataFolderPath, this);
         }
 
         public IEnumerable<string> GetArchiveFileNames(string archivePath, string path)
@@ -53,14 +56,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         public IEnumerable<string> GetLoadedArchivePaths()
         {
-            // Currently, GetApplicableArchivePaths ignores the ModKey entirely and just reads every available BSA.
-            // This is actually fine for our purposes, but the code has to be aware of this to avoid duplication.
-            return Archive.GetApplicableArchivePaths(GameRelease.SkyrimSE, environment.GameFolderPath, ModKey.Null);
+            var dataFolderPath = new DirectoryPath(environment.DataFolderPath);
+            return Archive.GetApplicableArchivePaths(GameRelease.SkyrimSE, dataFolderPath).Select(x => x.Path);
         }
 
         public string ResolvePath(string archiveName)
         {
-            return Path.Combine(environment.GameFolderPath, archiveName);
+            return Path.Combine(environment.DataFolderPath, archiveName);
         }
     }
 }

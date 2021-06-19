@@ -4,6 +4,10 @@ using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Main;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Installs;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Cache;
+using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
 using System;
@@ -41,12 +45,12 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public IEnumerable<Tuple<string, bool>> GetAvailablePlugins()
         {
             return LoadOrder.GetListings(GameRelease.SkyrimSE, GameDataFolder, true)
-                .Select(x => Tuple.Create(x.ModKey.FileName, x.Enabled));
+                .Select(x => Tuple.Create(x.ModKey.FileName.String, x.Enabled));
         }
 
         public IEnumerable<string> GetLoadedPlugins()
         {
-            return Environment.LoadOrder.Select(x => x.Key.FileName);
+            return Environment.LoadOrder.Select(x => x.Key.FileName.String);
         }
 
         public int GetLoadOrderIndex(string pluginName)
@@ -58,8 +62,8 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public bool IsMaster(string pluginName)
         {
             var modKey = ModKey.FromNameAndExtension(pluginName);
-            return Environment.LoadOrder.TryGetValue(modKey, out var listing) &&
-                listing.Mod.ModHeader.Flags.HasFlag(SkyrimModHeader.HeaderFlag.Master);
+            var listing = Environment.LoadOrder.TryGetValue(modKey);
+            return listing != null && listing.Mod.ModHeader.Flags.HasFlag(SkyrimModHeader.HeaderFlag.Master);
         }
 
         public Task Load(IEnumerable<string> pluginNames)
@@ -69,8 +73,11 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 var loadOrderKeys = pluginNames.Select(pluginName => ModKey.FromNameAndExtension(pluginName));
                 var loadOrder = LoadOrder.Import<ISkyrimModGetter>(GameDataFolder, loadOrderKeys, GameRelease.SkyrimSE);
                 var linkCache = loadOrder.ToImmutableLinkCache<ISkyrimMod, ISkyrimModGetter>();
-                Environment =
-                    new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(GameDataFolder, loadOrder, linkCache, true);
+                // If we actually managed to get here, then earlier code already managed to find the listings file.
+                var listingsFile = PluginListings.GetListingsFile(GameRelease.SkyrimSE);
+                var creationClubFile = CreationClubListings.GetListingsPath(GameRelease.SkyrimSE.ToCategory(), GameDataFolder);
+                Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
+                    GameDataFolder, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
                 ArchiveProvider = new MutagenArchiveProvider(Environment);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);

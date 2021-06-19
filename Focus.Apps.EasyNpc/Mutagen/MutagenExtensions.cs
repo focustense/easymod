@@ -1,4 +1,7 @@
 ﻿using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Cache;
+using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
 using System.Linq;
 
@@ -6,13 +9,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
 {
     static class MutagenExtensions
     {
-        public static INpcGetter GetMasterNpc(this LoadOrder<IModListing<ISkyrimModGetter>> loadOrder, FormKey formKey)
+        public static INpcGetter GetMasterNpc(this ILoadOrder<IModListing<ISkyrimModGetter>> loadOrder, FormKey formKey)
         {
             return GetModNpc(loadOrder, formKey.ModKey, formKey);
         }
 
         public static INpcGetter GetModNpc(
-            this LoadOrder<IModListing<ISkyrimModGetter>> loadOrder, ModKey modKey, FormKey formKey)
+            this ILoadOrder<IModListing<ISkyrimModGetter>> loadOrder, ModKey modKey, FormKey formKey)
         {
             return loadOrder.GetIfEnabled(modKey).Mod.Npcs.TryGetValue(formKey);
         }

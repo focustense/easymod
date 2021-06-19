@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-using TKey = Mutagen.Bethesda.FormKey;
+using TKey = Mutagen.Bethesda.Plugins.FormKey;
 
 namespace Focus.Apps.EasyNpc.Profile
 {

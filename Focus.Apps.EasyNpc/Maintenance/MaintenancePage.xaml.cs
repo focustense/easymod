@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows;
 
-using TKey = Mutagen.Bethesda.FormKey;
+using TKey = Mutagen.Bethesda.Plugins.FormKey;
 
 namespace Focus.Apps.EasyNpc.Maintenance
 {

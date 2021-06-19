@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.GameData.Files;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Skyrim;
 using System.IO;
 using System.Linq;
@@ -19,9 +20,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             var pluginNames = environment.LoadOrder.Select(x => x.Key.FileName);
             var archiveNames = Archive
-                .GetApplicableArchivePaths(GameRelease.SkyrimSE, environment.GameFolderPath, ModKey.Null)
+                .GetApplicableArchivePaths(GameRelease.SkyrimSE, environment.DataFolderPath)
                 .Select(f => Path.GetFileName(f));
-            return ModPluginMap.ForDirectory(modRootDirectory, pluginNames, archiveNames);
+            return ModPluginMap.ForDirectory(modRootDirectory, pluginNames.Select(f => f.String), archiveNames);
         }
     }
 }
