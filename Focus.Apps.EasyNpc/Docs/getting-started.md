@@ -9,7 +9,7 @@
 
 1. Download `EasyNPC-{version}.7z` from the [latest release](https://github.com/focustense/easymod/releases/latest) page.
 2. Extract to any folder on your hard drive.
-3. To get face previews in the app, download one or more [Mugshot packs](https://mega.nz/fm/yd5RCIjI) and extract them to the installation folder. (Note: These do not contain any original content from any mod, but are hosted off-site due to their size.)
+3. To get face previews in the app, download one or more [Mugshot packs](https://mega.nz/folder/KAxn2ARJ#NZQUN37_IwVDArs4DQ-tGQ) and extract them to the installation folder. (Note: These do not contain any original content from any mod, but are hosted off-site due to their size.)
 4. Add Easy NPC [as an executable](https://github.com/ModOrganizer2/modorganizer/wiki/Executables-window) in Mod Organizer.
 5. Prepare your load order for first-time use, as described in the following section.
 
