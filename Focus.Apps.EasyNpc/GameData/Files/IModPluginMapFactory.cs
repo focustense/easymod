@@ -11,7 +11,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
     {
         public static ModPluginMap DefaultMap(this IModPluginMapFactory modPluginMapFactory)
         {
-            return modPluginMapFactory.CreateForDirectory(BundlerSettings.Default.ModRootDirectory);
+            return modPluginMapFactory.CreateForDirectory(Settings.Default.ModRootDirectory);
         }
     }
 }

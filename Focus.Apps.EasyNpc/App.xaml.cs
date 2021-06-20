@@ -14,16 +14,9 @@ namespace Focus.Apps.EasyNpc
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            if (BundlerSettings.Default.UpgradeRequired)
-            {
-                BundlerSettings.Default.Upgrade();
-                BundlerSettings.Default.UpgradeRequired = false;
-                BundlerSettings.Default.Save();
-            }
-
             var isFirstLaunch =
                 e.Args.Contains("/forceintro", StringComparer.OrdinalIgnoreCase) ||
-                (string.IsNullOrEmpty(BundlerSettings.Default.ModRootDirectory) &&
+                (string.IsNullOrEmpty(Settings.Default.ModRootDirectory) &&
                     !File.Exists(ProgramData.ProfileLogFileName));
             var debugMode = e.Args.Contains("/debug", StringComparer.OrdinalIgnoreCase);
             var mainViewModel = new MainViewModel(isFirstLaunch, debugMode);

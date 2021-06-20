@@ -27,7 +27,7 @@ namespace Focus.Apps.EasyNpc.Build
         {
             var log = logger.ForContext("Type", "MergedFolder");
 
-            var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
+            var modRootDirectory = Settings.Default.ModRootDirectory;
             if (string.IsNullOrEmpty(modRootDirectory))
             {
                 progress.ErrorMessage = "No mod directory specified; cannot build merged mod.";
@@ -42,7 +42,7 @@ namespace Focus.Apps.EasyNpc.Build
             //   - Facegen meshes/textures: 50%
 
             progress.StartStage("Creating merge output directory");
-            var outDir = Path.Combine(BundlerSettings.Default.ModRootDirectory, buildSettings.OutputModName);
+            var outDir = Path.Combine(Settings.Default.ModRootDirectory, buildSettings.OutputModName);
             Directory.CreateDirectory(outDir);
             log.Information("Merge folder is ready at {MergeDirectoryName}", outDir);
 

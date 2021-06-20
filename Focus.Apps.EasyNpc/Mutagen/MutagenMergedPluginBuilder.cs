@@ -195,7 +195,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             progress.StartStage("Saving");
             progress.JumpTo(0.99f);
             var outFilePath = Path.Combine(
-                BundlerSettings.Default.ModRootDirectory, buildSettings.OutputModName, MergeFileName);
+                Settings.Default.ModRootDirectory, buildSettings.OutputModName, MergeFileName);
             mergedMod.WriteToBinaryParallel(outFilePath);
 
             progress.StartStage("Done");

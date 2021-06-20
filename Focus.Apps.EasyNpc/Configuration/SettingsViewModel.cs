@@ -12,7 +12,7 @@ namespace Focus.Apps.EasyNpc.Configuration
 {
     public class SettingsViewModel : INotifyPropertyChanged
     {
-        private static readonly BundlerSettings Settings = BundlerSettings.Default;
+        private static readonly Settings Settings = Settings.Default;
 
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler WelcomeAcked;
@@ -25,10 +25,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         public SettingsViewModel()
         {
             var entries = Settings.BuildWarningWhitelist
-                .Cast<string>()
-                .Select(s => s.Split('='))
-                .Where(items => items.Length == 2)
-                .Select(items => new BuildWarningSuppressions(items[0], BuildWarningSuppressions.ParseWarnings(items[1])));
+                .Select(x => new BuildWarningSuppressions(x.PluginName, x.IgnoredWarnings));
             BuildWarningWhitelist = new(entries);
             BuildWarningWhitelist.CollectionChanged += BuildWarningWhitelist_CollectionChanged;
             foreach (var entry in BuildWarningWhitelist)
@@ -104,18 +101,9 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         private void SaveBuildWarningSuppressions()
         {
-            // As suppressions are currently stored as a single serialized collection, we have to regenerate the whole
-            // value each time. This probably won't make much of a difference in practice - there's no reason any user
-            // should be adding suppressions for hundreds of plugins.
-            while (Settings.BuildWarningWhitelist.Count > BuildWarningWhitelist.Count)
-                Settings.BuildWarningWhitelist.RemoveAt(Settings.BuildWarningWhitelist.Count - 1);
-            while (Settings.BuildWarningWhitelist.Count < BuildWarningWhitelist.Count)
-                Settings.BuildWarningWhitelist.Add(null);
-            for (int i = 0; i < BuildWarningWhitelist.Count; i++)
-            {
-                var suppressions = BuildWarningWhitelist[i];
-                Settings.BuildWarningWhitelist[i] = $"{suppressions.PluginName}={suppressions.SerializeWarnings()}";
-            }
+            Settings.BuildWarningWhitelist = BuildWarningWhitelist
+                .Select(x => new BuildWarningSuppression(x.PluginName, x.SelectedWarnings))
+                .ToList();
             Settings.Save();
         }
 

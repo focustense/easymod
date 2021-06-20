@@ -73,7 +73,7 @@ namespace Focus.Apps.EasyNpc.Build
             Progress = new BuildProgressViewModel(log);
             await Task.Run(() =>
             {
-                OutputDirectory = Path.Combine(BundlerSettings.Default.ModRootDirectory, OutputModName);
+                OutputDirectory = Path.Combine(Settings.Default.ModRootDirectory, OutputModName);
                 Directory.CreateDirectory(OutputDirectory);
                 var buildSettings = new BuildSettings<TKey>
                 {
@@ -278,7 +278,7 @@ namespace Focus.Apps.EasyNpc.Build
                     WarningMessages.FaceModPluginMismatch(npc.EditorId, npc.Name, npc.FaceModName, npc.FacePluginName));
             var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
             var hasLooseFacegen = File.Exists(
-                Path.Combine(BundlerSettings.Default.ModRootDirectory, npc.FaceModName, faceMeshFileName));
+                Path.Combine(Settings.Default.ModRootDirectory, npc.FaceModName, faceMeshFileName));
             var hasArchiveFacegen = modPluginMap.GetArchivesForMod(npc.FaceModName)
                 .Select(f => archiveFileMap.ContainsFile(f, faceMeshFileName))
                 .Any(exists => exists);
@@ -305,7 +305,7 @@ namespace Focus.Apps.EasyNpc.Build
 
         private IEnumerable<BuildWarning> CheckModSettings()
         {
-            var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
+            var modRootDirectory = Settings.Default.ModRootDirectory;
             if (string.IsNullOrWhiteSpace(modRootDirectory))
                 yield return new BuildWarning(
                     BuildWarningId.ModDirectoryNotSpecified,
@@ -343,22 +343,14 @@ namespace Focus.Apps.EasyNpc.Build
 
         private static ILookup<string, BuildWarningId> GetBuildWarningSuppressions()
         {
-            return BundlerSettings.Default.BuildWarningWhitelist
-                .Cast<string>()
-                .Select(s => s.Split('='))
-                .Where(items => items.Length == 2)
-                .Select(items => new
-                {
-                    Plugin = items[0],
-                    Warnings = BuildWarningSuppressions.ParseWarnings(items[1])
-                })
-                .SelectMany(x => x.Warnings.Select(id => new { Plugin = x.Plugin, Id = id }))
+            return Settings.Default.BuildWarningWhitelist
+                .SelectMany(x => x.IgnoredWarnings.Select(id => new { Plugin = x.PluginName, Id = id }))
                 .ToLookup(x => x.Plugin, x => x.Id);
         }
 
         private static bool ModDirectoryIsNotEmpty(string modName)
         {
-            var modRootDirectory = BundlerSettings.Default.ModRootDirectory;
+            var modRootDirectory = Settings.Default.ModRootDirectory;
             var modDirectory = Path.Combine(modRootDirectory, modName);
             return Directory.Exists(modDirectory) && Directory.EnumerateFiles(modDirectory).Any();
         }
