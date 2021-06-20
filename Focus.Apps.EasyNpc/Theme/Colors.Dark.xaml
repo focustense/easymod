@@ -1,0 +1,16 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Color x:Key="ContentHighlightColor">#FF2F4F4F</Color>
+    <Color x:Key="DangerColor">#FFDC143C</Color>
+    <Color x:Key="ExpandoBackgroundColor">#FF121230</Color>
+    <Color x:Key="GroupBorderColor">#FF696969</Color>
+    <Color x:Key="HelpIconColor">#FF0078FD</Color>
+    <Color x:Key="HelpPanelBackgroundColor">#FF121230</Color>
+    <Color x:Key="MutedTextColor">#FFA9A9A9</Color>
+    <Color x:Key="TaskProgressBackgroundColor">#FF040618</Color>
+    <Color x:Key="TaskProgressCompletedBackgroundColor">#FF002D00</Color>
+    <Color x:Key="TaskProgressFailedBackgroundColor">#FF480000</Color>
+
+</ResourceDictionary>

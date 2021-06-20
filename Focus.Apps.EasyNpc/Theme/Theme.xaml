@@ -1,0 +1,39 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:fa="http://schemas.fontawesome.com/icons/"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="DangerForegroundBrush" Color="{StaticResource DangerColor}"/>
+    <SolidColorBrush x:Key="ExpandoBackgroundBrush" Color="{StaticResource ExpandoBackgroundColor}"/>
+    <SolidColorBrush x:Key="GroupBorderBrush" Color="{StaticResource GroupBorderColor}"/>
+    <SolidColorBrush x:Key="HelpIconForegroundBrush" Color="{StaticResource HelpIconColor}"/>
+    <SolidColorBrush x:Key="HelpPanelBackgroundBrush" Color="{StaticResource HelpPanelBackgroundColor}"/>
+    <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="TaskProgressBackgroundBrush" Color="{StaticResource TaskProgressBackgroundColor}"/>
+    <SolidColorBrush x:Key="TaskProgressCompletedBackgroundBrush" Color="{StaticResource TaskProgressCompletedBackgroundColor}"/>
+    <SolidColorBrush x:Key="TaskProgressFailedBackgroundBrush" Color="{StaticResource TaskProgressFailedBackgroundColor}"/>
+    <SolidColorBrush x:Key="WelcomeBackgroundBrush" Color="{StaticResource ContentHighlightColor}"/>
+
+    <Style TargetType="Border" x:Key="GroupBorder">
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource GroupBorderBrush}"/>
+        <Setter Property="Padding" Value="8,4,8,4"/>
+    </Style>
+
+    <Style TargetType="ContentControl" x:Key="HelpIconStyle">
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0"/>
+        <Setter Property="ToolTipService.ShowDuration" Value="60000"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border Background="Transparent"
+                                    Height="13"
+                                    IsHitTestVisible="True">
+                        <fa:SvgAwesome Foreground="{StaticResource HelpIconForegroundBrush}" Icon="Solid_InfoCircle" IsHitTestVisible="False"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

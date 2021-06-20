@@ -19,7 +19,7 @@
         <ui:ScrollViewerEx>
             <!-- We have to add padding on the right here, otherwise the scroll bar masks part of the buttons (even when hidden). -->
             <ui:SimpleStackPanel Margin="0,0,16,0">
-                <Border Background="LightGoldenrodYellow" Padding="8" Margin="0,8,0,16" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
+                <Border Background="{StaticResource WelcomeBackgroundBrush}" Padding="8" Margin="0,8,0,16" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
                     <ui:SimpleStackPanel>
                         <TextBlock Style="{StaticResource TitleTextBlockStyle}">Welcome!</TextBlock>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
@@ -57,7 +57,7 @@
                             <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
                         </Button>
                         <Expander Header="What's this?" Grid.ColumnSpan="2" Grid.Row="2">
-                            <TextBlock Background="SeaShell" Foreground="DimGray" Cursor="Arrow" Padding="4" TextWrapping="Wrap">
+                            <TextBlock Background="{StaticResource ExpandoBackgroundBrush}" Foreground="{StaticResource MutedTextBrush}" Cursor="Arrow" Padding="4" TextWrapping="Wrap">
                             Bethesda games look at two sources for face geometry: face data in plugins (ESPs) and pre-generated facegen meshes (NIFs).
                             If these two don't match in-game for any given actor, the result is the dreaded "black face", "gray face" or "dark face" bug.
                             <LineBreak/><LineBreak/>
@@ -154,7 +154,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button x:Name="RemoveWarningSuppressionsButton" HorizontalAlignment="Stretch" Click="RemoveWarningSuppressionsButton_Click">
-                                                <fa5:SvgAwesome Icon="Regular_TrashAlt" Foreground="DarkRed" Width="16" Height="16"/>
+                                                <fa5:SvgAwesome Icon="Regular_TrashAlt" Foreground="{StaticResource DangerForegroundBrush}" Width="16" Height="16"/>
                                             </Button>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>

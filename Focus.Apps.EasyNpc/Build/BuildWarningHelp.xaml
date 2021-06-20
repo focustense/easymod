@@ -29,7 +29,7 @@
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
                     <Run FontWeight="Medium">How to fix it:</Run>
                     <Run>Click on the</Run>
-                    <Viewbox MaxHeight="12" MaxWidth="12"><ui:SymbolIcon Foreground="Blue" Symbol="Setting"/></Viewbox><Run>Settings button</Run>
+                    <Viewbox MaxHeight="12" MaxWidth="12"><ui:SymbolIcon Foreground="{StaticResource HelpIconForegroundBrush}" Symbol="Setting"/></Viewbox><Run>Settings button</Run>
                     <Run>in the top navigation bar and choose a valid</Run>
                     <Run FontStyle="Italic">Mod Root Directory</Run>.
                     <Run>You can still do this even if you don't use Mod Organizer: just create a new folder anywhere on disk, and manually extract your mods into it, giving each mod its own subdirectory.</Run>

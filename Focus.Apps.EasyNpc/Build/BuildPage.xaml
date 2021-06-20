@@ -94,7 +94,13 @@
                                 <Button Name="RecheckProblemsButton" Content="Check again" Margin="0,0,8,0" Click="CheckForProblemsButton_Click"/>
                                 <Button Name="DismissProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Looks good" Click="DismissProblemsButton_Click"/>
                             </ui:SimpleStackPanel>
-                            <Border Style="{StaticResource GroupBorder}" DockPanel.Dock="Right" Width="350" Margin="8,0,0,0" CornerRadius="16" Background="AliceBlue" Visibility="{Binding IsWarningInfoVisible, Converter={StaticResource BoolToVisibility}}">
+                            <Border Style="{StaticResource GroupBorder}"
+                                    Background="{StaticResource HelpPanelBackgroundBrush}"
+                                    CornerRadius="16"
+                                    Margin="8,0,0,0"
+                                    Width="350"
+                                    DockPanel.Dock="Right"
+                                    Visibility="{Binding IsWarningInfoVisible, Converter={StaticResource BoolToVisibility}}">
                                 <GroupBox>
                                     <GroupBox.Header>
                                         <ui:SimpleStackPanel>
