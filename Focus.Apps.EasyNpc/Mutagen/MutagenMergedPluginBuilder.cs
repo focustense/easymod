@@ -104,7 +104,20 @@ namespace Focus.Apps.EasyNpc.Mutagen
                         HairColor = true,
                         TextureLighting = true,
                         TintLayers = true,
+                        // Height and weight might not be entirely safe to copy without carrying over body type (WNAM),
+                        // but serious problems should be extremely rare. Regardless of whether or not we copy the
+                        // height/weight, we'll still end up with an NPC whose body is a hybrid of the modded NPC and
+                        // the default body.
+                        Height = true,
+                        Weight = true,
                     });
+                    // We will respect the "Opposite gender animations" flag from the overhaul mod. If an overhaul
+                    // decides to make an NPC look more feminine (or masculine), then it probably wants the animations
+                    // to reflect that, and this would be consistent with both their intent and the intent of the user.
+                    if (faceNpcRecord.Configuration.Flags.HasFlag(NpcConfiguration.Flag.OppositeGenderAnims))
+                        mergedNpcRecord.Configuration.Flags |= NpcConfiguration.Flag.OppositeGenderAnims;
+                    else
+                        mergedNpcRecord.Configuration.Flags &= ~NpcConfiguration.Flag.OppositeGenderAnims;
                     log.Debug("Importing head parts", npc.FacePluginName);
                     mergedNpcRecord.HeadParts.Clear();
                     foreach (var sourceHeadPart in faceNpcRecord.HeadParts)

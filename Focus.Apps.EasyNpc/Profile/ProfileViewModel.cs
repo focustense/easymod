@@ -65,13 +65,13 @@ namespace Focus.Apps.EasyNpc.Profile
         {
             this.modPluginMapFactory = modPluginMapFactory;
             var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
-            var masterNameSet = new HashSet<string>(masterNames);
+            var profileRuleSet = StandardProfileRuleSet.Create(masterNames, npcs);
 
             var npcOrder = new List<TKey>();
             foreach (var npc in npcsWithOverrides)
             {
                 npcOrder.Add(npc.Key);
-                var npcConfig = new NpcConfiguration<TKey>(npc, modPluginMapFactory, masterNameSet);
+                var npcConfig = new NpcConfiguration<TKey>(npc, modPluginMapFactory, profileRuleSet);
                 npcConfigurations.Add(npc.Key, npcConfig);
             }
             this.npcOrder = npcOrder.AsReadOnly();

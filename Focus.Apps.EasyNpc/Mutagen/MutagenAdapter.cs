@@ -110,6 +110,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             if (listing == null)
                 return;
 
+            var masters = listing.Mod.ModHeader.MasterReferences.Select(x => x.Master).ToHashSet();
             var npcContexts = listing.Mod.EnumerateMajorRecordContexts<INpc, INpcGetter>(Environment.LinkCache);
             foreach (var npcContext in npcContexts)
             {
@@ -117,10 +118,19 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 if (formKey.ModKey != modKey)
                 {
                     var npc = cache[formKey];
-                    var faceOverrides = GetFaceOverrides(npcContext, out bool affectsFaceGen, out var itpoFileName);
-                    var wigInfo = GetWigInfo(npcContext.Record);
-                    npc.AddOverride(new NpcOverride<FormKey>(
-                        modKey.FileName, faceOverrides, affectsFaceGen, itpoFileName, wigInfo));
+                    var comparison = GetComparisonRecord(npcContext, out var itpoPluginName);
+                    var faceData = GetFaceOverrides(npcContext.Record, comparison, out bool affectsFaceGen);
+                    var npcOverride = new NpcOverride<FormKey>(modKey.FileName)
+                    {
+                        FaceData = faceData,
+                        FaceOverridesAffectFaceGen = affectsFaceGen,
+                        ItpoPluginName = itpoPluginName,
+                        ModifiesBehavior = ModifiesBehavior(npcContext, masters),
+                        ModifiesBody = ModifiesBody(npcContext.Record, comparison),
+                        ModifiesOutfits = ModifiesOutfits(npcContext.Record, comparison),
+                        Wig = GetWigInfo(npcContext.Record),
+                    };
+                    npc.AddOverride(npcOverride);
                 }
                 else
                 {
@@ -137,37 +147,50 @@ namespace Focus.Apps.EasyNpc.Mutagen
             }
         }
 
-        private NpcFaceData<FormKey> GetFaceOverrides(
-            IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext, out bool affectsFaceGen,
-            out string itpoPluginName)
+        private NpcFaceData<FormKey> GetFaceOverrides(INpcGetter npc, INpcGetter comparison, out bool affectsFaceGen)
         {
             affectsFaceGen = false;
-            itpoPluginName = null;
+            if (comparison == null)
+                return null;
 
-            var npcRecord = npcContext.Record;
-            var editorId = npcRecord.EditorID;
-            var formLink = npcRecord.FormKey.AsLink<INpcGetter>();
-            var previousOverride = formLink
+            var overrideFaceData = ReadFaceData(npc);
+            var previousFaceData = ReadFaceData(comparison);
+            var overrideRace = npc.Race.FormKeyNullable;
+            var previousRace = comparison.Race.FormKeyNullable;
+            affectsFaceGen = !NpcFaceData.EqualsForFaceGen(overrideFaceData, previousFaceData);
+            return (!NpcFaceData.Equals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
+                overrideFaceData : null;
+        }
+
+        private INpcGetter GetComparisonRecord(IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext,
+            out string itpoPluginName)
+        {
+            itpoPluginName = null;
+            var previousOverride = GetPreviousOverride(npcContext);
+            if (previousOverride == null)   // We were already on the master
+                return null;
+            var isItpo = NpcsSame(npcContext.Record, previousOverride.Record);
+            if (isItpo)
+                itpoPluginName = previousOverride.ModKey.FileName;
+            // This logic may appear strange - if it is not identical to the previous override, then why go directly to
+            // the master and ignore all overrides in between?
+            // What it boils down to is inferred intent. What we really care about for comparison purposes is whether or
+            // not it changes attributes from the master - the true master, that originally declared the record.
+            // However, ITPOs in particular have no functional effect on the NPC in the current load order, and so we
+            // don't want to end up picking them as defaults. If it's not strictly ITPO, but happens to be identical to
+            // some other override elsewhere in the load order, then that doesn't matter - it still changes the NPC.
+            return isItpo ? Environment.LoadOrder.GetMasterNpc(npcContext.Record.FormKey) : previousOverride.Record;
+        }
+
+        private IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> GetPreviousOverride(
+            IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext)
+        {
+            var formLink = npcContext.Record.FormKey.AsLink<INpcGetter>();
+            return formLink
                 .ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>(Environment.LinkCache)
                 .SkipWhile(x => x.ModKey != npcContext.ModKey)
                 .Skip(1)
                 .FirstOrDefault();
-
-            if (previousOverride == null)   // We were already on the master
-                return null;
-            if (NpcsSame(npcRecord, previousOverride.Record))
-                itpoPluginName = previousOverride.ModKey.FileName;
-            var previousNpcRecord = !string.IsNullOrEmpty(itpoPluginName) ?
-                Environment.LoadOrder.GetMasterNpc(npcRecord.FormKey) : previousOverride.Record;
-
-
-            var overrideFaceData = ReadFaceData(npcRecord);
-            var previousFaceData = ReadFaceData(previousNpcRecord);
-            var overrideRace = npcRecord.Race.FormKeyNullable;
-            var previousRace = previousNpcRecord.Race.FormKeyNullable;
-            affectsFaceGen = !NpcFaceData.EqualsForFaceGen(overrideFaceData, previousFaceData);
-            return (!NpcFaceData.Equals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
-                overrideFaceData : null;
         }
 
         private IEnumerable<VanillaRace> GetValidRaces(IHeadPartGetter headPart)
@@ -222,17 +245,154 @@ namespace Focus.Apps.EasyNpc.Mutagen
             };
         }
 
-        private static bool NpcsSame(INpcGetter x, INpcGetter y)
+        private bool ModifiesBehavior(
+            IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext, IReadOnlySet<ModKey> masterKeys)
         {
-            var workingEquals = x.Equals(y, new Npc.TranslationMask(true)
+            // The rules for behavior need to be a little different from those for the face, because the semi-common
+            // practice is for NPC overhauls to inherit from "foundation" mods like USSEP.
+            // Bethesda's multiple-master system is opaque and doesn't tell us anything about precisely *how* a master
+            // is being used, so for the time being, the solution is something equally blunt:
+            // Check to see if the behavior of this NPC is identical to the behavior of ANY of the plugin's masters. If
+            // so, it "probably" does not intend to be a behavior mod, and is just trying to avoid breaking other mods
+            // that do make intentional changes.
+            // This, of course, will not work at all if the extra master (e.g. USSEP) is changed and the plugin is not
+            // updated. Which is why mod creators really should distribute compatibility patches as separate files,
+            // despite the fact that some don't.
+            var previousOverrides = npcContext.Record.FormKey.AsLink<INpcGetter>()
+                .ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>(Environment.LinkCache)
+                .SkipWhile(x => x.ModKey != npcContext.ModKey)
+                .Skip(1)
+                .Where(x => masterKeys.Contains(x.ModKey));
+            return previousOverrides.All(x => ModifiesBehavior(npcContext.Record, x.Record));
+        }
+
+        private static bool ModifiesBehavior(INpcGetter current, INpcGetter previous)
+        {
+            if (previous == null)
+                return false;
+
+            // For the time being, we can interpret "modifying behavior" as modifying anything that is _not_ the face.
+            //
+            // This is somewhat of a shotgun solution, but more precise than looking for non-ITPO records that _don't_
+            // modify the face, as some mostly-behavior plugins do make edits to the face - possibly accidentally.
+            var sameExcludingConfigurationFlags = NpcsSame(current, previous, mask =>
             {
-                Factions = false,
-                Packages = false,
-                PlayerSkills = false,
+                mask.Configuration = false;
+                // Outfits may be considered part of "behavior" for merging, but they are checked separately.
+                mask.DefaultOutfit = false;
+                mask.FaceMorph = false;
+                mask.FaceParts = false;
+                mask.HairColor = false;
+                mask.HeadParts = false;
+                mask.HeadTexture = false;
+                mask.SleepingOutfit = false;
+                mask.TextureLighting = false;
+                mask.TintLayers = false;
+                mask.Height = false;
+                mask.Weight = false;
+                // Bodies behave similarly to outfits - not considered "behavior" unless isolated.
+                mask.WornArmor = false;
             });
+            return !sameExcludingConfigurationFlags ||
+                // We apparently have to compare the configurations separately, because Mutagen doesn't handle it right.
+                // Literally, the configurations will compare equal with the mask, while the NPCs will compare unequal
+                // using a default-empty (false, false) mask including the same configuration mask.
+                !current.Configuration.Equals(previous.Configuration, new NpcConfiguration.TranslationMask(true, true)
+                {
+                    Flags = false,
+                }) ||
+                // Overhauls might modify the Opposite Gender Animations flag. This is considered a visual change, not
+                // a behavior change. If a mod ONLY modifies this flag and nothing else about an NPC, it might be
+                // ignored. There were some very old mods that did this, but they're not so common anymore, and if they
+                // do exist, they probably conflict with USSEP etc.
+                (current.Configuration.Flags & ~NpcConfiguration.Flag.OppositeGenderAnims) !=
+                    (previous.Configuration.Flags & ~NpcConfiguration.Flag.OppositeGenderAnims);
+        }
+
+        private static bool ModifiesBody(INpcGetter current, INpcGetter previous)
+        {
+            return previous != null && current.WornArmor == previous.WornArmor;
+        }
+
+        private static bool ModifiesOutfits(INpcGetter current, INpcGetter previous)
+        {
+            if (previous == null)
+                return false;
+
+            // Outfits are currently a tossup in terms of whether they should be treated with the same logic as face
+            // overrides (only check PO or Declaring Master), or behavior overrides (check all masters), especially
+            // we don't actually handle outfit carry-over yet, only using it as a signal for other checks.
+            // This may change once outfits are actually implemented.
+            return current.DefaultOutfit == previous.DefaultOutfit && current.SleepingOutfit == previous.SleepingOutfit;
+        }
+
+        private static bool NpcsSame(INpcGetter x, INpcGetter y, Action<Npc.TranslationMask> configure = null)
+        {
+            // Using a translation mask with default-on just does not seem to work properly; even if we subsequently set
+            // every single field inside the mask to false, there are still records that refuse to compare equal.
+            // So we have to specify every individual field we DO want to include, and default to none.
+            // In addition, most fields that are lists (form lists, subrecord lists, etc.) have problems. In some cases
+            // it's enough to just compare the items in the list, especially with form links, but some, like VMAD,
+            // require even deeper inspection to get right.
+            var mask = new Npc.TranslationMask(false, false)
+            {
+                // AIData is another semi-broken field in Mutagen where it ignores the mask as part of the NPC mask, but
+                // compares equal when we directly compare the AIData from both NPCs. We have to ignore it in the
+                // primary comparison and check it individually afterward.
+                AIData = false,
+                AttackRace = true,
+                Class = true,
+                CombatOverridePackageList = true,
+                CombatStyle = true,
+                Configuration = true,
+                CrimeFaction = true,
+                DeathItem = true,
+                DefaultOutfit = true,
+                DefaultPackageList = true,
+                Destructible = true,
+                EditorID = true,
+                FaceMorph = true,
+                FaceParts = true,
+                FarAwayModel = true,
+                FormVersion = true,
+                GiftFilter = true,
+                GuardWarnOverridePackageList = true,
+                HairColor = true,
+                HeadParts = true,
+                HeadTexture = true,
+                Height = true,
+                MajorRecordFlagsRaw = true,
+                NAM5 = true,
+                Name = true,
+                ObjectBounds = true,
+                ObserveDeadBodyOverridePackageList = true,
+                Race = true,
+                ShortName = true,
+                SleepingOutfit = true,
+                Sound = true,
+                SoundLevel = true,
+                SpectatorOverridePackageList = true,
+                Template = true,
+                TextureLighting = true,
+                TintLayers = true,
+                // Version fields are tricky. Even though they should denote a change, for our purposes, they can't
+                // really be treated as independent changes, because they don't do anything by themselves. If other
+                // parts of the record have been modified then we'll detect those individually.
+                Voice = true,
+                Weight = true,
+                WornArmor = true,
+            };
+            configure?.Invoke(mask);
+            var workingEquals = x.Equals(y, mask);
             return workingEquals &&
-                x.Factions.SequenceEqual(y.Factions) &&
-                x.Packages.SequenceEqual(y.Packages) &&
+                x.ActorEffect.SequenceEqualSafe(y.ActorEffect, e => e.FormKey) &&
+                x.AIData.Equals(y.AIData, new AIData.TranslationMask(true, true) { Unused = false }) &&
+                x.Attacks.SequenceEqualSafe(y.Attacks, a => a.AttackData.AttackType.FormKey) &&
+                x.Factions.SequenceEqualSafe(y.Factions, f => f.Faction.FormKey) &&
+                x.Items.SequenceEqualSafe(y.Items, i => i.Item.Item.FormKey) &&
+                x.Keywords.SequenceEqualSafe(y.Keywords, k => k.FormKey) &&
+                x.Packages.SequenceEqualSafe(y.Packages, p => p.FormKey) &&
+                x.Perks.SequenceEqualSafe(y.Perks, p => p.Perk.FormKey) &&
                 x.PlayerSkills.Equals(y.PlayerSkills, new PlayerSkills.TranslationMask(true)
                 {
                     SkillOffsets = false,
@@ -240,8 +400,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     Unused = false,
                     Unused2 = false,
                 }) &&
-                x.PlayerSkills.SkillOffsets.SequenceEqual(y.PlayerSkills.SkillOffsets) &&
-                x.PlayerSkills.SkillValues.SequenceEqual(y.PlayerSkills.SkillValues);
+                x.PlayerSkills.SkillOffsets.SequenceEqualSafe(y.PlayerSkills.SkillOffsets) &&
+                x.PlayerSkills.SkillValues.SequenceEqualSafe(y.PlayerSkills.SkillValues) &&
+                VmadsSame(x.VirtualMachineAdapter, y.VirtualMachineAdapter);
         }
 
         private static NpcFaceData<FormKey> ReadFaceData(INpcGetter npc)
@@ -304,6 +465,29 @@ namespace Focus.Apps.EasyNpc.Mutagen
         private static NpcSkinTone ReadSkinTone(INpcGetter npc)
         {
             return npc.TextureLighting is Color c ? new NpcSkinTone(c.R, c.G, c.B) : null;
+        }
+
+        private static bool ScriptEntriesSame(IScriptEntryGetter x, IScriptEntryGetter y)
+        {
+            return
+                x.Name == y.Name &&
+                x.Flags == y.Flags &&
+                x.Properties.SequenceEqualSafeBy(y.Properties, p => p.Name);
+        }
+
+        private static bool VmadsSame(IVirtualMachineAdapterGetter x, IVirtualMachineAdapterGetter y)
+        {
+            if (ReferenceEquals(x, y))
+                return true;
+            if (x == null ^ y == null)
+                return false;
+            return
+                x.ObjectFormat == y.ObjectFormat &&
+                x.Version == y.Version &&
+                x.Scripts.Count == y.Scripts.Count &&
+                x.Scripts.OrderBy(s => s.Name)
+                    .Zip(y.Scripts.OrderBy(s => s.Name))
+                    .All(x => ScriptEntriesSame(x.First, x.Second));
         }
     }
 }

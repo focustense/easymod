@@ -22,12 +22,23 @@ namespace Focus.Apps.EasyNpc.GameData.Records
         void AddOverride(NpcOverride<TKey> overrideInfo);
     }
 
-    public record NpcOverride<TKey>(
-        string PluginName, NpcFaceData<TKey> FaceData, bool AffectsFaceGen, string ItpoPluginName,
-        NpcWigInfo<TKey> Wig = null)
+    public class NpcOverride<TKey>
         where TKey : struct
     {
-        public bool HasFaceOverride => FaceData != null;
+        public NpcFaceData<TKey> FaceData { get; init; }
+        public bool FaceOverridesAffectFaceGen { get; init; }
+        public bool ModifiesBehavior { get; init; }
+        public bool ModifiesBody { get; init; }
+        public bool ModifiesFace => FaceData != null;
+        public bool ModifiesOutfits { get; init; }
+        public string ItpoPluginName { get; init; }
+        public string PluginName { get; private init; }
+        public NpcWigInfo<TKey> Wig { get; init; }
+
+        public NpcOverride(string pluginName)
+        {
+            PluginName = pluginName;
+        }
     }
 
     public static class NpcFaceData

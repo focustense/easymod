@@ -34,19 +34,18 @@ namespace Focus.Apps.EasyNpc.Profile
         public string Name => npc.Name;
 
         private readonly Func<NpcOverrideConfiguration<TKey>, int> indexOfOverride;
-        private readonly IReadOnlySet<string> masterNames;
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly INpc<TKey> npc;
+        private readonly IProfileRuleSet ruleSet;
 
         private NpcOverrideConfiguration<TKey> defaultConfig;
         private NpcOverrideConfiguration<TKey> faceConfig;
 
-        public NpcConfiguration(
-            INpc<TKey> npc, IModPluginMapFactory modPluginMapFactory, IReadOnlySet<string> masterNames)
+        public NpcConfiguration(INpc<TKey> npc, IModPluginMapFactory modPluginMapFactory, IProfileRuleSet ruleSet)
         {
-            this.masterNames = masterNames;
             this.modPluginMapFactory = modPluginMapFactory;
             this.npc = npc;
+            this.ruleSet = ruleSet;
             var overrides = GetOverrides().ToList();
             Overrides = overrides.AsReadOnly();
             // It's really silly that we have to store this, but for no particular reason, IReadOnlyList<T> does not
@@ -88,45 +87,11 @@ namespace Focus.Apps.EasyNpc.Profile
             if (!defaults && !faces)
                 return;
 
-            // We're never going to make perfect choices on the first run, but we can make a few assumptions.
-            // First, that users have set up their NPC-mod load order to reflect their general preferences - i.e. mods
-            // they'll use the most go last, mods they'll use scarcely go first.
-            // Second, that they've used LOOT or manually organized their full load order so that all the compatibility
-            // and conflict-resolution patches that *don't* deal with body/face mods go nearly last in the load order.
-            //
-            // This gives us an obviously flawed but still fairly good heuristic:
-            // - Choose the last plugin in the load order _which modifies face data_ as the face source.
-            // - Try to choose the very last plugin in the load order as the default source, except...
-            //   - If that plugin is *also* the face source, then keep going up the list until we find either:
-            //     (a) A master (ESM) plugin; these are rare, like USSEP, and we generally shouldn't override; or
-            //     (b) Any plugin that modifies the NPC but does not modify the face, regardless of master.
-            var faceOverride = Overrides.LastOrDefault(x => x.HasFaceOverride);
+            var configDefaults = ruleSet.GetConfigurationDefaults(npc);
             if (defaults)
-            {
-                var defaultOverride = Overrides[Overrides.Count - 1];
-                while (!string.IsNullOrEmpty(defaultOverride.ItpoFileName))
-                {
-                    var itpoOverride = Overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoFileName);
-                    if (itpoOverride != null)   // Should never be null but we still need to check
-                        defaultOverride = itpoOverride;
-                }
-                if (defaultOverride == faceOverride && !masterNames.Contains(defaultOverride.PluginName))
-                {
-                    for (int i = indexOfOverride(faceOverride) - 1; i >= 0; i--)
-                    {
-                        var prevOverride = Overrides[i];
-                        if (masterNames.Contains(prevOverride.PluginName) || !prevOverride.HasFaceOverride)
-                        {
-                            defaultOverride = prevOverride;
-                            break;
-                        }
-                    }
-                }
-                SetDefaultPlugin(defaultOverride);
-            }
-
+                SetDefaultPlugin(configDefaults.DefaultPlugin);
             if (faces)
-                SetFacePlugin(faceOverride, true);
+                SetFacePlugin(configDefaults.FacePlugin, true);
         }
 
         public void RestoreFromProfileEvent(ProfileEvent e)
@@ -156,6 +121,8 @@ namespace Focus.Apps.EasyNpc.Profile
             var oldValue = defaultConfig?.PluginName;
             if (defaultConfig != null)
                 defaultConfig.IsDefaultSource = false;
+            if (overrideConfig == null)
+                overrideConfig = Overrides[0];  // Use the master if nothing else is specified
             if (overrideConfig != null)
                 overrideConfig.IsDefaultSource = true;
             defaultConfig = overrideConfig;
@@ -165,8 +132,7 @@ namespace Focus.Apps.EasyNpc.Profile
         public void SetDefaultPlugin(string pluginName)
         {
             var foundOverride = FindOverride(pluginName);
-            if (foundOverride != null)
-                SetDefaultPlugin(foundOverride);
+            SetDefaultPlugin(foundOverride);
         }
 
         public void SetFaceMod(string modName, bool detectPlugin)
@@ -199,6 +165,8 @@ namespace Focus.Apps.EasyNpc.Profile
             var oldValue = this.faceConfig?.PluginName;
             if (this.faceConfig != null)
                 this.faceConfig.IsFaceSource = false;
+            if (faceConfig == null)
+                faceConfig = Overrides[0];  // Use the master if nothing else is specified
             if (faceConfig != null)
                 faceConfig.IsFaceSource = true;
             this.faceConfig = faceConfig;
@@ -216,8 +184,7 @@ namespace Focus.Apps.EasyNpc.Profile
         public void SetFacePlugin(string pluginName, bool detectFaceMod)
         {
             var foundOverride = FindOverride(pluginName);
-            if (foundOverride != null)
-                SetFacePlugin(foundOverride, detectFaceMod);
+            SetFacePlugin(foundOverride, detectFaceMod);
         }
 
         protected void LogProfileEvent(NpcProfileField field, string oldValue, string newValue)
@@ -247,6 +214,8 @@ namespace Focus.Apps.EasyNpc.Profile
 
         private NpcOverrideConfiguration<TKey> FindOverride(string pluginName)
         {
+            if (string.IsNullOrEmpty(pluginName))
+                return null;
             return Overrides.SingleOrDefault(x =>
                 string.Equals(pluginName, x.PluginName, StringComparison.OrdinalIgnoreCase));
         }
@@ -274,8 +243,11 @@ namespace Focus.Apps.EasyNpc.Profile
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public bool HasBehaviorOverride { get; private init; }
+        public bool HasBodyOverride { get; private init; }
         public bool HasFaceOverride { get; private init; }
         public bool HasFaceGenOverride { get; private init; }
+        public bool HasOutfitOverride { get; private init; }
         public bool HasWig => Wig != null;
         public bool IsDefaultSource { get; set; }
         public bool IsFaceSource { get; set; }
@@ -291,16 +263,21 @@ namespace Focus.Apps.EasyNpc.Profile
             : this(parentConfig)
         {
             PluginName = pluginName;
+            HasBehaviorOverride = true;
             HasFaceOverride = true;
             HasFaceGenOverride = true;
+            HasOutfitOverride = true;
         }
 
         public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, NpcOverride<TKey> @override)
             : this(parentConfig)
         {
             PluginName = @override.PluginName;
-            HasFaceOverride = @override.HasFaceOverride;
-            HasFaceGenOverride = @override.AffectsFaceGen;
+            HasBehaviorOverride = @override.ModifiesBehavior;
+            HasBodyOverride = @override.ModifiesBody;
+            HasFaceOverride = @override.ModifiesFace;
+            HasFaceGenOverride = @override.FaceOverridesAffectFaceGen;
+            HasOutfitOverride = @override.ModifiesOutfits;
             ItpoFileName = @override.ItpoPluginName;
             Wig = @override.Wig;
         }
