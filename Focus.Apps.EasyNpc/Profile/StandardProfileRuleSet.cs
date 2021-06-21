@@ -27,15 +27,30 @@ namespace Focus.Apps.EasyNpc.Profile
         {
             var faceOverride = npc.Overrides.LastOrDefault(x => x.ModifiesFace);
             var defaultOverride = npc.Overrides[npc.Overrides.Count - 1];
+            // Tracking the default plugin name separately from the override record allows us to keep a quasi-reference
+            // to the master record, if it comes up as an ITPO (i.e. really an ITM).
+            var defaultPluginName = "";
             while (!string.IsNullOrEmpty(defaultOverride.ItpoPluginName))
             {
-                var itpoOverride = npc.Overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoPluginName);
-                if (itpoOverride != null)   // Should never be null but we still need to check
-                    defaultOverride = itpoOverride;
+                if (defaultOverride.ItpoPluginName == npc.BasePluginName)
+                {
+                    defaultOverride = null;
+                    defaultPluginName = npc.BasePluginName;
+                    break;
+                }
+                else
+                {
+                    var itpoOverride = npc.Overrides.SingleOrDefault(x => x.PluginName == defaultOverride.ItpoPluginName);
+                    if (itpoOverride != null)   // Should never be null but we still need to check
+                    {
+                        defaultOverride = itpoOverride;
+                        defaultPluginName = defaultOverride.PluginName;
+                    }
+                }
             }
             // Note that "masterNames" below means ESMs and DLCs. These are always allowable candidates for a default
             // plugin setting.
-            if (defaultOverride == faceOverride && !masterNames.Contains(defaultOverride.PluginName))
+            if (defaultOverride != null && defaultOverride == faceOverride && !masterNames.Contains(defaultPluginName))
             {
                 defaultOverride = null; // If we don't find a better candidate, use the original master
                 var faceOverrideIndex = ((IList<NpcOverride<TKey>>)npc.Overrides).IndexOf(faceOverride);
