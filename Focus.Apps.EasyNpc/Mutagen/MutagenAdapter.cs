@@ -42,10 +42,11 @@ namespace Focus.Apps.EasyNpc.Mutagen
             this.log = log;
         }
 
-        public IEnumerable<Tuple<string, bool>> GetAvailablePlugins()
+        public IEnumerable<PluginInfo> GetAvailablePlugins()
         {
             return LoadOrder.GetListings(GameRelease.SkyrimSE, GameDataFolder, true)
-                .Select(x => Tuple.Create(x.ModKey.FileName.String, x.Enabled));
+                .Select((x, i) => new PluginInfo(
+                    x.ModKey.FileName.String, GetMasterNames(x.ModKey.FileName), x.Enabled));
         }
 
         public IEnumerable<string> GetLoadedPlugins()
@@ -180,6 +181,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
             // don't want to end up picking them as defaults. If it's not strictly ITPO, but happens to be identical to
             // some other override elsewhere in the load order, then that doesn't matter - it still changes the NPC.
             return isItpo ? Environment.LoadOrder.GetMasterNpc(npcContext.Record.FormKey) : previousOverride.Record;
+        }
+
+        private IEnumerable<string> GetMasterNames(string pluginFileName)
+        {
+            var path = Path.Combine(GameDataFolder, pluginFileName);
+            using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
+            return mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
         }
 
         private IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> GetPreviousOverride(

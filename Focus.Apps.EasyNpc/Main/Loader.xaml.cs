@@ -29,14 +29,7 @@ namespace Focus.Apps.EasyNpc.Main
         {
             if (e.Key == Key.Space)
             {
-                var selectedPlugins = LoadOrderGrid.SelectedItems
-                    .Cast<PluginSetting>()
-                    .ToList();
-                if (selectedPlugins.Count == 0)
-                    return;
-                var shouldLoad = selectedPlugins.Any(x => !x.ShouldLoad);
-                foreach (var plugin in selectedPlugins)
-                    plugin.ShouldLoad = shouldLoad;
+                Model.TogglePlugins(LoadOrderGrid.SelectedItems.Cast<PluginSetting>());
             }
         }
     }

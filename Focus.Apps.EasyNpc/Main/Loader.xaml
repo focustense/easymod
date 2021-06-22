@@ -5,9 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:debug="clr-namespace:Focus.Apps.EasyNpc.Debug"
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
-             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+             xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
              xmlns:ui="http://schemas.modernwpf.com/2019"
-             d:DataContext="{d:DesignInstance Type=local:LoaderViewModel`1}"
+             d:DataContext="{d:DesignInstance Type=main:LoaderViewModel`1}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
@@ -16,16 +16,57 @@
                 <fa5:SvgAwesome Name="SpinnerImage" Icon="Solid_Cog" Spin="True" Height="20" Width="20" Margin="0,0,12,0" Visibility="{Binding Path=IsSpinnerVisible, Converter={StaticResource BoolToVisibility}}"/>
                 <TextBlock Text="{Binding Path=Status}" VerticalAlignment="Center" />
             </ui:SimpleStackPanel>
-            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
-                <Button Name="ConfirmLoad" Content="OK" Margin="8" Padding="4" Width="80" IsEnabled="{Binding CanLoad}" Click="ConfirmLoad_Click"/>
-            </ui:SimpleStackPanel>
+            <Grid DockPanel.Dock="Bottom">
+                <ui:SimpleStackPanel Margin="8" Orientation="Horizontal" Visibility="{Binding IsUnloadablePluginWarningVisible, Converter={StaticResource BoolToVisibility}}">
+                    <fa5:SvgAwesome Foreground="{StaticResource DangerForegroundBrush}" Icon="Solid_ExclamationTriangle" Height="20" VerticalAlignment="Center"/>
+                    <TextBlock FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource DangerForegroundBrush}" Margin="8,0,0,0" VerticalAlignment="Center">
+                        Some plugins are selected but can't be loaded.
+                    </TextBlock>
+                </ui:SimpleStackPanel>
+                <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Name="ConfirmLoad" Content="OK" Margin="8" Padding="4" Width="80" IsEnabled="{Binding CanLoad}" Style="{StaticResource AccentButtonStyle}" Click="ConfirmLoad_Click"/>
+                </ui:SimpleStackPanel>
+            </Grid>
             <Grid>
                 <DataGrid Name="LoadOrderGrid" AutoGenerateColumns="False" ItemsSource="{Binding Path=Plugins}" Margin="8,0,8,0" Visibility="{Binding Path=IsPluginListVisible, Converter={StaticResource BoolToVisibility}}" KeyDown="LoadOrderGrid_KeyDown">
+                    <DataGrid.Resources>
+                        <Style x:Key="LoadOrderCell" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CanLoad}" Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource SystemControlDisabledBaseMediumLowBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="Load?" Width="64" CanUserSort="False">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <CheckBox IsChecked="{Binding ShouldLoad, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" MinWidth="0"/>
+                                    <Grid>
+                                        <CheckBox IsChecked="{Binding ShouldLoad, UpdateSourceTrigger=PropertyChanged}"
+                                                  HorizontalAlignment="Center"
+                                                  MinWidth="0"
+                                                  Visibility="{Binding CanLoad, Converter={StaticResource BoolToVisibility}}"/>
+                                        <Border Background="Transparent"
+                                                IsHitTestVisible="True"
+                                                Padding="0,8,7,8"
+                                                ToolTipService.InitialShowDelay="50"
+                                                ToolTipService.ShowDuration="30000"
+                                                Visibility="{Binding CanLoad, Converter={StaticResource InvBoolToVisibility}}">
+                                            <Border.ToolTip>
+                                                <ui:SimpleStackPanel>
+                                                    <TextBlock Visibility="{Binding IsPreviousMerge, Converter={StaticResource BoolToVisibility}}">
+                                                        <Run FontWeight="SemiBold">Previous EasyNPC output</Run>
+                                                    </TextBlock>
+                                                    <TextBlock Visibility="{Binding HasMissingMasters, Converter={StaticResource BoolToVisibility}}">
+                                                    <Run FontWeight="SemiBold">Missing masters: </Run>
+                                                    <Run Text="{Binding MissingMastersFormatted, Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                </ui:SimpleStackPanel>
+                                            </Border.ToolTip>
+                                            <fa5:SvgAwesome Icon="Solid_ExclamationTriangle" Foreground="{StaticResource DangerForegroundBrush}" Height="16" IsHitTestVisible="False"/>
+                                        </Border>
+                                    </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                             <DataGridTemplateColumn.CellStyle>
@@ -39,8 +80,8 @@
                                 </Style>
                             </DataGridTemplateColumn.HeaderStyle>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Order" Width="80" Binding="{Binding Index}" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="File Name" Width="*" Binding="{Binding FileName}" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Order" Width="80" Binding="{Binding Index}" IsReadOnly="True" CellStyle="{StaticResource LoadOrderCell}"/>
+                        <DataGridTextColumn Header="File Name" Width="*" Binding="{Binding FileName}" IsReadOnly="True" CellStyle="{StaticResource LoadOrderCell}"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <debug:ScrollingTextBox Margin="8,0,8,0" Visibility="{Binding Path=IsLogVisible, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed" IsReadOnly="True" Text="{Binding Path=Log.Text, Mode=OneWay}"></debug:ScrollingTextBox>
