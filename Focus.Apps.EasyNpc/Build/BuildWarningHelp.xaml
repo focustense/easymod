@@ -3,9 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Focus.Apps.EasyNpc" d:DataContext="{d:DesignInstance Type=local:BuildWarning}"
+             xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=build:BuildWarning}"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <Style x:Key="HelpTextParagraph" TargetType="TextBlock">
@@ -213,6 +214,56 @@
                 </TextBlock>
             </ui:SimpleStackPanel>
         </DataTemplate>
+        <DataTemplate x:Key="MasterPluginRemoved">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>
+                        Your profile includes NPCs that originally came from a mod - such as a follower mod, world expansion or "population density" mod - that is no longer in your load order. It may have
+                        been deliberately uninstalled, or accidentally disabled when you started the app.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>Your merged mod won't include any of the NPCs from this mod. If you still plan to use the original mod, you may lose prior customizations.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Recommendation:</Run>
+                    <Run>
+                        If you uninstalled the original mod/plugin on purpose, you can use the Maintenance tab to trim your autosave and remove "orphaned" NPCs, which will prevent this warning from reappearing.
+                        If it was removed or disabled accidentally, restart</Run> <Run Text="{StaticResource AppTitle}"/> <Run>after re-enabling the mod and/or plugin.
+                    </Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="SelectedPluginRemoved">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>
+                        A plugin selection was made for this NPC in a previous session, but the plugin is no longer in the load order for this session. It may have been deliberately uninstalled, or accidentally
+                        disabled when you started the app.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>An alternative plugin has been automatically chosen for this NPC during this session, but the setting is temporary (not saved) and may change if you run </Run>
+                    <Run Text="{StaticResource AppTitle}"/>
+                    <Run>again with a different load order.</Run>
+                    <Run>
+                        The fallback selection may also not make sense in combination with other choices made for this NPC, such as their Face Mod. You may see additional redundant or misleading errors about
+                        this NPC, referring to missing or mismatched mods.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Recommendation:</Run>
+                    <Run>
+                        If you uninstalled the original mod/plugin on purpose, either choose different plugins for this NPC, or use the Maintenance tab to reset selections for all NPCs (you will lose any
+                        customizations you have made). If it was removed or disabled accidentally, restart</Run> <Run Text="{StaticResource AppTitle}"/> <Run>after re-enabling the mod and/or plugin.
+                    </Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
     </UserControl.Resources>
     <ui:SimpleStackPanel>
         <TextBlock Style="{StaticResource HelpTextParagraph}">
@@ -253,6 +304,12 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Id}" Value="FaceModMultipleFaceGen">
                             <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModMultipleFaceGen}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="MasterPluginRemoved">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource MasterPluginRemoved}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="SelectedPluginRemoved">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource SelectedPluginRemoved}"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

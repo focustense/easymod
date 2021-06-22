@@ -10,6 +10,8 @@ namespace Focus.Apps.EasyNpc.Build
     {
         ModDirectoryNotSpecified = 1,
         ModDirectoryNotFound,
+        MasterPluginRemoved,
+        SelectedPluginRemoved,
         MultipleArchiveSources,
         FaceModNotSpecified,
         FaceModNotInstalled,
@@ -127,6 +129,11 @@ namespace Focus.Apps.EasyNpc.Build
                 $"'{modelName}', which could not be matched to any known hair type. This NPC will be bald.";
         }
 
+        public static string MasterPluginRemoved(string pluginName)
+        {
+            return $"NPC master plugin {pluginName} is no longer installed.";
+        }
+
         public static string ModDirectoryNotFound(string directoryName)
         {
             return $"Mod directory {directoryName} doesn't exist. {ModRootJustification}";
@@ -140,6 +147,13 @@ namespace Focus.Apps.EasyNpc.Build
         public static string MultipleArchiveSources(string name, IEnumerable<string> providingMods)
         {
             return $"Archive '{name}' is provided by multiple mods: [{string.Join(", ", providingMods)}].";
+        }
+
+        public static string SelectedPluginRemoved(string editorId, string name, string fieldName, string pluginName)
+        {
+            return
+                $"{NpcLabel(editorId, name)} references missing or disabled {pluginName} for its {fieldName} plugin " +
+                $"selection.";
         }
 
         private static string NpcLabel(string editorId, string name)

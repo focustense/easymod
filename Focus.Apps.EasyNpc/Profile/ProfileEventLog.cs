@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
 namespace Focus.Apps.EasyNpc.Profile
 {
-    public class ProfileEventLog : IDisposable
+    public interface IReadOnlyProfileEventLog : IEnumerable<ProfileEvent> { }
+
+    public class ProfileEventLog : IDisposable, IReadOnlyProfileEventLog
     {
         public static IEnumerable<ProfileEvent> ReadEventsFromFile(string fileName)
         {
@@ -33,17 +36,17 @@ namespace Focus.Apps.EasyNpc.Profile
             Dispose(false);
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         public void Append(ProfileEvent e)
         {
             writer.WriteLine(e.Serialize());
             // Auto-flush since this is used to recover from crashes
             writer.Flush();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public void Erase()
@@ -52,6 +55,16 @@ namespace Focus.Apps.EasyNpc.Profile
             var backupName = Path.ChangeExtension(FileName, $".{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.bak");
             File.Move(FileName, backupName);
             OpenLogFile();
+        }
+
+        public IEnumerator<ProfileEvent> GetEnumerator()
+        {
+            return ReadEventsFromFile(FileName).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         protected virtual void Dispose(bool disposing)
