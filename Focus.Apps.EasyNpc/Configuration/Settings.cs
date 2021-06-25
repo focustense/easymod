@@ -26,6 +26,17 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         public List<BuildWarningSuppression> BuildWarningWhitelist { get; set; } = new();
         public string ModRootDirectory { get; set; }
+        public List<MugshotRedirect> MugshotRedirects { get; set; } = new()
+        {
+            // This is a known issue as mugshots for PoS were released under the "wrong" name.
+            // Rather than having to upload an entirely new pack just to fix a directory name, this can be added as a
+            // default redirect and automatically appear for anyone who upgrades from the old version.
+            new MugshotRedirect
+            {
+                ModName = "Pride of Skyrim - AIO Male High Poly Head Overhaul",
+                Mugshots = "Pride of Skyrim - AIO",
+            }
+        };
         public string MugshotsDirectory { get; set; }
 
         private readonly string path;
@@ -69,6 +80,20 @@ namespace Focus.Apps.EasyNpc.Configuration
         {
             PluginName = pluginName;
             IgnoredWarnings = ignoredWarnings.ToList();
+        }
+    }
+
+    public class MugshotRedirect
+    {
+        public string ModName { get; set; } 
+        public string Mugshots { get; set; }
+
+        public MugshotRedirect() { }
+
+        public MugshotRedirect(string modName, string mugshots)
+        {
+            ModName = modName;
+            Mugshots = mugshots;
         }
     }
 }

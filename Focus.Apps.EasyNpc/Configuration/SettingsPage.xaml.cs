@@ -19,6 +19,11 @@ namespace Focus.Apps.EasyNpc.Configuration
             Model.AddBuildWarningSuppression();
         }
 
+        private void AddMugshotRedirectButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.AddMugshotRedirect();
+        }
+
         private void BuildWarningsComboBox_DropDownClosed(object sender, System.EventArgs e)
         {
             // WPF's ComboBox makes a goddamn mess of the UI if any user is unlucky enough to click outside of the
@@ -41,8 +46,14 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         private void RemoveWarningSuppressionsButton_Click(object sender, RoutedEventArgs e)
         {
-            var suppressions = (sender as FrameworkElement).DataContext as BuildWarningSuppressions;
+            var suppressions = (sender as FrameworkElement).DataContext as BuildWarningSuppressionViewModel;
             Model.RemoveBuildWarningSuppression(suppressions);
+        }
+
+        private void RemoveMugshotRedirectButton_Click(object sender, RoutedEventArgs e)
+        {
+            var redirect = (sender as FrameworkElement).DataContext as MugshotRedirectViewModel;
+            Model.RemoveMugshotRedirect(redirect);
         }
 
         private void WelcomeDoneButton_Click(object sender, RoutedEventArgs e)

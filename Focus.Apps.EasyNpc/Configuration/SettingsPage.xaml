@@ -4,6 +4,7 @@
          xmlns:fa5="http://schemas.fontawesome.com/icons/"
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+         xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
          xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
          xmlns:ui="http://schemas.modernwpf.com/2019"
          mc:Ignorable="d" 
@@ -16,6 +17,10 @@
         </Style>
     </Page.Resources>
     <Grid DataContext="{Binding Path=Settings}">
+        <Grid.Resources>
+            <CollectionViewSource x:Key="AvailableModNames" Source="{Binding AvailableModNames}"/>
+            <CollectionViewSource x:Key="AvailableMugshotModNames" Source="{Binding AvailableMugshotModNames}"/>
+        </Grid.Resources>
         <ui:ScrollViewerEx>
             <!-- We have to add padding on the right here, otherwise the scroll bar masks part of the buttons (even when hidden). -->
             <ui:SimpleStackPanel Margin="0,0,16,0">
@@ -43,6 +48,7 @@
                             <ColumnDefinition Width="48"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -96,6 +102,43 @@
                         <Button x:Name="MugshotsDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Grid.Row="4" Click="MugshotsDirSelectButton_Click">
                             <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
                         </Button>
+                        <ui:SimpleStackPanel Visibility="{Binding IsWelcomeScreen, Converter={StaticResource InvBoolToVisibility}}" Grid.Row="5" Grid.ColumnSpan="2">
+                            <TextBlock Style="{StaticResource FormLabelStyle}" Grid.ColumnSpan="2" Grid.Row="3">
+                                Face Preview Synonyms
+                                <ContentControl Style="{StaticResource HelpIconStyle}" Margin="4,0,0,0">
+                                    <ContentControl.ToolTip>
+                                        <TextBlock>
+                                            If you have multiple variants of the same NPC overhaul, or have renamed mods from their default installations, or are using smaller mods
+                                            that were later combined into an all-in-one (such as Pride of Skyrim), use this setting to point them all to the same previews.
+                                        </TextBlock>
+                                    </ContentControl.ToolTip>
+                                </ContentControl>
+                            </TextBlock>
+                            <DataGrid x:Name="MugshotRedirectGrid" AutoGenerateColumns="False" ItemsSource="{Binding MugshotRedirects}">
+                                <DataGrid.Columns>
+                                    <local:DataGridComboBoxColumn Header="Mod Name"
+                                                                  ItemsSource="{Binding Source={StaticResource AvailableModNames}}"
+                                                                  Binding="{Binding ModName, UpdateSourceTrigger=LostFocus}"
+                                                                  Width="*"/>
+                                    <local:DataGridComboBoxColumn Header="Use Previews For"
+                                                                  ItemsSource="{Binding Source={StaticResource AvailableMugshotModNames}}"
+                                                                  Binding="{Binding Mugshots, UpdateSourceTrigger=LostFocus}"
+                                                                  Width="*"/>
+                                    <DataGridTemplateColumn IsReadOnly="True" MinWidth="36" MaxWidth="36">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button x:Name="RemoveMugshotRedirectButton" HorizontalAlignment="Stretch" ToolTip="Remove this synonym" Click="RemoveMugshotRedirectButton_Click">
+                                                    <fa5:SvgAwesome Icon="Regular_TrashAlt" Foreground="{StaticResource DangerForegroundBrush}" Width="16" Height="16"/>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <Button x:Name="AddMugshotRedirectButton" HorizontalAlignment="Right" ToolTip="Add another synonym" Click="AddMugshotRedirectButton_Click">
+                                <fa5:SvgAwesome Icon="Solid_Plus" Width="16" Height="16" HorizontalAlignment="Center"/>
+                            </Button>
+                        </ui:SimpleStackPanel>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Build Settings" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource InvBoolToVisibility}}">
@@ -106,22 +149,10 @@
                                 <CollectionViewSource x:Key="AvailablePlugins" Source="{Binding AvailablePlugins}"/>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTemplateColumn Header="Plugin Name" Width="250">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding PluginName}" Style="{StaticResource DataGridTextBlockStyle}"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                    <DataGridTemplateColumn.CellEditingTemplate>
-                                        <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Source={StaticResource AvailablePlugins}}"
-                                                      SelectedItem="{Binding PluginName, Mode=OneWay}"
-                                                      Text="{Binding PluginName, UpdateSourceTrigger=LostFocus}"
-                                                      IsEditable="True"
-                                                      HorizontalAlignment="Stretch"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellEditingTemplate>
-                                </DataGridTemplateColumn>
+                                <local:DataGridComboBoxColumn Header="Plugin Name"
+                                                              ItemsSource="{Binding Source={StaticResource AvailablePlugins}}"
+                                                              Binding="{Binding PluginName, UpdateSourceTrigger=LostFocus}"
+                                                              Width="250"/>
                                 <DataGridTemplateColumn Header="Warnings to Ignore" Width="*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -153,7 +184,7 @@
                                 <DataGridTemplateColumn IsReadOnly="True" MinWidth="36" MaxWidth="36">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button x:Name="RemoveWarningSuppressionsButton" HorizontalAlignment="Stretch" Click="RemoveWarningSuppressionsButton_Click">
+                                            <Button x:Name="RemoveWarningSuppressionsButton" HorizontalAlignment="Stretch" ToolTip="Remove this rule" Click="RemoveWarningSuppressionsButton_Click">
                                                 <fa5:SvgAwesome Icon="Regular_TrashAlt" Foreground="{StaticResource DangerForegroundBrush}" Width="16" Height="16"/>
                                             </Button>
                                         </DataTemplate>
@@ -161,12 +192,12 @@
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
-                        <Button x:Name="AddBuildWarningSuppressionButton" HorizontalAlignment="Right" Click="AddBuildWarningSuppressionButton_Click">
+                        <Button x:Name="AddBuildWarningSuppressionButton" HorizontalAlignment="Right" ToolTip="Add a new rule" Click="AddBuildWarningSuppressionButton_Click">
                             <fa5:SvgAwesome Icon="Solid_Plus" Width="16" Height="16" HorizontalAlignment="Center"/>
                         </Button>
                     </ui:SimpleStackPanel>
                 </GroupBox>
-                <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource BoolToVisibility}}">
+                <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
                     <Button x:Name="WelcomeDoneButton" Style="{StaticResource AccentButtonStyle}" FontSize="20" Click="WelcomeDoneButton_Click">I'm Done</Button>
                 </ui:SimpleStackPanel>
             </ui:SimpleStackPanel>

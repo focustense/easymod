@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Windows;
 
@@ -17,19 +18,29 @@ namespace Focus.Apps.EasyNpc.Configuration
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler WelcomeAcked;
 
+        public IEnumerable<string> AvailableModNames { get; private set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> AvailableMugshotModNames { get; private set; } = Enumerable.Empty<string>();
         public IEnumerable<string> AvailablePlugins { get; set; } = Enumerable.Empty<string>();
-        public ObservableCollection<BuildWarningSuppressions> BuildWarningWhitelist { get; init; }
+        public ObservableCollection<BuildWarningSuppressionViewModel> BuildWarningWhitelist { get; init; }
         public bool IsWelcomeScreen { get; set; }
+        public ObservableCollection<MugshotRedirectViewModel> MugshotRedirects { get; init; }
         public string MugshotsDirectoryPlaceholderText => ProgramData.DefaultMugshotsPath;
 
         public SettingsViewModel()
         {
-            var entries = Settings.BuildWarningWhitelist
-                .Select(x => new BuildWarningSuppressions(x.PluginName, x.IgnoredWarnings));
-            BuildWarningWhitelist = new(entries);
-            BuildWarningWhitelist.CollectionChanged += BuildWarningWhitelist_CollectionChanged;
-            foreach (var entry in BuildWarningWhitelist)
-                Watch(entry);
+            // Since these are pass-through properties, we need to force an initial update.
+            OnModRootDirectoryChanged();
+            OnMugshotsDirectoryChanged();
+
+            var buildWarningSuppressions = Settings.BuildWarningWhitelist
+                .Select(x => new BuildWarningSuppressionViewModel(x.PluginName, x.IgnoredWarnings));
+            BuildWarningWhitelist = new(buildWarningSuppressions);
+            WatchCollection(BuildWarningWhitelist, SaveBuildWarningSuppressions);
+
+            var mugshotRedirects = Settings.MugshotRedirects
+                .Select(x => new MugshotRedirectViewModel(x.ModName, x.Mugshots));
+            MugshotRedirects = new(mugshotRedirects);
+            WatchCollection(MugshotRedirects, SaveMugshotRedirects);
         }
 
         public string ModRootDirectory
@@ -63,9 +74,19 @@ namespace Focus.Apps.EasyNpc.Configuration
             BuildWarningWhitelist.Add(new(AvailablePlugins.FirstOrDefault()));
         }
 
-        public void RemoveBuildWarningSuppression(BuildWarningSuppressions suppressions)
+        public void AddMugshotRedirect()
+        {
+            MugshotRedirects.Add(new("", ""));
+        }
+
+        public void RemoveBuildWarningSuppression(BuildWarningSuppressionViewModel suppressions)
         {
             BuildWarningWhitelist.Remove(suppressions);
+        }
+
+        public void RemoveMugshotRedirect(MugshotRedirectViewModel redirect)
+        {
+            MugshotRedirects.Remove(redirect);
         }
 
         public void SelectModRootDirectory(Window owner)
@@ -83,26 +104,36 @@ namespace Focus.Apps.EasyNpc.Configuration
                 MugshotsDirectory = mugshotsDirectory;
         }
 
-        private void BuildWarningSuppressions_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        protected void OnModRootDirectoryChanged()
         {
-            SaveBuildWarningSuppressions();
+            AvailableModNames = Directory.Exists(ModRootDirectory) ?
+                Directory.GetDirectories(ModRootDirectory)
+                    .Select(f => Path.GetRelativePath(ModRootDirectory, f))
+                    .ToArray() :
+                Enumerable.Empty<string>();
         }
 
-        private void BuildWarningWhitelist_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        protected void OnMugshotsDirectoryChanged()
         {
-            if (e.OldItems != null)
-                foreach (var item in e.OldItems.Cast<BuildWarningSuppressions>())
-                    Unwatch(item);
-            if (e.NewItems != null)
-                foreach (var item in e.NewItems.Cast<BuildWarningSuppressions>())
-                    Watch(item);
-            SaveBuildWarningSuppressions();
+            AvailableMugshotModNames = Directory.Exists(MugshotsDirectory) ?
+                Directory.GetDirectories(MugshotsDirectory)
+                    .Select(f => Path.GetRelativePath(MugshotsDirectory, f))
+                    .ToArray() :
+                Enumerable.Empty<string>();
         }
 
         private void SaveBuildWarningSuppressions()
         {
             Settings.BuildWarningWhitelist = BuildWarningWhitelist
                 .Select(x => new BuildWarningSuppression(x.PluginName, x.SelectedWarnings))
+                .ToList();
+            Settings.Save();
+        }
+
+        private void SaveMugshotRedirects()
+        {
+            Settings.MugshotRedirects = MugshotRedirects
+                .Select(x => new MugshotRedirect(x.ModName, x.Mugshots))
                 .ToList();
             Settings.Save();
         }
@@ -120,14 +151,27 @@ namespace Focus.Apps.EasyNpc.Configuration
             return result;
         }
 
-        private void Unwatch(BuildWarningSuppressions instance)
+        private void WatchCollection<T>(ObservableCollection<T> collection, Action onChange)
+            where T : INotifyPropertyChanged
         {
-            instance.PropertyChanged -= BuildWarningSuppressions_PropertyChanged;
+            PropertyChangedEventHandler propertyChangeHandler = (_, _) => onChange();
+            collection.CollectionChanged += (_, e) =>
+            {
+                UpdateWatchedItems(e, propertyChangeHandler);
+                onChange();
+            };
+            foreach (var entry in collection)
+                entry.PropertyChanged += propertyChangeHandler;
         }
 
-        private void Watch(BuildWarningSuppressions instance)
+        private void UpdateWatchedItems(NotifyCollectionChangedEventArgs e, PropertyChangedEventHandler handler)
         {
-            instance.PropertyChanged += BuildWarningSuppressions_PropertyChanged;
+            if (e.OldItems != null)
+                foreach (var item in e.OldItems.Cast<INotifyPropertyChanged>())
+                    item.PropertyChanged -= handler;
+            if (e.NewItems != null)
+                foreach (var item in e.NewItems.Cast<INotifyPropertyChanged>())
+                    item.PropertyChanged += handler;
         }
     }
 
@@ -136,7 +180,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-    public class BuildWarningSuppressions : INotifyPropertyChanged
+    public class BuildWarningSuppressionViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -158,7 +202,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         public IEnumerable<BuildWarningId> SelectedWarnings { get; private set; }
         public IReadOnlyList<BuildWarningSelection> WarningSelections { get; init; }
 
-        public BuildWarningSuppressions(string pluginName, IEnumerable<BuildWarningId> warnings = null)
+        public BuildWarningSuppressionViewModel(string pluginName, IEnumerable<BuildWarningId> warnings = null)
         {
             PluginName = pluginName;
             WarningSelections = Enum.GetValues<BuildWarningId>()
@@ -179,6 +223,20 @@ namespace Focus.Apps.EasyNpc.Configuration
         {
             // This could easily be a computed property - but that doesn't play nice with WPF and Fody.PropertyChanged.
             SelectedWarnings = WarningSelections.Where(x => x.IsSelected).Select(x => x.Id);
+        }
+    }
+
+    public class MugshotRedirectViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string ModName { get; set; }
+        public string Mugshots { get; set; }
+
+        public MugshotRedirectViewModel(string modName, string mugshots)
+        {
+            ModName = modName;
+            Mugshots = mugshots;
         }
     }
 }

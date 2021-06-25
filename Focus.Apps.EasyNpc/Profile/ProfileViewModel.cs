@@ -308,9 +308,11 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public static bool Exists(string modName, string basePluginName, string localFormIdHex)
         {
-            var path = Path.Combine(
-                ProgramData.ConfiguredMugshotsPath, modName, basePluginName, $"00{localFormIdHex}.png");
-            return File.Exists(path);
+            var redirect = GetRedirect(modName);
+            var candidatePaths = new[] { modName, redirect }
+                .Select(dir => Path.Combine(
+                    ProgramData.ConfiguredMugshotsPath, dir, basePluginName, $"00{localFormIdHex}.png"));
+            return candidatePaths.Any(File.Exists);
         }
 
         public static IEnumerable<Mugshot> GetMugshots<TKey>(NpcConfiguration<TKey> npc, ModPluginMap modPluginMap)
@@ -331,12 +333,32 @@ namespace Focus.Apps.EasyNpc.Profile
                     Path.Combine(mugshotModDir, npc.BasePluginName, $"00{npc.LocalFormIdHex}.png");
                 if (File.Exists(fileName))
                 {
-                    var modName = Path.GetFileName(Path.TrimEndingDirectorySeparator(mugshotModDir));
-                    var matchingPluginNames =
-                        modPluginMap.GetPluginsForMod(modName).Where(f => overridingPluginNames.Contains(f)).ToArray();
-                    yield return new Mugshot(
-                        modName, modPluginMap.IsModInstalled(modName), matchingPluginNames, fileName, false);
-                    handledModNames.Add(modName);
+                    var mugshotName = Path.GetFileName(Path.TrimEndingDirectorySeparator(mugshotModDir));
+                    var candidateMugshots = Settings.Default.MugshotRedirects
+                        .Where(x => string.Equals(mugshotName, x.Mugshots, StringComparison.OrdinalIgnoreCase))
+                        .Select(x => x.ModName)
+                        .Prepend(mugshotName)
+                        .Select(modName => GetMugshot(fileName, modName, modPluginMap, overridingPluginNames));
+                    // The reason for attempting to obtain the "best" mugshot here, as opposed to producing all of the
+                    // matches, is so that we can avoid duplicates in the list. If the mugshots are named "My Overhaul",
+                    // and the mod is named "My Overhaul 2.0", and we have a redirect from "My Overhaul 2.0" to "My
+                    // Overhaul", then it would make no sense and be visually confusing to see the same mugshot appear
+                    // twice, one for "My Overhaul" (which is not installed) and one for "My Overhaul 2.0" (which is).
+                    //
+                    // Another way of describing this is that we try to show, and correctly label, mugshots for mods
+                    // that are actually installed. Showing a mugshot for a non-installed mod is just there as a neat
+                    // discovery feature for people first getting into overhauls or not sure whether they want to
+                    // install the mod. But it shouldn't interfere with users who already know what they want and have
+                    // already set up the redirects correctly.
+                    //
+                    // In theory this could exclude some mugshots if the redirects are set up really badly, e.g. if Mod
+                    // X is set up to redirect to mugshots for totally unrelated Mod Y, and both are installed. At some
+                    // point we just have to trust that typical users won't mess things up that badly, and if they do,
+                    // will think to look at their settings again when trying to fix it.
+                    var bestMugshot = GetBestMugshot(candidateMugshots);
+                    yield return bestMugshot;
+                    if (bestMugshot != null && bestMugshot.IsModInstalled)
+                        handledModNames.Add(bestMugshot.ProvidingMod);
                 }
             }
             foreach (var pluginName in npc.Overrides.Select(x => x.PluginName))
@@ -355,6 +377,46 @@ namespace Focus.Apps.EasyNpc.Profile
                             fileName, true);
                 }
             }
+        }
+
+        private static Mugshot GetBestMugshot(IEnumerable<Mugshot> mugshots)
+        {
+            // This could be written more elegantly with LINQ, but performance is potentially tight here if the user is
+            // going to be scrolling down a long list very quickly. This way guarantees that the list is iterated at
+            // most once, and possibly short-circuited in a best-case scenario.
+            //
+            // Effectively implements the following priorities:
+            // 1. Mod was detected AND has a plugin in the load order (i.e. we're definitely using it)
+            // 2. Mod was NOT detected but plugin is still in the load order (probably has missing/incorrect redirect)
+            // 3. No plugin, but mod was found (might be disabled, merged, etc.)
+            // 4. No evidence whatsoever of mod being installed (i.e. have mugshot without the mod)
+            Mugshot bestMugshot = null;
+            foreach (var mugshot in mugshots)
+            {
+                if (mugshot.IsModInstalled && mugshot.IsPluginLoaded)
+                    return mugshot;
+                if (bestMugshot == null ||
+                    !bestMugshot.IsPluginLoaded && mugshot.IsPluginLoaded ||
+                    !bestMugshot.IsPluginLoaded && !bestMugshot.IsModInstalled && mugshot.IsModInstalled)
+
+                    bestMugshot = mugshot;
+            }
+            return bestMugshot;
+        }
+
+        private static Mugshot GetMugshot(
+            string fileName, string modName, ModPluginMap modPluginMap, IReadOnlySet<string> pluginNames)
+        {
+            var matchingPluginNames =
+                modPluginMap.GetPluginsForMod(modName).Where(f => pluginNames.Contains(f)).ToArray();
+            return new Mugshot(modName, modPluginMap.IsModInstalled(modName), matchingPluginNames, fileName, false);
+        }
+
+        private static string GetRedirect(string modName)
+        {
+            return Settings.Default.MugshotRedirects
+                .FirstOrDefault(x => string.Equals(x.ModName, modName, StringComparison.OrdinalIgnoreCase))
+                ?.Mugshots ?? modName;
         }
 
         public Mugshot(string providingMod, bool isModInstalled, string[] providingPlugins, string fileName, bool isGeneric)
