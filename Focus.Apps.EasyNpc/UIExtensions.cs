@@ -31,6 +31,15 @@ namespace Focus.Apps.EasyNpc
             }
         }
 
+        public static T FindVisualParentByType<T>(this DependencyObject child)
+            where T : DependencyObject
+        {
+            for (var parent = child; parent != null; parent = VisualTreeHelper.GetParent(parent))
+                if (parent is T)
+                    return (T)parent;
+            return default;
+        }
+
         public static T GetFirstVisualChildByType<T>(this DependencyObject parent)
             where T : DependencyObject
         {

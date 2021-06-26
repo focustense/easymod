@@ -12,6 +12,16 @@
          d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
          d:DesignHeight="700" d:DesignWidth="1200">
     <Page.Resources>
+        <Style x:Key="NonSelectableMenuItemStyle" TargetType="MenuItem" BasedOn="{StaticResource DefaultMenuItemStyle}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <ContentPresenter ContentSource="Header" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="12,4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="PluginIconBorderStyle" TargetType="Border">
             <Setter Property="ToolTipService.InitialShowDelay" Value="50"/>
             <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
@@ -88,9 +98,74 @@
         <Border Margin="0,0,0,8" Style="{StaticResource GroupBorder}" Grid.Row="0" Grid.ColumnSpan="3">
             <Grid>
                 <ui:SimpleStackPanel Orientation="Horizontal">
-                    <CheckBox Content="Show DLC Overrides" IsChecked="{Binding ShowDlcOverrides}"/>
-                    <CheckBox Content="Show Non-Conflicting Overrides" IsChecked="{Binding ShowSinglePluginOverrides}" Margin="16,0,0,0"/>
-                    <CheckBox Content="Only Face Overrides" IsChecked="{Binding OnlyFaceOverrides}" Margin="16,0,0,0"/>
+                    <ui:DropDownButton ToolTip="Filters">
+                        <fa5:SvgAwesome Icon="Solid_Filter" Height="18"/>
+                        <ui:DropDownButton.Flyout>
+                            <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <CheckBox Content="Modded" IsChecked="{Binding Filters.NonDlc}">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock>Hide NPCs who are <Run FontStyle="Italic" FontWeight="SemiBold">only</Run> changed by vanilla/DLC plugins.</TextBlock>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+                                <CheckBox Content="Conflicts"
+                                          IsChecked="{Binding Filters.Conflicts}"
+                                          ToolTip="Only show NPCs whose face plugin doesn't belong to their face mod."/>
+                                <CheckBox Content="Missing mods"
+                                          IsChecked="{Binding Filters.Missing}"
+                                          ToolTip="Only show NPCs pointing to mods that can no longer be found, or plugins no longer in the load order. For best results with this, turn off the 'Modded' filter."/>
+                                <CheckBox Content="Wigs"
+                                          IsChecked="{Binding Filters.Wigs}"
+                                          ToolTip="Only show NPCs whose face plugin uses a wig, which may not carry over properly."/>
+                                <Separator/>
+                                <Grid x:Name="PluginFiltersGrid" Loaded="PluginFiltersGrid_Loaded">
+                                    <Grid.Resources>
+                                        <Style x:Key="ClearFilterButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="Padding" Value="4"/>
+                                            <Setter Property="VerticalAlignment" Value="Stretch"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="ContentTemplate">
+                                                <Setter.Value>
+                                                    <DataTemplate>
+                                                        <fa5:SvgAwesome Icon="Regular_TimesCircle"/>
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Grid.Resources>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="32"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="8"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">Default plugin:</TextBlock>
+                                    <ComboBox Grid.Row="0" Grid.Column="1"
+                                              HorizontalAlignment="Stretch" Margin="8,0" MinWidth="250"
+                                              ItemsSource="{Binding LoadedPluginNames}" IsEditable="True" SelectedItem="{Binding Filters.DefaultPlugin}"/>
+                                    <Button x:Name="ClearDefaultPluginFilterButton" Grid.Row="0" Grid.Column="2" Style="{StaticResource ClearFilterButtonStyle}" Click="ClearDefaultPluginFilterButton_Click"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">Face plugin:</TextBlock>
+                                    <ComboBox Grid.Row="2" Grid.Column="1"
+                                              HorizontalAlignment="Stretch" Margin="8,0" MinWidth="250"
+                                              ItemsSource="{Binding LoadedPluginNames}" IsEditable="True" SelectedItem="{Binding Filters.FacePlugin}"/>
+                                    <Button x:Name="ClearFacePluginFilterButton" Grid.Row="2" Grid.Column="2" Style="{StaticResource ClearFilterButtonStyle}" Click="ClearFacePluginFilterButton_Click"/>
+                                </Grid>
+                            </ui:MenuFlyout>
+                        </ui:DropDownButton.Flyout>
+                    </ui:DropDownButton>
+                    <CheckBox Content="Show Non-Conflicting Overrides"
+                              IsChecked="{Binding ShowSinglePluginOverrides}"
+                              Margin="16,0,0,0"
+                              ToolTip="List NPCs who only have a single face customization option available within all active mods."/>
+                    <CheckBox Content="Only Face Overrides"
+                              IsChecked="{Binding OnlyFaceOverrides}"
+                              Margin="16,0,0,0"
+                              ToolTip="Hide NPCs with no face customizations available, i.e. who only have changes being made to items, AI behavior, etc."/>
                 </ui:SimpleStackPanel>
                 <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button x:Name="LoadProfile" ToolTip="Load previous profile" Click="LoadProfile_Click">

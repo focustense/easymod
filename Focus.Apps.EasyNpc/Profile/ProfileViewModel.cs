@@ -21,49 +21,42 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public ColumnDefinitions Columns { get; private init; }
 
-        [DependsOn(
-            "NpcConfigurations", "OnlyFaceOverrides", "ShowDlcOverrides", "ShowSinglePluginOverrides",
-            "DisplayedNpcsSentinel")]
+        [DependsOn("NpcConfigurations", "OnlyFaceOverrides", "ShowSinglePluginOverrides", "DisplayedNpcsSentinel")]
         public IEnumerable<NpcConfiguration<TKey>> DisplayedNpcs
         {
-            get {
-                var minOverrideCount = ShowSinglePluginOverrides ? 1 : 2;
-                var displayedNpcs = GetAllNpcConfigurations();
-                ApplyFilter(ref displayedNpcs, Columns.BasePluginName, x => x.BasePluginName);
-                ApplyFilter(ref displayedNpcs, Columns.LocalFormIdHex, x => x.LocalFormIdHex);
-                ApplyFilter(ref displayedNpcs, Columns.EditorId, x => x.EditorId);
-                ApplyFilter(ref displayedNpcs, Columns.Name, x => x.Name);
-                return displayedNpcs
-                    .Where(x => x.GetOverrideCount(ShowDlcOverrides, !OnlyFaceOverrides) >= minOverrideCount);
-            }
+            get { return ApplyFilters(GetAllNpcConfigurations()); }
         }
 
+        public NpcFilters Filters { get; private init; } = new NpcFilters();
         public Mugshot FocusedMugshot { get; set; }
         public NpcOverrideConfiguration<TKey> FocusedNpcOverride { get; set; }
         [DependsOn("SelectedNpc")]
         public bool HasSelectedNpc => SelectedNpc != null;
+        public IReadOnlyList<string> LoadedPluginNames { get; private init; }
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
         public bool OnlyFaceOverrides { get; set; }
         public NpcOverrideConfiguration<TKey> SelectedOverrideConfig { get; private set; }
         public NpcConfiguration<TKey> SelectedNpc { get; set; }
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> SelectedNpcOverrides { get; private set; }
-        public bool ShowDlcOverrides { get; set; }
         public bool ShowSinglePluginOverrides { get; set; } = true;
 
         // PropertyChanged.Fody doesn't have supported for "nested" properties, so this is a convenient way for an
         // internal handler to force the DisplayedNpcs to update (just invert the value).
         protected bool DisplayedNpcsSentinel { get; private set; }
 
+        private readonly IReadOnlySet<string> loadedPluginNamesSet;
         private readonly ProfileEventLog profileEventLog;
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly Dictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
         private readonly IReadOnlyList<TKey> npcOrder;
 
         public ProfileViewModel(
-            IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory, IEnumerable<string> masterNames,
-            ProfileEventLog profileEventLog)
+            IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory,
+            IEnumerable<string> loadedPluginNames, IEnumerable<string> masterNames, ProfileEventLog profileEventLog)
         {
             this.modPluginMapFactory = modPluginMapFactory;
+            LoadedPluginNames = loadedPluginNames.OrderBy(x => x).ToList().AsReadOnly();
+            loadedPluginNamesSet = LoadedPluginNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
             var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
             var profileRuleSet = StandardProfileRuleSet.Create(masterNames, npcs);
 
@@ -99,25 +92,8 @@ namespace Focus.Apps.EasyNpc.Profile
                 LocalFormIdHex = RegisterNpcGridColumn("Form ID"),
                 Name = RegisterNpcGridColumn("Name"),
             };
-        }
 
-        private IEnumerable<Tuple<NpcConfiguration<TKey>, NpcProfileField>> RestoreProfileAutosave(
-            string eventLogFileName)
-        {
-            // Mutagen keys can be derived directly from the master plugin name and we don't really need the extra
-            // dictionary for it, but XEdit doesn't, so until it's removed, this has to be explicit.
-            var npcConfigurationsByPluginKey = npcConfigurations.Values
-                .ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
-            var restoredProfileEvents = ProfileEventLog.ReadEventsFromFile(eventLogFileName);
-            foreach (var e in restoredProfileEvents)
-            {
-                var npcKey = Tuple.Create(e.BasePluginName, e.LocalFormIdHex);
-                if (npcConfigurationsByPluginKey.TryGetValue(npcKey, out var npcConfig))
-                {
-                    npcConfig.RestoreFromProfileEvent(e);
-                    yield return Tuple.Create(npcConfig, e.Field);
-                }
-            }
+            Filters.PropertyChanged += (_, _) => RefreshDisplayedNpcs();
         }
 
         public IEnumerable<NpcConfiguration<TKey>> GetAllNpcConfigurations()
@@ -235,7 +211,7 @@ namespace Focus.Apps.EasyNpc.Profile
                 next.FaceModChanged += OnNpcFaceModChanged;
         }
 
-        private static void ApplyFilter(
+        private static void ApplyColumnFilter(
             ref IEnumerable<NpcConfiguration<TKey>> npcs, DataGridColumn column,
             Func<NpcConfiguration<TKey>, string> propertySelector)
         {
@@ -243,6 +219,51 @@ namespace Focus.Apps.EasyNpc.Profile
                 return;
             npcs = npcs.Where(x =>
                 propertySelector(x)?.Contains(column.FilterText, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
+        private IEnumerable<NpcConfiguration<TKey>> ApplyFilters(IEnumerable<NpcConfiguration<TKey>> npcs)
+        {
+            var displayedNpcs = npcs;
+            var minOverrideCount = ShowSinglePluginOverrides ? 1 : 2;
+            ApplyColumnFilter(ref displayedNpcs, Columns.BasePluginName, x => x.BasePluginName);
+            ApplyColumnFilter(ref displayedNpcs, Columns.LocalFormIdHex, x => x.LocalFormIdHex);
+            ApplyColumnFilter(ref displayedNpcs, Columns.EditorId, x => x.EditorId);
+            ApplyColumnFilter(ref displayedNpcs, Columns.Name, x => x.Name);
+            var modPluginMap = modPluginMapFactory.DefaultMap();
+            if (Filters.Wigs)
+                displayedNpcs = displayedNpcs.Where(x => x.FaceConfiguration?.HasWig == true);
+            if (!string.IsNullOrEmpty(Filters.DefaultPlugin))
+                displayedNpcs = displayedNpcs.Where(x =>
+                    x.DefaultPluginName.Equals(Filters.DefaultPlugin, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(Filters.FacePlugin))
+                displayedNpcs = displayedNpcs.Where(x =>
+                    x.FacePluginName.Equals(Filters.FacePlugin, StringComparison.OrdinalIgnoreCase));
+            if (Filters.Conflicts)
+                displayedNpcs = displayedNpcs.Where(x =>
+                    (x.HasFaceCustomizations() || !string.IsNullOrEmpty(x.FaceModName)) &&
+                    !modPluginMap
+                        .GetModsForPlugin(x.FacePluginName)
+                        .Contains(x.FaceModName, StringComparer.OrdinalIgnoreCase));
+            if (Filters.Missing)
+            {
+                // The loading process will have selected alternate plugins, so we have to go back to the autosave to
+                // find out where they "should" be pointing.
+                //
+                // TODO: This makes it possible to find them, but what about visualizing them? How can the user actually
+                // see what the problem is, after selecting one of these NPCS?
+                // This condition is starting to be recognized in a few different places now, and there needs to be a
+                // better way to handle it, both in terms of efficiency and usability.
+                var npcsWithMissingPlugins = profileEventLog
+                    .MostRecentByNpc()
+                    .WithMissingPlugins(loadedPluginNamesSet, modPluginMap)
+                    .Select(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex))
+                    .ToHashSet();
+                displayedNpcs = displayedNpcs.Where(x =>
+                    npcsWithMissingPlugins.Contains(Tuple.Create(x.BasePluginName, x.LocalFormIdHex)) ||
+                    (!string.IsNullOrEmpty(x.FaceModName) && !modPluginMap.IsModInstalled(x.FaceModName)));
+            }
+            return displayedNpcs
+                .Where(x => x.GetOverrideCount(!Filters.NonDlc, !OnlyFaceOverrides) >= minOverrideCount);
         }
 
         private void ClearNpcHighlights()
@@ -269,11 +290,35 @@ namespace Focus.Apps.EasyNpc.Profile
             profileEventLog.Append(e);
         }
 
+        private void RefreshDisplayedNpcs()
+        {
+            DisplayedNpcsSentinel = !DisplayedNpcsSentinel;
+        }
+
         private DataGridColumn RegisterNpcGridColumn(string headerText)
         {
             var column = new DataGridColumn(headerText);
-            column.PropertyChanged += (_, _) => UpdateNpcColumnFilters();
+            column.PropertyChanged += (_, _) => RefreshDisplayedNpcs();
             return column;
+        }
+
+        private IEnumerable<Tuple<NpcConfiguration<TKey>, NpcProfileField>> RestoreProfileAutosave(
+            string eventLogFileName)
+        {
+            // Mutagen keys can be derived directly from the master plugin name and we don't really need the extra
+            // dictionary for it, but XEdit doesn't, so until it's removed, this has to be explicit.
+            var npcConfigurationsByPluginKey = npcConfigurations.Values
+                .ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
+            var restoredProfileEvents = ProfileEventLog.ReadEventsFromFile(eventLogFileName);
+            foreach (var e in restoredProfileEvents)
+            {
+                var npcKey = Tuple.Create(e.BasePluginName, e.LocalFormIdHex);
+                if (npcConfigurationsByPluginKey.TryGetValue(npcKey, out var npcConfig))
+                {
+                    npcConfig.RestoreFromProfileEvent(e);
+                    yield return Tuple.Create(npcConfig, e.Field);
+                }
+            }
         }
 
         private void SyncMugshotMod()
@@ -284,17 +329,24 @@ namespace Focus.Apps.EasyNpc.Profile
                     (string.IsNullOrEmpty(ms.ProvidingMod) && string.IsNullOrEmpty(SelectedNpc?.FaceModName));
         }
 
-        private void UpdateNpcColumnFilters()
-        {
-            DisplayedNpcsSentinel = !DisplayedNpcsSentinel;
-        }
-
         public class ColumnDefinitions
         {
             public DataGridColumn BasePluginName { get; init; }
             public DataGridColumn LocalFormIdHex { get; init; }
             public DataGridColumn EditorId { get; init; }
             public DataGridColumn Name { get; init; }
+        }
+
+        public class NpcFilters : INotifyPropertyChanged
+        {
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            public bool Conflicts { get; set; }
+            public string DefaultPlugin { get; set; }
+            public string FacePlugin { get; set; }
+            public bool Missing { get; set; }
+            public bool NonDlc { get; set; } = true;
+            public bool Wigs { get; set; }
         }
     }
 
@@ -370,13 +422,20 @@ namespace Focus.Apps.EasyNpc.Profile
                     modNames = modNames.Concat(new[] { "" });
                 foreach (var modName in modNames.Distinct())
                 {
-                    var filePrefix = npc.IsFemale ? "female" : "male";
-                    var fileName = Path.Combine(AssetsDirectory, $"{filePrefix}-silhouette.png");
+                    var fileName = GetGenericMugshotImage(npc);
                     yield return new Mugshot(
                             modName, isVanillaOrDlc || modPluginMap.IsModInstalled(modName), new[] { pluginName },
                             fileName, true);
+                    handledModNames.Add(modName);
                 }
             }
+            // It's possible that an NPC is configured with a face mod that is no longer "reachable" through any of the
+            // installed plugins. We still want to show this as a mugshot, for that specific NPC only, so that the user
+            // can tell what's actually going on.
+            if (!string.IsNullOrEmpty(npc.FaceModName) && !handledModNames.Contains(npc.FaceModName))
+                yield return new Mugshot(
+                    npc.FaceModName, modPluginMap.IsModInstalled(npc.FaceModName), Array.Empty<string>(),
+                    GetGenericMugshotImage(npc), true);
         }
 
         private static Mugshot GetBestMugshot(IEnumerable<Mugshot> mugshots)
@@ -402,6 +461,13 @@ namespace Focus.Apps.EasyNpc.Profile
                     bestMugshot = mugshot;
             }
             return bestMugshot;
+        }
+
+        private static string GetGenericMugshotImage<TKey>(NpcConfiguration<TKey> npc)
+            where TKey : struct
+        {
+            var filePrefix = npc.IsFemale ? "female" : "male";
+            return Path.Combine(AssetsDirectory, $"{filePrefix}-silhouette.png");
         }
 
         private static Mugshot GetMugshot(

@@ -68,6 +68,12 @@ namespace Focus.Apps.EasyNpc.Profile
                 (!FileStructure.IsDlc(DefaultPluginName) || !FileStructure.IsDlc(FacePluginName));
         }
 
+        public bool HasFaceCustomizations()
+        {
+            return FacePluginName != DefaultPluginName &&
+                !FileStructure.IsVanilla(FacePluginName) && !FileStructure.IsDlc(FacePluginName);
+        }
+
         public bool HasFaceGenOverridesEnabled()
         {
             return faceConfig.HasFaceGenOverride &&

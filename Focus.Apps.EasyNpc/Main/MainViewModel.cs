@@ -76,7 +76,8 @@ namespace Focus.Apps.EasyNpc.Main
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
                 var profileEventLog = new ProfileEventLog(ProgramData.ProfileLogFileName);
                 Profile = new ProfileViewModel<TKey>(
-                    Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedMasterNames, profileEventLog);
+                    Loader.Npcs, Loader.ModPluginMapFactory, Loader.LoadedPluginNames, Loader.LoadedMasterNames,
+                    profileEventLog);
                 Maintenance = new MaintenanceViewModel<TKey>(Profile.GetAllNpcConfigurations(), profileEventLog);
                 var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
                 var faceGenEditor = new NiflyFaceGenEditor(Logger);

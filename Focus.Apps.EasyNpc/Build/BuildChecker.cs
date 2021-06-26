@@ -38,7 +38,7 @@ namespace Focus.Apps.EasyNpc.Build
             warnings.AddRange(CheckModSettings());
             var profileEvents = profileEventLog.ToList();
             warnings.AddRange(CheckOrphanedNpcs(npcs, profileEvents));
-            warnings.AddRange(CheckMissingPlugins(npcs, profileEvents));
+            warnings.AddRange(CheckMissingPlugins(profileEvents));
             warnings.AddRange(CheckForOverriddenArchives());
             warnings.AddRange(CheckModPluginConsistency(npcs));
             warnings.AddRange(CheckWigs(npcs, buildSettings.WigResolver, buildSettings.EnableDewiggify));
@@ -72,28 +72,18 @@ namespace Focus.Apps.EasyNpc.Build
                     WarningMessages.MultipleArchiveSources(x.Name, x.ProvidingMods)));
         }
 
-        private IEnumerable<BuildWarning> CheckMissingPlugins(
-            IEnumerable<NpcConfiguration<TKey>> npcs, IEnumerable<ProfileEvent> events)
+        private IEnumerable<BuildWarning> CheckMissingPlugins(IEnumerable<ProfileEvent> events)
         {
-            var mostRecentPluginSelections = events
-                .Where(x => x.Field == NpcProfileField.DefaultPlugin || x.Field == NpcProfileField.FacePlugin)
-                .GroupBy(x => new { x.BasePluginName, x.LocalFormIdHex, x.Field })
-                .Select(g => new {
-                    g.Key.BasePluginName,
-                    g.Key.LocalFormIdHex, g.Key.Field,
-                    Value = g.Last().NewValue
-                })
-                .ToList();
-            var currentPlugins = loadOrder.ToHashSet();
-            return mostRecentPluginSelections
-                .Where(x => !currentPlugins.Contains(x.Value))
+            return events
+                .MostRecentByNpc()
+                .WithMissingPlugins(loadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase))
                 .Select(x => allNpcs.TryGetValue(Tuple.Create(x.BasePluginName, x.LocalFormIdHex), out var npc) ?
                     new
                     {
                         npc.EditorId,
                         npc.Name,
                         FieldName = x.Field == NpcProfileField.FacePlugin ? "face" : "default",
-                        PluginName = x.Value,
+                        PluginName = x.NewValue,
                     } : null)
                 .Where(x => x != null)
                 .Select(x => new BuildWarning(

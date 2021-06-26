@@ -19,6 +19,16 @@ namespace Focus.Apps.EasyNpc.Profile
             InitializeComponent();
         }
 
+        private void ClearDefaultPluginFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.Filters.DefaultPlugin = null;
+        }
+
+        private void ClearFacePluginFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.Filters.FacePlugin = null;
+        }
+
         private void LoadProfile_Click(object sender, RoutedEventArgs e)
         {
             Model.LoadFromFile(Window.GetWindow(this));
@@ -54,6 +64,16 @@ namespace Focus.Apps.EasyNpc.Profile
         {
             if (NpcDataGrid.SelectedItem != null)
                 NpcDataGrid.ScrollIntoView(NpcDataGrid.SelectedItem);
+        }
+
+        private void PluginFiltersGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            var menuItem = PluginFiltersGrid.FindVisualParentByType<MenuItem>();
+            if (menuItem == null)
+                return;
+            menuItem.Focusable = false;
+            menuItem.StaysOpenOnClick = true;
+            menuItem.Style = FindResource("NonSelectableMenuItemStyle") as Style;
         }
 
         private void SaveProfile_Click(object sender, RoutedEventArgs e)
