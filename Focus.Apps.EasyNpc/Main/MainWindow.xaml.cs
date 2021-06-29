@@ -7,6 +7,7 @@ using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Main
@@ -55,6 +56,7 @@ namespace Focus.Apps.EasyNpc.Main
                 model.Settings.WelcomeAcked += (sender, e) =>
                     (MainNavigationView.MenuItems[0] as NavigationViewItem).IsSelected = true;
             }
+            model.PageNavigationRequested += (sender, pageName) => SelectPage(pageName);
         }
 
         private void Navigate(string pageName)
@@ -72,6 +74,16 @@ namespace Focus.Apps.EasyNpc.Main
                 Navigate("settings");
             else
                 Navigate((string)args.SelectedItemContainer.Tag);
+        }
+
+        private void SelectPage(string pageName)
+        {
+            var matchingItem = MainNavigationView.MenuItems
+                .OfType<NavigationViewItem>()
+                .Where(x => string.Equals(x.Tag?.ToString(), pageName, StringComparison.OrdinalIgnoreCase))
+                .SingleOrDefault();
+            if (matchingItem != null)
+                MainNavigationView.SelectedItem = matchingItem;
         }
     }
 

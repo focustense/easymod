@@ -113,7 +113,13 @@
                                     </ui:ScrollViewerEx>
                                 </GroupBox>
                             </Border>
-                            <ListBox ItemsSource="{Binding Problems}" DisplayMemberPath="Message" SelectedItem="{Binding SelectedWarning}" ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="0,8,0,0"/>
+                            <ListBox x:Name="WarningsListBox"
+                                     ItemsSource="{Binding Problems}"
+                                     DisplayMemberPath="Message"
+                                     SelectedItem="{Binding SelectedWarning}"
+                                     Margin="0,8,0,0"
+                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                     MouseDoubleClick="WarningsListBox_MouseDoubleClick"/>
                         </DockPanel>
                     </Grid>
                 </GroupBox>

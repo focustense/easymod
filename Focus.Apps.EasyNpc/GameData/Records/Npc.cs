@@ -4,14 +4,12 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.GameData.Records
 {
-    public interface INpc<TKey>
+    public interface INpc<TKey> : IRecordKey
         where TKey : struct
     {
-        string BasePluginName { get; }
         string EditorId { get; }
         bool IsFemale { get; }
         TKey Key { get; }
-        string LocalFormIdHex { get; }
         string Name { get; }
         IReadOnlyList<NpcOverride<TKey>> Overrides { get; }
     }

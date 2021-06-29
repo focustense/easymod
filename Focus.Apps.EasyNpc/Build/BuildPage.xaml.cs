@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows;
-
+using System.Windows.Input;
 using TKey = Mutagen.Bethesda.Plugins.FormKey;
 
 namespace Focus.Apps.EasyNpc.Build
@@ -55,6 +55,14 @@ namespace Focus.Apps.EasyNpc.Build
         private void SkipProblemsButton_Click(object sender, RoutedEventArgs e)
         {
             Model.IsProblemCheckerVisible = false;
+        }
+
+        private void WarningsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left)
+                return;
+            if (WarningsListBox.SelectedItem is BuildWarning buildWarning && buildWarning.RecordKey != null)
+                Model.ExpandWarning(buildWarning);
         }
     }
 }

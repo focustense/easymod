@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Focus.Apps.EasyNpc.GameData.Records;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -29,6 +30,7 @@ namespace Focus.Apps.EasyNpc.Build
         // Used for help links, if provided.
         public BuildWarningId? Id { get; init; }
         public string Message { get; init; }
+        public RecordKey RecordKey { get; init; }
         public string PluginName { get; init; }
 
         public BuildWarning() { }
@@ -43,10 +45,21 @@ namespace Focus.Apps.EasyNpc.Build
             Id = id;
         }
 
+        public BuildWarning(RecordKey key, BuildWarningId id, string message) : this(id, message)
+        {
+            RecordKey = key;
+        }
+
         public BuildWarning(string pluginName, BuildWarningId id, string message)
             : this(id, message)
         {
             PluginName = pluginName;
+        }
+
+        public BuildWarning(string pluginName, RecordKey key, BuildWarningId id, string message)
+            : this(pluginName, id, message)
+        {
+            RecordKey = key;
         }
     }
 

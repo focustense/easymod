@@ -21,6 +21,7 @@ namespace Focus.Apps.EasyNpc.Main
         IProfileContainer<TKey>, ISettingsContainer
         where TKey : struct
     {
+        public event EventHandler<string> PageNavigationRequested;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public BuildViewModel<TKey> Build { get; private set; }
@@ -88,11 +89,19 @@ namespace Focus.Apps.EasyNpc.Main
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, buildChecker, gameDataEditor.MergedPluginBuilder,
                     Loader.ModPluginMapFactory, Profile.GetAllNpcConfigurations(), wigResolver, faceGenEditor, Logger);
+                Build.WarningExpanded += BuildViewModel_WarningExpanded;
                 IsLoaded = true;
             };
         }
 
         protected abstract IGameDataEditor<TKey> CreateEditor();
+
+        private void BuildViewModel_WarningExpanded(object sender, BuildWarning e)
+        {
+            var found = Profile.SelectNpc(e.RecordKey);
+            if (found)
+                PageNavigationRequested?.Invoke(this, "profile");
+        }
     }
 
     public class MainViewModel : MainViewModel<FormKey>

@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Profile
 {
-    public class NpcConfiguration<TKey> : INotifyPropertyChanged
+    public class NpcConfiguration<TKey> : INotifyPropertyChanged, IRecordKey
         where TKey : struct
     {
         private static readonly HashSet<string> DlcPluginNames = new HashSet<string>(

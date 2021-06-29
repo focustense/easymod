@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Profile;
 using System;
 using System.Collections.Generic;
@@ -80,6 +81,8 @@ namespace Focus.Apps.EasyNpc.Build
                 .Select(x => npcConfigs.TryGetValue(Tuple.Create(x.BasePluginName, x.LocalFormIdHex), out var npc) ?
                     new
                     {
+                        npc.BasePluginName,
+                        npc.LocalFormIdHex,
                         npc.EditorId,
                         npc.Name,
                         FieldName = x.Field == NpcProfileField.FacePlugin ? "face" : "default",
@@ -87,6 +90,7 @@ namespace Focus.Apps.EasyNpc.Build
                     } : null)
                 .Where(x => x != null)
                 .Select(x => new BuildWarning(
+                    new RecordKey(x.BasePluginName, x.LocalFormIdHex),
                     BuildWarningId.SelectedPluginRemoved,
                     WarningMessages.SelectedPluginRemoved(x.EditorId, x.Name, x.FieldName, x.PluginName)));
         }
@@ -111,6 +115,7 @@ namespace Focus.Apps.EasyNpc.Build
             {
                 if (npc.RequiresFacegenData())
                     yield return new BuildWarning(
+                        new RecordKey(npc),
                         BuildWarningId.FaceModNotSpecified,
                         WarningMessages.FaceModNotSpecified(npc.EditorId, npc.Name));
                 yield break;
@@ -120,6 +125,7 @@ namespace Focus.Apps.EasyNpc.Build
             if (!modPluginMap.IsModInstalled(npc.FaceModName))
             {
                 yield return new BuildWarning(
+                    new RecordKey(npc),
                     BuildWarningId.FaceModNotInstalled,
                     WarningMessages.FaceModNotInstalled(npc.EditorId, npc.Name, npc.FaceModName));
                 yield break;
@@ -127,6 +133,7 @@ namespace Focus.Apps.EasyNpc.Build
             if (!modsProvidingFacePlugin.Contains(npc.FaceModName))
                 yield return new BuildWarning(
                     npc.FacePluginName,
+                    new RecordKey(npc),
                     BuildWarningId.FaceModPluginMismatch,
                     WarningMessages.FaceModPluginMismatch(npc.EditorId, npc.Name, npc.FaceModName, npc.FacePluginName));
             var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
@@ -142,16 +149,19 @@ namespace Focus.Apps.EasyNpc.Build
                 // include it isn't loaded, i.e. due to the mod or plugin being disabled.
                 yield return new BuildWarning(
                     npc.FacePluginName,
+                    new RecordKey(npc),
                     BuildWarningId.FaceModMissingFaceGen,
                     WarningMessages.FaceModMissingFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
             else if (!npc.RequiresFacegenData() && (hasLooseFacegen || hasArchiveFacegen))
                 yield return new BuildWarning(
                     npc.FacePluginName,
+                    new RecordKey(npc),
                     BuildWarningId.FaceModExtraFaceGen,
                     WarningMessages.FaceModExtraFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
             else if (hasLooseFacegen && hasArchiveFacegen)
                 yield return new BuildWarning(
                     npc.FacePluginName,
+                    new RecordKey(npc),
                     BuildWarningId.FaceModMultipleFaceGen,
                     WarningMessages.FaceModMultipleFaceGen(npc.EditorId, npc.Name, npc.FaceModName));
         }
@@ -196,6 +206,7 @@ namespace Focus.Apps.EasyNpc.Build
                 .Where(x => x.Wig != null && (!enableDewiggify || !matchedWigKeys.Contains(x.Wig.Key)))
                 .Select(x => enableDewiggify ?
                     new BuildWarning(
+                        new RecordKey(x.Npc),
                         x.Wig.IsBald ? BuildWarningId.FaceModWigNotMatchedBald : BuildWarningId.FaceModWigNotMatched,
                         x.Wig.IsBald ?
                             WarningMessages.FaceModWigNotMatchedBald(
