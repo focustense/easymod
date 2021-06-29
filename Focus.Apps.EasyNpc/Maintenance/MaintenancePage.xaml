@@ -44,6 +44,12 @@
                         <Button x:Name="ResetFacesButton" Margin="8,0,0,0" IsEnabled="{Binding CanResetNpcs}" Click="ResetFacesButton_Click">Reset Face Selections</Button>
                         <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsResettingNpcs, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
                     </ui:SimpleStackPanel>
+                    <CheckBox Margin="0,8,0,0" IsChecked="{Binding OnlyResetInvalid}" IsEnabled="{Binding CanResetNpcs}" Content="Only reset references to missing plugins">
+                        <CheckBox.ToolTip>
+                            If checked, clicking either of the buttons above will not touch any NPC unless their current settings reference a plugin that is invalid, i.e. no longer present in the load order.
+                            This is useful if you've removed a large mod or overhaul and need to fix several records that were pointing to it.
+                        </CheckBox.ToolTip>
+                    </CheckBox>
                 </ui:SimpleStackPanel>
             </GroupBox>
         </Border>

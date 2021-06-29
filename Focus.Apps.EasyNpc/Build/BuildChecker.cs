@@ -1,6 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
-using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Profile;
 using System;
 using System.Collections.Generic;
@@ -12,18 +11,19 @@ namespace Focus.Apps.EasyNpc.Build
     public class BuildChecker<TKey>
         where TKey : struct
     {
-        private readonly IDictionary<Tuple<string, string>, INpc<TKey>> allNpcs;
         private readonly ArchiveFileMap archiveFileMap;
         private readonly IArchiveProvider archiveProvider;
         private readonly IReadOnlyList<string> loadOrder;
         private readonly IModPluginMapFactory modPluginMapFactory;
+        private readonly IDictionary<Tuple<string, string>, NpcConfiguration<TKey>> npcConfigs;
         private readonly IReadOnlyProfileEventLog profileEventLog;
 
         public BuildChecker(
-            IReadOnlyList<string> loadOrder, IEnumerable<INpc<TKey>> allNpcs, IModPluginMapFactory modPluginMapFactory,
-            IArchiveProvider archiveProvider, IReadOnlyProfileEventLog profileEventLog)
+            IReadOnlyList<string> loadOrder, IEnumerable<NpcConfiguration<TKey>> npcConfigs,
+            IModPluginMapFactory modPluginMapFactory, IArchiveProvider archiveProvider,
+            IReadOnlyProfileEventLog profileEventLog)
         {
-            this.allNpcs = allNpcs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
+            this.npcConfigs = npcConfigs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
             this.loadOrder = loadOrder;
             this.modPluginMapFactory = modPluginMapFactory;
             this.archiveProvider = archiveProvider;
@@ -77,7 +77,7 @@ namespace Focus.Apps.EasyNpc.Build
             return events
                 .MostRecentByNpc()
                 .WithMissingPlugins(loadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase))
-                .Select(x => allNpcs.TryGetValue(Tuple.Create(x.BasePluginName, x.LocalFormIdHex), out var npc) ?
+                .Select(x => npcConfigs.TryGetValue(Tuple.Create(x.BasePluginName, x.LocalFormIdHex), out var npc) ?
                     new
                     {
                         npc.EditorId,
