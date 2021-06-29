@@ -104,12 +104,6 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 });
         }
 
-        private ISkyrimModGetter GetMod(ModKey key)
-        {
-            var listing = Environment.LoadOrder.GetIfEnabled(key);
-            return listing?.Mod;
-        }
-
         public void ReadNpcRecords(string pluginName, IDictionary<FormKey, IMutableNpc<FormKey>> cache)
         {
             var modKey = ModKey.FromNameAndExtension(pluginName);
@@ -171,21 +165,6 @@ namespace Focus.Apps.EasyNpc.Mutagen
             }
         }
 
-        private NpcFaceData<FormKey> GetFaceOverrides(INpcGetter npc, INpcGetter comparison, out bool affectsFaceGen)
-        {
-            affectsFaceGen = false;
-            if (comparison == null)
-                return null;
-
-            var overrideFaceData = ReadFaceData(npc);
-            var previousFaceData = ReadFaceData(comparison);
-            var overrideRace = npc.Race.FormKeyNullable;
-            var previousRace = comparison.Race.FormKeyNullable;
-            affectsFaceGen = !NpcFaceData.EqualsForFaceGen(overrideFaceData, previousFaceData);
-            return (!NpcFaceData.Equals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
-                overrideFaceData : null;
-        }
-
         private INpcGetter GetComparisonRecord(IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext,
             out string itpoPluginName)
         {
@@ -206,11 +185,32 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return isItpo ? Environment.LoadOrder.GetMasterNpc(npcContext.Record.FormKey) : previousOverride.Record;
         }
 
+        private NpcFaceData<FormKey> GetFaceOverrides(INpcGetter npc, INpcGetter comparison, out bool affectsFaceGen)
+        {
+            affectsFaceGen = false;
+            if (comparison == null)
+                return null;
+
+            var overrideFaceData = ReadFaceData(npc);
+            var previousFaceData = ReadFaceData(comparison);
+            var overrideRace = npc.Race.FormKeyNullable;
+            var previousRace = comparison.Race.FormKeyNullable;
+            affectsFaceGen = !NpcFaceData.EqualsForFaceGen(overrideFaceData, previousFaceData);
+            return (!NpcFaceData.Equals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
+                overrideFaceData : null;
+        }
+
         private IEnumerable<string> GetMasterNames(string pluginFileName)
         {
             var path = Path.Combine(GameDataFolder, pluginFileName);
             using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
             return mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
+        }
+
+        private ISkyrimModGetter GetMod(ModKey key)
+        {
+            var listing = Environment.LoadOrder.GetIfEnabled(key);
+            return listing?.Mod;
         }
 
         private IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> GetPreviousOverride(
