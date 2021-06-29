@@ -104,21 +104,44 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 });
         }
 
+        private ISkyrimModGetter GetMod(ModKey key)
+        {
+            var listing = Environment.LoadOrder.GetIfEnabled(key);
+            return listing?.Mod;
+        }
+
         public void ReadNpcRecords(string pluginName, IDictionary<FormKey, IMutableNpc<FormKey>> cache)
         {
             var modKey = ModKey.FromNameAndExtension(pluginName);
-            var listing = Environment.LoadOrder.GetIfEnabled(modKey);
-            if (listing == null)
+            var mod = GetMod(modKey);
+            if (mod == null)
                 return;
 
-            var masters = listing.Mod.ModHeader.MasterReferences.Select(x => x.Master).ToHashSet();
-            var npcContexts = listing.Mod.EnumerateMajorRecordContexts<INpc, INpcGetter>(Environment.LinkCache);
+            var masters = mod.ModHeader.MasterReferences.Select(x => x.Master).ToHashSet();
+            var npcContexts = mod.EnumerateMajorRecordContexts<INpc, INpcGetter>(Environment.LinkCache);
             foreach (var npcContext in npcContexts)
             {
                 var formKey = npcContext.Record.FormKey;
                 if (formKey.ModKey != modKey)
                 {
-                    var npc = cache[formKey];
+                    if (!cache.TryGetValue(formKey, out var npc))
+                    {
+                        var declaringMod = GetMod(formKey.ModKey);
+                        if (declaringMod == null)
+                        {
+                            log.Fatal(
+                                $"Plugin [{mod.ModKey}] requires master [{formKey.ModKey}], but this master is " +
+                                $"either not loaded or is incorrectly configured to load after [{mod.ModKey}].");
+                            throw new Exception($"NPC [{formKey}] references missing master [{formKey.ModKey}]");
+                        }
+                        if (!declaringMod.Npcs.ContainsKey(formKey))
+                        {
+                            log.Warning(
+                                $"Plugin [{mod.ModKey}] references invalid or 'injected' (unsupported) NPC " +
+                                $"[{formKey}] ('{npcContext.Record.EditorID}'). This NPC will be ignored.");
+                            continue;
+                        }
+                    }
                     var comparison = GetComparisonRecord(npcContext, out var itpoPluginName);
                     var faceData = GetFaceOverrides(npcContext.Record, comparison, out bool affectsFaceGen);
                     var npcOverride = new NpcOverride<FormKey>(modKey.FileName)
