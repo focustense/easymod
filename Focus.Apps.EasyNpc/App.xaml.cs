@@ -1,8 +1,8 @@
-﻿using Focus.Apps.EasyNpc.Configuration;
+﻿using CommandLine;
+using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Main;
 using System;
 using System.IO;
-using System.Linq;
 using System.Windows;
 
 namespace Focus.Apps.EasyNpc
@@ -14,12 +14,17 @@ namespace Focus.Apps.EasyNpc
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            Parser.Default.ParseArguments<CommandLineOptions>(e.Args)
+                .WithParsed(Start);
+        }
+
+        private void Start(CommandLineOptions options)
+        {
             var isFirstLaunch =
-                e.Args.Contains("/forceintro", StringComparer.OrdinalIgnoreCase) ||
+                options.ForceIntro ||
                 (string.IsNullOrEmpty(Settings.Default.ModRootDirectory) &&
                     !File.Exists(ProgramData.ProfileLogFileName));
-            var debugMode = e.Args.Contains("/debug", StringComparer.OrdinalIgnoreCase);
-            var mainViewModel = new MainViewModel(isFirstLaunch, debugMode);
+            var mainViewModel = new MainViewModel(isFirstLaunch, options.DebugMode);
             var mainWindow = new MainWindow(mainViewModel);
             mainWindow.Show();
         }
