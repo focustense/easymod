@@ -1,0 +1,14 @@
+{
+  "name": "easynpc-vortex-launcher",
+  "version": "1.0.0",
+  "description": "Vortex extension for EasyNPC integration",
+  "main": "./dist/index.js",
+  "repository": "https://github.com/focustense/easymod",
+  "author": "focustense",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.3.5",
+    "vortex-api": "Nexus-Mods/vortex-api",
+    "webpack": "^5.44.0"
+  }
+}
