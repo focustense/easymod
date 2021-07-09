@@ -26,6 +26,11 @@ namespace Focus.ModManagers.Vortex
             manifest = LoadManifest(manifestPath);
         }
 
+        public string GetDefaultModRootDirectory()
+        {
+            return manifest.StagingDir;
+        }
+
         public IEnumerable<string> GetModDirectories(string modName)
         {
             return manifest.Files

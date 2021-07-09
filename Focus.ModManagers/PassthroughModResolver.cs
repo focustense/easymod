@@ -6,6 +6,11 @@ namespace Focus.ModManagers
 {
     public class PassthroughModResolver : IModResolver
     {
+        public string GetDefaultModRootDirectory()
+        {
+            return null;
+        }
+
         public IEnumerable<string> GetModDirectories(string modName)
         {
             return new[] { modName };

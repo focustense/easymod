@@ -7,6 +7,7 @@ namespace Focus.ModManagers.Vortex
     {
         public Dictionary<string, FileInfo> Files { get; set; }
         public Dictionary<int, ModInfo> Mods { get; set; }
+        public string StagingDir { get; set; }
     }
 
     public class FileInfo

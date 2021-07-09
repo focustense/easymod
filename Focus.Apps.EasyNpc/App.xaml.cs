@@ -42,6 +42,12 @@ namespace Focus.Apps.EasyNpc
             var defaultModResolver = new PassthroughModResolver();
             IModResolver modResolver = !string.IsNullOrEmpty(options.VortexManifest) ?
                 new VortexModResolver(defaultModResolver, options.VortexManifest) : defaultModResolver;
+            if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.ModRootDirectory))
+            {
+                Settings.Default.ModRootDirectory = modResolver.GetDefaultModRootDirectory();
+                if (!string.IsNullOrEmpty(Settings.Default.ModRootDirectory))
+                    Settings.Default.Save();
+            }
             var mainViewModel = new MainViewModel(modResolver, isFirstLaunch, options.DebugMode);
             var mainWindow = MainWindow = new MainWindow(mainViewModel);
             mainWindow.Show();

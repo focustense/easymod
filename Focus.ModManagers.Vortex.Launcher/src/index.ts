@@ -24,12 +24,18 @@ interface IModInfo {
 interface IBootstrapFile {
   files: Record<string, IFileInfo>;
   mods: Record<number, IModInfo>;
+  stagingDir: string;
 }
 
 const init = (context: IExtensionContext) => {
   function createLookupFile(): string {
-    const mods = context.api.getState().persistent.mods[GameId.SSE] || {};
-    const data: IBootstrapFile = { files: {}, mods: {} };
+    const state = context.api.getState();
+    const mods = state.persistent.mods[GameId.SSE] || {};
+    const data: IBootstrapFile = {
+      files: {},
+      mods: {},
+      stagingDir: state.settings.mods.installPath[GameId.SSE],
+    };
     for (const mod of Object.values(mods)) {
       const attributes = mod.attributes as IModAttributes;
       if (!attributes || !attributes.modId)
