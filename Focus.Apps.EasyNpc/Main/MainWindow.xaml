@@ -9,7 +9,8 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
         ui:WindowHelper.UseModernWindowStyle="True"
-        Title="{StaticResource AppTitle}" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
+        Title="{StaticResource AppTitle}" Height="700" Width="1200" WindowStartupLocation="CenterScreen"
+        Closed="Window_Closed">
     <Window.Resources>
         <DataTemplate x:Key="LoaderTemplate" DataType="main:MainViewModel">
             <main:Loader DataContext="{Binding Loader}"/>

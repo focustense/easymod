@@ -85,6 +85,11 @@ namespace Focus.Apps.EasyNpc.Main
             if (matchingItem != null)
                 MainNavigationView.SelectedItem = matchingItem;
         }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
     }
 
     record NavLink(string Title, Type PageType, Func<MainViewModel, object> ViewModelSelector);

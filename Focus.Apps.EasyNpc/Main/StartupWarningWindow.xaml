@@ -1,0 +1,59 @@
+﻿<Window x:Class="Focus.Apps.EasyNpc.Main.StartupWarningWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:fa5="http://schemas.fontawesome.com/icons/"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
+        xmlns:ui="http://schemas.modernwpf.com/2019" d:DataContext="{d:DesignInstance Type=main:StartupWarningViewModel}"
+        mc:Ignorable="d"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        Title="EasyNPC Startup Warning" Height="450" Width="800" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Border Padding="16">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <fa5:SvgAwesome Icon="Solid_ExclamationCircle" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Height="48" Grid.Row="0" Grid.Column="0"/>
+            <TextBlock Margin="16,0,0,0" FontSize="36" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding Title}" d:Text="Warning"/>
+            <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
+                <ContentControl Content="{Binding Content}" d:Content="{d:DesignInstance Type=main:MissingVortexManifestContent, IsDesignTimeCreatable=True}">
+                    <ContentControl.Resources>
+                        <DataTemplate DataType="{x:Type main:MissingVortexManifestContent}">
+                            <ui:SimpleStackPanel>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    It looks like EasyNPC has been launched directly from the Vortex dashboard, or pointing to a Vortex staging directory, without using the
+                                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding ExtensionUrl, Mode=OneWay}">EasyNPC extension</Hyperlink>.
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    Using the extension allows EasyNPC to recognize the associations between files in Vortex and the mods they came from. Without the extension, face previews will not display correctly
+                                    for your installed mods - instead you will see "mod not installed" for those previews, and a generic placeholder image for a differently-named file.
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    Using the extension is <Run FontStyle="Italic">very strongly recommended</Run> for Vortex users. You can obtain a similar result by setting up mod synonyms in the application settings,
+                                    but this may require hundreds of entries and need to be updated each time you install/change mods. The extension does this in a single click and automatically updates with your
+                                    current mod list.
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding ExtensionUrl, Mode=OneWay}">Get the extension now</Hyperlink>
+                                    or click "Proceed Anyway" to ignore this and run without mod information.
+                                </TextBlock>
+                            </ui:SimpleStackPanel>
+                        </DataTemplate>
+                    </ContentControl.Resources>
+                </ContentControl>
+            </Border>
+            <ui:SimpleStackPanel Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button x:Name="IgnoreButton" HorizontalAlignment="Right" MinWidth="120" Click="IgnoreButton_Click">Proceed Anyway</Button>
+                <Button x:Name="ExitButton" HorizontalAlignment="Right" MinWidth="120" Margin="8,0,0,0" Style="{StaticResource AccentButtonStyle}" Click="ExitButton_Click">Exit</Button>
+            </ui:SimpleStackPanel>
+        </Grid>
+    </Border>
+</Window>
