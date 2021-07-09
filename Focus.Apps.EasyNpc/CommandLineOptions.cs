@@ -9,5 +9,8 @@ namespace Focus.Apps.EasyNpc
 
         [Option('i', "force-intro")]
         public bool ForceIntro { get; set; }
+
+        [Option("vortex-manifest")]
+        public string VortexManifest { get; set; }
     }
 }

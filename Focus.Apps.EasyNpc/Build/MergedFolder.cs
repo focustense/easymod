@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.ModManagers;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -13,16 +14,14 @@ namespace Focus.Apps.EasyNpc.Build
 {
     static class MergedFolder
     {
-        private static readonly HashSet<string> SupportFileExtensions = new(
-            new[] { "nif", "dds", "tri" }, StringComparer.OrdinalIgnoreCase);
         private static readonly Regex TexturePathExpression = new(
                 @"[\w\s\p{P}]+\.dds",
                 RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
         public static void Build<TKey>(
             IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, IArchiveProvider archiveProvider,
-            IFaceGenEditor faceGenEditor, ModPluginMap modPluginMap, BuildSettings<TKey> buildSettings,
-            ProgressViewModel progress, ILogger logger)
+            IFaceGenEditor faceGenEditor, ModPluginMap modPluginMap, IModResolver modResolver,
+            BuildSettings<TKey> buildSettings, ProgressViewModel progress, ILogger logger)
             where TKey : struct
         {
             var log = logger.ForContext("Type", "MergedFolder");
@@ -60,25 +59,35 @@ namespace Focus.Apps.EasyNpc.Build
                 {
                     progress.CurrentProgress++;
                     progress.ItemName = modName;
-                    var modPath = Path.Combine(modRootDirectory, modName);
+                    var modPaths = modResolver.GetModDirectories(modName)
+                        .Select(dir => Path.Combine(modRootDirectory, dir))
+                        .ToList();
                     return new ModFileIndex
                     {
                         ModName = modName,
-                        ModPath = modPath,
-                        LooseFiles = new HashSet<string>(
-                            Directory.EnumerateFiles(modPath, "*.*", SearchOption.AllDirectories)
-                                .Select(fileName => Path.GetRelativePath(modPath, fileName)),
-                            StringComparer.OrdinalIgnoreCase),
+                        ModPaths = modPaths.AsReadOnly(),
+                        LooseFiles = modPaths
+                            .SelectMany(modPath => Directory
+                                .EnumerateFiles(modPath, "*.*", SearchOption.AllDirectories)
+                                .Select(f => new LooseFile
+                                {
+                                    AbsolutePath = f,
+                                    DirectoryPath = modPath,
+                                    RelativePath = Path.GetRelativePath(modPath, f)
+                                }))
+                            .GroupBy(x => x.RelativePath)
+                            .Select(g => g.Last())
+                            .ToDictionary(x => x.RelativePath, StringComparer.OrdinalIgnoreCase),
                         ArchiveFiles = modPluginMap.GetArchivesForMod(modName)
-                            .Select(archiveName => archiveProvider.ResolvePath(archiveName))
-                            .Select(archivePath => new
-                            {
-                                ArchivePath = archivePath,
-                                Files = new HashSet<string>(
-                                    archiveProvider.GetArchiveFileNames(archivePath),
-                                    StringComparer.OrdinalIgnoreCase) as IReadOnlySet<string>
-                            })
-                            .ToDictionary(x => x.ArchivePath, x => x.Files)
+                                .Select(archiveName => archiveProvider.ResolvePath(archiveName))
+                                .Select(archivePath => new
+                                {
+                                    ArchivePath = archivePath,
+                                    Files = new HashSet<string>(
+                                        archiveProvider.GetArchiveFileNames(archivePath),
+                                        StringComparer.OrdinalIgnoreCase) as IReadOnlySet<string>
+                                })
+                                .ToDictionary(x => x.ArchivePath, x => x.Files)
                     };
                 })
                 .ToList();
@@ -99,17 +108,17 @@ namespace Focus.Apps.EasyNpc.Build
                     return true;
                 }
 
-                if (index.LooseFiles.Contains(relativePath))
+                if (index.LooseFiles.TryGetValue(relativePath, out var looseFile))
                 {
                     log.Debug(
                         "File {SourceFileName} found as loose file in mod {ModName}",
                         relativePath, index.ModName);
                     progress.ItemName = $"[{index.ModName}] - Loose - {relativePath}";
                     Directory.CreateDirectory(Path.GetDirectoryName(outFileName));
-                    File.Copy(Path.Combine(index.ModPath, relativePath), outFileName);
+                    File.Copy(looseFile.AbsolutePath, outFileName);
                     log.Information(
                         "Copied {SourceFileName} from {ModPath} to {MergeFileName}",
-                        relativePath, index.ModPath, outFileName);
+                        relativePath, looseFile.DirectoryPath, outFileName);
                     if (incProgress)
                         progress.CurrentProgress++;
                     return true;
@@ -129,8 +138,8 @@ namespace Focus.Apps.EasyNpc.Build
                     Directory.CreateDirectory(Path.GetDirectoryName(outFileName));
                     archiveProvider.CopyToFile(containingArchiveFile, relativePath, outFileName);
                     log.Information(
-                        "Extracted {SourceFileName} from {ArchiveName} in {ModPath} to {MergeFileName}",
-                        relativePath, Path.GetFileName(containingArchiveFile), index.ModPath, outFileName);
+                        "Extracted {SourceFileName} from {ArchiveName} in {ModName} to {MergeFileName}",
+                        relativePath, Path.GetFileName(containingArchiveFile), index.ModName, outFileName);
                     if (incProgress)
                         progress.CurrentProgress++;
                     return true;
@@ -314,8 +323,15 @@ that the resource mods are installed correctly. If you aren't having such issues
     class ModFileIndex
     {
         public string ModName { get; init; }
-        public string ModPath { get; init; }
-        public IReadOnlySet<string> LooseFiles { get; init; }
+        public IReadOnlyList<string> ModPaths { get; init; }
+        public IReadOnlyDictionary<string, LooseFile> LooseFiles { get; init; }
         public IDictionary<string, IReadOnlySet<string>> ArchiveFiles { get; init; }
+    }
+
+    class LooseFile
+    {
+        public string AbsolutePath { get; init; }
+        public string DirectoryPath { get; init; }
+        public string RelativePath { get; init; }
     }
 }

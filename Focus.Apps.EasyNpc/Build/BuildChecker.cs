@@ -2,6 +2,7 @@
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,16 +17,18 @@ namespace Focus.Apps.EasyNpc.Build
         private readonly IArchiveProvider archiveProvider;
         private readonly IReadOnlyList<string> loadOrder;
         private readonly IModPluginMapFactory modPluginMapFactory;
+        private readonly IModResolver modResolver;
         private readonly IDictionary<Tuple<string, string>, NpcConfiguration<TKey>> npcConfigs;
         private readonly IReadOnlyProfileEventLog profileEventLog;
 
         public BuildChecker(
             IReadOnlyList<string> loadOrder, IEnumerable<NpcConfiguration<TKey>> npcConfigs,
-            IModPluginMapFactory modPluginMapFactory, IArchiveProvider archiveProvider,
+            IModResolver modResolver, IModPluginMapFactory modPluginMapFactory, IArchiveProvider archiveProvider,
             IReadOnlyProfileEventLog profileEventLog)
         {
             this.npcConfigs = npcConfigs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
             this.loadOrder = loadOrder;
+            this.modResolver = modResolver;
             this.modPluginMapFactory = modPluginMapFactory;
             this.archiveProvider = archiveProvider;
             this.profileEventLog = profileEventLog;
@@ -137,8 +140,9 @@ namespace Focus.Apps.EasyNpc.Build
                     BuildWarningId.FaceModPluginMismatch,
                     WarningMessages.FaceModPluginMismatch(npc.EditorId, npc.Name, npc.FaceModName, npc.FacePluginName));
             var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
-            var hasLooseFacegen = File.Exists(
-                Path.Combine(Settings.Default.ModRootDirectory, npc.FaceModName, faceMeshFileName));
+            var hasLooseFacegen = modResolver.GetModDirectories(npc.FaceModName)
+                .Select(dir => Path.Combine(Settings.Default.ModRootDirectory, dir, faceMeshFileName))
+                .Any(File.Exists);
             var hasArchiveFacegen = modPluginMap.GetArchivesForMod(npc.FaceModName)
                 .Select(f => archiveFileMap.ContainsFile(f, faceMeshFileName))
                 .Any(exists => exists);

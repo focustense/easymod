@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.ModManagers;
 using Focus.Storage.Archives;
 using PropertyChanged;
 using Serilog;
@@ -50,12 +51,14 @@ namespace Focus.Apps.EasyNpc.Build
         private readonly IFaceGenEditor faceGenEditor;
         private readonly ILogger log;
         private readonly IModPluginMapFactory modPluginMapFactory;
+        private readonly IModResolver modResolver;
         private readonly IWigResolver<TKey> wigResolver;
 
         public BuildViewModel(
             IArchiveProvider archiveProvider, BuildChecker<TKey> buildChecker, IMergedPluginBuilder<TKey> builder,
-            IModPluginMapFactory modPluginMapFactory, IEnumerable<NpcConfiguration<TKey>> npcs,
-            IWigResolver<TKey> wigResolver, IFaceGenEditor faceGenEditor, ILogger logger)
+            IModPluginMapFactory modPluginMapFactory, IModResolver modResolver,
+            IEnumerable<NpcConfiguration<TKey>> npcs, IWigResolver<TKey> wigResolver, IFaceGenEditor faceGenEditor,
+            ILogger logger)
         {
             this.buildChecker = buildChecker;
             this.builder = builder;
@@ -63,6 +66,7 @@ namespace Focus.Apps.EasyNpc.Build
             this.faceGenEditor = faceGenEditor;
             this.log = logger.ForContext<BuildViewModel<TKey>>();
             this.modPluginMapFactory = modPluginMapFactory;
+            this.modResolver = modResolver;
             this.wigResolver = wigResolver;
             Npcs = npcs.ToList().AsReadOnly();
         }
@@ -78,8 +82,8 @@ namespace Focus.Apps.EasyNpc.Build
                 var mergeInfo = builder.Build(Npcs, buildSettings, Progress.MergedPlugin);
                 var modPluginMap = modPluginMapFactory.DefaultMap();
                 MergedFolder.Build(
-                    Npcs, mergeInfo, archiveProvider, faceGenEditor, modPluginMap, buildSettings, Progress.MergedFolder,
-                    log);
+                    Npcs, mergeInfo, archiveProvider, faceGenEditor, modPluginMap, modResolver, buildSettings,
+                    Progress.MergedFolder, log);
                 BuildArchive();
             }).ConfigureAwait(true);
             IsReadyToBuild = false;

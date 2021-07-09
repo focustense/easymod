@@ -3,6 +3,7 @@ using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Main;
+using Focus.ModManagers;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Installs;
 using Mutagen.Bethesda.Plugins;
@@ -33,13 +34,15 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }
 
         private readonly ILogger log;
+        private readonly IModResolver modResolver;
 
-        public MutagenAdapter(ILogger log)
+        public MutagenAdapter(IModResolver modResolver, ILogger log)
         {
             if (!GameLocations.TryGetDataFolder(GameRelease.SkyrimSE, out var dataFolder))
                 throw new Exception("Couldn't find SkyrimSE game data folder");
             GameDataFolder = dataFolder;
             this.log = log;
+            this.modResolver = modResolver;
         }
 
         public IEnumerable<PluginInfo> GetAvailablePlugins()
@@ -82,7 +85,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 Environment.LinkCache.Warmup<Npc>();
                 ArchiveProvider = new MutagenArchiveProvider(Environment);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
-                ModPluginMapFactory = new MutagenModPluginMapFactory(Environment);
+                ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, modResolver);
             });
         }
 

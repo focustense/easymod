@@ -1,11 +1,11 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
-using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Mutagen;
 using Focus.Apps.EasyNpc.Nifly;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.ModManagers;
 using Mutagen.Bethesda.Plugins;
 using PropertyChanged;
 using Serilog;
@@ -39,10 +39,14 @@ namespace Focus.Apps.EasyNpc.Main
         public string PageTitle { get; set; }
         public SettingsViewModel Settings { get; private init; }
 
+        protected IModResolver ModResolver { get; private init; }
+
         private readonly IGameDataEditor<TKey> gameDataEditor;
 
-        public MainViewModel(bool isFirstLaunch, bool debugMode)
+        public MainViewModel(IModResolver modResolver, bool isFirstLaunch, bool debugMode)
         {
+            ModResolver = modResolver;
+
             IsFirstLaunch = isFirstLaunch;
 
             var loggingLevelSwitch =
@@ -66,7 +70,7 @@ namespace Focus.Apps.EasyNpc.Main
             Logger.Information("Initialized");
             Log.ResumeExternalMonitoring();
 
-            Settings = new SettingsViewModel { IsWelcomeScreen = isFirstLaunch };
+            Settings = new SettingsViewModel(modResolver) { IsWelcomeScreen = isFirstLaunch };
             Settings.WelcomeAcked += (sender, e) =>
             {
                 IsFirstLaunch = false;
@@ -84,11 +88,12 @@ namespace Focus.Apps.EasyNpc.Main
                 var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
                 var faceGenEditor = new NiflyFaceGenEditor(Logger);
                 var buildChecker = new BuildChecker<TKey>(
-                    Loader.LoadedPluginNames, npcConfigs, Loader.ModPluginMapFactory, gameDataEditor.ArchiveProvider,
-                    profileEventLog);
+                    Loader.LoadedPluginNames, npcConfigs, modResolver, Loader.ModPluginMapFactory,
+                    gameDataEditor.ArchiveProvider, profileEventLog);
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, buildChecker, gameDataEditor.MergedPluginBuilder,
-                    Loader.ModPluginMapFactory, Profile.GetAllNpcConfigurations(), wigResolver, faceGenEditor, Logger);
+                    Loader.ModPluginMapFactory, modResolver, Profile.GetAllNpcConfigurations(), wigResolver,
+                    faceGenEditor, Logger);
                 Build.WarningExpanded += BuildViewModel_WarningExpanded;
                 IsLoaded = true;
             };
@@ -106,12 +111,12 @@ namespace Focus.Apps.EasyNpc.Main
 
     public class MainViewModel : MainViewModel<FormKey>
     {
-        public MainViewModel(bool isFirstLaunch = false, bool debugMode = false)
-            : base(isFirstLaunch, debugMode) { }
+        public MainViewModel(IModResolver modResolver, bool isFirstLaunch = false, bool debugMode = false)
+            : base(modResolver, isFirstLaunch, debugMode) { }
 
         protected override IGameDataEditor<FormKey> CreateEditor()
         {
-            return new MutagenAdapter(Logger);
+            return new MutagenAdapter(ModResolver, Logger);
         }
     }
 }

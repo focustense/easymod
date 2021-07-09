@@ -377,7 +377,7 @@ namespace Focus.Apps.EasyNpc.Profile
         {
             foreach (var ms in Mugshots)
                 ms.IsSelectedSource =
-                    ms.ProvidingMod == SelectedNpc?.FaceModName ||
+                    string.Equals(ms.ProvidingMod, SelectedNpc?.FaceModName, StringComparison.OrdinalIgnoreCase) ||
                     (string.IsNullOrEmpty(ms.ProvidingMod) && string.IsNullOrEmpty(SelectedNpc?.FaceModName));
         }
 

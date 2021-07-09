@@ -1,6 +1,8 @@
 ﻿using CommandLine;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Main;
+using Focus.ModManagers;
+using Focus.ModManagers.Vortex;
 using System;
 using System.IO;
 using System.Windows;
@@ -24,7 +26,10 @@ namespace Focus.Apps.EasyNpc
                 options.ForceIntro ||
                 (string.IsNullOrEmpty(Settings.Default.ModRootDirectory) &&
                     !File.Exists(ProgramData.ProfileLogFileName));
-            var mainViewModel = new MainViewModel(isFirstLaunch, options.DebugMode);
+            var defaultModResolver = new PassthroughModResolver();
+            IModResolver modResolver = !string.IsNullOrEmpty(options.VortexManifest) ?
+                new VortexModResolver(defaultModResolver, options.VortexManifest) : defaultModResolver;
+            var mainViewModel = new MainViewModel(modResolver, isFirstLaunch, options.DebugMode);
             var mainWindow = new MainWindow(mainViewModel);
             mainWindow.Show();
         }

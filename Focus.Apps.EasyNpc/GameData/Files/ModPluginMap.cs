@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Focus.ModManagers;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -17,7 +18,8 @@ namespace Focus.Apps.EasyNpc.GameData.Files
         enum FileType { Unknown, Plugin, Archive };
 
         public static ModPluginMap ForDirectory(
-            string modRootDirectory, IEnumerable<string> pluginNames, IEnumerable<string> archiveNames)
+            string modRootDirectory, IModResolver modResolver, IEnumerable<string> pluginNames,
+            IEnumerable<string> archiveNames)
         {
             var trimmedDirectory = Path.TrimEndingDirectorySeparator(modRootDirectory);
             if (string.IsNullOrEmpty(trimmedDirectory))
@@ -38,7 +40,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
             var modsWithPlugins = Directory.EnumerateDirectories(trimmedDirectory)
                 .Select(modDir => new
                 {
-                    Mod = Path.GetFileName(Path.TrimEndingDirectorySeparator(modDir)),
+                    ModName = modResolver.GetModName(modDir),
                     Files = Directory.EnumerateFiles(modDir)
                         .Select(path => Path.GetFileName(path))
                         .Select(fileName => new
@@ -51,10 +53,17 @@ namespace Focus.Apps.EasyNpc.GameData.Files
                         })
                         .Where(f => f.FileType != FileType.Unknown)
                 })
-                .Select(x => new {
-                    x.Mod,
-                    Archives = x.Files.Where(f => f.FileType == FileType.Archive).Select(f => f.FileName).ToArray(),
-                    Plugins = x.Files.Where(f => f.FileType == FileType.Plugin).Select(f => f.FileName).ToArray(),
+                .GroupBy(x => x.ModName)
+                .Select(g => new {
+                    Mod = g.Key,
+                    Archives = g.SelectMany(x => x.Files)
+                        .Where(f => f.FileType == FileType.Archive)
+                        .Select(f => f.FileName)
+                        .ToArray(),
+                    Plugins = g.SelectMany(x => x.Files)
+                        .Where(f => f.FileType == FileType.Plugin)
+                        .Select(f => f.FileName)
+                        .ToArray(),
                 })
                 .ToList();
             IDictionary<string, IEnumerable<string>> modsToPlugins = null;
@@ -66,27 +75,35 @@ namespace Focus.Apps.EasyNpc.GameData.Files
                 {
                     modsToArchives = modsWithPlugins.ToDictionary(
                         x => x.Mod,
-                        x => x.Archives.ToList().AsReadOnly().AsEnumerable());
+                        x => x.Archives.ToList().AsReadOnly().AsEnumerable(),
+                        StringComparer.OrdinalIgnoreCase);
                 },
                 () =>
                 {
                     archivesToMods = modsWithPlugins
                         .SelectMany(x => x.Archives.Select(a => new { x.Mod, Archive = a }))
                         .GroupBy(x => x.Archive, x => x.Mod)
-                        .ToDictionary(x => x.Key, x => x.ToList().AsReadOnly().AsEnumerable());
+                        .ToDictionary(
+                            x => x.Key,
+                            x => x.ToList().AsReadOnly().AsEnumerable(),
+                            StringComparer.OrdinalIgnoreCase);
                     foreach (var archive in archiveFileNames)
                         archivesToMods.TryAdd(archive, Enumerable.Empty<string>());
                 },
                 () => {
                     modsToPlugins = modsWithPlugins.ToDictionary(
                         x => x.Mod,
-                        x => x.Plugins.ToList().AsReadOnly().AsEnumerable());
+                        x => x.Plugins.ToList().AsReadOnly().AsEnumerable(),
+                        StringComparer.OrdinalIgnoreCase);
                 },
                 () => {
                     pluginsToMods = modsWithPlugins
                         .SelectMany(x => x.Plugins.Select(p => new { x.Mod, Plugin = p }))
                         .GroupBy(x => x.Plugin, x => x.Mod)
-                        .ToDictionary(x => x.Key, x => x.ToList().AsReadOnly().AsEnumerable());
+                        .ToDictionary(
+                            x => x.Key,
+                            x => x.ToList().AsReadOnly().AsEnumerable(),
+                            StringComparer.OrdinalIgnoreCase);
                     foreach (var plugin in pluginFileNames)
                         pluginsToMods.TryAdd(plugin, Enumerable.Empty<string>());
                 });

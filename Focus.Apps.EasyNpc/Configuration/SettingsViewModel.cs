@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Build;
+using Focus.ModManagers;
 using Ookii.Dialogs.Wpf;
 using System;
 using System.Collections.Generic;
@@ -26,8 +27,12 @@ namespace Focus.Apps.EasyNpc.Configuration
         public ObservableCollection<MugshotRedirectViewModel> MugshotRedirects { get; init; }
         public string MugshotsDirectoryPlaceholderText => ProgramData.DefaultMugshotsPath;
 
-        public SettingsViewModel()
+        private readonly IModResolver modResolver;
+
+        public SettingsViewModel(IModResolver modResolver)
         {
+            this.modResolver = modResolver;
+
             // Since these are pass-through properties, we need to force an initial update.
             OnModRootDirectoryChanged();
             OnMugshotsDirectoryChanged();
@@ -108,7 +113,8 @@ namespace Focus.Apps.EasyNpc.Configuration
         {
             AvailableModNames = Directory.Exists(ModRootDirectory) ?
                 Directory.GetDirectories(ModRootDirectory)
-                    .Select(f => Path.GetRelativePath(ModRootDirectory, f))
+                    .Select(f => modResolver.GetModName(f))
+                    .Distinct()
                     .ToArray() :
                 Enumerable.Empty<string>();
         }

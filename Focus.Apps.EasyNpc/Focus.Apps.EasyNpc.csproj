@@ -53,6 +53,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Focus.ModManagers.Vortex\Focus.ModManagers.Vortex.csproj" />
+    <ProjectReference Include="..\Focus.ModManagers\Focus.ModManagers.csproj" />
     <ProjectReference Include="..\Focus.Storage.Archives\Focus.Storage.Archives.csproj" />
   </ItemGroup>
 
