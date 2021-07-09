@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=build:BuildWarning}"
@@ -22,7 +23,7 @@
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
                     <Run FontWeight="Medium">Why this matters:</Run>
                     <Run>Almost all NPC appearance mods have two parts to them: the plugin (.esm/.esp) and the generated face meshes, AKA facegen data. If you're using a mod manager with mod isolation, such as</Run>
-                    <Hyperlink NavigateUri="https://www.modorganizer.org/">Mod Organizer</Hyperlink>
+                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://www.modorganizer.org/">Mod Organizer</Hyperlink>
                     <Run>(recommended), then we need to know where your installed mods are located, so we can keep the plugins and facegens in sync. If you</Run>
                     <Run FontStyle="Italic">don't</Run>
                     <Run>use one of these, then you are probably letting different mods irrecoverably overwrite each other's facegen data, which is extremely fragile and almost always causes in-game bugs.</Run>
@@ -52,7 +53,7 @@
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
                     <Run FontWeight="Medium">Why this matters:</Run>
                     <Run>It could be harmless, if the reason for it is something like the</Run>
-                    <Hyperlink NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/42045">Sofia BSA Fix</Hyperlink>
+                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/42045">Sofia BSA Fix</Hyperlink>
                     <Run>that doesn't add, remove or alter any facegen data. We also can't detect which of your mods are disabled, so if the "extra" BSA comes from one or more disabled mods, then this is also harmless.</Run>
                     <Run>You only need to be concerned if the two archives have different facegen data, such as a "personal" BSA you may have created in the past to resolve earlier issues.</Run>
                 </TextBlock>
@@ -62,7 +63,7 @@
                         If only one of the mods listed above is enabled, no action is needed. If more than one is enabled, and you trust the winning file, then you can hide the losing files from their respective mods in Mod Organizer
                         in order to make this warning go away. If you're not sure, then you can either hope and pray, or unpack both BSAs using the
                     </Run>
-                    <Hyperlink NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/974">Bethesda Archive Extractor</Hyperlink>
+                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/974">Bethesda Archive Extractor</Hyperlink>
                     <Run>or built-in extraction in Mod Organizer, and then use any comparison tool (e.g. WinMerge) to check for inconsistencies in the</Run>
                     <Run Style="{StaticResource CodeStyle}">meshes\actors\character\facegendata</Run>
                     <Run>directory of each. If there are no changes, you can ignore the warning. Make sure to delete the extracted files when done.</Run>
