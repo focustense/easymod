@@ -43,6 +43,11 @@ namespace Focus.Apps.EasyNpc.Configuration
             },
             new MugshotRedirect
             {
+                ModName = "Fresh Faces",
+                Mugshots = "Fresh Faces - SSE",
+            },
+            new MugshotRedirect
+            {
                 ModName = "Pandorable's Frea",
                 Mugshots = "Pandorable's Frea and Frida",
             },
