@@ -32,7 +32,7 @@ const init = (context: IExtensionContext) => {
     const data: IBootstrapFile = { files: {}, mods: {} };
     for (const mod of Object.values(mods)) {
       const attributes = mod.attributes as IModAttributes;
-      if (!attributes)
+      if (!attributes || !attributes.modId)
         continue;
       data.files[mod.id] = { modId: attributes.modId };
       data.mods[attributes.modId] = { name: attributes.modName };
