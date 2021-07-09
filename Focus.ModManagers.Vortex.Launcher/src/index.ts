@@ -73,7 +73,7 @@ const init = (context: IExtensionContext) => {
     }
   }
 
-  context.registerAction('mod-icons', 999, 'show', {}, 'EasyNPC', () => launchEasyNpc());
+  context.registerAction('mod-icons', 999, 'launch-simple', {}, 'Launch EasyNPC', () => launchEasyNpc());
 };
 
 export default init;
