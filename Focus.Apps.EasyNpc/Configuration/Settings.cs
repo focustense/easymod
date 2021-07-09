@@ -35,7 +35,32 @@ namespace Focus.Apps.EasyNpc.Configuration
             {
                 ModName = "Pride of Skyrim - AIO Male High Poly Head Overhaul",
                 Mugshots = "Pride of Skyrim - AIO",
-            }
+            },
+            new MugshotRedirect
+            {
+                ModName = "Courageous Women - High Poly Head Female NPC Overhaul",
+                Mugshots = "Courageous Women of Skyrim AIO",
+            },
+            new MugshotRedirect
+            {
+                ModName = "Pandorable's Frea",
+                Mugshots = "Pandorable's Frea and Frida",
+            },
+            new MugshotRedirect
+            {
+                ModName = "Pandorable's Lethal Ladies - Jenassa Karliah",
+                Mugshots = "Pandorable's Lethal Ladies",
+            },
+            new MugshotRedirect
+            {
+                ModName = "Pandorable's Shield-Sisters - Aela Ria Njada",
+                Mugshots = "Pandorable's Shield Sisters",
+            },
+            new MugshotRedirect
+            {
+                ModName = "Pandorable's Warrior Women - Mjoll Uthgerd",
+                Mugshots = "Pandorable's Warrior Women",
+            },
         };
         public string MugshotsDirectory { get; set; }
 
@@ -55,6 +80,16 @@ namespace Focus.Apps.EasyNpc.Configuration
             Serializer.Serialize(jsonWriter, this);
         }
 
+        private void CopyFrom(Settings other)
+        {
+            // This doesn't make deep copies, as it's assumed to only be working with temporary Settings instances, i.e.
+            // from the Load() method. If this method is made public, the behavior needs to change.
+            BuildWarningWhitelist = other.BuildWarningWhitelist;
+            ModRootDirectory = other.ModRootDirectory;
+            MugshotRedirects = other.MugshotRedirects;
+            MugshotsDirectory = other.MugshotsDirectory;
+        }
+
         private void Load()
         {
             if (!File.Exists(path))
@@ -62,7 +97,12 @@ namespace Focus.Apps.EasyNpc.Configuration
             using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var streamReader = new StreamReader(fs);
             using var jsonReader = new JsonTextReader(streamReader);
-            Serializer.Populate(jsonReader, this);
+            // Using Serializer.Populate(this) would require us to clear various lists to avoid duplicates, since
+            // JSON.NET doesn't clear them prior to populating. However, this obscures the distinction between settings
+            // with default values and missing settings. It's more tedious, but better to just deserialize an entirely
+            // new settings object and copy the fields directly.
+            var settings = Serializer.Deserialize<Settings>(jsonReader);
+            CopyFrom(settings);
         }
     }
 
