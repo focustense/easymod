@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Apps.EasyNpc", "Focus
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Storage.Archives", "Focus.Storage.Archives\Focus.Storage.Archives.csproj", "{21BE44BC-C8F9-40F0-AE40-2A99747367E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.ModManagers.Vortex", "Focus.ModManagers.Vortex\Focus.ModManagers.Vortex.csproj", "{97FF723A-6603-4F14-AAC8-DF590A154CAB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers.Vortex", "Focus.ModManagers.Vortex\Focus.ModManagers.Vortex.csproj", "{97FF723A-6603-4F14-AAC8-DF590A154CAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.ModManagers", "Focus.ModManagers\Focus.ModManagers.csproj", "{99F6E7B3-BD79-4D7F-A2B7-B82551DD8369}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers", "Focus.ModManagers\Focus.ModManagers.csproj", "{99F6E7B3-BD79-4D7F-A2B7-B82551DD8369}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.ModManagers.ModOrganizer", "Focus.ModManagers.ModOrganizer\Focus.ModManagers.ModOrganizer.csproj", "{23C30720-E00F-4058-9ACF-C4615A212DCF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,18 @@ Global
 		{99F6E7B3-BD79-4D7F-A2B7-B82551DD8369}.Release|x64.Build.0 = Release|Any CPU
 		{99F6E7B3-BD79-4D7F-A2B7-B82551DD8369}.Release|x86.ActiveCfg = Release|Any CPU
 		{99F6E7B3-BD79-4D7F-A2B7-B82551DD8369}.Release|x86.Build.0 = Release|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Debug|x64.Build.0 = Debug|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Debug|x86.Build.0 = Debug|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Release|x64.ActiveCfg = Release|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Release|x64.Build.0 = Release|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Release|x86.ActiveCfg = Release|Any CPU
+		{23C30720-E00F-4058-9ACF-C4615A212DCF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

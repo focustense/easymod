@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Focus.ModManagers;
 using Ookii.Dialogs.Wpf;
+using PropertyChanged;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -23,7 +24,12 @@ namespace Focus.Apps.EasyNpc.Configuration
         public IEnumerable<string> AvailableMugshotModNames { get; private set; } = Enumerable.Empty<string>();
         public IEnumerable<string> AvailablePlugins { get; set; } = Enumerable.Empty<string>();
         public ObservableCollection<BuildWarningSuppressionViewModel> BuildWarningWhitelist { get; init; }
+        public bool HasDefaultModRootDirectory { get; private init; }
+        [DependsOn("ModRootDirectory")]
+        public bool IsModDirectorySpecified => !string.IsNullOrEmpty(ModRootDirectory);
         public bool IsWelcomeScreen { get; set; }
+        [DependsOn("ModRootDirectory")]
+        public bool ModDirectoryExists => IsModDirectorySpecified && Directory.Exists(ModRootDirectory);
         public ObservableCollection<MugshotRedirectViewModel> MugshotRedirects { get; init; }
         public string MugshotsDirectoryPlaceholderText => ProgramData.DefaultMugshotsPath;
 
@@ -32,6 +38,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         public SettingsViewModel(IModResolver modResolver)
         {
             this.modResolver = modResolver;
+            HasDefaultModRootDirectory = !string.IsNullOrEmpty(ModRootDirectory);
 
             // Since these are pass-through properties, we need to force an initial update.
             OnModRootDirectoryChanged();
@@ -70,6 +77,7 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         public void AckWelcome()
         {
+            Settings.Save();
             IsWelcomeScreen = false;
             WelcomeAcked?.Invoke(this, EventArgs.Empty);
         }

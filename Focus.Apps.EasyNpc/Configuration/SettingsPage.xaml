@@ -28,16 +28,27 @@
                     <ui:SimpleStackPanel>
                         <TextBlock Style="{StaticResource TitleTextBlockStyle}">Welcome!</TextBlock>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
-                        Looks like this is your first time running <Run Text="{StaticResource AppTitle}"/>. A starting profile will be generated based on your load order, but first you'll
-                        need to specify where your mods are located, so that we know which ones are actually installed. If you use Mod Organizer, this is normally the "mods" folder inside
-                        your Mod Organizer installation folder.
+                            Looks like this is your first time running <Run Text="{StaticResource AppTitle}"/>. A starting profile will be generated based on your load order, but first you'll
+                            need to confirm where your mods are located, so that we know which ones are actually installed.
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}" Visibility="{Binding HasDefaultModRootDirectory, Converter={StaticResource BoolToVisibility}}">
+                            We've chosen a default directory based on the mod manager you appear to be running. If this is correct, you don't need to do anything else; just click "I'm Done".
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}" Visibility="{Binding HasDefaultModRootDirectory, Converter={StaticResource InvBoolToVisibility}}">
+                            We couldn't figure this out automatically, because we couldn't detect which mod manager you're using. This is usually because <Run Text="{StaticResource AppTitle}"/> was started from
+                            Windows Explorer instead of starting it from the mod manager. To fix this, you can either close <Run Text="{StaticResource AppTitle}"/> now and restart it from inside your mod manager,
+                            or manually specify the directory below. If you use Mod Organizer, this is normally the "mods" folder inside your Mod Organizer installation folder, and if you use Vortex, it is the game's
+                            "Mod Staging Folder".
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}" Visibility="{Binding HasDefaultModRootDirectory, Converter={StaticResource InvBoolToVisibility}}">
+                            <Run FontWeight="Bold">Do not</Run> point this at your Skyrim data directory. If you're confused, click on the "What's this?" link further down.
+                            Legacy mod managers that do not use a mod directory, such as Nexus Mod Manager, are <Run FontStyle="Italic">not supported</Run>.
                         </TextBlock>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
-                        <Run FontWeight="Bold">Do not</Run> point this at your Skyrim data directory. If you're confused, click on the "What's this?" link further down.
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ParagraphStyle}">
-                        If you haven't already, you should also browse the "Getting Started" section of the how-to guide for how to set up your load order for first-time use. In general:
-                        Put your NPC overhauls last, order them from least to most favorite, and disable any compatibility patches or AIOs for them. For more details, see the guide.
+                            If you haven't already, you should also browse the
+                            <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://github.com/focustense/easymod/blob/master/Focus.Apps.EasyNpc/Docs/getting-started.md">Getting Started</Hyperlink>
+                            section of the how-to guide for how to set up your load order for first-time use. In general: Put your NPC overhauls last, order them from least to most favorite, and disable any compatibility
+                            patches or AIOs for them. For more details, see the guide.
                         </TextBlock>
                     </ui:SimpleStackPanel>
                 </Border>
@@ -198,7 +209,22 @@
                     </ui:SimpleStackPanel>
                 </GroupBox>
                 <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
-                    <Button x:Name="WelcomeDoneButton" Style="{StaticResource AccentButtonStyle}" FontSize="20" Click="WelcomeDoneButton_Click">I'm Done</Button>
+                    <Button x:Name="WelcomeDoneButton" FontSize="20" ToolTipService.InitialShowDelay="50" Click="WelcomeDoneButton_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ModDirectoryExists}" Value="False">
+                                        <Setter Property="Background" Value="{StaticResource DangerBackgroundBrush}"/>
+                                        <Setter Property="ToolTip" Value="WARNING: Specified mod directory doesn't exist"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsModDirectorySpecified}" Value="False">
+                                        <Setter Property="ToolTip" Value="WARNING: Mod directory has not been chosen"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        I'm Done
+                    </Button>
                 </ui:SimpleStackPanel>
             </ui:SimpleStackPanel>
         </ui:ScrollViewerEx>
