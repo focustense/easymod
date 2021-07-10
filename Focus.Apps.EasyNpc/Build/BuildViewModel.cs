@@ -76,6 +76,10 @@ namespace Focus.Apps.EasyNpc.Build
             Progress = new BuildProgressViewModel(log);
             await Task.Run(() =>
             {
+                // Deleting the build report means we're guaranteed not to have a stale one, but serves the secondary
+                // purpose of signaling to parent processes (mod managers/extensions) that the build actually started.
+                // This way they can tell the difference between a failed build and no build.
+                File.Delete(Settings.Default.BuildReportPath);
                 OutputDirectory = Path.Combine(Settings.Default.ModRootDirectory, OutputModName);
                 Directory.CreateDirectory(OutputDirectory);
                 var buildSettings = GetBuildSettings();
@@ -85,6 +89,7 @@ namespace Focus.Apps.EasyNpc.Build
                     Npcs, mergeInfo, archiveProvider, faceGenEditor, modPluginMap, modResolver, buildSettings,
                     Progress.MergedFolder, log);
                 BuildArchive();
+                new BuildReport { ModName = buildSettings.OutputModName }.SaveToFile(Settings.Default.BuildReportPath);
             }).ConfigureAwait(true);
             IsReadyToBuild = false;
             IsBuildCompleted = true;

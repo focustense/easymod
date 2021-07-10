@@ -68,6 +68,9 @@ namespace Focus.Apps.EasyNpc.Configuration
             },
         };
         public string MugshotsDirectory { get; set; }
+        // Report path is a command-line setting used for interop; we don't save it.
+        [JsonIgnore]
+        public string BuildReportPath { get; set; } = Path.Combine(ProgramData.DirectoryPath, "BuildReport.json");
 
         private readonly string path;
 

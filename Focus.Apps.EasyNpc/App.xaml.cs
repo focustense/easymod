@@ -5,7 +5,6 @@ using Focus.ModManagers;
 using Focus.ModManagers.ModOrganizer;
 using Focus.ModManagers.Vortex;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Windows;
 
@@ -18,12 +17,14 @@ namespace Focus.Apps.EasyNpc
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            Console.WriteLine("Application started");
             Parser.Default.ParseArguments<CommandLineOptions>(e.Args)
                 .WithParsed(Start);
         }
 
         private void Start(CommandLineOptions options)
         {
+            Settings.Default.BuildReportPath = options.ReportPath;
             var startupInfo = StartupInfo.Detect();
             var isFirstLaunch =
                 options.ForceIntro ||
