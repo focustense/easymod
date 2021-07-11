@@ -23,17 +23,15 @@
             <Button x:Name="AltCheckForProblemsButton" ToolTip="Check for problems" IsEnabled="{Binding IsProblemCheckerEnabled}" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource InvBoolToVisibility}}" Grid.Row="0" Click="AltCheckForProblemsButton_Click">
                 <fa5:SvgAwesome Icon="Solid_Glasses" Width="16" Height="16"/>
             </Button>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1" d:Visibility="Visible">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1" d:Visibility="Collapsed">
                 <ui:SimpleStackPanel>
                     <TextBlock Style="{StaticResource FirstParagraphStyle}">
-                        Before you build your NPC package, you should run a check for problems that could cause in-game blackface bugs or crashes. This isn't required, but normally only takes a few seconds and
-                        will warn you if you're about to break an actor's face.
+                        <Run Text="{StaticResource AppName}"/> includes a set of pre-build checks that can warn you about a variety of potential bugs and conflicts, including those likely to cause blackface or
+                        crashes. These checks normally take a few seconds and it is recommended to run them before each build.
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParagraphStyle}">
-                        <Bold Foreground="OrangeRed">Important:</Bold> This is not a substitute for properly managing your modlist and load order, e.g. with Mod Organizer, LOOT and user rules/tags. It will <Italic>only</Italic>
-                        check for inconsistencies between your plugin selection and available mods/facegen data; it will not detect conflicts or other problems with AI packages, skills, perks, dialogue, or other crazy things that
-                        some NPC mods do such as vanilla race edits. When in doubt, check for conflicts in xEdit/zEdit after running this tool, and make sure that the generated plugin isn't overwriting anything you don't want
-                        overwritten.
+                        <Bold Foreground="{StaticResource WarningForegroundBrush}">Note:</Bold> These checks only relate to the data that <Run Text="{StaticResource AppName}"/> specifically modifies, i.e. NPC appearances.
+                        For help with other types of issues, consult a general conflict-resolution guide that discusses load order, mod/file priorities, patching tools, etc.
                     </TextBlock>
                     <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding HasWigs, Converter={StaticResource BoolToVisibility}}">
                         <CheckBox x:Name="DewiggifyCheckBox" IsChecked="{Binding EnableDewiggify}">
@@ -41,20 +39,20 @@
                         </CheckBox>
                         <ContentControl Style="{StaticResource HelpIconStyle}" Margin="8,0,0,0">
                             <ContentControl.ToolTip>
-                                <TextBlock>
-                                    Some of your NPC choices point to records that use wigs (i.e. armor) for hair instead of standard head parts.
-                                    <LineBreak/><LineBreak/>
-                                    <Run Text="{StaticResource AppTitle}"/> can attempt to convert these to hairs, but note that <Run FontWeight="SemiBold">this feature is experimental</Run>, and may not work on every NPC or
-                                    produce great results for the NPCs it does work on. In addition, it requires that you have the original hair resource installed (e.g. KS Hairdos if the NPC overhaul uses KS Wigs) and will
-                                    not be able to tell the difference between that resource not being installed vs. the wig being un-convertible.
-                                    <LineBreak/><LineBreak/>
-                                    On the other hand, if you <Run FontStyle="Italic">don't</Run> enable this feature and still choose to import NPCs with wigs, they will either be bald or have the wrong hair in-game.
-                                    <LineBreak/><LineBreak/>
-                                    The best option for compatibility is not to use these mods at all. If you can't live without them, you should leave this box checked, but expect some bugs. Advanced users who are proficient
-                                    with xEdit/zEdit and really want to keep the wigs can disable this option and manually forward the NPC's WNAM property to restore them, although there is usually no downside to attempting
-                                    conversion anyway - if it can't find a matching head part, then you'll get the same bald NPC you would have had without the conversion, but at least <Run FontStyle="Italic">some</Run>
-                                    NPCs may successfully convert and you'll have fewer records to manually patch.
-                                </TextBlock>
+                                <ui:SimpleStackPanel>
+                                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                                        Some of your NPC choices point to records that use wigs (i.e. worn armor) for hair instead of standard head parts. Wigs cannot be carried over and will disappear in the merge.
+                                    </TextBlock>
+                                    <TextBlock Style="{StaticResource ParagraphStyle}">
+                                        <Run Text="{StaticResource AppName}"/> can attempt to convert these to hairs, but note that <Run FontWeight="SemiBold">this feature is experimental</Run>, and may not work on every NPC or
+                                        produce great results for the NPCs it does work on. In addition, it requires that you have the original hair resource installed (e.g. KS Hairdos if the NPC overhaul uses KS Wigs) and will
+                                        not be able to tell the difference between that resource not being installed vs. the wig being un-convertible.
+                                    </TextBlock>
+                                    <TextBlock Style="{StaticResource ParagraphStyle}">
+                                        Disabling this feature may prevent some bugs, but wigged NPCs will end up either bald or using their default hair. For best compatibility with this tool, choose a different face plugin for
+                                        these NPCs. You can locate wig selections by clicking the <fa5:SvgAwesome Icon="Solid_Filter" Height="12"/> (Filter) button on the Profile page and selecting "Wigs".
+                                    </TextBlock>
+                                </ui:SimpleStackPanel>
                             </ContentControl.ToolTip>
                         </ContentControl>
                     </ui:SimpleStackPanel>
@@ -124,7 +122,7 @@
                     </Grid>
                 </GroupBox>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
                 <GroupBox Header="Ready to build">
                     <ui:SimpleStackPanel>
                         <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
@@ -156,34 +154,77 @@
                     </ui:SimpleStackPanel>
                 </GroupBox>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Visible">
                 <GroupBox Header="All done">
                     <ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel.Resources>
+                            <ControlTemplate x:Key="ListItem" TargetType="ContentControl">
+                                <BulletDecorator Margin="16,0,0,0">
+                                    <BulletDecorator.Bullet>
+                                        <TextBlock FontSize="14" Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag}"/>
+                                    </BulletDecorator.Bullet>
+                                    <ContentPresenter Margin="8,0,0,0"/>
+                                </BulletDecorator>
+                            </ControlTemplate>
+                            <Style x:Key="ListItemStyle" TargetType="TextBlock" BasedOn="{StaticResource ParagraphStyle}"/>
+                        </ui:SimpleStackPanel.Resources>
+
                         <TextBlock Style="{StaticResource FirstParagraphStyle}" Text="Your NPC merge is ready at:"/>
                         <ui:HyperlinkButton Content="{Binding OutputDirectory}" d:Content="C:\Foo\Bar\Baz" Click="HyperlinkButton_Click"/>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
-                            If you are using Mod Organizer, it should appear in your mod list when you exit this program. If it doesn't, press F5 to refresh. Enable the merge,
-                            and <Bold>disable</Bold> all of the original NPC appearance mods (but not masters, behavior mods, followers, etc.) to avoid conflicts, improve
-                            performance and free up those slots in your load order. The merge includes all required assets from the original mods, so you can disable the entire
-                            mods, not just their plugins.
+                            To start using the new mod:
                         </TextBlock>
+                        <ContentControl Template="{StaticResource ListItem}" Tag="1.">
+                            <!--
+                                Weird structure here is to play nice with the BulletDecorator, which only vertically-aligns to the top when the child control is text.
+                                That's why we don't just use a StackPanel/SimpleStackPanel here.
+                            -->
+                            <TextBlock Style="{StaticResource ListItemStyle}">
+                                <TextBlock TextWrapping="Wrap" Visibility="{Binding Source={StaticResource LaunchedByModOrganizer}, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
+                                    Import the mod. After closing <Run Text="{StaticResource AppName}"/>, click the Refresh button in Mod Organizer, or press F5 to refresh your mods.
+                                    The new mod should appear at the bottom of the list.
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" Visibility="{Binding Source={StaticResource LaunchedByModOrganizer}, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
+                                    Import the mod. After closing <Run Text="{StaticResource AppName}"/>, it should automatically appear in your mod list. If it does not, you may need
+                                    to restart Vortex and acknowledge a warning about the mod staging folder being modified.
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" Visibility="{Binding Source={StaticResource LaunchedStandaloneOrUnknown}, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
+                                    Import the mod. Since <Run Text="{StaticResource AppName}"/> wasn't able to determine which mod manager you are using, you will have to figure this
+                                    out on your own. It may involve copying or moving the mod folder you just created, or zipping it and importing it as a file.
+                                </TextBlock>
+                            </TextBlock>
+                        </ContentControl>
+                        <ContentControl Template="{StaticResource ListItem}" Tag="2.">
+                            <TextBlock Style="{StaticResource ListItemStyle}">
+                                Activate the mod named <Run FontWeight="SemiBold" Text="{Binding OutputModName}" d:Text="NPC Merge"/>, and ensure that the plugin
+                                <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> is at the bottom of your load order.
+                                It does not matter whether it goes above or below other generated patches (Wrye Bash, Synthesis, etc. - see the note under "Optional instructions" below) but it
+                                should load after all standard mods.
+                            </TextBlock>
+                        </ContentControl>
+                        <ContentControl Template="{StaticResource ListItem}" Tag="3.">
+                            <TextBlock Style="{StaticResource ListItemStyle}">
+                                <Bold Foreground="{StaticResource WarningForegroundBrush}">Deactivate other NPC overhauls.</Bold> This will free up slots in your load order and eliminate possible conflicts between the
+                                <Run Text="{StaticResource AppName}"/> merge and its original sources.
+                            </TextBlock>
+                        </ContentControl>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
-                            If you are <Italic>not</Italic> using Mod Organizer, you will probably have to copy/move the output into your game's data directory.
+                            Optional instructions for other tools:
                         </TextBlock>
-                        <TextBlock Style="{StaticResource ParagraphStyle}">
-                            After activating the mod, <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/>
-                            should be at or near the bottom of your load order; if it is anywhere else, move it to the bottom, after all other mods that make NPC edits.
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ParagraphStyle}">
-                            <Bold>LOOT users:</Bold> Add <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/>
-                            to the "Dynamic Patches" group so that it stays near the bottom after each sort.
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource ParagraphStyle}">
-                            <Bold>Wrye Bash users:</Bold> If you built this NPC merge <Italic>with</Italic> your up-to-date Bashed Patch in your load order, then load the NPC merge
-                            <Italic>after</Italic> the Bashed Patch. If you built <Italic>without</Italic> the Bashed Patch, then load the NPC merge <Italic>before</Italic> the Bashed
-                            Patch, and make sure to regenerate the Bashed Patch with
-                            <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> in your load order and enabled.
-                        </TextBlock>
+                        <ContentControl Template="{StaticResource ListItem}" Tag="•">
+                            <TextBlock Style="{StaticResource ListItemStyle}">
+                                <Bold>LOOT:</Bold> Add <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> to the "Dynamic Patches" group
+                                so that it stays near the bottom after each sort.
+                            </TextBlock>
+                        </ContentControl>
+                        <ContentControl Template="{StaticResource ListItem}" Tag="•">
+                            <TextBlock Style="{StaticResource ParagraphStyle}">
+                                <Bold>Automated Patchers (Wrye Bash, Synthesis, etc.):</Bold> You can run <Run Text="{StaticResource AppName}"/> either before or after these patchers. If you've selected a patch
+                                (<Run Style="{StaticResource CodeStyle}">Bashed Patch, 0.esp</Run>, <Run Style="{StaticResource CodeStyle}">Synthesis.esp</Run>, etc.) as the plugin source for any NPCs, then make
+                                sure that <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> loads after the patch. Otherwise, re-run
+                                those patchers after finishing with <Run Text="{StaticResource AppName}"/>.
+                            </TextBlock>
+                        </ContentControl>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
                             You've reached the end and can exit the program now.
                         </TextBlock>

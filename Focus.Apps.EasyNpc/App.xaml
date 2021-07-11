@@ -5,6 +5,7 @@
              xmlns:debug="clr-namespace:Focus.Apps.EasyNpc.Debug"
              xmlns:fa="http://schemas.fontawesome.com/icons/"
              xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+             xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              ShutdownMode="OnExplicitShutdown"
@@ -34,6 +35,11 @@
             <x:Static x:Key="AppProduct" Member="config:AssemblyProperties.Product"/>
             <x:Static x:Key="AppTitle" Member="config:AssemblyProperties.Title"/>
             <x:Static x:Key="AppVersion" Member="config:AssemblyProperties.Version"/>
+            <x:Static x:Key="LaunchedByModOrganizer" Member="main:StartupInfo.IsLaunchedByModOrganizer"/>
+            <x:Static x:Key="LaunchedByUnknown" Member="main:StartupInfo.IsLaunchedByUnknown"/>
+            <x:Static x:Key="LaunchedByVortex" Member="main:StartupInfo.IsLaunchedByVortex"/>
+            <x:Static x:Key="LaunchedStandalone" Member="main:StartupInfo.IsLaunchedStandalone"/>
+            <x:Static x:Key="LaunchedStandaloneOrUnknown" Member="main:StartupInfo.IsLaunchedStandaloneOrUnknown"/>
 
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>

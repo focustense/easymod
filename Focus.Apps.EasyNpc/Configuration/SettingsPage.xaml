@@ -75,18 +75,18 @@
                         </Button>
                         <Expander Header="What's this?" Grid.ColumnSpan="2" Grid.Row="2">
                             <TextBlock Background="{StaticResource ExpandoBackgroundBrush}" Foreground="{StaticResource MutedTextBrush}" Cursor="Arrow" Padding="4" TextWrapping="Wrap">
-                            Bethesda games look at two sources for face geometry: face data in plugins (ESPs) and pre-generated facegen meshes (NIFs).
-                            If these two don't match in-game for any given actor, the result is the dreaded "black face", "gray face" or "dark face" bug.
-                            <LineBreak/><LineBreak/>
-                            Specifying your mod directory (e.g. C:\Program Files\Mod Organizer\mods) enables this program to find the face meshes associated
-                            with the plugins and overrides you select and prevent blackface issues. It also allows you to create a merged NPC BSA, which is
-                            highly recommended if you're modifying hundreds of NPCs with high-poly faces.
-                            <LineBreak/><LineBreak/>
-                            Even if you don't use Mod Organizer, you can still use this feature by extracting all your NPC mods to a single directory that
-                            lives <Italic>outside</Italic> your SSE data directory - just extract each mod to its own folder. Vortex also uses this structure
-                            for its mod staging directory, although the exact mod directory names it chooses may be different.
-                            <LineBreak/><LineBreak/>
-                            <Bold>Do not use your Skyrim data directory here.</Bold> It won't work, and could cause bad side effects that break your game.
+                                Bethesda games look at two sources for face geometry: face data in plugins (ESPs) and pre-generated facegen meshes (NIFs).
+                                If these two don't match in-game for any given actor, the result is the dreaded "black face", "gray face" or "dark face" bug.
+                                <LineBreak/><LineBreak/>
+                                Specifying your mod directory (e.g. C:\Program Files\Mod Organizer\mods) enables this program to find the face meshes associated
+                                with the plugins and overrides you select and prevent blackface issues. It also allows you to create a merged NPC BSA, which is
+                                highly recommended if you're modifying hundreds of NPCs with high-poly faces.
+                                <LineBreak/><LineBreak/>
+                                If you don't use a supported mod manager such as Mod Organizer or Vortex, you may still be able to use this feature by extracting
+                                all your NPC mods to a single directory that lives <Italic>outside</Italic> your SSE data directory - just extract each mod to its
+                                own folder. This workflow is not officially supported, but may work for some scenarios.
+                                <LineBreak/><LineBreak/>
+                                <Bold>Do not use your Skyrim data directory here.</Bold> It won't work, and could cause bad side effects that break your game.
                             </TextBlock>
                         </Expander>
 

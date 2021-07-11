@@ -16,6 +16,14 @@ namespace Focus.Apps.EasyNpc.Main
 
     public class StartupInfo
     {
+        public static bool IsLaunchedByModOrganizer => instance?.Launcher == ModManager.ModOrganizer;
+        public static bool IsLaunchedByUnknown => instance?.Launcher == ModManager.Unknown;
+        public static bool IsLaunchedByVortex => instance?.Launcher == ModManager.Vortex;
+        public static bool IsLaunchedStandalone => instance?.Launcher == ModManager.None;
+        public static bool IsLaunchedStandaloneOrUnknown => IsLaunchedByUnknown || IsLaunchedStandalone;
+
+        private static StartupInfo instance;
+
         public ModManager Launcher { get; private init; }
         public ModManager ModDirectoryOwner { get; private init; }
         public string ParentProcessPath { get; private init; }
@@ -23,12 +31,13 @@ namespace Focus.Apps.EasyNpc.Main
         public static StartupInfo Detect()
         {
             var parentProcess = Process.GetCurrentProcess().Parent();
-            return new StartupInfo
+            instance = new StartupInfo
             {
                 Launcher = DetectProcessModManager(parentProcess),
                 ModDirectoryOwner = DetectModDirectoryModManager(Settings.Default.ModRootDirectory),
                 ParentProcessPath = parentProcess?.MainModule?.FileName,
             };
+            return instance;
         }
 
         private StartupInfo() { }

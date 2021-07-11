@@ -12,5 +12,6 @@
     <Color x:Key="TaskProgressBackgroundColor">#FFF0F8FF</Color>
     <Color x:Key="TaskProgressCompletedBackgroundColor">#FF98FB98</Color>
     <Color x:Key="TaskProgressFailedBackgroundColor">#FFFFC0CB</Color>
+    <Color x:Key="WarningForegroundColor">#FFFF4500</Color>
 
 </ResourceDictionary>

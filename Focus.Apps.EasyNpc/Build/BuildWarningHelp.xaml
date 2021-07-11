@@ -34,13 +34,7 @@
                     <Viewbox MaxHeight="12" MaxWidth="12"><ui:SymbolIcon Foreground="{StaticResource HelpIconForegroundBrush}" Symbol="Setting"/></Viewbox><Run>Settings button</Run>
                     <Run>in the top navigation bar and choose a valid</Run>
                     <Run FontStyle="Italic">Mod Root Directory</Run>.
-                    <Run>You can still do this even if you don't use Mod Organizer: just create a new folder anywhere on disk, and manually extract your mods into it, giving each mod its own subdirectory.</Run>
-                </TextBlock>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run>
-                        You can still use this program to generate a merged plugin without doing the above, but without access to the true mod structure, your results may be just as buggy, or even worse,
-                        than simply installing the mods as normal.
-                    </Run>
+                    <Run>If you aren't using a supported mod manager: create a new folder anywhere on disk, and manually extract your mods into it, giving each mod its own subdirectory.</Run>
                 </TextBlock>
             </ui:SimpleStackPanel>
         </DataTemplate>
@@ -60,8 +54,8 @@
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
                     <Run FontWeight="Medium">Recommendation:</Run>
                     <Run>
-                        If only one of the mods listed above is enabled, no action is needed. If more than one is enabled, and you trust the winning file, then you can hide the losing files from their respective mods in Mod Organizer
-                        in order to make this warning go away. If you're not sure, then you can either hope and pray, or unpack both BSAs using the
+                        If only one of the mods listed in the warning is enabled, no action is needed. If more than one is enabled, and you trust the winning file, then you can hide the losing files from their respective mods
+                        in Mod Organizer in order to make this warning go away. If you're not sure, or don't use Mod Organizer, then you can either hope and pray, or unpack both BSAs using the
                     </Run>
                     <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://www.nexusmods.com/skyrimspecialedition/mods/974">Bethesda Archive Extractor</Hyperlink>
                     <Run>or built-in extraction in Mod Organizer, and then use any comparison tool (e.g. WinMerge) to check for inconsistencies in the</Run>
