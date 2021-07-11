@@ -1,21 +1,23 @@
 # Getting Started with EasyNPC
 
-- [Installation](#Installation)
-- [First Time](#First-time-use-and-load-order)
-- [Profile](#Customizing-NPCs-(Profile))
-- [Build](#Building-your-personal-mod)
+- [Installation](#installation)
+- [First Time](#first-time-use-and-load-order)
+- [Profile](#customizing-NPCs-Profile)
+- [Build](#building-your-personal-mod)
 
 ## Installation
 
 1. Download `EasyNPC-{version}.7z` from the [latest release](https://github.com/focustense/easymod/releases/latest) page.
 2. Extract to any folder on your hard drive.
 3. To get face previews in the app, download one or more [Mugshot packs](https://mega.nz/folder/KAxn2ARJ#NZQUN37_IwVDArs4DQ-tGQ) and extract them to the installation folder. (Note: These do not contain any original content from any mod, but are hosted off-site due to their size.)
-4. Add Easy NPC [as an executable](https://github.com/ModOrganizer2/modorganizer/wiki/Executables-window) in Mod Organizer.
+4. Register Easy NPC with your mod manager:  
+   - **Mod Organizer:** Add Easy NPC [as an executable](https://github.com/ModOrganizer2/modorganizer/wiki/Executables-window).
+   - **Vortex:** Launch EasyNPC using the [Vortex extension](https://www.nexusmods.com/site/mods/265).
 5. Prepare your load order for first-time use, as described in the following section.
 
 ## First-time use and load order
 
-The optimal load order for EasyNPC is the same as the load order for SSE without any patches or add-ons for NPC overhauls. LOOT can generally be used as a starting point, but manual sorting is recommended for NPC mods:
+The optimal load order for EasyNPC is the same as the load order for SSE without any patches or add-ons for NPC overhauls. [LOOT](https://loot.github.io/) is integrated into most mod managers and can generally be used as a starting point, but manual sorting is recommended for NPC mods:
 
 1. Place all NPC overhauls near the bottom. The only plugins that load afterward should be generated patches (Bashed Patch, DynDOLOD output, etc.).
 2. Order NPC mods by personal preference, from least to most important. In this context, "importance" is roughly equivalent to "number or proportion of faces that will be used".
@@ -41,21 +43,29 @@ The Profile tab is divided into 4 sections:
 
 ![Profile Screenshot](images/profile.png)
 
-The header (top) includes a few high-level filters on the left, as well as buttons to Load or Save the profile on the right.
+The header (top) includes a filter drop-downmenu and some high-level settings on the left, as well as buttons to Load or Save the profile on the right.
 
-- _Show DLC Overrides_: includes NPCs that are **only** overridden by the Skyrim DLC (Dawnguard, Dragonborn, Hearthfires), and not any other mods.
+Available filter options include:
+- _Modded_: NPCs that are customized by a third-party (not DLC) mod.
+- _Conflicts_: Inconsistent/conflicting settings, e.g. likely to cause blackface or other problems.
+- _Missing Mods_: Pointing to mods that are no longer available.
+- _Wigs_: Hair that is overridden with a wig - these may not convert properly.
+- _Default plugin_: NPCs using the specified plugin as the default or "master" record.
+- _Face plugin_: NPCs using the specified plugin for face attributes.
+
+Other top-level filters include:
 - _Show Non-Conflicting Overrides_: includes NPCs that only have one mod available. Since it is still possible to revert to vanilla, this is enabled by default, but can be disabled if only interested in the NPCs supported by multiple overhauls.
 - _Only Face Overrides_ - hides NPCs whose behavior is modified, but who don't have any face customizations available. Since the default plugin is chosen to be the last applicable one in the load order by default, there is usually no reason to look at them.
+
+All filters are subtractive - each box that is ticked will reduce the number of visible NPCs.
 
 The NPC or actor list (left) shows all NPCs who are present in your load order and who have not been filtered, either by options in the header or by typing search text into one of the boxes at the top. Clicking on a line will bring up the details for that NPC.
 
 The plugin list (right) shows all plugins that customize ("override") this NPC. Icons to the right of each plugin name will help identify which ones include face changes and which are the current default/master and face selections - hover over each icon for a description. Clicking on any plugin once will show the available actions, and also highlight the corresponding face preview in the bottom section.
 
-The preview list (bottom) shows face previews for the combination of all mods in your Mod Directory (you did specify one when you started the app, right?) **as well as** any mugshots you downloaded for mods that are _not_ enabled or installed. These will be shown with the warning text "Plugin not loaded", "Mod not installed", or both. "Plugin not loaded" means you might have the mod but it is disabled, whereas "Mod not installed" means you don't have any mod in your Mod Directory by that name.
+The preview list (bottom) shows face previews for the combination of all mods in your Mod Directory _as well as_ any mugshots you downloaded for mods that are _not_ enabled or installed. These will be shown with the warning text "Plugin not loaded", "Mod not installed", or both. "Plugin not loaded" means you might have the mod but it is disabled, whereas "Mod not installed" means you don't have any mod in your Mod Directory by that name.  **If you are seeing any results or warnings that you don't understand or don't expect, please check the documentation on [mugshot matching](mugshot-matching.md).**
 
 Clicking once on a preview will highlight the related plugin, if any is installed; double-clicking will choose the face from that mod/plugin combination.
-
-**TIP:** If you're getting "mod not installed" because you have it installed under a different name - for example, "Bijin NPCs" instead of "Bijin NPCs SE" - you can make EasyNPC associate them by either renaming the mod, or renaming the folder inside `Mugshots` you extracted to the app folder. You need to restart the app if you rename the mod, but not if you rename the Mugshots sub-folder.
 
 **ADVANCED:** Hold `Ctrl` while double-clicking a face preview, or when clicking "Set as face", to _stop_ EasyNPC from synchronizing your plugin and mod selection. This is normally not recommended, but can help resolve a few esoteric problems, such as a single mod providing multiple plugins that each modify the same NPC, or a mod that includes a "replacer" for another mod's ESP.
 
@@ -83,8 +93,8 @@ After confirming the mod name, the build starts and can only be stopped by exiti
 
 ![Build Progress Screenshot](images/build-progress.png)
 
-Once complete, exit the app and refresh your mod manager (F5 in Mod Organizer) to see the new mod. Remember to disable the original NPC overhauls after enabling the newly-built mod.
+Once complete, follow the on-screen instructions to activate the new mod. Remember to disable the original NPC overhauls after enabling the newly-built mod.
 
-**TIP:** Activate the new mod, and disable the original ones, in a new Mod Organizer profile. This will make it much easier to rebuild or revert if any issues are found.
+**TIP:** Activate the new mod, and disable the original ones, in a new Mod Organizer/Vortex profile. This will make it much easier to rebuild or revert if any issues are found.
 
 That's it! Enjoy your de-uglified gaming experience.
