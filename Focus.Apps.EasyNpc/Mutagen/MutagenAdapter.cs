@@ -3,7 +3,9 @@ using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Main;
+using Focus.Files;
 using Focus.ModManagers;
+using Focus.Providers.Mutagen;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Installs;
 using Mutagen.Bethesda.Plugins;
@@ -25,7 +27,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
     {
         public IArchiveProvider ArchiveProvider { get; private set; }
         public GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> Environment { get; private set; }
-        public string GameDataFolder { get; private set; }
+        public string DataDirectory { get; private set; }
         // Mutagen doesn't have an internal log, like XEdit Lib. (Because it doesn't need to, as it's a .NET library and
         // works with ordinary exception handling)
         public IExternalLog Log { get; init; } = new NullExternalLog();
@@ -40,14 +42,14 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             if (!GameLocations.TryGetDataFolder(GameRelease.SkyrimSE, out var dataFolder))
                 throw new Exception("Couldn't find SkyrimSE game data folder");
-            GameDataFolder = dataFolder;
+            DataDirectory = dataFolder;
             this.log = log;
             this.modResolver = modResolver;
         }
 
         public IEnumerable<PluginInfo> GetAvailablePlugins()
         {
-            return LoadOrder.GetListings(GameRelease.SkyrimSE, GameDataFolder, true)
+            return LoadOrder.GetListings(GameRelease.SkyrimSE, DataDirectory, true)
                 .Select((x, i) => new PluginInfo(
                     x.ModKey.FileName.String, GetMasterNames(x.ModKey.FileName), x.Enabled));
         }
@@ -75,13 +77,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return Task.Run(() =>
             {
                 var loadOrderKeys = pluginNames.Select(pluginName => ModKey.FromNameAndExtension(pluginName));
-                var loadOrder = LoadOrder.Import<ISkyrimModGetter>(GameDataFolder, loadOrderKeys, GameRelease.SkyrimSE);
+                var loadOrder = LoadOrder.Import<ISkyrimModGetter>(DataDirectory, loadOrderKeys, GameRelease.SkyrimSE);
                 var linkCache = loadOrder.ToImmutableLinkCache<ISkyrimMod, ISkyrimModGetter>();
                 // If we actually managed to get here, then earlier code already managed to find the listings file.
                 var listingsFile = PluginListings.GetListingsFile(GameRelease.SkyrimSE);
-                var creationClubFile = CreationClubListings.GetListingsPath(GameRelease.SkyrimSE.ToCategory(), GameDataFolder);
+                var creationClubFile = CreationClubListings.GetListingsPath(GameRelease.SkyrimSE.ToCategory(), DataDirectory);
                 Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
-                    GameDataFolder, listingsFile, creationClubFile, loadOrder, linkCache, true);
+                    DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
                 ArchiveProvider = new MutagenArchiveProvider(Environment);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
@@ -205,7 +207,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         private IEnumerable<string> GetMasterNames(string pluginFileName)
         {
-            var path = Path.Combine(GameDataFolder, pluginFileName);
+            var path = Path.Combine(DataDirectory, pluginFileName);
             using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
             return mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
         }

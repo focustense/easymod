@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Files;
 using nifly;
 using Serilog;
 
@@ -12,16 +13,18 @@ namespace Focus.Apps.EasyNpc.Nifly
 {
     public class NiflyFaceGenEditor : IFaceGenEditor
     {
+        private readonly IFileProvider fileProvider;
         private readonly ILogger log;
 
-        public NiflyFaceGenEditor(ILogger log)
+        public NiflyFaceGenEditor(IFileProvider fileProvider, ILogger log)
         {
+            this.fileProvider = fileProvider;
             this.log = log.ForContext<NiflyFaceGenEditor>();
         }
 
         public void ReplaceHeadParts(
             string faceGenPath, IEnumerable<HeadPartInfo> removedParts, IEnumerable<HeadPartInfo> addedParts,
-            Color? hairColorNullable, IArchiveProvider archiveProvider)
+            Color? hairColorNullable, TempFileCache tempFileCache)
         {
             if (!File.Exists(faceGenPath))
             {
@@ -42,7 +45,6 @@ namespace Focus.Apps.EasyNpc.Nifly
 
             // In case we end up re-processing a facegen (i.e. due to user running merge on an old directory), we should
             // ignore head parts that are already present in the facegen with the correct name.
-            using var gameFileProvider = archiveProvider.CreateGameFileProvider();
             var existingShapeNames = GetChildShapes(faceGenFile, faceGenNode)
                 .Select(x => x.name.get())
                 .ToHashSet();
@@ -50,7 +52,7 @@ namespace Focus.Apps.EasyNpc.Nifly
             {
                 if (existingShapeNames.Contains(addedPart.EditorId))
                     continue;
-                var modelPath = gameFileProvider.GetPhysicalPath(addedPart.FileName);
+                var modelPath = tempFileCache.GetTempPath(fileProvider, addedPart.FileName);
                 using var modelFile = new NifFile(true);
                 modelFile.Load(modelPath);
                 var mainShape = GetChildShapes(modelFile, modelFile.GetRootNode()).FirstOrDefault();
@@ -67,6 +69,18 @@ namespace Focus.Apps.EasyNpc.Nifly
                 }
             }
             faceGenFile.Save(faceGenPath);
+        }
+
+        private void CopyToTempFile(string fileName)
+        {
+            var data = fileProvider.ReadBytes(fileName);
+            if (data == null)
+            {
+                log.Error("Missing asset file {FileName} for FaceGen injection", fileName);
+                return;
+            }
+            var tempFilePath = Path.GetTempFileName();
+
         }
 
         private static IEnumerable<BSDynamicTriShape> GetChildShapes(NifFile file, NiNode parent)

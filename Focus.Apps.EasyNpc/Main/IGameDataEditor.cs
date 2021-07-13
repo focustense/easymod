@@ -2,6 +2,7 @@
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
+using Focus.Files;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace Focus.Apps.EasyNpc.Main
         where TKey : struct
     {
         IArchiveProvider ArchiveProvider { get; }
+        string DataDirectory { get; }
         IExternalLog Log { get; }
         IMergedPluginBuilder<TKey> MergedPluginBuilder { get; }
         IModPluginMapFactory ModPluginMapFactory { get; }

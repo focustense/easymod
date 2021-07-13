@@ -5,6 +5,7 @@ using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Mutagen;
 using Focus.Apps.EasyNpc.Nifly;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.Files;
 using Focus.ModManagers;
 using Mutagen.Bethesda.Plugins;
 using PropertyChanged;
@@ -86,7 +87,8 @@ namespace Focus.Apps.EasyNpc.Main
                 var npcConfigs = Profile.GetAllNpcConfigurations();
                 Maintenance = new MaintenanceViewModel<TKey>(npcConfigs, profileEventLog, Loader.LoadedPluginNames);
                 var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
-                var faceGenEditor = new NiflyFaceGenEditor(Logger);
+                var fileProvider = new GameFileProvider(gameDataEditor.DataDirectory, gameDataEditor.ArchiveProvider);
+                var faceGenEditor = new NiflyFaceGenEditor(fileProvider, Logger);
                 var buildChecker = new BuildChecker<TKey>(
                     Loader.LoadedPluginNames, npcConfigs, modResolver, Loader.ModPluginMapFactory,
                     gameDataEditor.ArchiveProvider, profileEventLog);

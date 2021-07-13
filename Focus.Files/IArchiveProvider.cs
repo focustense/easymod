@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Focus.Apps.EasyNpc.GameData.Files
+namespace Focus.Files
 {
     public interface IArchiveProvider
     {
         bool ContainsFile(string archivePath, string archiveFilePath);
-        void CopyToFile(string archivePath, string archiveFilePath, string outFilePath);
-        IGameFileProvider CreateGameFileProvider();
         IEnumerable<string> GetArchiveFileNames(string archivePath, string path = "");
+        string GetArchivePath(string archiveName);
         IEnumerable<string> GetLoadedArchivePaths();
-        string ResolvePath(string archiveName);
+        ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath);
     }
 }

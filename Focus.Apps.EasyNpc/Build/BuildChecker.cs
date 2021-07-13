@@ -2,6 +2,7 @@
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.Files;
 using Focus.ModManagers;
 using System;
 using System.Collections.Generic;

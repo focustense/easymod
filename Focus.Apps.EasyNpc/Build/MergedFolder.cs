@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.Files;
 using Focus.ModManagers;
 using Serilog;
 using System;
@@ -83,7 +84,7 @@ namespace Focus.Apps.EasyNpc.Build
                             .Select(g => g.Last())
                             .ToDictionary(x => x.RelativePath, StringComparer.OrdinalIgnoreCase),
                         ArchiveFiles = modPluginMap.GetArchivesForMod(modName)
-                                .Select(archiveName => archiveProvider.ResolvePath(archiveName))
+                                .Select(archiveName => archiveProvider.GetArchivePath(archiveName))
                                 .Select(archivePath => new
                                 {
                                     ArchivePath = archivePath,
@@ -140,10 +141,14 @@ namespace Focus.Apps.EasyNpc.Build
                     var archiveShortName = Path.GetFileName(containingArchiveFile);
                     progress.ItemName = $"[{index.ModName}] - {archiveShortName} - {relativePath}";
                     Directory.CreateDirectory(Path.GetDirectoryName(outFileName));
-                    archiveProvider.CopyToFile(containingArchiveFile, relativePath, outFileName);
-                    log.Information(
-                        "Extracted {SourceFileName} from {ArchiveName} in {ModName} to {MergeFileName}",
-                        relativePath, Path.GetFileName(containingArchiveFile), index.ModName, outFileName);
+                    if (archiveProvider.CopyToFile(containingArchiveFile, relativePath, outFileName))
+                        log.Information(
+                            "Extracted {SourceFileName} from {ArchiveName} in {ModName} to {MergeFileName}",
+                            relativePath, Path.GetFileName(containingArchiveFile), index.ModName, outFileName);
+                    else
+                        log.Warning(
+                            "Failed to extract {SourceFileName} from {ArchiveName} in {ModName}",
+                            relativePath, Path.GetFileName(containingArchiveFile), index.ModName);
                     if (incProgress)
                         progress.CurrentProgress++;
                     return true;
@@ -240,6 +245,7 @@ namespace Focus.Apps.EasyNpc.Build
                 progress.StartStage("Processing wig conversions");
                 progress.AdjustRemaining(mergeInfo.WigConversions.Count, 0.2f);
                 var npcsByFormId = npcs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
+                using var tempFileCache = new TempFileCache();
                 Parallel.ForEach(mergeInfo.WigConversions, wigConversion =>
                 {
                     var npcKey = Tuple.Create(wigConversion.BasePluginName, wigConversion.LocalFormIdHex);
@@ -249,7 +255,7 @@ namespace Focus.Apps.EasyNpc.Build
                     progress.ItemName = $"'{npc.Name}' ({npc.BasePluginName} - {npc.EditorId}) -- {faceMeshFileName}";
                     faceGenEditor.ReplaceHeadParts(
                         faceGenPath, wigConversion.RemovedHeadParts, wigConversion.AddedHeadParts,
-                        wigConversion.HairColor, archiveProvider);
+                        wigConversion.HairColor, tempFileCache);
                     progress.CurrentProgress++;
                 });
                 progress.JumpTo(0.75f);

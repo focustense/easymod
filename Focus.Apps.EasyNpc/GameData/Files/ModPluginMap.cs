@@ -68,7 +68,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
                 .ToList();
             IDictionary<string, IEnumerable<string>> modsToPlugins = null;
             IDictionary<string, IEnumerable<string>> pluginsToMods = null;
-            IDictionary<string, IEnumerable<string>> modsToArchives= null;
+            IDictionary<string, IEnumerable<string>> modsToArchives = null;
             IDictionary<string, IEnumerable<string>> archivesToMods = null;
             Parallel.Invoke(
                 () =>

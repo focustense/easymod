@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.Files;
 using Focus.ModManagers;
 using Focus.Storage.Archives;
 using PropertyChanged;
