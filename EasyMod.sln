@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Files", "Focus.Files\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Providers.Mutagen", "Focus.Providers.Mutagen\Focus.Providers.Mutagen.csproj", "{BC539444-C54B-422E-B060-0089B652D8EF}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Tools.MugPrep", "Focus.Tools.MugPrep\Focus.Tools.MugPrep.csproj", "{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{BC539444-C54B-422E-B060-0089B652D8EF}.Release|x64.Build.0 = Release|Any CPU
 		{BC539444-C54B-422E-B060-0089B652D8EF}.Release|x86.ActiveCfg = Release|Any CPU
 		{BC539444-C54B-422E-B060-0089B652D8EF}.Release|x86.Build.0 = Release|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Debug|x64.Build.0 = Debug|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Debug|x86.Build.0 = Debug|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|x64.Build.0 = Release|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|x86.ActiveCfg = Release|Any CPU
+		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
