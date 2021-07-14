@@ -13,10 +13,19 @@ namespace Focus.Providers.Mutagen
     public class MutagenArchiveProvider : IArchiveProvider
     {
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
+        private readonly IReadOnlyList<FileName> order;
 
         public MutagenArchiveProvider(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment)
         {
             this.environment = environment;
+            order = Archive.GetIniListings(GameRelease.SkyrimSE)
+                .Concat(environment.LoadOrder.ListedOrder.SelectMany(x => new[] {
+                    // Not all of these will exist, but it doesn't matter, as these are only used for sorting and won't
+                    // affect the actual set of paths returned.
+                    new FileName($"{x.ModKey.Name}.bsa"),
+                    new FileName($"{x.ModKey.Name} - Textures.bsa"),
+                }))
+                .ToList();
         }
 
         public bool ContainsFile(string archivePath, string archiveFilePath)
@@ -35,12 +44,12 @@ namespace Focus.Providers.Mutagen
 
         public string GetArchivePath(string archiveName)
         {
-            return Path.Combine(environment.DataFolderPath, archiveName);
+            return Path.Combine(environment.GetRealDataDirectory(), archiveName);
         }
 
         public IEnumerable<string> GetLoadedArchivePaths()
         {
-            var dataFolderPath = new DirectoryPath(environment.DataFolderPath);
+            var dataFolderPath = new DirectoryPath(environment.GetRealDataDirectory());
             return Archive.GetApplicableArchivePaths(GameRelease.SkyrimSE, dataFolderPath).Select(x => x.Path);
         }
 
