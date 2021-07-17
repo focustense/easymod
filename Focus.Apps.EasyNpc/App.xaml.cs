@@ -24,7 +24,8 @@ namespace Focus.Apps.EasyNpc
 
         private void Start(CommandLineOptions options)
         {
-            Settings.Default.BuildReportPath = options.ReportPath;
+            if (!string.IsNullOrEmpty(options.ReportPath))
+                Settings.Default.BuildReportPath = options.ReportPath;
             var startupInfo = StartupInfo.Detect();
             var isFirstLaunch =
                 options.ForceIntro ||
