@@ -10,12 +10,12 @@ enum GameId {
 }
 
 interface IModAttributes {
-  modId: number;
+  modId: string;
   modName: string;
 }
 
 interface IFileInfo {
-  modId: number;
+  modId: string;
 }
 
 interface IModInfo {
