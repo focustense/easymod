@@ -12,12 +12,12 @@ namespace Focus.ModManagers.ModOrganizer
         {
             var directoryPath = Path.GetDirectoryName(exePath);
             var entryIniPath = Path.Combine(directoryPath, "ModOrganizer.ini");
-            config = new ModOrganizerConfiguration(entryIniPath);
+            config = File.Exists(entryIniPath) ? new ModOrganizerConfiguration(entryIniPath) : null;
         }
 
         public string GetDefaultModRootDirectory()
         {
-            return config.ModsDirectory;
+            return config?.ModsDirectory;
         }
 
         public IEnumerable<string> GetModDirectories(string modName)
