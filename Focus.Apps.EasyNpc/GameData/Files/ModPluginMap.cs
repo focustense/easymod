@@ -82,7 +82,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
                 {
                     archivesToMods = modsWithPlugins
                         .SelectMany(x => x.Archives.Select(a => new { x.Mod, Archive = a }))
-                        .GroupBy(x => x.Archive, x => x.Mod)
+                        .GroupBy(x => x.Archive, x => x.Mod, StringComparer.OrdinalIgnoreCase)
                         .ToDictionary(
                             x => x.Key,
                             x => x.ToList().AsReadOnly().AsEnumerable(),
@@ -99,7 +99,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
                 () => {
                     pluginsToMods = modsWithPlugins
                         .SelectMany(x => x.Plugins.Select(p => new { x.Mod, Plugin = p }))
-                        .GroupBy(x => x.Plugin, x => x.Mod)
+                        .GroupBy(x => x.Plugin, x => x.Mod, StringComparer.OrdinalIgnoreCase)
                         .ToDictionary(
                             x => x.Key,
                             x => x.ToList().AsReadOnly().AsEnumerable(),
