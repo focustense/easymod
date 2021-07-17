@@ -13,11 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers", "Focus.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers.ModOrganizer", "Focus.ModManagers.ModOrganizer\Focus.ModManagers.ModOrganizer.csproj", "{23C30720-E00F-4058-9ACF-C4615A212DCF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Files", "Focus.Files\Focus.Files.csproj", "{359F8381-B305-43F6-9546-86F9730EFFE3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Files", "Focus.Files\Focus.Files.csproj", "{359F8381-B305-43F6-9546-86F9730EFFE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Providers.Mutagen", "Focus.Providers.Mutagen\Focus.Providers.Mutagen.csproj", "{BC539444-C54B-422E-B060-0089B652D8EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Providers.Mutagen", "Focus.Providers.Mutagen\Focus.Providers.Mutagen.csproj", "{BC539444-C54B-422E-B060-0089B652D8EF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Tools.MugPrep", "Focus.Tools.MugPrep\Focus.Tools.MugPrep.csproj", "{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Audio", "Focus.Audio\Focus.Audio.csproj", "{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -125,6 +127,18 @@ Global
 		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|x64.Build.0 = Release|Any CPU
 		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|x86.ActiveCfg = Release|Any CPU
 		{EF9FD5B0-2B94-4EC3-ABDB-790B0D6F78C9}.Release|x86.Build.0 = Release|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Debug|x64.Build.0 = Debug|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Debug|x86.Build.0 = Debug|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Release|x64.ActiveCfg = Release|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Release|x64.Build.0 = Release|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Release|x86.ActiveCfg = Release|Any CPU
+		{F796A5C5-E84D-48CC-829F-5AEF4E5AF02B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
