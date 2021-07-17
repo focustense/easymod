@@ -79,7 +79,8 @@ namespace Focus.Apps.EasyNpc.Build
                 // Deleting the build report means we're guaranteed not to have a stale one, but serves the secondary
                 // purpose of signaling to parent processes (mod managers/extensions) that the build actually started.
                 // This way they can tell the difference between a failed build and no build.
-                File.Delete(Settings.Default.BuildReportPath);
+                if (File.Exists(Settings.Default.BuildReportPath))
+                    File.Delete(Settings.Default.BuildReportPath);
                 OutputDirectory = Path.Combine(Settings.Default.ModRootDirectory, OutputModName);
                 Directory.CreateDirectory(OutputDirectory);
                 var buildSettings = GetBuildSettings();
