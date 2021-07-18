@@ -43,7 +43,8 @@ namespace Focus.ModManagers.Vortex
             var directoryName = new DirectoryInfo(directoryPath).Name;
             return
                 manifest.Files.TryGetValue(directoryName, out var fileInfo) &&
-                manifest.Mods.TryGetValue(fileInfo.ModId, out var modInfo) ?
+                manifest.Mods.TryGetValue(fileInfo.ModId, out var modInfo) &&
+                !string.IsNullOrEmpty(modInfo.Name) ?
                 modInfo.Name : defaultResolver.GetModName(directoryPath);
         }
 
