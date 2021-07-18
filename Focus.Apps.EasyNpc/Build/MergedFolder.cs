@@ -170,19 +170,7 @@ namespace Focus.Apps.EasyNpc.Build
             {
                 foreach (var rawTexturePath in GetReferencedTexturePaths(meshFileName))
                 {
-                    var texturePath = rawTexturePath;
-
-                    // A facegen might have an absolute path from the mod creator. No bueno. Get rid of the root.
-                    if (Path.IsPathRooted(texturePath))
-                    {
-                        var texturesIndex =
-                            texturePath.LastIndexOf(@"data\textures", StringComparison.OrdinalIgnoreCase);
-                        if (texturesIndex == -1)
-                            texturesIndex =
-                                texturePath.LastIndexOf(@"data/textures", StringComparison.OrdinalIgnoreCase);
-                        if (texturesIndex > 0)
-                            texturePath = texturePath.Substring(texturesIndex + 5);
-                    }
+                    var texturePath = ExtractTexturePath(rawTexturePath);
 
                     // Face tints are a little weird in terms of the rules we want to apply and the warnings we want to
                     // generate. Missing facetints won't cause blackface like other facegen inconsistencies, they just
@@ -197,7 +185,6 @@ namespace Focus.Apps.EasyNpc.Build
                     // in the sense of producing unwanted/unexpected results, whereas the latter is just an oddity and
                     // we have no idea if it's really a problem. So we have to treat these two scenarios differently,
                     // and track the "implicitly referenced but not present" face tints from those in NPC records.
-                    texturePath = texturePath.PrefixPath("textures");
                     if (FileStructure.IsFaceGen(texturePath))
                         referencedFaceTints.Add(texturePath);
                     else
@@ -296,6 +283,40 @@ namespace Focus.Apps.EasyNpc.Build
 
             progress.StartStage("Done");
             progress.CurrentProgress = progress.MaxProgress;
+        }
+
+        private static string ExtractTexturePath(string rawTexturePath)
+        {
+            var texturePath = rawTexturePath;
+            try
+            {
+                if (Path.IsPathRooted(texturePath))
+                {
+                    texturePath =
+                        GetPathAfter(texturePath, @"data\textures", 5) ??
+                        GetPathAfter(texturePath, @"data/textures", 5) ??
+                        GetPathAfter(texturePath, @"\textures\", 1) ??
+                        GetPathAfter(texturePath, @"/textures\", 1) ??
+                        GetPathAfter(texturePath, @"\textures/", 1) ??
+                        GetPathAfter(texturePath, @"/textures/", 1) ??
+                        GetPathAfter(texturePath, @"\data\", 1) ??
+                        GetPathAfter(texturePath, @"/data\", 1) ??
+                        GetPathAfter(texturePath, @"\data/", 1) ??
+                        GetPathAfter(texturePath, @"/data/", 1) ??
+                        texturePath;
+                }
+            }
+            catch (Exception)
+            {
+                // Just use the best we were able to come up with before the error.
+            }
+            return texturePath.PrefixPath("textures");
+        }
+
+        private static string GetPathAfter(string path, string search, int offset)
+        {
+            var index = path.LastIndexOf(search, StringComparison.OrdinalIgnoreCase);
+            return index >= 0 ? path.Substring(index + offset) : null;
         }
 
         // This is kind of a horrible hack to read texture paths from a NIF without actually parsing the file.
