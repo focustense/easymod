@@ -168,8 +168,22 @@ namespace Focus.Apps.EasyNpc.Build
 
             void AddReferencedTextures(string meshFileName)
             {
-                foreach (var rawRexturePath in GetReferencedTexturePaths(meshFileName))
+                foreach (var rawTexturePath in GetReferencedTexturePaths(meshFileName))
                 {
+                    var texturePath = rawTexturePath;
+
+                    // A facegen might have an absolute path from the mod creator. No bueno. Get rid of the root.
+                    if (Path.IsPathRooted(texturePath))
+                    {
+                        var texturesIndex =
+                            texturePath.LastIndexOf(@"data\textures", StringComparison.OrdinalIgnoreCase);
+                        if (texturesIndex == -1)
+                            texturesIndex =
+                                texturePath.LastIndexOf(@"data/textures", StringComparison.OrdinalIgnoreCase);
+                        if (texturesIndex > 0)
+                            texturePath = texturePath.Substring(texturesIndex + 5);
+                    }
+
                     // Face tints are a little weird in terms of the rules we want to apply and the warnings we want to
                     // generate. Missing facetints won't cause blackface like other facegen inconsistencies, they just
                     // won't do anything at all (i.e. no "makeup" or warpaint). It is normal for a mod to edit an NPCs
@@ -183,7 +197,7 @@ namespace Focus.Apps.EasyNpc.Build
                     // in the sense of producing unwanted/unexpected results, whereas the latter is just an oddity and
                     // we have no idea if it's really a problem. So we have to treat these two scenarios differently,
                     // and track the "implicitly referenced but not present" face tints from those in NPC records.
-                    var texturePath = rawRexturePath.PrefixPath("textures");
+                    texturePath = texturePath.PrefixPath("textures");
                     if (FileStructure.IsFaceGen(texturePath))
                         referencedFaceTints.Add(texturePath);
                     else
