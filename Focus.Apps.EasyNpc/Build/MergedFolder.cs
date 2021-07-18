@@ -50,7 +50,11 @@ namespace Focus.Apps.EasyNpc.Build
             // of time. This takes up a decent chunk of memory, but, hey, we're talking about users who are running
             // modded Skyrim and incorporating NPC mods full of 4K and 8K textures, so they can probably afford it.
             progress.StartStage("Building file index");
-            var allFaceMods = npcs.Select(x => x.FaceModName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
+            var allFaceMods = npcs
+                .Select(x => x.FaceModName)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
             // For progress reporting, we select an entirely arbitrary 5% of the total for building the index. We won't
             // know what the real total is until we actually read the NIFs, but the max can be adjusted as we go along.
             progress.MaxProgress = allFaceMods.Count * 20;
