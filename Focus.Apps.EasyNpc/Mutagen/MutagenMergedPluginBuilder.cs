@@ -101,7 +101,6 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     {
                         FaceMorph = true,
                         FaceParts = true,
-                        HairColor = true,
                         TextureLighting = true,
                         TintLayers = true,
                         // Height and weight might not be entirely safe to copy without carrying over body type (WNAM),
@@ -125,6 +124,8 @@ namespace Focus.Apps.EasyNpc.Mutagen
                         var mergedHeadPart = context.Import(sourceHeadPart, mergedMod.HeadParts);
                         mergedNpcRecord.HeadParts.Add(mergedHeadPart.Value);
                     }
+                    log.Debug("Importing hair color", npc.FacePluginName);
+                    mergedNpcRecord.HairColor.SetTo(context.Import(faceNpcRecord.HairColor, mergedMod.Colors));
                     log.Debug("Importing face texture", npc.FacePluginName);
                     mergedNpcRecord.HeadTexture.SetTo(context.Import(faceNpcRecord.HeadTexture, mergedMod.TextureSets));
                     log.Information(
@@ -353,6 +354,11 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     "Processing head part {FormKey} '{EditorId}' for cloning",
                     headPart.FormKey, headPart.EditorID);
                 headPart.TextureSet.SetTo(Import(headPart.TextureSet, mergedMod.TextureSets));
+                if (headPart.Model != null && headPart.Model.AlternateTextures != null)
+                {
+                    foreach (var altTexture in headPart.Model.AlternateTextures)
+                        altTexture.NewTexture.SetTo(Import(altTexture.NewTexture, mergedMod.TextureSets));
+                }
                 var mergedExtraParts = headPart.ExtraParts
                     .Select(x => Import(x, mergedMod.HeadParts, hp => ImportHeadPartDependencies(hp)))
                     .Where(x => x != null)
