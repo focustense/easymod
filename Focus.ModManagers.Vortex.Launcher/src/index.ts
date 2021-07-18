@@ -123,7 +123,7 @@ const init = (context: IExtensionContext) => {
     const dataPath = createLookupFile(reportPath);
 
     const tools = context.api.getState().settings.gameMode.discovered[GameId.SSE]?.tools || {};
-    const easyNpcTool = Object.values(tools).find(t => basename(t.path).toLowerCase() == "easynpc.exe");
+    const easyNpcTool = Object.values(tools).find(t => t.path && basename(t.path).toLowerCase() == "easynpc.exe");
     if (easyNpcTool) {
       context.api.runExecutable(
         easyNpcTool.path,
