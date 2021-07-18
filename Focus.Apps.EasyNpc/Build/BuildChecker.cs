@@ -133,7 +133,7 @@ namespace Focus.Apps.EasyNpc.Build
                     WarningMessages.FaceModNotInstalled(npc.EditorId, npc.Name, npc.FaceModName));
                 yield break;
             }
-            if (!modsProvidingFacePlugin.Contains(npc.FaceModName))
+            if (!modsProvidingFacePlugin.Contains(npc.FaceModName, StringComparer.OrdinalIgnoreCase))
                 yield return new BuildWarning(
                     npc.FacePluginName,
                     new RecordKey(npc),
