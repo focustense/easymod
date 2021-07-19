@@ -233,7 +233,8 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 return Enumerable.Empty<VanillaRace>();
             var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>().Resolve(Environment.LinkCache);
             return raceList.Items
-                .Select(x => x.FormKey.AsLink<IRaceGetter>().Resolve(Environment.LinkCache))
+                .Select(x => x.FormKey.AsLink<IRaceGetter>().TryResolve(Environment.LinkCache))
+                .Where(x => x != null)
                 .Select(x => InferRace(x.EditorID));
         }
 
