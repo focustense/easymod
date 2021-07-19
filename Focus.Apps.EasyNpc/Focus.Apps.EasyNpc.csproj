@@ -9,6 +9,7 @@
     <AssemblyTitle>Easy NPC</AssemblyTitle>
     <Product>EasyMod</Product>
     <Version>0.8.5</Version>
+    <ApplicationIcon>EasyNPC.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
