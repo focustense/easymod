@@ -489,10 +489,11 @@ namespace Focus.Apps.EasyNpc.Mutagen
         private static NpcFaceTint[] ReadFaceTints(INpcGetter npc)
         {
             return npc.TintLayers
+                .Where(x => x.Index.HasValue && x.Color.HasValue)
                 .Select(x => new NpcFaceTint(
                     x.Index.Value,
                     new NpcFaceTintColor(x.Color.Value.R, x.Color.Value.G, x.Color.Value.B, x.Color.Value.A),
-                    x.InterpolationValue.Value))
+                    x.InterpolationValue ?? 0))
                 .ToArray();
         }
 
