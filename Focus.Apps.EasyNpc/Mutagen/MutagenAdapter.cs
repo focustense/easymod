@@ -119,6 +119,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             foreach (var npcContext in npcContexts)
             {
                 var formKey = npcContext.Record.FormKey;
+                log.Debug($"Processing {formKey} '{npcContext.Record.EditorID}'");
                 if (formKey.ModKey != modKey)
                 {
                     if (!cache.TryGetValue(formKey, out var npc))
