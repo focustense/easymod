@@ -21,7 +21,7 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public ColumnDefinitions Columns { get; private init; }
 
-        [DependsOn("NpcConfigurations", "OnlyFaceOverrides", "ShowSinglePluginOverrides", "DisplayedNpcsSentinel")]
+        [DependsOn("OnlyFaceOverrides", "ShowSinglePluginOverrides", "DisplayedNpcsSentinel")]
         public IEnumerable<NpcConfiguration<TKey>> DisplayedNpcs
         {
             get
@@ -218,11 +218,6 @@ namespace Focus.Apps.EasyNpc.Profile
                 FocusedNpcOverride.IsSelected = true;
                 FocusedMugshot = null;
             }
-        }
-
-        protected void OnNpcConfigurationsChanged()
-        {
-            ClearFilterBypass();
         }
 
         protected void OnOnlyFaceOverridesChanged()
