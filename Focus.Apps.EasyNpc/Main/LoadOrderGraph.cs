@@ -15,7 +15,11 @@ namespace Focus.Apps.EasyNpc.Main
             foreach (var plugin in plugins)
             {
                 var node = GetOrAddNode(plugin.FileName);
-                node.IsBlacklisted = blacklist.Contains(plugin.FileName);
+                node.IsBlacklisted = !plugin.IsReadable || blacklist.Contains(plugin.FileName);
+                if (node.IsBlacklisted)
+                    // This would normally be handled by Validate(), but it's possible that the node isn't actually
+                    // reachable in the graph.
+                    node.CanLoad = false;
                 node.IsEnabled = plugin.IsEnabled;
                 foreach (var master in plugin.Masters)
                 {

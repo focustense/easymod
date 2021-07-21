@@ -48,8 +48,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public IEnumerable<PluginInfo> GetAvailablePlugins()
         {
             return LoadOrder.GetListings(GameRelease.SkyrimSE, GameDataFolder, true)
-                .Select((x, i) => new PluginInfo(
-                    x.ModKey.FileName.String, GetMasterNames(x.ModKey.FileName), x.Enabled));
+                .Select((x, i) =>
+                {
+                    var isReadable = TryGetMasterNames(x.ModKey.FileName, out var masterNames);
+                    return new PluginInfo(
+                        x.ModKey.FileName.String, masterNames, isReadable, x.Enabled);
+                })
+                .Where(x => x != null);
         }
 
         public IEnumerable<string> GetLoadedPlugins()
@@ -202,13 +207,6 @@ namespace Focus.Apps.EasyNpc.Mutagen
             affectsFaceGen = !NpcFaceData.EqualsForFaceGen(overrideFaceData, previousFaceData);
             return (!NpcFaceData.Equals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
                 overrideFaceData : null;
-        }
-
-        private IEnumerable<string> GetMasterNames(string pluginFileName)
-        {
-            var path = Path.Combine(GameDataFolder, pluginFileName);
-            using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
-            return mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
         }
 
         private ISkyrimModGetter GetMod(ModKey key)
@@ -510,6 +508,23 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 x.Name == y.Name &&
                 x.Flags == y.Flags &&
                 x.Properties.SequenceEqualSafeBy(y.Properties, p => p.Name);
+        }
+
+        private bool TryGetMasterNames(string pluginFileName, out IEnumerable<string> masterNames)
+        {
+            var path = Path.Combine(GameDataFolder, pluginFileName);
+            try
+            {
+                using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
+                masterNames = mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Plugin {pluginName} appears to be corrupt and cannot be loaded.", pluginFileName);
+                masterNames = Enumerable.Empty<string>();
+                return false;
+            }
         }
 
         private static bool VmadsSame(IVirtualMachineAdapterGetter x, IVirtualMachineAdapterGetter y)

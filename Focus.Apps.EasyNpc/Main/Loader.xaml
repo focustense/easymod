@@ -59,8 +59,11 @@
                                                         <Run FontWeight="SemiBold">Previous EasyNPC output</Run>
                                                     </TextBlock>
                                                     <TextBlock Visibility="{Binding HasMissingMasters, Converter={StaticResource BoolToVisibility}}">
-                                                    <Run FontWeight="SemiBold">Missing masters: </Run>
-                                                    <Run Text="{Binding MissingMastersFormatted, Mode=OneWay}"/>
+                                                        <Run FontWeight="SemiBold">Missing masters: </Run>
+                                                        <Run Text="{Binding MissingMastersFormatted, Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Visibility="{Binding IsReadable, Converter={StaticResource InvBoolToVisibility}}">
+                                                        <Run FontWeight="SemiBold">Invalid, unreadable or corrupted plugin</Run>
                                                     </TextBlock>
                                                 </ui:SimpleStackPanel>
                                             </Border.ToolTip>
