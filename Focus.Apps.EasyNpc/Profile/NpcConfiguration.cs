@@ -21,12 +21,14 @@ namespace Focus.Apps.EasyNpc.Profile
         public string BasePluginName => npc.BasePluginName;
         public NpcOverrideConfiguration<TKey> DefaultConfiguration => defaultConfig;
         public string DefaultPluginName => defaultConfig?.PluginName;
+        public RecordKey DefaultPluginRace => defaultConfig?.Race;
         public string DescriptiveLabel => $"'{Name}' ({BasePluginName} - {EditorId})";
         public string EditorId => npc.EditorId;
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
         public NpcOverrideConfiguration<TKey> FaceConfiguration => faceConfig;
         public string FaceModName { get; private set; }
         public string FacePluginName => faceConfig?.PluginName;
+        public RecordKey FacePluginRace => faceConfig?.Race;
         public TKey Key => npc.Key;
         public bool IsFemale => npc.IsFemale;
         public string LocalFormIdHex => npc.LocalFormIdHex;
@@ -230,7 +232,7 @@ namespace Focus.Apps.EasyNpc.Profile
         {
             var sources = npc.Overrides.Select(x => new NpcOverrideConfiguration<TKey>(this, x));
             // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
-            var master = new NpcOverrideConfiguration<TKey>(this, BasePluginName);
+            var master = new NpcOverrideConfiguration<TKey>(this, BasePluginName, npc.DefaultRace);
             return sources.Prepend(master);
         }
 
@@ -261,11 +263,12 @@ namespace Focus.Apps.EasyNpc.Profile
         public bool IsSelected { get; set; }
         public string ItpoFileName { get; private init; }
         public string PluginName { get; private init; }
+        public RecordKey Race { get; private init; }
         public NpcWigInfo<TKey> Wig { get; private init; }
 
         private readonly NpcConfiguration<TKey> parentConfig;
 
-        public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, string pluginName)
+        public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, string pluginName, RecordKey race)
             : this(parentConfig)
         {
             PluginName = pluginName;
@@ -273,6 +276,7 @@ namespace Focus.Apps.EasyNpc.Profile
             HasFaceOverride = true;
             HasFaceGenOverride = true;
             HasOutfitOverride = true;
+            Race = race;
         }
 
         public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, NpcOverride<TKey> @override)
@@ -285,6 +289,7 @@ namespace Focus.Apps.EasyNpc.Profile
             HasFaceGenOverride = @override.FaceOverridesAffectFaceGen;
             HasOutfitOverride = @override.ModifiesOutfits;
             ItpoFileName = @override.ItpoPluginName;
+            Race = @override.Race;
             Wig = @override.Wig;
         }
 

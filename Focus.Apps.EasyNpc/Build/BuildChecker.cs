@@ -147,6 +147,12 @@ namespace Focus.Apps.EasyNpc.Build
             var hasArchiveFacegen = modPluginMap.GetArchivesForMod(npc.FaceModName)
                 .Select(f => archiveFileMap.ContainsFile(f, faceMeshFileName))
                 .Any(exists => exists);
+            if (!RecordKey.Equals(npc.DefaultPluginRace, npc.FacePluginRace))
+                yield return new BuildWarning(
+                    npc.FacePluginName,
+                    new RecordKey(npc),
+                    BuildWarningId.FaceModChangesRace,
+                    WarningMessages.FaceModChangesRace(npc.EditorId, npc.Name, npc.FacePluginName, npc.DefaultPluginName));
             // If the selected plugin has overrides, then we want to see facegen data. On the other hand, if the
             // selected plugin does NOT have overrides, then a mod providing facegens will probably break something.
             if (npc.RequiresFacegenData() && !hasLooseFacegen && !hasArchiveFacegen)

@@ -188,6 +188,7 @@ namespace Focus.Apps.EasyNpc.Main
         where TKey : struct
     {
         public string BasePluginName { get; set; }
+        public RecordKey DefaultRace { get; set; }
         public string EditorId { get; set; }
         public TKey Key { get; set; }
         public bool IsFemale { get; set; }

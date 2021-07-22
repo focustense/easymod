@@ -1,4 +1,5 @@
-﻿using Mutagen.Bethesda;
+﻿using Focus.Apps.EasyNpc.GameData.Records;
+using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Cache;
 using Mutagen.Bethesda.Plugins.Order;
@@ -26,6 +27,11 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return linkCache.ResolveAllContexts<INpc, INpcGetter>(formKey)
                 .Where(x => x.ModKey == modKey)
                 .SingleOrDefault();
+        }
+
+        public static RecordKey ToRecordKey(this FormKey formKey)
+        {
+            return new RecordKey(formKey.ModKey.FileName, formKey.IDString());
         }
     }
 }

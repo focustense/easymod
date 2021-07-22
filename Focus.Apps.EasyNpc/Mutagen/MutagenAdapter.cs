@@ -169,6 +169,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                         ModifiesBehavior = ModifiesBehavior(npcContext, masters),
                         ModifiesBody = ModifiesBody(npcContext.Record, comparison),
                         ModifiesOutfits = ModifiesOutfits(npcContext.Record, comparison),
+                        Race = npcContext.Record.Race.FormKeyNullable?.ToRecordKey(),
                         Wig = GetWigInfo(npcContext.Record),
                     };
                     log.Debug("Completed checks for NPC override");
@@ -180,6 +181,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     cache.Add(formKey, new NpcInfo<FormKey>
                     {
                         BasePluginName = modKey.FileName,
+                        DefaultRace = npcContext.Record.Race.FormKeyNullable?.ToRecordKey(),
                         EditorId = npcContext.Record.EditorID,
                         IsFemale = npcContext.Record.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                         Key = formKey,

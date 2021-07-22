@@ -16,5 +16,14 @@ namespace Focus.Apps.EasyNpc.GameData.Records
         {
             return key.BasePluginName == BasePluginName && key.LocalFormIdHex == LocalFormIdHex;
         }
+
+        public static bool Equals(IRecordKey x, IRecordKey y)
+        {
+            if (ReferenceEquals(x, y))
+                return true;
+            if (x is null || y is null)
+                return false;
+            return x.Equals(y);
+        }
     }
 }
