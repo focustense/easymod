@@ -21,20 +21,42 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <fa5:SvgAwesome Icon="Solid_ExclamationCircle" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Height="48" Grid.Row="0" Grid.Column="0"/>
+            <fa5:SvgAwesome Icon="Solid_ExclamationCircle"
+                            Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                            Height="48"
+                            Visibility="{Binding IsFatal, Converter={StaticResource InvBoolToVisibility}}"
+                            Grid.Row="0"
+                            Grid.Column="0"/>
+            <fa5:SvgAwesome Icon="Solid_TimesCircle"
+                            Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                            Height="48"
+                            Visibility="{Binding IsFatal, Converter={StaticResource BoolToVisibility}}"
+                            d:Visibility="Collapsed"
+                            Grid.Row="0"
+                            Grid.Column="0"/>
             <TextBlock Margin="16,0,0,0" FontSize="36" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding Title}" d:Text="Warning"/>
             <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
-                <ContentControl Content="{Binding Content}" d:Content="{d:DesignInstance Type=main:MissingVortexManifestContent, IsDesignTimeCreatable=True}">
+                <ContentControl Content="{Binding Content}" d:Content="{d:DesignInstance Type=main:UnsupportedGameContent, IsDesignTimeCreatable=True}">
                     <ContentControl.Resources>
+                        <ControlTemplate x:Key="ListItem" TargetType="ContentControl">
+                            <BulletDecorator Margin="16,0,0,0">
+                                <BulletDecorator.Bullet>
+                                    <TextBlock FontSize="14" Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag}"/>
+                                </BulletDecorator.Bullet>
+                                <ContentPresenter Margin="8,0,0,0"/>
+                            </BulletDecorator>
+                        </ControlTemplate>
+                        <Style x:Key="ListItemStyle" TargetType="TextBlock" BasedOn="{StaticResource ParagraphStyle}"/>
+
                         <DataTemplate DataType="{x:Type main:MissingVortexManifestContent}">
                             <ui:SimpleStackPanel>
                                 <TextBlock Style="{StaticResource ParagraphStyle}">
-                                    It looks like EasyNPC has been launched directly from the Vortex dashboard, or pointing to a Vortex staging directory, without using the
+                                    It looks like <Run Text="{StaticResource AppName}"/> has been launched directly from the Vortex dashboard, or pointing to a Vortex staging directory, without using the
                                     <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding ExtensionUrl, Mode=OneWay}">EasyNPC extension</Hyperlink>.
                                 </TextBlock>
                                 <TextBlock Style="{StaticResource ParagraphStyle}">
-                                    Using the extension allows EasyNPC to recognize the associations between files in Vortex and the mods they came from. Without the extension, face previews will not display correctly
-                                    for your installed mods - instead you will see "mod not installed" for those previews, and a generic placeholder image for a differently-named file.
+                                    Using the extension allows <Run Text="{StaticResource AppName}"/> to recognize the associations between files in Vortex and the mods they came from. Without the extension, face previews
+                                    will not display correctly for your installed mods - instead you will see "mod not installed" for those previews, and a generic placeholder image for a differently-named file.
                                 </TextBlock>
                                 <TextBlock Style="{StaticResource ParagraphStyle}">
                                     Using the extension is <Run FontStyle="Italic">very strongly recommended</Run> for Vortex users. You can obtain a similar result by setting up mod synonyms in the application settings,
@@ -47,11 +69,43 @@
                                 </TextBlock>
                             </ui:SimpleStackPanel>
                         </DataTemplate>
+                        <DataTemplate DataType="{x:Type main:UnsupportedGameContent}">
+                            <ui:SimpleStackPanel>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    <Run Text="{StaticResource AppName}"/> was not able to locate the game data folder for <Run Text="{Binding GameId}"/> (<Run Text="{Binding GameName}"/>).
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    Either:
+                                </TextBlock>
+                                <ContentControl Template="{StaticResource ListItem}" Tag="•">
+                                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                                        You don't have this <Run FontWeight="SemiBold">edition of the game</Run> installed (you may have a different edition).
+                                    </TextBlock>
+                                </ContentControl>
+                                <ContentControl Template="{StaticResource ListItem}" Tag="•">
+                                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                                        You are using an unsupported distribution of the game. Refer to the
+                                        <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding SupportedDistributionsUrl, Mode=OneWay}">list of supported stores</Hyperlink>.
+                                    </TextBlock>
+                                </ContentControl>
+                                <ContentControl Template="{StaticResource ListItem}" Tag="•">
+                                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                                        The distributor has made a recent change that breaks game detection.
+                                    </TextBlock>
+                                </ContentControl>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    If you just recently installed the game and are using a supported store, please first
+                                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding IssuesUrl, Mode=OneWay}">check for an existing issue</Hyperlink>
+                                    to see if it has already been solved in a current or upcoming version. Otherwise, start a new bug report and
+                                    <Run FontWeight="SemiBold">make sure to specify</Run> your game edition, distribution (store), and when you installed the game.
+                                </TextBlock>
+                            </ui:SimpleStackPanel>
+                        </DataTemplate>
                     </ContentControl.Resources>
                 </ContentControl>
             </Border>
             <ui:SimpleStackPanel Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button x:Name="IgnoreButton" HorizontalAlignment="Right" MinWidth="120" Click="IgnoreButton_Click">Proceed Anyway</Button>
+                <Button x:Name="IgnoreButton" HorizontalAlignment="Right" MinWidth="120" Visibility="{Binding IsFatal, Converter={StaticResource InvBoolToVisibility}}" Click="IgnoreButton_Click">Proceed Anyway</Button>
                 <Button x:Name="ExitButton" HorizontalAlignment="Right" MinWidth="120" Margin="8,0,0,0" Style="{StaticResource AccentButtonStyle}" Click="ExitButton_Click">Exit</Button>
             </ui:SimpleStackPanel>
         </Grid>

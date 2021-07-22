@@ -41,9 +41,17 @@ namespace Focus.Apps.EasyNpc
             var modResolver = CreateModResolver(startupInfo, options);
             if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.ModRootDirectory))
                 Settings.Default.ModRootDirectory = modResolver.GetDefaultModRootDirectory();
-            var mainViewModel = new MainViewModel(modResolver, isFirstLaunch, options.DebugMode);
-            var mainWindow = MainWindow = new MainWindow(mainViewModel);
-            mainWindow.Show();
+            try
+            {
+                var mainViewModel = new MainViewModel(modResolver, isFirstLaunch, options.DebugMode);
+                var mainWindow = MainWindow = new MainWindow(mainViewModel);
+                mainWindow.Show();
+            }
+            catch (MissingGameException ex)
+            {
+                Warn(StartupWarnings.UnsupportedGame(ex.GameId, ex.GameName), true);
+                Current.Shutdown();
+            }
         }
 
         private static IModResolver CreateModResolver(StartupInfo startupInfo, CommandLineOptions options)
@@ -61,12 +69,13 @@ namespace Focus.Apps.EasyNpc
             }
         }
 
-        private static bool Warn(StartupWarning warning)
+        private static bool Warn(StartupWarning warning, bool isFatal = false)
         {
             var model = new StartupWarningViewModel
             {
                 Title = warning.Title,
                 Content = warning.Description,
+                IsFatal = isFatal,
             };
             var warningWindow = new StartupWarningWindow
             {

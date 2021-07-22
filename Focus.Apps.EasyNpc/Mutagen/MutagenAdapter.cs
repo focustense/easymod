@@ -43,7 +43,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             if (!GameLocations.TryGetDataFolder(GameRelease.SkyrimSE, out var dataFolder))
-                throw new Exception("Couldn't find SkyrimSE game data folder");
+                throw new MissingGameException(Enum.GetName(GameRelease.SkyrimSE), GetGameName(GameRelease.SkyrimSE));
             GameDataFolder = dataFolder;
             this.log = log;
             this.modResolver = modResolver;
@@ -218,6 +218,18 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return (!NpcFaceData.Equals(overrideFaceData, previousFaceData) || (overrideRace != previousRace)) ?
                 overrideFaceData : null;
         }
+
+        private static string GetGameName(GameRelease gameRelease) => gameRelease switch
+        {
+            GameRelease.EnderalLE => "Enderal Legendary Edition",
+            GameRelease.EnderalSE => "Enderal Special Edition",
+            GameRelease.Fallout4 => "Fallout 4",
+            GameRelease.Oblivion => "Oblivion",
+            GameRelease.SkyrimLE => "Skyrim Legendary Edition",
+            GameRelease.SkyrimSE => "Skyrim Special Edition",
+            GameRelease.SkyrimVR => "Skyrim VR",
+            _ => "Unknown game"
+        };
 
         private ISkyrimModGetter? GetMod(ModKey key)
         {
