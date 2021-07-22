@@ -92,8 +92,14 @@
                             </ContentControl.ToolTip>
                         </ContentControl>
                     </TextBlock>
+                    <TextBlock Style="{StaticResource ParagraphStyle}" Foreground="{StaticResource DangerForegroundBrush}">
+                        <fa:SvgAwesome Icon="Solid_HandPaper" Foreground="{StaticResource DangerForegroundBrush}" Height="16"/>
+                        <Run FontWeight="SemiBold">Trimming is a destructive operation that can make temporary profile problems permanent.</Run>
+                        Only use this if you understand exactly what it does and are certain it can solve your specific problem. Redundant NPC entries are
+                        <Run FontStyle="Italic">not</Run> a serious problem by themselves.
+                    </TextBlock>
                     <ui:SimpleStackPanel Orientation="Horizontal">
-                        <Button x:Name="TrimAutosaveButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanTrimAutoSave}" Click="TrimAutosaveButton_Click">Trim Autosave</Button>
+                        <Button x:Name="TrimAutosaveButton" Style="{StaticResource DangerButtonStyle}" IsEnabled="{Binding CanTrimAutoSave}" Click="TrimAutosaveButton_Click">Trim Autosave</Button>
                         <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsTrimmingAutoSave, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
                     </ui:SimpleStackPanel>
                 </ui:SimpleStackPanel>
