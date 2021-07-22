@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,12 +17,14 @@ namespace Focus.Apps.EasyNpc.GameData.Files
     {
         private Dictionary<string, IEnumerable<string>> archivesToFiles;
         private Dictionary<string, IEnumerable<string>> filesToArchives;
+        private readonly ILogger log;
 
         private readonly IArchiveProvider archiveProvider;
 
-        public ArchiveFileMap(IArchiveProvider archiveProvider)
+        public ArchiveFileMap(IArchiveProvider archiveProvider, ILogger log)
         {
             this.archiveProvider = archiveProvider;
+            this.log = log;
         }
 
         // Most code shouldn't need to call this, unless the map is going to be subsequently be used by parallel or
@@ -57,13 +60,16 @@ namespace Focus.Apps.EasyNpc.GameData.Files
         {
             if (archivesToFiles != null || filesToArchives != null)
                 return;
+            log.Information("Building file index from loaded archives");
             var archivesWithFiles = archiveProvider.GetLoadedArchivePaths()
+                .Tap(path => log.Debug("Indexing archive {archivePath}", path))
                 .Select(path => new
                 {
                     FileName = Path.GetFileName(path),
                     FaceGenFiles = archiveProvider.GetArchiveFileNames(path, FileStructure.FaceMeshesPath)
                         .Concat(archiveProvider.GetArchiveFileNames(path, FileStructure.FaceTintsPath)),
                 })
+                .Tap(path => log.Information("Indexed archive {archivePath}", path))
                 .ToList();
             Parallel.Invoke(
                 () =>

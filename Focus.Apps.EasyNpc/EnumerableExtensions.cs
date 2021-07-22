@@ -45,5 +45,14 @@ namespace Focus.Apps.EasyNpc
         {
             return first.OrderBySafe(keySelector).SequenceEqualSafe(second.OrderBySafe(keySelector));
         }
+
+        public static IEnumerable<T> Tap<T>(this IEnumerable<T> sequence, Action<T> action)
+        {
+            foreach (var item in sequence)
+            {
+                action(item);
+                yield return item;
+            }
+        }
     }
 }

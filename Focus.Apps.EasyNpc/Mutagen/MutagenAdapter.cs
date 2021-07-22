@@ -93,7 +93,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
                     GameDataFolder, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
-                ArchiveProvider = new MutagenArchiveProvider(Environment);
+                ArchiveProvider = new MutagenArchiveProvider(Environment, log);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, modResolver);
             });

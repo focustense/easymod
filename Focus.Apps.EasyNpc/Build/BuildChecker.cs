@@ -3,6 +3,7 @@ using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Profile;
 using Focus.ModManagers;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +25,7 @@ namespace Focus.Apps.EasyNpc.Build
         public BuildChecker(
             IReadOnlyList<string> loadOrder, IEnumerable<NpcConfiguration<TKey>> npcConfigs,
             IModResolver modResolver, IModPluginMapFactory modPluginMapFactory, IArchiveProvider archiveProvider,
-            IReadOnlyProfileEventLog profileEventLog)
+            IReadOnlyProfileEventLog profileEventLog, ILogger log)
         {
             this.npcConfigs = npcConfigs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
             this.loadOrder = loadOrder;
@@ -32,7 +33,7 @@ namespace Focus.Apps.EasyNpc.Build
             this.modPluginMapFactory = modPluginMapFactory;
             this.archiveProvider = archiveProvider;
             this.profileEventLog = profileEventLog;
-            archiveFileMap = new ArchiveFileMap(archiveProvider);
+            archiveFileMap = new ArchiveFileMap(archiveProvider, log);
         }
 
         public IReadOnlyList<BuildWarning> CheckAll(
