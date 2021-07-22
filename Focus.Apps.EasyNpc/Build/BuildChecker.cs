@@ -42,7 +42,7 @@ namespace Focus.Apps.EasyNpc.Build
             var warnings = new List<BuildWarning>();
             warnings.AddRange(CheckModSettings());
             var profileEvents = profileEventLog.ToList();
-            warnings.AddRange(CheckOrphanedNpcs(npcs, profileEvents));
+            warnings.AddRange(CheckOrphanedNpcs(profileEvents));
             warnings.AddRange(CheckMissingPlugins(profileEvents));
             warnings.AddRange(CheckForOverriddenArchives());
             warnings.AddRange(CheckModPluginConsistency(npcs));
@@ -190,14 +190,10 @@ namespace Focus.Apps.EasyNpc.Build
                     WarningMessages.ModDirectoryNotFound(modRootDirectory));
         }
 
-        private static IEnumerable<BuildWarning> CheckOrphanedNpcs(
-            IEnumerable<NpcConfiguration<TKey>> npcs, IEnumerable<ProfileEvent> events)
+        private IEnumerable<BuildWarning> CheckOrphanedNpcs(IEnumerable<ProfileEvent> events)
         {
             var allPluginsInProfile = events.Select(x => x.BasePluginName).Distinct().ToList();
-            var currentPlugins = npcs
-                .Select(x => x.BasePluginName)
-                .Distinct()
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var currentPlugins = loadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase);
             return allPluginsInProfile
                 .Where(p => !currentPlugins.Contains(p))
                 .Select(p => new BuildWarning(
