@@ -191,6 +191,7 @@ namespace Focus.Apps.EasyNpc.Main
         public string EditorId { get; set; }
         public TKey Key { get; set; }
         public bool IsFemale { get; set; }
+        public bool IsSupported { get; set; }
         public string LocalFormIdHex { get; set; }
         public string Name { get; set; }
         public List<NpcOverride<TKey>> Overrides { get; set; } = new List<NpcOverride<TKey>>();

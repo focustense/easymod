@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using Focus.Apps.EasyNpc.Build;
+using Focus.Apps.EasyNpc.Compatibility;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
@@ -38,12 +39,14 @@ namespace Focus.Apps.EasyNpc.Mutagen
         private readonly ILogger log;
         private readonly IModResolver modResolver;
 
+        private CompatibilityRuleSet<INpcGetter> npcCompatibilityRuleSet;
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public MutagenAdapter(IModResolver modResolver, ILogger log)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             if (!GameLocations.TryGetDataFolder(GameRelease.SkyrimSE, out var dataFolder))
-                throw new MissingGameException(Enum.GetName(GameRelease.SkyrimSE), GetGameName(GameRelease.SkyrimSE));
+                throw new MissingGameException(Enum.GetName(GameRelease.SkyrimSE)!, GetGameName(GameRelease.SkyrimSE));
             GameDataFolder = dataFolder;
             this.log = log;
             this.modResolver = modResolver;
@@ -96,6 +99,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 ArchiveProvider = new MutagenArchiveProvider(Environment, log);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, modResolver);
+                npcCompatibilityRuleSet = new CompatibilityRuleSet<INpcGetter>(npc => $"{npc.FormKey} '{npc.EditorID}'", log)
+                    .Add(new NoChildrenRule(Environment));
+                npcCompatibilityRuleSet.ReportConfiguration();
             });
         }
 
@@ -177,6 +183,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                         EditorId = npcContext.Record.EditorID,
                         IsFemale = npcContext.Record.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                         Key = formKey,
+                        IsSupported = npcCompatibilityRuleSet.IsSupported(npcContext.Record),
                         LocalFormIdHex = formKey.ID.ToString("X6"),
                         Name = npcContext.Record.Name?.ToString(),
                     });

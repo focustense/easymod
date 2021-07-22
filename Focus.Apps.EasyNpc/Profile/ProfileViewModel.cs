@@ -64,7 +64,9 @@ namespace Focus.Apps.EasyNpc.Profile
             this.modPluginMapFactory = modPluginMapFactory;
             LoadedPluginNames = loadedPluginNames.OrderBy(x => x).ToList().AsReadOnly();
             loadedPluginNamesSet = LoadedPluginNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
+            var npcsWithOverrides = npcs
+                .Where(npc => npc.IsSupported)
+                .Where(npc => npc.Overrides.Count > 0);
             var profileRuleSet = StandardProfileRuleSet.Create(masterNames, npcs);
 
             var npcOrder = new List<TKey>();

@@ -9,6 +9,7 @@ namespace Focus.Apps.EasyNpc.GameData.Records
     {
         string EditorId { get; }
         bool IsFemale { get; }
+        bool IsSupported { get; }
         TKey Key { get; }
         string Name { get; }
         IReadOnlyList<NpcOverride<TKey>> Overrides { get; }
