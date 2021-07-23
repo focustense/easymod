@@ -67,7 +67,9 @@ namespace Focus.Apps.EasyNpc.Main
 
             Log = new LogViewModel(gameDataEditor.Log);
             logViewModelSink.ViewModel = Log;
-            Logger.Information("Initialized");
+            Logger.Information(
+                "Initialized: {appName:l} version {version:l}, built on {buildDate}",
+                AssemblyProperties.Name, AssemblyProperties.Version, AssemblyProperties.BuildTimestampUtc);
             Log.ResumeExternalMonitoring();
 
             Settings = new SettingsViewModel(modResolver) { IsWelcomeScreen = isFirstLaunch };

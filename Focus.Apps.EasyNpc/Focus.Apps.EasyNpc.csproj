@@ -8,7 +8,7 @@
     <AssemblyName>EasyNPC</AssemblyName>
     <AssemblyTitle>Easy NPC</AssemblyTitle>
     <Product>EasyMod</Product>
-    <Version>0.8.6</Version>
+    <Version>0.8.8</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -60,6 +60,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Configuration\BuildDate.generated.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>BuildDate.tt</DependentUpon>
+    </Compile>
     <Compile Update="Configuration\SettingsPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -78,6 +83,17 @@
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
     </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Configuration\BuildDate.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>BuildDate.generated.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
 </Project>

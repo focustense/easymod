@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Focus.Apps.EasyNpc.Configuration
 {
-    public static class AssemblyProperties
+    public static partial class AssemblyProperties
     {
         public static string Name => currentAssembly.GetName().Name;
         public static string Product => currentAssembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product;
