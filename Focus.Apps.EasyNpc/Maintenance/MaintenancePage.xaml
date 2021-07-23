@@ -10,100 +10,102 @@
       d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
       d:DesignHeight="700" d:DesignWidth="1200"
       Title="MaintenancePage" Loaded="Page_Loaded">
-    <ui:SimpleStackPanel DataContext="{Binding Maintenance, Mode=OneWay}">
-        <TextBlock Style="{StaticResource FirstParagraphStyle}">
-            Use this page to perform maintenance tasks related to <Run Text="{StaticResource AppTitle}"/>. You generally only need these if you use the
-            program very often or have made drastic changes to your mod list.
-        </TextBlock>
-        <Border Style="{StaticResource GroupBorder}" Margin="0,8,0,0" Padding="8">
-            <GroupBox Header="Load order sync" Padding="0,0,0,4">
-                <ui:SimpleStackPanel>
-                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
-                        If you've added or removed mods that change NPC behavior or other non-visual aspects since the last time you ran
-                        <Run Text="{StaticResource AppTitle}"/>, then these changes won't be reflected in your current profile. To avoid introducing
-                        new conflicts or compatibility issues, you may need to sync the Default Plugins to your current load order.
-                        <ContentControl Style="{StaticResource HelpIconStyle}">
-                            <ContentControl.ToolTip>
-                                <TextBlock>
-                                    Choosing to reset will affect <Run FontWeight="Bold">all</Run> NPCs, even if you had previously changed their
-                                    Default Plugin to something other than the auto-detected default.
-                                    <LineBreak/><LineBreak/>
-                                    If the mod(s) that you've added or removed only affect a small number of NPCs, and you know which ones are
-                                    affected, it is often better to manually update the defaults for them. You should only use this bulk reset if
-                                    you've made sweeping changes that affect a large or unknown number of NPCs.
-                                </TextBlock>
-                            </ContentControl.ToolTip>
-                        </ContentControl>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParagraphStyle}">
-                        You can also reset the face selections, which will replace all your current choices with the last overhaul (per NPC) in
-                        your current load order.
-                    </TextBlock>
-                    <ui:SimpleStackPanel Orientation="Horizontal">
-                        <Button x:Name="EvolveToLoadOrderButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanResetNpcs}" Click="EvolveToLoadOrderButton_Click">Reset NPC Defaults</Button>
-                        <Button x:Name="ResetFacesButton" Margin="8,0,0,0" IsEnabled="{Binding CanResetNpcs}" Click="ResetFacesButton_Click">Reset Face Selections</Button>
-                        <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsResettingNpcs, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+    <ui:ScrollViewerEx Padding="0,0,8,0">
+        <ui:SimpleStackPanel DataContext="{Binding Maintenance, Mode=OneWay}">
+            <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                Use this page to perform maintenance tasks related to <Run Text="{StaticResource AppTitle}"/>. You generally only need these if you use the
+                program very often or have made drastic changes to your mod list.
+            </TextBlock>
+            <Border Style="{StaticResource GroupBorder}" Margin="0,8,0,0" Padding="8">
+                <GroupBox Header="Load order sync" Padding="0,0,0,4">
+                    <ui:SimpleStackPanel>
+                        <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                            If you've added or removed mods that change NPC behavior or other non-visual aspects since the last time you ran
+                            <Run Text="{StaticResource AppTitle}"/>, then these changes won't be reflected in your current profile. To avoid introducing
+                            new conflicts or compatibility issues, you may need to sync the Default Plugins to your current load order.
+                            <ContentControl Style="{StaticResource HelpIconStyle}">
+                                <ContentControl.ToolTip>
+                                    <TextBlock>
+                                        Choosing to reset will affect <Run FontWeight="Bold">all</Run> NPCs, even if you had previously changed their
+                                        Default Plugin to something other than the auto-detected default.
+                                        <LineBreak/><LineBreak/>
+                                        If the mod(s) that you've added or removed only affect a small number of NPCs, and you know which ones are
+                                        affected, it is often better to manually update the defaults for them. You should only use this bulk reset if
+                                        you've made sweeping changes that affect a large or unknown number of NPCs.
+                                    </TextBlock>
+                                </ContentControl.ToolTip>
+                            </ContentControl>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            You can also reset the face selections, which will replace all your current choices with the last overhaul (per NPC) in
+                            your current load order.
+                        </TextBlock>
+                        <ui:SimpleStackPanel Orientation="Horizontal">
+                            <Button x:Name="EvolveToLoadOrderButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanResetNpcs}" Click="EvolveToLoadOrderButton_Click">Reset NPC Defaults</Button>
+                            <Button x:Name="ResetFacesButton" Margin="8,0,0,0" IsEnabled="{Binding CanResetNpcs}" Click="ResetFacesButton_Click">Reset Face Selections</Button>
+                            <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsResettingNpcs, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+                        </ui:SimpleStackPanel>
+                        <CheckBox Margin="0,8,0,0" IsChecked="{Binding OnlyResetInvalid}" IsEnabled="{Binding CanResetNpcs}" Content="Only reset references to missing plugins">
+                            <CheckBox.ToolTip>
+                                If checked, clicking either of the buttons above will not touch any NPC unless their current settings reference a plugin that is invalid, i.e. no longer present in the load order.
+                                This is useful if you've removed a large mod or overhaul and need to fix several records that were pointing to it.
+                            </CheckBox.ToolTip>
+                        </CheckBox>
                     </ui:SimpleStackPanel>
-                    <CheckBox Margin="0,8,0,0" IsChecked="{Binding OnlyResetInvalid}" IsEnabled="{Binding CanResetNpcs}" Content="Only reset references to missing plugins">
-                        <CheckBox.ToolTip>
-                            If checked, clicking either of the buttons above will not touch any NPC unless their current settings reference a plugin that is invalid, i.e. no longer present in the load order.
-                            This is useful if you've removed a large mod or overhaul and need to fix several records that were pointing to it.
-                        </CheckBox.ToolTip>
-                    </CheckBox>
-                </ui:SimpleStackPanel>
-            </GroupBox>
-        </Border>
-        <Border Style="{StaticResource GroupBorder}" Margin="0,8,0,0" Padding="8">
-            <GroupBox Header="Log files" Padding="0,0,0,4">
-                <ui:SimpleStackPanel>
-                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
-                        You have <Run FontWeight="SemiBold" Text="{Binding LogFileCount, Mode=OneWay}" d:Text="42"/> old log files taking up
-                        <Run FontWeight="SemiBold" Text="{Binding LogFileSizeMb, Mode=OneWay}" d:Text="57.8"/> <Run FontWeight="SemiBold">MB</Run>
-                        of disk space.
-                        <ContentControl Style="{StaticResource HelpIconStyle}"
-                                        ToolTip="Log files have no effect on app performance but can be deleted to free up space."/>
-                    </TextBlock>
-                    <ui:SimpleStackPanel Orientation="Horizontal">
-                        <Button x:Name="DeleteLogsButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanDeleteLogFiles}" Click="DeleteLogsButton_Click">Delete Logs</Button>
-                        <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsDeletingLogFiles, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+                </GroupBox>
+            </Border>
+            <Border Style="{StaticResource GroupBorder}" Margin="0,8,0,0" Padding="8">
+                <GroupBox Header="Log files" Padding="0,0,0,4">
+                    <ui:SimpleStackPanel>
+                        <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                            You have <Run FontWeight="SemiBold" Text="{Binding LogFileCount, Mode=OneWay}" d:Text="42"/> old log files taking up
+                            <Run FontWeight="SemiBold" Text="{Binding LogFileSizeMb, Mode=OneWay}" d:Text="57.8"/> <Run FontWeight="SemiBold">MB</Run>
+                            of disk space.
+                            <ContentControl Style="{StaticResource HelpIconStyle}"
+                                            ToolTip="Log files have no effect on app performance but can be deleted to free up space."/>
+                        </TextBlock>
+                        <ui:SimpleStackPanel Orientation="Horizontal">
+                            <Button x:Name="DeleteLogsButton" Style="{StaticResource AccentButtonStyle}" IsEnabled="{Binding CanDeleteLogFiles}" Click="DeleteLogsButton_Click">Delete Logs</Button>
+                            <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsDeletingLogFiles, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+                        </ui:SimpleStackPanel>
                     </ui:SimpleStackPanel>
-                </ui:SimpleStackPanel>
-            </GroupBox>
-        </Border>
-        <Border Style="{StaticResource GroupBorder}" Margin="0,8,0,0" Padding="8">
-            <GroupBox Header="Autosave" Padding="0,0,0,4">
-                <ui:SimpleStackPanel>
-                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
-                        Your autosave includes <Run FontWeight="SemiBold" Text="{Binding AutosaveRecordCount, Mode=OneWay}" d:Text="12345"/> change entries, of which
-                        <Run FontWeight="SemiBold" Text="{Binding AutoSaveRedundantRecordCount, Mode=OneWay}" d:Text="678"/> are redundant and
-                        <Run FontWeight="SemiBold" Text="{Binding AutosaveInvalidNpcCount, Mode=OneWay}" d:Text="22"/> reference NPCs that no longer exist or have no
-                        overrides in the current load order.
-                        <ContentControl Style="{StaticResource HelpIconStyle}">
-                            <ContentControl.ToolTip>
-                                <TextBlock>
-                                    Trim your autosave if you're noticing the app loading slowly. This will not improve build times, only load times.
-                                    <LineBreak/><LineBreak/>
-                                    Once you trim, you'll no longer be able to revert to a previous state, although you can still load any profiles that
-                                    you had previously saved by clicking the <fa:SvgAwesome Icon="Solid_Save" Height="8"/> Save button from the Profile page.
-                                    <LineBreak/><LineBreak/>
-                                    Even on a slow machine, trimming will generally only make a difference if more than 50-75% of your change entries are
-                                    redundant.
-                                </TextBlock>
-                            </ContentControl.ToolTip>
-                        </ContentControl>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParagraphStyle}" Foreground="{StaticResource DangerForegroundBrush}">
-                        <fa:SvgAwesome Icon="Solid_HandPaper" Foreground="{StaticResource DangerForegroundBrush}" Height="16"/>
-                        <Run FontWeight="SemiBold">Trimming is a destructive operation that can make temporary profile problems permanent.</Run>
-                        Only use this if you understand exactly what it does and are certain it can solve your specific problem. Redundant NPC entries are
-                        <Run FontStyle="Italic">not</Run> a serious problem by themselves.
-                    </TextBlock>
-                    <ui:SimpleStackPanel Orientation="Horizontal">
-                        <Button x:Name="TrimAutosaveButton" Style="{StaticResource DangerButtonStyle}" IsEnabled="{Binding CanTrimAutoSave}" Click="TrimAutosaveButton_Click">Trim Autosave</Button>
-                        <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsTrimmingAutoSave, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+                </GroupBox>
+            </Border>
+            <Border Style="{StaticResource GroupBorder}" Margin="0,8,0,0" Padding="8">
+                <GroupBox Header="Autosave" Padding="0,0,0,4">
+                    <ui:SimpleStackPanel>
+                        <TextBlock Style="{StaticResource FirstParagraphStyle}">
+                            Your autosave includes <Run FontWeight="SemiBold" Text="{Binding AutosaveRecordCount, Mode=OneWay}" d:Text="12345"/> change entries, of which
+                            <Run FontWeight="SemiBold" Text="{Binding AutoSaveRedundantRecordCount, Mode=OneWay}" d:Text="678"/> are redundant and
+                            <Run FontWeight="SemiBold" Text="{Binding AutosaveInvalidNpcCount, Mode=OneWay}" d:Text="22"/> reference NPCs that no longer exist or have no
+                            overrides in the current load order.
+                            <ContentControl Style="{StaticResource HelpIconStyle}">
+                                <ContentControl.ToolTip>
+                                    <TextBlock>
+                                        Trim your autosave if you're noticing the app loading slowly. This will not improve build times, only load times.
+                                        <LineBreak/><LineBreak/>
+                                        Once you trim, you'll no longer be able to revert to a previous state, although you can still load any profiles that
+                                        you had previously saved by clicking the <fa:SvgAwesome Icon="Solid_Save" Height="8"/> Save button from the Profile page.
+                                        <LineBreak/><LineBreak/>
+                                        Even on a slow machine, trimming will generally only make a difference if more than 50-75% of your change entries are
+                                        redundant.
+                                    </TextBlock>
+                                </ContentControl.ToolTip>
+                            </ContentControl>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}" Foreground="{StaticResource DangerForegroundBrush}">
+                            <fa:SvgAwesome Icon="Solid_HandPaper" Foreground="{StaticResource DangerForegroundBrush}" Height="16"/>
+                            <Run FontWeight="SemiBold">Trimming is a destructive operation that can make temporary profile problems permanent.</Run>
+                            Only use this if you understand exactly what it does and are certain it can solve your specific problem. Redundant NPC entries are
+                            <Run FontStyle="Italic">not</Run> a serious problem by themselves.
+                        </TextBlock>
+                        <ui:SimpleStackPanel Orientation="Horizontal">
+                            <Button x:Name="TrimAutosaveButton" Style="{StaticResource DangerButtonStyle}" IsEnabled="{Binding CanTrimAutoSave}" Click="TrimAutosaveButton_Click">Trim Autosave</Button>
+                            <fa:SvgAwesome Icon="Solid_Cog" Height="24" Margin="8,0,0,0" Spin="True" Visibility="{Binding IsTrimmingAutoSave, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed"/>
+                        </ui:SimpleStackPanel>
                     </ui:SimpleStackPanel>
-                </ui:SimpleStackPanel>
-            </GroupBox>
-        </Border>
-    </ui:SimpleStackPanel>
+                </GroupBox>
+            </Border>
+        </ui:SimpleStackPanel>
+    </ui:ScrollViewerEx>
 </ui:Page>
