@@ -17,13 +17,13 @@ namespace Focus.Apps.EasyNpc.Build
         FaceModNotSpecified,
         FaceModNotInstalled,
         FaceModPluginMismatch,
+        FaceModChangesRace,
         FaceModMissingFaceGen,
         FaceModExtraFaceGen,
         FaceModMultipleFaceGen,
         FaceModWigNotMatched,
         FaceModWigNotMatchedBald,
         FaceModWigConversionDisabled,
-        FaceModChangesRace,
     }
 
     public class BuildWarning
