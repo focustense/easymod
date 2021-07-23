@@ -22,7 +22,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
             IEnumerable<string> archiveNames)
         {
             var trimmedDirectory = Path.TrimEndingDirectorySeparator(modRootDirectory);
-            if (string.IsNullOrEmpty(trimmedDirectory))
+            if (string.IsNullOrEmpty(trimmedDirectory) || !Directory.Exists(trimmedDirectory))
                 return Empty;
             if (Instances.TryGetValue(trimmedDirectory, out ModPluginMap cached))
                 return cached;
