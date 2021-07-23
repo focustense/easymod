@@ -261,7 +261,15 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             if (headPart.ValidRaces.IsNull)
                 return Enumerable.Empty<VanillaRace>();
-            var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>().Resolve(Environment.LinkCache);
+            var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>().TryResolve(Environment.LinkCache);
+            if (raceList == null)
+            {
+                log.Warning(
+                    "Head part {formKey} {editorId} points to missing ValidRaces form list {referencedFormKey} " +
+                    "and will be unusable for hair or wig conversion.",
+                    headPart.FormKey, headPart.EditorID, headPart.ValidRaces.FormKey);
+                return Enumerable.Empty<VanillaRace>();
+            }
             return raceList.Items
                 .Select(x => x.FormKey.AsLink<IRaceGetter>().TryResolve(Environment.LinkCache))
                 .NotNull()
