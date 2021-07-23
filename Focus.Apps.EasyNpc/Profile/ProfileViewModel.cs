@@ -80,6 +80,17 @@ namespace Focus.Apps.EasyNpc.Profile
 
             this.profileEventLog = profileEventLog;
             var restored = RestoreProfileAutosave(profileEventLog.FileName).ToLookup(x => x.Item1.Key, x => x.Item2);
+            // NPCs that were pointing to vanilla for "face mod" won't have profile events. If such an NPC was already
+            // in the profile, we have to overwrite any detection attempt that may have occurred on startup.
+            // See: https://github.com/focustense/easymod/issues/65
+            foreach (var restoredPair in restored)
+            {
+                if (restoredPair.Contains(NpcProfileField.FacePlugin) && !restoredPair.Contains(NpcProfileField.FaceMod) &&
+                    npcConfigurations.TryGetValue(restoredPair.Key, out var npcConfig))
+                {
+                    npcConfig.SetFaceMod(null, false);
+                }
+            }
             var allProfileFields = Enum.GetValues<NpcProfileField>();
             foreach (var npcConfig in npcConfigurations.Values)
             {

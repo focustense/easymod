@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Focus.Apps.EasyNpc.GameData.Records;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 
@@ -6,7 +7,7 @@ namespace Focus.Apps.EasyNpc.Profile
 {
     public enum NpcProfileField { DefaultPlugin, FaceMod, FacePlugin };
 
-    public record ProfileEvent
+    public record ProfileEvent : IRecordKey
     {
         public static ProfileEvent Deserialize(string serialized)
         {
