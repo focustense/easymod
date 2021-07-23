@@ -285,7 +285,15 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 .Select(x => x.FormKey.AsLink<IHeadPartGetter>().Resolve(Environment.LinkCache))
                 .Where(x => x.Type == HeadPart.TypeEnum.Hair)
                 .All(x => string.IsNullOrEmpty(x.Model?.File));
-            var wornArmor = npc.WornArmor.Resolve(Environment.LinkCache);
+            var wornArmor = npc.WornArmor.TryResolve(Environment.LinkCache);
+            if (wornArmor == null)
+            {
+                log.Warning(
+                    "NPC {formKey} {editorId} references missing armor {referencedFormKey} as its Worn Armor. " +
+                    "Wig and body customizations for this NPC will be ignored.",
+                    npc.FormKey, npc.EditorID, npc.WornArmor.FormKey);
+                return null;
+            }
             return wornArmor.Armature
                 .Select(fk => fk.Resolve(Environment.LinkCache))
                 .Where(x =>
