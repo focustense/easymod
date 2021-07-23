@@ -1,4 +1,6 @@
-﻿using Focus.Apps.EasyNpc.GameData.Files;
+﻿#nullable enable
+
+using Focus.Apps.EasyNpc.GameData.Files;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Archives;
 using Mutagen.Bethesda.Archives.Exceptions;
@@ -38,7 +40,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             Safe(archivePath, () =>
             {
                 var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
-                var folderName = Path.GetDirectoryName(archiveFilePath).ToLower();  // Mutagen is case-sensitive
+                var folderName = Path.GetDirectoryName(archiveFilePath)!.ToLower();  // Mutagen is case-sensitive
                 if (!reader.TryGetFolder(folderName, out var folder))
                     throw new Exception($"Couldn't find folder {folderName} in archive {archivePath}");
                 var file = folder.Files
@@ -66,7 +68,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     .Where(f =>
                         string.IsNullOrEmpty(path) || f.Path.StartsWith(path, StringComparison.OrdinalIgnoreCase))
                     .Select(f => f.Path);
-            }, Enumerable.Empty<string>());
+            }) ?? Enumerable.Empty<string>();
         }
 
         public IEnumerable<string> GetLoadedArchivePaths()
@@ -80,10 +82,10 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return Path.Combine(environment.DataFolderPath, archiveName);
         }
 
-        private T Safe<T>(string archivePath, Func<T> action, T defaultValue = default)
+        private T? Safe<T>(string archivePath, Func<T> action)
         {
             if (badArchivePaths.Contains(archivePath))
-                return defaultValue;
+                return default;
             try
             {
                 return action();
@@ -99,7 +101,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 // This could happen with an individual file; other parts of the archive may still be readable.
                 log.Error(ex, "Problem reading from archive {archivePath}", archivePath);
             }
-            return defaultValue;
+            return default;
         }
     }
 }

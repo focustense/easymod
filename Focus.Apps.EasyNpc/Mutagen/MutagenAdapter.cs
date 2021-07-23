@@ -261,17 +261,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             if (headPart.ValidRaces.IsNull)
                 return Enumerable.Empty<VanillaRace>();
-            var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>().TryResolve(Environment.LinkCache);
+            var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>()
+                .TryResolve(Environment.LinkCache, headPart, log, "Hair/wig conversion will be unavailable.");
             if (raceList == null)
-            {
-                log.Warning(
-                    "Head part {formKey} {editorId} points to missing ValidRaces form list {referencedFormKey} " +
-                    "and will be unusable for hair or wig conversion.",
-                    headPart.FormKey, headPart.EditorID, headPart.ValidRaces.FormKey);
                 return Enumerable.Empty<VanillaRace>();
-            }
             return raceList.Items
-                .Select(x => x.FormKey.AsLink<IRaceGetter>().TryResolve(Environment.LinkCache))
+                .Select(x => x.FormKey.AsLink<IRaceGetter>()
+                    .TryResolve(Environment.LinkCache, raceList, log, "Hair/wig conversion may not work correctly."))
                 .NotNull()
                 .Select(x => InferRace(x.EditorID));
         }
@@ -282,20 +278,19 @@ namespace Focus.Apps.EasyNpc.Mutagen
             if (npc.WornArmor.IsNull)
                 return null;
             var isBald = npc.HeadParts
-                .Select(x => x.FormKey.AsLink<IHeadPartGetter>().Resolve(Environment.LinkCache))
+                .Select(x => x.FormKey.AsLink<IHeadPartGetter>().TryResolve(Environment.LinkCache))
+                .NotNull()
                 .Where(x => x.Type == HeadPart.TypeEnum.Hair)
                 .All(x => string.IsNullOrEmpty(x.Model?.File));
-            var wornArmor = npc.WornArmor.TryResolve(Environment.LinkCache);
+            var wornArmor =
+                npc.WornArmor.TryResolve(Environment.LinkCache, npc, log,
+                "Wig and body customizations for this NPC will be ignored.");
             if (wornArmor == null)
-            {
-                log.Warning(
-                    "NPC {formKey} {editorId} references missing armor {referencedFormKey} as its Worn Armor. " +
-                    "Wig and body customizations for this NPC will be ignored.",
-                    npc.FormKey, npc.EditorID, npc.WornArmor.FormKey);
                 return null;
-            }
             return wornArmor.Armature
-                .Select(fk => fk.Resolve(Environment.LinkCache))
+                .Select(fk => fk.TryResolve(
+                    Environment.LinkCache, wornArmor, log, "Wigs may not be correctly detected."))
+                .NotNull()
                 .Where(x =>
                     // Search for ONLY hair, because some sadistic modders add hair flags to other parts.
                     x.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.Hair ||

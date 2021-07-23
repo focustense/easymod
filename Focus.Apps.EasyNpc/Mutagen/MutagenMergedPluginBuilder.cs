@@ -1,4 +1,6 @@
-﻿using Focus.Apps.EasyNpc.Build;
+﻿#nullable enable
+
+using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Profile;
 using Mutagen.Bethesda;
@@ -122,7 +124,8 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     foreach (var sourceHeadPart in faceNpcRecord.HeadParts)
                     {
                         var mergedHeadPart = context.Import(sourceHeadPart, mergedMod.HeadParts);
-                        mergedNpcRecord.HeadParts.Add(mergedHeadPart.Value);
+                        if (mergedHeadPart.HasValue)
+                            mergedNpcRecord.HeadParts.Add(mergedHeadPart.Value);
                     }
                     log.Debug("Importing hair color", npc.FacePluginName);
                     mergedNpcRecord.HairColor.SetTo(context.Import(faceNpcRecord.HairColor, mergedMod.Colors));
@@ -166,13 +169,15 @@ namespace Focus.Apps.EasyNpc.Mutagen
                         progress.ItemName = $"{npc.DescriptiveLabel}; Source: {npc.FacePluginName}";
                         var hairKey = wigMatches[npc.FaceConfiguration.Wig.Key][0];
                         var oldHairParts = mergedNpcRecord.HeadParts
-                            .Select(x => context.Resolve<IHeadPartGetter>(x.FormKey))
+                            .Select(x => context.TryResolve<IHeadPartGetter>(x.FormKey))
+                            .NotNull()
                             .Where(x => x.Type == HeadPart.TypeEnum.Hair)
                             .Select(x => new { x.FormKey, x.EditorID, x.Model?.File })
                             .ToList();
                         mergedNpcRecord.HeadParts.Remove(oldHairParts.Select(x => x.FormKey));
                         var mergedHair = context.Import(hairKey.AsLink<IHeadPartGetter>(), mergedMod.HeadParts);
-                        mergedNpcRecord.HeadParts.Add(mergedHair.Value);
+                        if (mergedHair.HasValue)
+                            mergedNpcRecord.HeadParts.Add(mergedHair.Value);
                         log.Debug(
                             "Completed wig conversion for {NpcLabel} from {FacePluginName}: {WigKey}",
                             npc.DescriptiveLabel, npc.FacePluginName, npc.FaceConfiguration.Wig.Key);
@@ -181,7 +186,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
                             BasePluginName = npc.BasePluginName,
                             LocalFormIdHex = npc.LocalFormIdHex,
                             HairColor = GetHairColor(mergedNpcRecord),
-                            AddedHeadParts = DescribeHeadParts(mergedHair.Value, context).ToList().AsReadOnly(),
+                            AddedHeadParts = mergedHair.HasValue ?
+                                DescribeHeadParts(mergedHair.Value, context).ToList().AsReadOnly() :
+                                new List<HeadPartInfo>().AsReadOnly(),
                             RemovedHeadParts = oldHairParts
                                 .SelectMany(x => DescribeHeadParts(x.FormKey, context))
                                 .ToList()
@@ -205,8 +212,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return new MergedPluginResult
             {
                 Meshes = mergedMod.HeadParts
-                    .Where(x => x.Model != null)
-                    .Select(x => x.Model.File.PrefixPath("meshes"))
+                    .Select(x => x.Model)
+                    .NotNull()
+                    .Select(x => x.File.PrefixPath("meshes"))
                     .ToHashSet(),
                 Morphs = mergedMod.HeadParts
                     .SelectMany(x => x.Parts)
@@ -246,7 +254,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         private IEnumerable<HeadPartInfo> DescribeHeadParts(FormKey formKey, MergeContext context)
         {
-            var headPart = context.Resolve<IHeadPartGetter>(formKey);
+            var headPart = context.TryResolve<IHeadPartGetter>(formKey);
+            if (headPart == null)
+                return Enumerable.Empty<HeadPartInfo>();
             return headPart.ExtraParts
                 .SelectMany(x => DescribeHeadParts(x.FormKey, context))
                 .Prepend(new HeadPartInfo {
@@ -259,8 +269,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             if (npc.HairColor.IsNull)
                 return null;
-            var colorRecord = npc.HairColor.Resolve(environment.LinkCache);
-            return colorRecord.Color;
+            var colorRecord =
+                npc.HairColor.TryResolve(environment.LinkCache, npc, log, "This NPC will have the wrong hair color.");
+            return colorRecord?.Color;
         }
 
         class MergeContext
@@ -291,25 +302,34 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 where T : SkyrimMajorRecord, TGetter
                 where TGetter : class, ISkyrimMajorRecordGetter
             {
-                Action<T> setup = null;
+                Action<T>? setup = null;
                 // There's probably a switch expression that's better for this, but Mutagen doesn't make it obvious.
                 if (typeof(IHeadPartGetter).IsAssignableFrom(link.Type))
                     setup = x => ImportHeadPartDependencies((HeadPart)(SkyrimMajorRecord)x);
                 return Import(link, group, setup);
             }
 
-            public T Resolve<T>(FormKey key) where T : class, IMajorRecordGetter
+            public T? TryResolve<T>(FormKey key) where T : class, IMajorRecordGetter
             {
-                return GetIfMerged<T>(key) ?? key.AsLink<T>().Resolve(environment.LinkCache);
+                var record = GetIfMerged<T>(key) ?? key.AsLink<T>().TryResolve(environment.LinkCache);
+                if (record == null)
+                {
+                    var recordTypeName = MutagenExtensions.GetRecordTypeName<T>();
+                    log.Warning(
+                        "{linkType:l} {referencedFormKey} is not in the merge mod and could not be resolved anywhere " +
+                        "else in the load order. The current NPC will not convert correctly.",
+                        recordTypeName, key);
+                }
+                return record;
             }
 
-            private T GetIfMerged<T>(FormKey key) where T : IMajorRecordGetter
+            private T? GetIfMerged<T>(FormKey key) where T : IMajorRecordGetter
             {
                 return mergedRecords.TryGetValue(key, out var merged) ? (T)merged : default;
             }
 
             private FormKey? Import<T, TGetter>(
-                IFormLinkGetter<TGetter> link, IGroup<T> group, Action<T> setup = null)
+                IFormLinkGetter<TGetter> link, IGroup<T> group, Action<T>? setup = null)
                 where T : SkyrimMajorRecord, TGetter
                 where TGetter : class, ISkyrimMajorRecordGetter
             {
@@ -361,8 +381,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 }
                 var mergedExtraParts = headPart.ExtraParts
                     .Select(x => Import(x, mergedMod.HeadParts, hp => ImportHeadPartDependencies(hp)))
-                    .Where(x => x != null)
-                    .Select(x => x.Value)
+                    .NotNull()
                     .ToList();
                 headPart.ExtraParts.Clear();
                 headPart.ExtraParts.AddRange(mergedExtraParts);

@@ -14,6 +14,11 @@ namespace Focus.Apps.EasyNpc
             return sequence.Where(x => x != null)!;
         }
 
+        public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> sequence) where T : struct
+        {
+            return sequence.Where(x => x.HasValue).Select(x => x!.Value);
+        }
+
         public static IEnumerable<T>? OrderBySafe<T, TKey>(this IEnumerable<T>? sequence, Func<T, TKey> keySelector)
         {
             // If we use null-projection inline, then C# interprets the final expression differently. This essentially
