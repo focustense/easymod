@@ -65,9 +65,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
             {
                 var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
                 return reader.Files
-                    .Where(f =>
-                        string.IsNullOrEmpty(path) || f.Path.StartsWith(path, StringComparison.OrdinalIgnoreCase))
-                    .Select(f => f.Path);
+                    .Select(f => Safe(archivePath, () => f.Path))
+                    .NotNull()
+                    .Where(p => string.IsNullOrEmpty(path) || p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
             }) ?? Enumerable.Empty<string>();
         }
 
