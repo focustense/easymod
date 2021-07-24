@@ -2,6 +2,7 @@
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.Maintenance;
+using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profile;
 using ModernWpf.Controls;
 using System;
@@ -56,8 +57,18 @@ namespace Focus.Apps.EasyNpc.Main
                 model.Settings.WelcomeAcked += (sender, e) =>
                     (MainNavigationView.MenuItems[0] as NavigationViewItem).IsSelected = true;
             }
-            model.PageNavigationRequested += (sender, pageName) => SelectPage(pageName);
+            MessageBus.Subscribe<NavigateToPage>(message => SelectPage(message.Page));
         }
+
+        private static string GetPageName(MainPage page) => page switch
+        {
+            MainPage.Profile => "profile",
+            MainPage.Build => "build",
+            MainPage.Maintenance => "maintenance",
+            MainPage.Log => "log",
+            MainPage.Settings => "settings",
+            _ => null
+        };
 
         private void Navigate(string pageName)
         {
@@ -84,6 +95,13 @@ namespace Focus.Apps.EasyNpc.Main
                 .SingleOrDefault();
             if (matchingItem != null)
                 MainNavigationView.SelectedItem = matchingItem;
+        }
+
+        private void SelectPage(MainPage page)
+        {
+            var pageName = GetPageName(page);
+            if (!string.IsNullOrEmpty(pageName))
+                SelectPage(pageName);
         }
 
         private void Window_Closed(object sender, EventArgs e)

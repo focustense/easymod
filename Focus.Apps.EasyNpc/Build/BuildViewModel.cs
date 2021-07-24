@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profile;
 using Focus.ModManagers;
 using Focus.Storage.Archives;
@@ -19,7 +20,6 @@ namespace Focus.Apps.EasyNpc.Build
         where TKey : struct
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<BuildWarning> WarningExpanded;
 
         public bool EnableDewiggify { get; set; } = true;
         [DependsOn("Problems")]
@@ -128,9 +128,7 @@ namespace Focus.Apps.EasyNpc.Build
 
         public void ExpandWarning(BuildWarning warning)
         {
-            // There isn't actually any notion of expansion in this context, aside from the info panel which is more of
-            // a "select" action. This just serves as a signal for an external component to handle the request.
-            WarningExpanded?.Invoke(this, warning);
+            MessageBus.Send(new JumpToNpc(warning.RecordKey));
         }
 
         public void OpenBuildOutput()
