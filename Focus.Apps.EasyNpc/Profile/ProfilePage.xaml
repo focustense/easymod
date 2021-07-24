@@ -99,21 +99,50 @@
             <Grid>
                 <ui:SimpleStackPanel Orientation="Horizontal">
                     <ui:DropDownButton ToolTip="Filters">
+                        <ui:DropDownButton.Style>
+                            <Style TargetType="ui:DropDownButton">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Filters.IsNonDefault}" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource SystemControlHighlightAccentBrush}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasForcedFilter}" Value="True">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="FilterButtonAnimation">
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetProperty="Background.Color"
+                                                                    From="{StaticResource SystemBaseLowColor}"
+                                                                    To="{StaticResource SystemAccentColor}"
+                                                                    AutoReverse="True"
+                                                                    Duration="0:0:1"
+                                                                    RepeatBehavior="0:0:9"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <RemoveStoryboard BeginStoryboardName="FilterButtonAnimation"/>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ui:DropDownButton.Style>
                         <fa5:SvgAwesome Icon="Solid_Filter" Height="18"/>
                         <ui:DropDownButton.Flyout>
                             <ui:MenuFlyout Placement="BottomEdgeAlignedLeft">
-                                <CheckBox Content="Modded" IsChecked="{Binding Filters.NonDlc}">
+                                <CheckBox Content="Modded" IsChecked="{Binding Filters.NonDlc}" HorizontalAlignment="Stretch">
                                     <CheckBox.ToolTip>
                                         <TextBlock>Hide NPCs who are <Run FontStyle="Italic" FontWeight="SemiBold">only</Run> changed by vanilla/DLC plugins.</TextBlock>
                                     </CheckBox.ToolTip>
                                 </CheckBox>
                                 <CheckBox Content="Conflicts"
+                                          HorizontalAlignment="Stretch"
                                           IsChecked="{Binding Filters.Conflicts}"
                                           ToolTip="Only show NPCs whose face plugin doesn't belong to their face mod."/>
                                 <CheckBox Content="Missing mods"
+                                          HorizontalAlignment="Stretch"
                                           IsChecked="{Binding Filters.Missing}"
                                           ToolTip="Only show NPCs pointing to mods that can no longer be found, or plugins no longer in the load order. For best results with this, turn off the 'Modded' filter."/>
                                 <CheckBox Content="Wigs"
+                                          HorizontalAlignment="Stretch"
                                           IsChecked="{Binding Filters.Wigs}"
                                           ToolTip="Only show NPCs whose face plugin uses a wig, which may not carry over properly."/>
                                 <Separator/>

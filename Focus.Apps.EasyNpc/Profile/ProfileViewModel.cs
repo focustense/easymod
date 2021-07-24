@@ -37,6 +37,7 @@ namespace Focus.Apps.EasyNpc.Profile
         public NpcFilters Filters { get; private init; } = new NpcFilters();
         public Mugshot FocusedMugshot { get; set; }
         public NpcOverrideConfiguration<TKey> FocusedNpcOverride { get; set; }
+        public bool HasForcedFilter { get; set; }
         [DependsOn("SelectedNpc")]
         public bool HasSelectedNpc => SelectedNpc != null;
         public IReadOnlyList<string> LoadedPluginNames { get; private init; }
@@ -135,6 +136,7 @@ namespace Focus.Apps.EasyNpc.Profile
                         Filters.NonDlc = message.Filters.NonDlc.Value;
                     if (message.Filters.Wigs.HasValue)
                         Filters.Wigs = message.Filters.Wigs.Value;
+                    HasForcedFilter = true;
                 }
                     
                 MessageBus.Send(new NavigateToPage(MainPage.Profile));
@@ -377,6 +379,7 @@ namespace Focus.Apps.EasyNpc.Profile
         private void RefreshDisplayedNpcs()
         {
             filterBypassNpc = null;
+            HasForcedFilter = false;
             DisplayedNpcsSentinel = !DisplayedNpcsSentinel;
         }
 
@@ -432,6 +435,12 @@ namespace Focus.Apps.EasyNpc.Profile
             public bool Missing { get; set; }
             public bool NonDlc { get; set; }
             public bool Wigs { get; set; }
+
+            [DependsOn("Conflicts", "DefaultPlugin", "FacePlugin", "Missing", "NonDlc", "Wigs")]
+            public bool IsNonDefault =>
+                !NonDlc || Conflicts || Missing || Wigs ||
+                !string.IsNullOrEmpty(DefaultPlugin) ||
+                !string.IsNullOrEmpty(FacePlugin);
 
             public NpcFilters()
             {
