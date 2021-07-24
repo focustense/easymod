@@ -126,6 +126,14 @@ namespace Focus.Apps.EasyNpc.Build
             IsReadyToBuild = true;
         }
 
+        public void ExpandMasterDependency(PreBuildReport.MasterDependency masterDependency)
+        {
+            MessageBus.Send(new JumpToProfile(new JumpToProfile.FilterOverrides
+            {
+                DefaultPlugin = masterDependency.PluginName
+            }));
+        }
+
         public void ExpandWarning(BuildWarning warning)
         {
             MessageBus.Send(new JumpToNpc(warning.RecordKey));

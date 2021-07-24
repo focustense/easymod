@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
+using Focus.Apps.EasyNpc.Messages;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
 using System;
@@ -116,6 +117,28 @@ namespace Focus.Apps.EasyNpc.Profile
             };
 
             Filters.PropertyChanged += (_, _) => RefreshDisplayedNpcs();
+
+            MessageBus.Subscribe<JumpToProfile>(message =>
+            {
+                if (message.Filters != null)
+                {
+                    Filters.ResetToDefault();
+                    if (message.Filters.Conflicts.HasValue)
+                        Filters.Conflicts = message.Filters.Conflicts.Value;
+                    if (message.Filters.DefaultPlugin != null)  // Allow "empty" override
+                        Filters.DefaultPlugin = message.Filters.DefaultPlugin;
+                    if (message.Filters.FacePlugin != null)
+                        Filters.FacePlugin = message.Filters.FacePlugin;
+                    if (message.Filters.Missing.HasValue)
+                        Filters.Missing = message.Filters.Missing.Value;
+                    if (message.Filters.NonDlc.HasValue)
+                        Filters.NonDlc = message.Filters.NonDlc.Value;
+                    if (message.Filters.Wigs.HasValue)
+                        Filters.Wigs = message.Filters.Wigs.Value;
+                }
+                    
+                MessageBus.Send(new NavigateToPage(MainPage.Profile));
+            });
         }
 
         public IEnumerable<NpcConfiguration<TKey>> GetAllNpcConfigurations()
@@ -407,8 +430,23 @@ namespace Focus.Apps.EasyNpc.Profile
             public string DefaultPlugin { get; set; }
             public string FacePlugin { get; set; }
             public bool Missing { get; set; }
-            public bool NonDlc { get; set; } = true;
+            public bool NonDlc { get; set; }
             public bool Wigs { get; set; }
+
+            public NpcFilters()
+            {
+                ResetToDefault();
+            }
+
+            public void ResetToDefault()
+            {
+                Conflicts = false;
+                DefaultPlugin = null;
+                FacePlugin = null;
+                Missing = false;
+                NonDlc = true;
+                Wigs = false;
+            }
         }
     }
 

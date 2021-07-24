@@ -147,7 +147,10 @@
                                 This is shown for your information. You can't change it.
                             </TextBlock>
                             <TextBlock Text="Master Dependencies" Style="{StaticResource LoweredFormLabelStyle}"/>
-                            <ListBox ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding PreBuildReport.Masters}">
+                            <ListBox x:Name="MasterDependenciesListBox"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ItemsSource="{Binding PreBuildReport.Masters}"
+                                     MouseDoubleClick="MasterDependenciesListBox_MouseDoubleClick">
                                 <ListBox.Resources>
                                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
                                         <Style.Triggers>
@@ -194,8 +197,8 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             <TextBlock Foreground="{StaticResource MutedTextBrush}">
-                                Your merge will depend on these plugins as masters. If you see anything that doesn't belong, use the Profile page to find which
-                                NPCs are referencing that plugin as "Default", and change their default.
+                                Your merge will depend on these plugins as masters. If you see anything that doesn't belong, double-click on it to see the
+                                list of affected NPCs, and change their "Default plugin" to something else.
                             </TextBlock>
                             <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,16,0,0">
                                 <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
