@@ -374,6 +374,7 @@ namespace Focus.Apps.EasyNpc.Profile
         private void OnNpcProfilePropertyChanged(object sender, ProfileEvent e)
         {
             profileEventLog.Append(e);
+            MessageBus.Send(new NpcConfigurationChanged(e));
         }
 
         private void RefreshDisplayedNpcs()

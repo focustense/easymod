@@ -69,6 +69,20 @@ namespace Focus.Apps.EasyNpc.Build
             this.modResolver = modResolver;
             this.wigResolver = wigResolver;
             Npcs = npcs.ToList().AsReadOnly();
+
+            // We don't want to prevent users from switching back and forth between the build warnings and profile, and
+            // using that to fix warnings in the profile. That's an intended flow. However, due to the way the UI is
+            // currently designed, we DO want to persuade them to run a check again IF they dismissed the previous
+            // checks (or there were no previous warnings) AND they've changed the profile since then.
+            //
+            // An improved pre-build UI could eliminate the need for this hack, i.e. we could show a warning that
+            // "profile" has been changed without actually flipping back a few steps. But currently there's no logical
+            // place to put this in the UI.
+            MessageBus.Subscribe<NpcConfigurationChanged>(_ =>
+            {
+                if (IsReadyToBuild)
+                    Reset();
+            });
         }
 
         public async void BeginBuild()
@@ -109,11 +123,9 @@ namespace Focus.Apps.EasyNpc.Build
         // TODO: Add a check for missing textures - requires much deeper inspection of both plugins and meshes.
         public async void CheckForProblems()
         {
-            Progress = null;
+            Reset();
             IsProblemCheckerVisible = false;
-            IsProblemReportVisible = false;
             IsProblemCheckingInProgress = true;
-            IsReadyToBuild = false;
             var buildSettings = GetBuildSettings();
             PreBuildReport = await Task.Run(() => buildChecker.CheckAll(Npcs, buildSettings));
             IsProblemCheckingInProgress = false;
@@ -228,6 +240,15 @@ namespace Focus.Apps.EasyNpc.Build
             var modRootDirectory = Settings.Default.ModRootDirectory;
             var modDirectory = Path.Combine(modRootDirectory, modName);
             return Directory.Exists(modDirectory) && Directory.EnumerateFiles(modDirectory).Any();
+        }
+
+        private void Reset()
+        {
+            Progress = null;
+            IsProblemCheckerVisible = true;
+            IsProblemReportVisible = false;
+            IsReadyToBuild = false;
+            PreBuildReport = null;
         }
     }
 
