@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
 using PropertyChanged;
 using Serilog;
@@ -30,6 +31,7 @@ namespace Focus.Apps.EasyNpc.Main
         public bool IsUnloadablePluginWarningVisible => HasEnabledUnloadablePlugins && IsPluginListVisible;
         public IReadOnlyList<string> LoadedMasterNames { get; private set; }
         public IReadOnlyList<string> LoadedPluginNames { get; private set; }
+        public IReadOnlyLoadOrderGraph Graph => graph;
         public LogViewModel Log { get; private init; }
         public IModPluginMapFactory ModPluginMapFactory => editor.ModPluginMapFactory;
         public IReadOnlyList<INpc<TKey>> Npcs { get; private set; }

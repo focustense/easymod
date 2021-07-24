@@ -41,6 +41,7 @@ namespace Focus.Apps.EasyNpc.Profile
         public IReadOnlyList<string> LoadedPluginNames { get; private init; }
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
         public bool OnlyFaceOverrides { get; set; }
+        public IProfileRuleSet RuleSet => ruleSet;
         public NpcOverrideConfiguration<TKey> SelectedOverrideConfig { get; private set; }
         public NpcConfiguration<TKey> SelectedNpc { get; set; }
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> SelectedNpcOverrides { get; private set; }
@@ -56,6 +57,7 @@ namespace Focus.Apps.EasyNpc.Profile
         private readonly Dictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
         private readonly IReadOnlyList<TKey> npcOrder;
         private readonly ProfileEventLog profileEventLog;
+        private readonly IProfileRuleSet ruleSet;
 
         public ProfileViewModel(
             IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory,
@@ -67,13 +69,13 @@ namespace Focus.Apps.EasyNpc.Profile
             var npcsWithOverrides = npcs
                 .Where(npc => npc.IsSupported)
                 .Where(npc => npc.Overrides.Count > 0);
-            var profileRuleSet = StandardProfileRuleSet.Create(masterNames, npcs);
+            ruleSet = StandardProfileRuleSet.Create(masterNames, npcs);
 
             var npcOrder = new List<TKey>();
             foreach (var npc in npcsWithOverrides)
             {
                 npcOrder.Add(npc.Key);
-                var npcConfig = new NpcConfiguration<TKey>(npc, modPluginMapFactory, profileRuleSet);
+                var npcConfig = new NpcConfiguration<TKey>(npc, modPluginMapFactory, ruleSet);
                 npcConfigurations.Add(npc.Key, npcConfig);
             }
             this.npcOrder = npcOrder.AsReadOnly();

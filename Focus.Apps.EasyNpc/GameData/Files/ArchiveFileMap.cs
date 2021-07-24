@@ -69,7 +69,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
                     FaceGenFiles = archiveProvider.GetArchiveFileNames(path, FileStructure.FaceMeshesPath)
                         .Concat(archiveProvider.GetArchiveFileNames(path, FileStructure.FaceTintsPath)),
                 })
-                .Tap(path => log.Information("Indexed archive {archivePath}", path))
+                .Tap(x => log.Information("Indexed archive {archivePath}", x.FileName))
                 .ToList();
             Parallel.Invoke(
                 () =>

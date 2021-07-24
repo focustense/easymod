@@ -90,8 +90,8 @@ namespace Focus.Apps.EasyNpc.Main
                 var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
                 var faceGenEditor = new NiflyFaceGenEditor(Logger);
                 var buildChecker = new BuildChecker<TKey>(
-                    Loader.LoadedPluginNames, npcConfigs, modResolver, Loader.ModPluginMapFactory,
-                    gameDataEditor.ArchiveProvider, profileEventLog, Logger);
+                    Loader.LoadedPluginNames, Loader.Graph, npcConfigs, Profile.RuleSet, modResolver,
+                    Loader.ModPluginMapFactory, gameDataEditor.ArchiveProvider, profileEventLog, Logger);
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, buildChecker, gameDataEditor.MergedPluginBuilder,
                     Loader.ModPluginMapFactory, modResolver, Profile.GetAllNpcConfigurations(), wigResolver,

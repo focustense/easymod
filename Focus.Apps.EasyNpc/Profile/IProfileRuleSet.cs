@@ -7,6 +7,7 @@ namespace Focus.Apps.EasyNpc.Profile
     {
         NpcConfigurationDefaults GetConfigurationDefaults<TKey>(INpc<TKey> npc)
             where TKey : struct;
+        bool IsLikelyOverhaul(string pluginName);
     }
 
     public class NpcConfigurationDefaults

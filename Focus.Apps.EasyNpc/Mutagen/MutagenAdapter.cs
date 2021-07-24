@@ -4,6 +4,7 @@ using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Compatibility;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Main;
 using Focus.ModManagers;

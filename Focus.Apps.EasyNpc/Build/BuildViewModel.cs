@@ -23,7 +23,7 @@ namespace Focus.Apps.EasyNpc.Build
 
         public bool EnableDewiggify { get; set; } = true;
         [DependsOn("Problems")]
-        public bool HasProblems => Problems?.Any() ?? false;
+        public bool HasProblems => PreBuildReport?.Warnings.Any() ?? false;
         public bool HasWigs { get; private set; }
         public bool IsBuildCompleted { get; private set; }
         [DependsOn("Progress")]
@@ -41,7 +41,7 @@ namespace Focus.Apps.EasyNpc.Build
         public string OutputDirectory { get; private set; }
         public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now:yyyy-MM-dd}";
         public string OutputPluginName => FileStructure.MergeFileName;
-        public IEnumerable<BuildWarning> Problems { get; private set; }
+        public PreBuildReport PreBuildReport { get; private set; }
         public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
 
@@ -115,15 +115,7 @@ namespace Focus.Apps.EasyNpc.Build
             IsProblemCheckingInProgress = true;
             IsReadyToBuild = false;
             var buildSettings = GetBuildSettings();
-            var warnings = await Task.Run(() => buildChecker.CheckAll(Npcs, buildSettings).ToList());
-            var suppressions = GetBuildWarningSuppressions();
-            Problems = warnings
-                .Where(x =>
-                    string.IsNullOrEmpty(x.PluginName) ||
-                    x.Id == null ||
-                    !suppressions[x.PluginName].Contains((BuildWarningId)x.Id))
-                .OrderBy(x => x.Id)
-                .ThenBy(x => x.PluginName);
+            PreBuildReport = await Task.Run(() => buildChecker.CheckAll(Npcs, buildSettings));
             IsProblemCheckingInProgress = false;
             IsProblemReportVisible = true;
         }
@@ -223,13 +215,6 @@ namespace Focus.Apps.EasyNpc.Build
                 Progress.Archive.ErrorMessage = ex.Message;
                 throw;
             }
-        }
-
-        private static ILookup<string, BuildWarningId> GetBuildWarningSuppressions()
-        {
-            return Settings.Default.BuildWarningWhitelist
-                .SelectMany(x => x.IgnoredWarnings.Select(id => new { Plugin = x.PluginName, Id = id }))
-                .ToLookup(x => x.Plugin, x => x.Id);
         }
 
         private static bool ModDirectoryIsNotEmpty(string modName)

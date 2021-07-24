@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc.Main
+namespace Focus.Apps.EasyNpc.GameData.Plugins
 {
-    public class LoadOrderGraph
+    public class LoadOrderGraph : ILoadOrderGraph
     {
         private readonly Dictionary<string, LoadOrderNode> nodesByName = new(StringComparer.OrdinalIgnoreCase);
         private readonly LoadOrderNode root;
@@ -34,6 +34,12 @@ namespace Focus.Apps.EasyNpc.Main
         public bool CanLoad(string pluginName)
         {
             return nodesByName.TryGetValue(pluginName, out var node) && node.CanLoad;
+        }
+
+        public IEnumerable<string> GetAllMasters(string pluginName)
+        {
+            return nodesByName.TryGetValue(pluginName, out var node) ?
+                node.Masters.Select(x => x.PluginName) : Enumerable.Empty<string>();
         }
 
         public IEnumerable<string> GetMissingMasters(string pluginName)

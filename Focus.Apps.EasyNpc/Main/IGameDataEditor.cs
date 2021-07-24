@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
 using System;
 using System.Collections.Generic;
@@ -24,25 +25,5 @@ namespace Focus.Apps.EasyNpc.Main
         Task Load(IEnumerable<string> pluginNames);
         IEnumerable<Hair<TKey>> ReadHairRecords(string pluginName);
         void ReadNpcRecords(string pluginName, IDictionary<TKey, IMutableNpc<TKey>> cache);
-    }
-
-    public class PluginInfo
-    {
-        public string FileName { get; init; }
-        public bool IsEnabled { get; init; }
-        public bool IsReadable { get; init; }
-        public IReadOnlyList<string> Masters { get; init; }
-
-        public PluginInfo()
-        {
-        }
-
-        public PluginInfo(string fileName, IEnumerable<string> masters, bool isReadable, bool isEnabled)
-        {
-            FileName = fileName;
-            Masters = masters.ToList().AsReadOnly();
-            IsReadable = isReadable;
-            IsEnabled = isEnabled;
-        }
     }
 }

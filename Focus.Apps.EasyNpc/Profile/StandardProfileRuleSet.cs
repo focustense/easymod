@@ -1,4 +1,5 @@
-﻿using Focus.Apps.EasyNpc.GameData.Records;
+﻿using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Records;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,8 +20,8 @@ namespace Focus.Apps.EasyNpc.Profile
 
         private StandardProfileRuleSet(IEnumerable<string> masterNames, IEnumerable<string> overhaulNames)
         {
-            this.masterNames = masterNames.ToHashSet();
-            this.overhaulNames = overhaulNames.ToHashSet();
+            this.masterNames = masterNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            this.overhaulNames = overhaulNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
         public NpcConfigurationDefaults GetConfigurationDefaults<TKey>(INpc<TKey> npc) where TKey : struct
@@ -84,6 +85,11 @@ namespace Focus.Apps.EasyNpc.Profile
             };
         }
 
+        public bool IsLikelyOverhaul(string pluginName)
+        {
+            return overhaulNames.Contains(pluginName);
+        }
+
         private static IEnumerable<string> InferOverhaulNames<TKey>(IEnumerable<INpc<TKey>> npcs)
             where TKey : struct
         {
@@ -106,6 +112,7 @@ namespace Focus.Apps.EasyNpc.Profile
             var pluginStats = npcs
                 .SelectMany(x => x.Overrides.Select(o => new { Npc = x, Override = o }))
                 .GroupBy(x => x.Override.PluginName)
+                .Where(p => !FileStructure.IsVanilla(p.Key) && !FileStructure.IsDlc(p.Key))
                 .Select(p => new
                 {
                     PluginName = p.Key,
