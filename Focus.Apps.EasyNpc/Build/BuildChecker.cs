@@ -53,6 +53,7 @@ namespace Focus.Apps.EasyNpc.Build
             warnings.AddRange(CheckForOverriddenArchives());
             warnings.AddRange(CheckModPluginConsistency(npcs));
             warnings.AddRange(CheckWigs(npcs, buildSettings.WigResolver, buildSettings.EnableDewiggify));
+            warnings.AddRange(CheckBadArchives());
             var suppressions = GetBuildWarningSuppressions();
             var defaultPluginNames = npcs
                 .Select(x => x.DefaultPluginName)
@@ -82,6 +83,14 @@ namespace Focus.Apps.EasyNpc.Build
                     .ToList()
                     .AsReadOnly()
             };
+        }
+
+        private IEnumerable<BuildWarning> CheckBadArchives()
+        {
+            return archiveProvider.GetBadArchivePaths()
+                .Select(p => new BuildWarning(
+                    BuildWarningId.BadArchive,
+                    WarningMessages.BadArchive(p)));
         }
 
         private IEnumerable<BuildWarning> CheckForOverriddenArchives()

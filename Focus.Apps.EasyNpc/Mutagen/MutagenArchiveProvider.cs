@@ -71,6 +71,11 @@ namespace Focus.Apps.EasyNpc.Mutagen
             }) ?? Enumerable.Empty<string>();
         }
 
+        public IEnumerable<string> GetBadArchivePaths()
+        {
+            return badArchivePaths;
+        }
+
         public IEnumerable<string> GetLoadedArchivePaths()
         {
             var dataFolderPath = new DirectoryPath(environment.DataFolderPath);

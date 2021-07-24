@@ -38,6 +38,26 @@
                 </TextBlock>
             </ui:SimpleStackPanel>
         </DataTemplate>
+        <DataTemplate x:Key="BadArchive">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>Data corruption was detected in an archive being used to provide game assets.</Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>A corrupt archive is always a serious problem, irrespective of how</Run> <Run Text="{StaticResource AppName}"/> <Run>uses it.</Run>
+                    <Run>Both the game itself and any modding tools you use may crash, ignore the file, or read incorrect or garbage data from it.</Run>
+                    <Run Text="{StaticResource AppName}"/> <Run>
+                        will ignore it, but if any NPC overhauls depend on its assets, they may end up with blackface or other incorrect visuals, and could even crash the game.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">How to fix it:</Run>
+                    <Run>Reinstall the mod that is providing this file. If it is still corrupted, contact the mod author for a fix.</Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
         <DataTemplate x:Key="MultipleArchiveSources">
             <ui:SimpleStackPanel>
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
@@ -302,6 +322,9 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Id}" Value="ModDirectoryNotFound">
                             <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource ModDirectoryNotFound}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="BadArchive">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource BadArchive}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Id}" Value="MultipleArchiveSources">
                             <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource MultipleArchiveSources}"/>
