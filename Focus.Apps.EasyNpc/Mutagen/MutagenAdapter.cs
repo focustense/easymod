@@ -101,6 +101,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, modResolver);
                 npcCompatibilityRuleSet = new CompatibilityRuleSet<INpcGetter>(npc => $"{npc.FormKey} '{npc.EditorID}'", log)
+                    .Add(new FacegenHeadRule(Environment))
                     .Add(new NoChildrenRule(Environment));
                 npcCompatibilityRuleSet.ReportConfiguration();
             });

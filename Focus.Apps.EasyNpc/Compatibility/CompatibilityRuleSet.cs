@@ -43,7 +43,8 @@ namespace Focus.Apps.EasyNpc.Compatibility
                     var isSupported = rule.IsSupported(record);
                     if (!isSupported)
                     {
-                        log.Information(
+                        log.Write(
+                            rule.LogLevel,
                             "Record {recordName} is blocked by rule {ruleName}.",
                             SafeGetRecordName(record), rule.Name);
                         return false;

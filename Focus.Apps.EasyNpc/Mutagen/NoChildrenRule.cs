@@ -3,6 +3,7 @@
 using Focus.Apps.EasyNpc.Compatibility;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
+using Serilog.Events;
 
 namespace Focus.Apps.EasyNpc.Mutagen
 {
@@ -14,6 +15,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             "child actors is currently disabled until this is sorted out, so that EasyNPC will not overwrite any " +
             "of their edits.";
         public string Name => "No Children";
+        public LogEventLevel LogLevel => LogEventLevel.Warning;
 
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env;
 
