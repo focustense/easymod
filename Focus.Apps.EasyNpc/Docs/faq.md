@@ -32,7 +32,7 @@
 
 [Issue #32](https://github.com/focustense/easymod/issues/32) is the tracker for VR support; it is likely to happen, but not guaranteed. The answer for all other Skyrim versions, aside from SE and VR, is "maybe".
 
-At some point, a preview build will be released that will enable testing with other instances via a command-line switch. This feature will need testers before it can become part of the official build. If you are interested _and willing to spend some time testing, reporting issues and trying out fixes_, please ping that issue and/or the [EasyMod Discord](https://discord.gg/p3Gn7ubG).
+At some point, a preview build will be released that will enable testing with other instances via a command-line switch. This feature will need testers before it can become part of the official build. If you are interested _and willing to spend some time testing, reporting issues and trying out fixes_, please ping that issue and/or the [EasyMod Discord](https://discord.gg/E4a6XfRvHe).
 
 ### Does this support [favorite mod]?
 
@@ -48,7 +48,7 @@ Almost no overhauls do this, so virtually all overhauls are supported. Two notab
 
 ### Will you release previews/mugshots for [specific mod]?
 
-Eventually, but since it is a laborious manual process, it may take time. For those who have volunteered to make their own, the [mugshot creation guide](making-mugshots.md) may help. In the meantime, there is now a [dedicated Discord channel](https://discord.gg/GRVPkyus) for making these requests, where other people can vote on them.
+Eventually, but since it is a laborious manual process, it may take time. For those who have volunteered to make their own, the [mugshot creation guide](making-mugshots.md) may help. In the meantime, there is now a [dedicated Discord channel](https://discord.gg/hyV8r8heDj) for making these requests, where other people can vote on them.
 
 ## Starting EasyNPC
 
@@ -213,7 +213,7 @@ Second, if the warning is specific to an NPC and you have some idea how to fix i
 
 If you don't think it sounds important, you can ignore it and build anyway. Try it in the game and see. If you see blackface, or some of the specific face issues described below, then you may at that point want to return to the warning and resolve it - usually by making different selections.
 
-If, after all of the above, you are still having trouble making sense of a warning, we may be able to help in the [Discord chat](https://discord.gg/p3Gn7ubG).
+If, after all of the above, you are still having trouble making sense of a warning, we may be able to help in the [Discord chat](https://discord.gg/E4a6XfRvHe).
 
 ### My mod has dependencies on the original overhauls. Isn't EasyNPC supposed to eliminate those?
 
@@ -298,4 +298,4 @@ Aside from being a different type of resources, and being slightly more likely t
 
 ## Other problems?
 
-Ask a [question on GitHub](https://github.com/focustense/easymod/discussions) or join us in the [Discord chat](https://discord.gg/p3Gn7ubG).
+Ask a [question on GitHub](https://github.com/focustense/easymod/discussions) or join us in the [Discord chat](https://discord.gg/E4a6XfRvHe).
