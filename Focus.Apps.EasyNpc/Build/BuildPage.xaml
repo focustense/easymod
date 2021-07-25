@@ -13,6 +13,11 @@
          d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
          d:DesignHeight="700" d:DesignWidth="1200" Loaded="Page_Loaded">
     <Grid DataContext="{Binding Build}">
+        <Grid.Resources>
+            <Style TargetType="TextBlock" x:Key="LoweredFormLabelStyle" BasedOn="{StaticResource FormLabelStyle}">
+                <Setter Property="Margin" Value="0,16,0,2"/>
+            </Style>
+        </Grid.Resources>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -112,7 +117,7 @@
                                 </GroupBox>
                             </Border>
                             <ListBox x:Name="WarningsListBox"
-                                     ItemsSource="{Binding Problems}"
+                                     ItemsSource="{Binding PreBuildReport.Warnings}"
                                      DisplayMemberPath="Message"
                                      SelectedItem="{Binding SelectedWarning}"
                                      Margin="0,8,0,0"
@@ -122,12 +127,12 @@
                     </Grid>
                 </GroupBox>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Visible">
                 <GroupBox Header="Ready to build">
                     <ui:SimpleStackPanel>
                         <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
                             <TextBlock Style="{StaticResource FirstParagraphStyle}">All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
-                            <TextBlock Text="Mod Name" Style="{StaticResource BodyTextBlockStyle}" Margin="0,8,0,0"/>
+                            <TextBlock Text="Mod Name" Style="{StaticResource LoweredFormLabelStyle}"/>
                             <TextBox Text="{Binding OutputModName, UpdateSourceTrigger=PropertyChanged}"/>
                             <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding IsModOverwriteWarningVisible, Converter={StaticResource BoolToVisibility}}">
                                 <fa5:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Icon="Solid_ExclamationTriangle" Width="10" Height="10"/>
@@ -136,16 +141,70 @@
                             <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}">
                                 Please specify a <Bold>new or empty</Bold> mod. Existing files can interfere with the merge and may also be overwritten or deleted.
                             </TextBlock>
-                            <TextBlock Text="Plugin Name" Style="{StaticResource BodyTextBlockStyle}" Margin="0,8,0,0"/>
+                            <TextBlock Text="Plugin Name" Style="{StaticResource LoweredFormLabelStyle}"/>
                             <TextBox Text="{Binding OutputPluginName, Mode=OneWay}" IsEnabled="False"/>
-                            <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}">
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}">
                                 This is shown for your information. You can't change it.
                             </TextBlock>
-                            <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Text="Master Dependencies" Style="{StaticResource LoweredFormLabelStyle}"/>
+                            <ListBox x:Name="MasterDependenciesListBox"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ItemsSource="{Binding PreBuildReport.Masters}"
+                                     MouseDoubleClick="MasterDependenciesListBox_MouseDoubleClick">
+                                <ListBox.Resources>
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsLikelyOverhaul}" Value="True">
+                                                <Setter Property="ToolTip">
+                                                    <Setter.Value>
+                                                        <ToolTip>
+                                                            <TextBlock>
+                                                                This looks like it <Run FontWeight="SemiBold">might</Run> be from a visual overhaul, but
+                                                                <Run Text="{StaticResource AppName}"/> can't know for sure. If you recognize it as part of
+                                                                a mod that is only expected to change NPC appearances, then remove it from the NPCs who
+                                                                are referencing it as the <Run FontWeight="SemiBold">default (master)</Run> plugin.
+                                                                <LineBreak/><LineBreak FontSize="6"/>
+                                                                Master dependencies on visual overhauls may cause conflicts in the game.
+                                                            </TextBlock>
+                                                        </ToolTip>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.Resources>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding PluginName}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsLikelyOverhaul}" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerForegroundBrush}"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}">
+                                Your merge will depend on these plugins as masters. If you see anything that doesn't belong, double-click on it to see the
+                                list of affected NPCs, and change their "Default plugin" to something else.
+                            </TextBlock>
+                            <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,16,0,0">
                                 <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
                             </ui:SimpleStackPanel>
                         </ui:SimpleStackPanel>
-                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}">
+                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
                             <TextBlock Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
                             <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8,0,0"/>
                             <local:ProgressViewer DataContext="{Binding Progress.MergedFolder}" Margin="0,8,0,0"/>
@@ -154,7 +213,7 @@
                     </ui:SimpleStackPanel>
                 </GroupBox>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Visible">
+            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
                 <GroupBox Header="All done">
                     <ui:SimpleStackPanel>
                         <ui:SimpleStackPanel.Resources>

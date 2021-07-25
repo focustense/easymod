@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc.Main
+namespace Focus.Apps.EasyNpc.GameData.Plugins
 {
-    public class LoadOrderGraph
+    public class LoadOrderGraph : ILoadOrderGraph
     {
         private readonly Dictionary<string, LoadOrderNode> nodesByName = new(StringComparer.OrdinalIgnoreCase);
         private readonly LoadOrderNode root;
@@ -15,7 +15,11 @@ namespace Focus.Apps.EasyNpc.Main
             foreach (var plugin in plugins)
             {
                 var node = GetOrAddNode(plugin.FileName);
-                node.IsBlacklisted = blacklist.Contains(plugin.FileName);
+                node.IsBlacklisted = !plugin.IsReadable || blacklist.Contains(plugin.FileName);
+                if (node.IsBlacklisted)
+                    // This would normally be handled by Validate(), but it's possible that the node isn't actually
+                    // reachable in the graph.
+                    node.CanLoad = false;
                 node.IsEnabled = plugin.IsEnabled;
                 foreach (var master in plugin.Masters)
                 {
@@ -30,6 +34,12 @@ namespace Focus.Apps.EasyNpc.Main
         public bool CanLoad(string pluginName)
         {
             return nodesByName.TryGetValue(pluginName, out var node) && node.CanLoad;
+        }
+
+        public IEnumerable<string> GetAllMasters(string pluginName)
+        {
+            return nodesByName.TryGetValue(pluginName, out var node) ?
+                node.Masters.Select(x => x.PluginName) : Enumerable.Empty<string>();
         }
 
         public IEnumerable<string> GetMissingMasters(string pluginName)

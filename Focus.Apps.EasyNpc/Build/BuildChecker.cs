@@ -1,9 +1,11 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Profile;
 using Focus.Files;
 using Focus.ModManagers;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,37 +19,79 @@ namespace Focus.Apps.EasyNpc.Build
         private readonly ArchiveFileMap archiveFileMap;
         private readonly IArchiveProvider archiveProvider;
         private readonly IReadOnlyList<string> loadOrder;
+        private readonly IReadOnlyLoadOrderGraph loadOrderGraph;
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly IModResolver modResolver;
         private readonly IDictionary<Tuple<string, string>, NpcConfiguration<TKey>> npcConfigs;
         private readonly IReadOnlyProfileEventLog profileEventLog;
+        private readonly IProfileRuleSet profileRuleSet;
 
         public BuildChecker(
-            IReadOnlyList<string> loadOrder, IEnumerable<NpcConfiguration<TKey>> npcConfigs,
-            IModResolver modResolver, IModPluginMapFactory modPluginMapFactory, IArchiveProvider archiveProvider,
-            IReadOnlyProfileEventLog profileEventLog)
+            IReadOnlyList<string> loadOrder, IReadOnlyLoadOrderGraph loadOrderGraph,
+            IEnumerable<NpcConfiguration<TKey>> npcConfigs, IProfileRuleSet profileRuleSet, IModResolver modResolver,
+            IModPluginMapFactory modPluginMapFactory, IArchiveProvider archiveProvider,
+            IReadOnlyProfileEventLog profileEventLog, ILogger log)
         {
             this.npcConfigs = npcConfigs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
+            this.profileRuleSet = profileRuleSet;
             this.loadOrder = loadOrder;
+            this.loadOrderGraph = loadOrderGraph;
             this.modResolver = modResolver;
             this.modPluginMapFactory = modPluginMapFactory;
             this.archiveProvider = archiveProvider;
             this.profileEventLog = profileEventLog;
-            archiveFileMap = new ArchiveFileMap(archiveProvider);
+            archiveFileMap = new ArchiveFileMap(archiveProvider, log);
         }
 
-        public IReadOnlyList<BuildWarning> CheckAll(
+        public PreBuildReport CheckAll(
             IReadOnlyList<NpcConfiguration<TKey>> npcs, BuildSettings<TKey> buildSettings)
         {
             var warnings = new List<BuildWarning>();
             warnings.AddRange(CheckModSettings());
             var profileEvents = profileEventLog.ToList();
-            warnings.AddRange(CheckOrphanedNpcs(npcs, profileEvents));
+            warnings.AddRange(CheckOrphanedNpcs(profileEvents));
             warnings.AddRange(CheckMissingPlugins(profileEvents));
             warnings.AddRange(CheckForOverriddenArchives());
             warnings.AddRange(CheckModPluginConsistency(npcs));
             warnings.AddRange(CheckWigs(npcs, buildSettings.WigResolver, buildSettings.EnableDewiggify));
-            return warnings.AsReadOnly();
+            warnings.AddRange(CheckBadArchives());
+            var suppressions = GetBuildWarningSuppressions();
+            var defaultPluginNames = npcs
+                .Select(x => x.DefaultPluginName)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var masterPluginNames = defaultPluginNames
+                .SelectMany(p => loadOrderGraph.GetAllMasters(p))
+                .Concat(defaultPluginNames)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            return new()
+            {
+                Masters = masterPluginNames
+                    .Select(p => new PreBuildReport.MasterDependency
+                    {
+                        PluginName = p,
+                        IsLikelyOverhaul = profileRuleSet.IsLikelyOverhaul(p),
+                    })
+                    .ToList()
+                    .AsReadOnly(),
+                Warnings = warnings
+                    .Where(x =>
+                        string.IsNullOrEmpty(x.PluginName) ||
+                        x.Id == null ||
+                        !suppressions[x.PluginName].Contains((BuildWarningId)x.Id))
+                    .OrderBy(x => x.Id)
+                    .ThenBy(x => x.PluginName)
+                    .ToList()
+                    .AsReadOnly()
+            };
+        }
+
+        private IEnumerable<BuildWarning> CheckBadArchives()
+        {
+            return archiveProvider.GetBadArchivePaths()
+                .Select(p => new BuildWarning(
+                    BuildWarningId.BadArchive,
+                    WarningMessages.BadArchive(p)));
         }
 
         private IEnumerable<BuildWarning> CheckForOverriddenArchives()
@@ -147,6 +191,12 @@ namespace Focus.Apps.EasyNpc.Build
             var hasArchiveFacegen = modPluginMap.GetArchivesForMod(npc.FaceModName)
                 .Select(f => archiveFileMap.ContainsFile(f, faceMeshFileName))
                 .Any(exists => exists);
+            if (!RecordKey.Equals(npc.DefaultPluginRace, npc.FacePluginRace))
+                yield return new BuildWarning(
+                    npc.FacePluginName,
+                    new RecordKey(npc),
+                    BuildWarningId.FaceModChangesRace,
+                    WarningMessages.FaceModChangesRace(npc.EditorId, npc.Name, npc.FacePluginName, npc.DefaultPluginName));
             // If the selected plugin has overrides, then we want to see facegen data. On the other hand, if the
             // selected plugin does NOT have overrides, then a mod providing facegens will probably break something.
             if (npc.RequiresFacegenData() && !hasLooseFacegen && !hasArchiveFacegen)
@@ -184,14 +234,10 @@ namespace Focus.Apps.EasyNpc.Build
                     WarningMessages.ModDirectoryNotFound(modRootDirectory));
         }
 
-        private static IEnumerable<BuildWarning> CheckOrphanedNpcs(
-            IEnumerable<NpcConfiguration<TKey>> npcs, IEnumerable<ProfileEvent> events)
+        private IEnumerable<BuildWarning> CheckOrphanedNpcs(IEnumerable<ProfileEvent> events)
         {
             var allPluginsInProfile = events.Select(x => x.BasePluginName).Distinct().ToList();
-            var currentPlugins = npcs
-                .Select(x => x.BasePluginName)
-                .Distinct()
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var currentPlugins = loadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase);
             return allPluginsInProfile
                 .Where(p => !currentPlugins.Contains(p))
                 .Select(p => new BuildWarning(
@@ -223,6 +269,13 @@ namespace Focus.Apps.EasyNpc.Build
                             BuildWarningId.FaceModWigConversionDisabled,
                             WarningMessages.FaceModWigConversionDisabled(
                                 x.Npc.EditorId, x.Npc.Name, x.Npc.FacePluginName, x.Wig.IsBald)));
+        }
+
+        private static ILookup<string, BuildWarningId> GetBuildWarningSuppressions()
+        {
+            return Settings.Default.BuildWarningWhitelist
+                .SelectMany(x => x.IgnoredWarnings.Select(id => new { Plugin = x.PluginName, Id = id }))
+                .ToLookup(x => x.Plugin, x => x.Id);
         }
     }
 }

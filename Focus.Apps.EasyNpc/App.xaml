@@ -45,6 +45,11 @@
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
             <build:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>
 
+            <Style TargetType="Button" x:Key="DangerButtonStyle" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Background" Value="{StaticResource DangerBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="White"/>
+            </Style>
+
             <Style TargetType="DataGrid" BasedOn="{StaticResource DefaultDataGridStyle}">
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="LightGray"/>

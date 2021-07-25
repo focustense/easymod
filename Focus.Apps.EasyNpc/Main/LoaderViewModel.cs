@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
 using PropertyChanged;
 using Serilog;
@@ -30,6 +31,7 @@ namespace Focus.Apps.EasyNpc.Main
         public bool IsUnloadablePluginWarningVisible => HasEnabledUnloadablePlugins && IsPluginListVisible;
         public IReadOnlyList<string> LoadedMasterNames { get; private set; }
         public IReadOnlyList<string> LoadedPluginNames { get; private set; }
+        public IReadOnlyLoadOrderGraph Graph => graph;
         public LogViewModel Log { get; private init; }
         public IModPluginMapFactory ModPluginMapFactory => editor.ModPluginMapFactory;
         public IReadOnlyList<INpc<TKey>> Npcs { get; private set; }
@@ -54,7 +56,7 @@ namespace Focus.Apps.EasyNpc.Main
             var blacklist = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { FileStructure.MergeFileName };
             graph = new(sourcePlugins, blacklist);
             Plugins = editor.GetAvailablePlugins()
-                .Select((x, i) => new PluginSetting(x.FileName, i + 1, x.IsEnabled))
+                .Select((x, i) => new PluginSetting(x.FileName, i + 1, x.IsReadable, x.IsEnabled))
                 .ToList()
                 .AsReadOnly();
             UpdatePluginStates();
@@ -164,15 +166,17 @@ namespace Focus.Apps.EasyNpc.Main
         public bool HasMissingMasters => MissingMasters.Any();
         public int Index { get; private init; }
         public bool IsPreviousMerge => FileName == FileStructure.MergeFileName;
+        public bool IsReadable { get; private init; }
         public IEnumerable<string> MissingMasters { get; set; } = Enumerable.Empty<string>();
         public string MissingMastersFormatted => string.Join(", ", MissingMasters);
         public bool ShouldLoad { get; set; }
 
-        public PluginSetting(string fileName, int index, bool defaultEnabled)
+        public PluginSetting(string fileName, int index, bool isReadable, bool defaultEnabled)
         {
             CanLoad = true;
             FileName = fileName;
             Index = index;
+            IsReadable = isReadable;
             ShouldLoad = defaultEnabled;
         }
 
@@ -186,9 +190,11 @@ namespace Focus.Apps.EasyNpc.Main
         where TKey : struct
     {
         public string BasePluginName { get; set; }
+        public RecordKey DefaultRace { get; set; }
         public string EditorId { get; set; }
         public TKey Key { get; set; }
         public bool IsFemale { get; set; }
+        public bool IsSupported { get; set; }
         public string LocalFormIdHex { get; set; }
         public string Name { get; set; }
         public List<NpcOverride<TKey>> Overrides { get; set; } = new List<NpcOverride<TKey>>();

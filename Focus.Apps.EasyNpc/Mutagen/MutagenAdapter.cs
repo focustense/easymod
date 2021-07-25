@@ -1,6 +1,10 @@
-﻿using Focus.Apps.EasyNpc.Build;
+﻿#nullable enable
+
+using Focus.Apps.EasyNpc.Build;
+using Focus.Apps.EasyNpc.Compatibility;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Main;
 using Focus.Files;
@@ -32,16 +36,20 @@ namespace Focus.Apps.EasyNpc.Mutagen
         // works with ordinary exception handling)
         public IExternalLog Log { get; init; } = new NullExternalLog();
         public IMergedPluginBuilder<FormKey> MergedPluginBuilder { get; private set; }
-        public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod);
+        public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod).NotNull();
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }
 
         private readonly ILogger log;
         private readonly IModResolver modResolver;
 
+        private CompatibilityRuleSet<INpcGetter> npcCompatibilityRuleSet;
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public MutagenAdapter(IModResolver modResolver, ILogger log)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             if (!GameLocations.TryGetDataFolder(GameRelease.SkyrimSE, out var dataFolder))
-                throw new Exception("Couldn't find SkyrimSE game data folder");
+                throw new MissingGameException(Enum.GetName(GameRelease.SkyrimSE)!, GetGameName(GameRelease.SkyrimSE));
             DataDirectory = dataFolder;
             this.log = log;
             this.modResolver = modResolver;
@@ -50,8 +58,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public IEnumerable<PluginInfo> GetAvailablePlugins()
         {
             return LoadOrder.GetListings(GameRelease.SkyrimSE, DataDirectory, true)
-                .Select((x, i) => new PluginInfo(
-                    x.ModKey.FileName.String, GetMasterNames(x.ModKey.FileName), x.Enabled));
+                .Select((x, i) =>
+                {
+                    var isReadable = TryGetMasterNames(x.ModKey.FileName, out var masterNames);
+                    return new PluginInfo(
+                        x.ModKey.FileName.String, masterNames, isReadable, x.Enabled);
+                })
+                .Where(x => x is not null);
         }
 
         public IEnumerable<string> GetLoadedPlugins()
@@ -69,7 +82,8 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             var modKey = ModKey.FromNameAndExtension(pluginName);
             var listing = Environment.LoadOrder.TryGetValue(modKey);
-            return listing != null && listing.Mod.ModHeader.Flags.HasFlag(SkyrimModHeader.HeaderFlag.Master);
+            return listing is not null && listing.Mod is not null &&
+                listing.Mod.ModHeader.Flags.HasFlag(SkyrimModHeader.HeaderFlag.Master);
         }
 
         public Task Load(IEnumerable<string> pluginNames)
@@ -85,9 +99,13 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
                     DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
-                ArchiveProvider = new MutagenArchiveProvider(Environment);
+                ArchiveProvider = new MutagenArchiveProvider(Environment, log);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, modResolver);
+                npcCompatibilityRuleSet = new CompatibilityRuleSet<INpcGetter>(npc => $"{npc.FormKey} '{npc.EditorID}'", log)
+                    .Add(new FacegenHeadRule(Environment))
+                    .Add(new NoChildrenRule(Environment));
+                npcCompatibilityRuleSet.ReportConfiguration();
             });
         }
 
@@ -106,27 +124,30 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     IsFemale = x.Flags.HasFlag(HeadPart.Flag.Female),
                     IsMale = x.Flags.HasFlag(HeadPart.Flag.Male),
                     ValidRaces = GetValidRaces(x).ToHashSet(),
-                });
+                }) ?? Enumerable.Empty<Hair<FormKey>>();
         }
 
         public void ReadNpcRecords(string pluginName, IDictionary<FormKey, IMutableNpc<FormKey>> cache)
         {
             var modKey = ModKey.FromNameAndExtension(pluginName);
             var mod = GetMod(modKey);
-            if (mod == null)
+            if (mod is null)
                 return;
 
+            log.Debug("Checking master references");
             var masters = mod.ModHeader.MasterReferences.Select(x => x.Master).ToHashSet();
             var npcContexts = mod.EnumerateMajorRecordContexts<INpc, INpcGetter>(Environment.LinkCache);
             foreach (var npcContext in npcContexts)
             {
                 var formKey = npcContext.Record.FormKey;
+                log.Debug($"Processing {formKey} '{npcContext.Record.EditorID}'");
                 if (formKey.ModKey != modKey)
                 {
+                    log.Debug("Record is an override, starting analysis");
                     if (!cache.TryGetValue(formKey, out var npc))
                     {
                         var declaringMod = GetMod(formKey.ModKey);
-                        if (declaringMod == null)
+                        if (declaringMod is null)
                         {
                             log.Fatal(
                                 $"Plugin [{mod.ModKey}] requires master [{formKey.ModKey}], but this master is " +
@@ -142,6 +163,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                         }
                     }
                     var comparison = GetComparisonRecord(npcContext, out var itpoPluginName);
+                    log.Debug("Checking for face edits");
                     var faceData = GetFaceOverrides(npcContext.Record, comparison, out bool affectsFaceGen);
                     var npcOverride = new NpcOverride<FormKey>(modKey.FileName)
                     {
@@ -151,18 +173,23 @@ namespace Focus.Apps.EasyNpc.Mutagen
                         ModifiesBehavior = ModifiesBehavior(npcContext, masters),
                         ModifiesBody = ModifiesBody(npcContext.Record, comparison),
                         ModifiesOutfits = ModifiesOutfits(npcContext.Record, comparison),
+                        Race = npcContext.Record.Race.FormKeyNullable?.ToRecordKey(),
                         Wig = GetWigInfo(npcContext.Record),
                     };
-                    npc.AddOverride(npcOverride);
+                    log.Debug("Completed checks for NPC override");
+                    npc!.AddOverride(npcOverride);
                 }
                 else
                 {
+                    log.Debug("Record is the master");
                     cache.Add(formKey, new NpcInfo<FormKey>
                     {
                         BasePluginName = modKey.FileName,
+                        DefaultRace = npcContext.Record.Race.FormKeyNullable?.ToRecordKey(),
                         EditorId = npcContext.Record.EditorID,
                         IsFemale = npcContext.Record.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                         Key = formKey,
+                        IsSupported = npcCompatibilityRuleSet.IsSupported(npcContext.Record),
                         LocalFormIdHex = formKey.ID.ToString("X6"),
                         Name = npcContext.Record.Name?.ToString(),
                     });
@@ -170,12 +197,12 @@ namespace Focus.Apps.EasyNpc.Mutagen
             }
         }
 
-        private INpcGetter GetComparisonRecord(IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext,
-            out string itpoPluginName)
+        private INpcGetter? GetComparisonRecord(IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext,
+            out string? itpoPluginName)
         {
             itpoPluginName = null;
             var previousOverride = GetPreviousOverride(npcContext);
-            if (previousOverride == null)   // We were already on the master
+            if (previousOverride is null)   // We were already on the master
                 return null;
             var isItpo = NpcsSame(npcContext.Record, previousOverride.Record);
             if (isItpo)
@@ -190,10 +217,10 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return isItpo ? Environment.LoadOrder.GetMasterNpc(npcContext.Record.FormKey) : previousOverride.Record;
         }
 
-        private NpcFaceData<FormKey> GetFaceOverrides(INpcGetter npc, INpcGetter comparison, out bool affectsFaceGen)
+        private NpcFaceData<FormKey>? GetFaceOverrides(INpcGetter npc, INpcGetter? comparison, out bool affectsFaceGen)
         {
             affectsFaceGen = false;
-            if (comparison == null)
+            if (comparison is null)
                 return null;
 
             var overrideFaceData = ReadFaceData(npc);
@@ -205,20 +232,25 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 overrideFaceData : null;
         }
 
-        private IEnumerable<string> GetMasterNames(string pluginFileName)
+        private static string GetGameName(GameRelease gameRelease) => gameRelease switch
         {
-            var path = Path.Combine(DataDirectory, pluginFileName);
-            using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
-            return mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
-        }
+            GameRelease.EnderalLE => "Enderal Legendary Edition",
+            GameRelease.EnderalSE => "Enderal Special Edition",
+            GameRelease.Fallout4 => "Fallout 4",
+            GameRelease.Oblivion => "Oblivion",
+            GameRelease.SkyrimLE => "Skyrim Legendary Edition",
+            GameRelease.SkyrimSE => "Skyrim Special Edition",
+            GameRelease.SkyrimVR => "Skyrim VR",
+            _ => "Unknown game"
+        };
 
-        private ISkyrimModGetter GetMod(ModKey key)
+        private ISkyrimModGetter? GetMod(ModKey key)
         {
             var listing = Environment.LoadOrder.GetIfEnabled(key);
             return listing?.Mod;
         }
 
-        private IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> GetPreviousOverride(
+        private IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>? GetPreviousOverride(
             IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext)
         {
             var formLink = npcContext.Record.FormKey.AsLink<INpcGetter>();
@@ -233,30 +265,43 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             if (headPart.ValidRaces.IsNull)
                 return Enumerable.Empty<VanillaRace>();
-            var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>().Resolve(Environment.LinkCache);
+            var raceList = headPart.ValidRaces.FormKey.AsLink<IFormListGetter>()
+                .TryResolve(Environment.LinkCache, headPart, log, "Hair/wig conversion will be unavailable.");
+            if (raceList == null)
+                return Enumerable.Empty<VanillaRace>();
             return raceList.Items
-                .Select(x => x.FormKey.AsLink<IRaceGetter>().Resolve(Environment.LinkCache))
+                .Select(x => x.FormKey.AsLink<IRaceGetter>()
+                    .TryResolve(Environment.LinkCache, raceList, log, "Hair/wig conversion may not work correctly."))
+                .NotNull()
                 .Select(x => InferRace(x.EditorID));
         }
 
-        private NpcWigInfo<FormKey> GetWigInfo(INpcGetter npc)
+        private NpcWigInfo<FormKey>? GetWigInfo(INpcGetter npc)
         {
+            log.Debug("Checking for wigs");
             if (npc.WornArmor.IsNull)
                 return null;
             var isBald = npc.HeadParts
-                .Select(x => x.FormKey.AsLink<IHeadPartGetter>().Resolve(Environment.LinkCache))
+                .Select(x => x.FormKey.AsLink<IHeadPartGetter>().TryResolve(Environment.LinkCache))
+                .NotNull()
                 .Where(x => x.Type == HeadPart.TypeEnum.Hair)
                 .All(x => string.IsNullOrEmpty(x.Model?.File));
-            var wornArmor = npc.WornArmor.Resolve(Environment.LinkCache);
+            var wornArmor =
+                npc.WornArmor.TryResolve(Environment.LinkCache, npc, log,
+                "Wig and body customizations for this NPC will be ignored.");
+            if (wornArmor == null)
+                return null;
             return wornArmor.Armature
-                .Select(fk => fk.Resolve(Environment.LinkCache))
+                .Select(fk => fk.TryResolve(
+                    Environment.LinkCache, wornArmor, log, "Wigs may not be correctly detected."))
+                .NotNull()
                 .Where(x =>
                     // Search for ONLY hair, because some sadistic modders add hair flags to other parts.
-                    x.BodyTemplate.FirstPersonFlags == BipedObjectFlag.Hair ||
-                    x.BodyTemplate.FirstPersonFlags == BipedObjectFlag.LongHair ||
-                    x.BodyTemplate.FirstPersonFlags == (BipedObjectFlag.Hair | BipedObjectFlag.LongHair))
+                    x.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.Hair ||
+                    x.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.LongHair ||
+                    x.BodyTemplate?.FirstPersonFlags == (BipedObjectFlag.Hair | BipedObjectFlag.LongHair))
                 .Select(x => {
-                    var modelFileName = x.WorldModel?.Where(x => x != null)?.FirstOrDefault()?.File;
+                    var modelFileName = x.WorldModel?.Where(x => x is not null)?.FirstOrDefault()?.File;
                     var modelName = !string.IsNullOrEmpty(modelFileName) ?
                         Path.GetFileNameWithoutExtension(modelFileName) : null;
                     return new NpcWigInfo<FormKey>(x.FormKey, modelName, isBald);
@@ -264,7 +309,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 .FirstOrDefault();
         }
 
-        private static VanillaRace InferRace(string editorId)
+        private static VanillaRace InferRace(string? editorId)
         {
             return editorId switch
             {
@@ -284,6 +329,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
         private bool ModifiesBehavior(
             IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter> npcContext, IReadOnlySet<ModKey> masterKeys)
         {
+            log.Debug("Checking for behavior edits");
             // The rules for behavior need to be a little different from those for the face, because the semi-common
             // practice is for NPC overhauls to inherit from "foundation" mods like USSEP.
             // Bethesda's multiple-master system is opaque and doesn't tell us anything about precisely *how* a master
@@ -304,7 +350,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         private static bool ModifiesBehavior(INpcGetter current, INpcGetter previous)
         {
-            if (previous == null)
+            if (previous is null)
                 return false;
 
             // For the time being, we can interpret "modifying behavior" as modifying anything that is _not_ the face.
@@ -345,14 +391,16 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     (previous.Configuration.Flags & ~NpcConfiguration.Flag.OppositeGenderAnims);
         }
 
-        private static bool ModifiesBody(INpcGetter current, INpcGetter previous)
+        private bool ModifiesBody(INpcGetter current, INpcGetter? previous)
         {
-            return previous != null && current.WornArmor == previous.WornArmor;
+            log.Debug("Checking for body edits");
+            return previous is not null && current.WornArmor == previous.WornArmor;
         }
 
-        private static bool ModifiesOutfits(INpcGetter current, INpcGetter previous)
+        private bool ModifiesOutfits(INpcGetter current, INpcGetter? previous)
         {
-            if (previous == null)
+            log.Debug("Checking for outfit edits");
+            if (previous is null)
                 return false;
 
             // Outfits are currently a tossup in terms of whether they should be treated with the same logic as face
@@ -362,7 +410,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return current.DefaultOutfit == previous.DefaultOutfit && current.SleepingOutfit == previous.SleepingOutfit;
         }
 
-        private static bool NpcsSame(INpcGetter x, INpcGetter y, Action<Npc.TranslationMask> configure = null)
+        private static bool NpcsSame(INpcGetter x, INpcGetter y, Action<Npc.TranslationMask>? configure = null)
         {
             // Using a translation mask with default-on just does not seem to work properly; even if we subsequently set
             // every single field inside the mask to false, there are still records that refuse to compare equal.
@@ -423,22 +471,32 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return workingEquals &&
                 x.ActorEffect.SequenceEqualSafe(y.ActorEffect, e => e.FormKey) &&
                 x.AIData.Equals(y.AIData, new AIData.TranslationMask(true, true) { Unused = false }) &&
-                x.Attacks.SequenceEqualSafe(y.Attacks, a => a.AttackData.AttackType.FormKey) &&
+                x.Attacks.SequenceEqualSafe(y.Attacks, a => a.AttackData?.AttackType.FormKey ?? FormKey.Null) &&
                 x.Factions.SequenceEqualSafe(y.Factions, f => f.Faction.FormKey) &&
                 x.Items.SequenceEqualSafe(y.Items, i => i.Item.Item.FormKey) &&
                 x.Keywords.SequenceEqualSafe(y.Keywords, k => k.FormKey) &&
                 x.Packages.SequenceEqualSafe(y.Packages, p => p.FormKey) &&
                 x.Perks.SequenceEqualSafe(y.Perks, p => p.Perk.FormKey) &&
-                x.PlayerSkills.Equals(y.PlayerSkills, new PlayerSkills.TranslationMask(true)
+                PlayerSkillsSame(x.PlayerSkills, y.PlayerSkills) &&
+                VmadsSame(x.VirtualMachineAdapter, y.VirtualMachineAdapter);
+        }
+
+        private static bool PlayerSkillsSame(IPlayerSkillsGetter? x, IPlayerSkillsGetter? y)
+        {
+            if (ReferenceEquals(x, y))
+                return true;
+            if (x is null || y is null)
+                return false;
+            return
+                x.Equals(y, new PlayerSkills.TranslationMask(true)
                 {
                     SkillOffsets = false,
                     SkillValues = false,
                     Unused = false,
                     Unused2 = false,
                 }) &&
-                x.PlayerSkills.SkillOffsets.SequenceEqualSafe(y.PlayerSkills.SkillOffsets) &&
-                x.PlayerSkills.SkillValues.SequenceEqualSafe(y.PlayerSkills.SkillValues) &&
-                VmadsSame(x.VirtualMachineAdapter, y.VirtualMachineAdapter);
+                x.SkillOffsets.SequenceEqualSafe(y.SkillOffsets) &&
+                x.SkillValues.SequenceEqualSafe(y.SkillValues);
         }
 
         private static NpcFaceData<FormKey> ReadFaceData(INpcGetter npc)
@@ -455,9 +513,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
             };
         }
 
-        private static NpcFaceMorphs ReadFaceMorphs(INpcGetter npc)
+        private static NpcFaceMorphs? ReadFaceMorphs(INpcGetter npc)
         {
-            if (npc.FaceMorph == null)
+            if (npc.FaceMorph is null)
                 return null;
             return new NpcFaceMorphs
             {
@@ -482,23 +540,24 @@ namespace Focus.Apps.EasyNpc.Mutagen
             };
         }
 
-        private static NpcFaceParts ReadFaceParts(INpcGetter npc)
+        private static NpcFaceParts? ReadFaceParts(INpcGetter npc)
         {
-            return npc.FaceParts != null ?
+            return npc.FaceParts is not null ?
                 new NpcFaceParts(npc.FaceParts.Nose, npc.FaceParts.Eyes, npc.FaceParts.Mouth) : null;
         }
 
         private static NpcFaceTint[] ReadFaceTints(INpcGetter npc)
         {
             return npc.TintLayers
+                .Where(x => x.Index.HasValue && x.Color.HasValue)
                 .Select(x => new NpcFaceTint(
-                    x.Index.Value,
-                    new NpcFaceTintColor(x.Color.Value.R, x.Color.Value.G, x.Color.Value.B, x.Color.Value.A),
-                    x.InterpolationValue.Value))
+                    x.Index!.Value,
+                    new NpcFaceTintColor(x.Color!.Value.R, x.Color.Value.G, x.Color.Value.B, x.Color.Value.A),
+                    x.InterpolationValue ?? 0))
                 .ToArray();
         }
 
-        private static NpcSkinTone ReadSkinTone(INpcGetter npc)
+        private static NpcSkinTone? ReadSkinTone(INpcGetter npc)
         {
             return npc.TextureLighting is Color c ? new NpcSkinTone(c.R, c.G, c.B) : null;
         }
@@ -511,11 +570,28 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 x.Properties.SequenceEqualSafeBy(y.Properties, p => p.Name);
         }
 
-        private static bool VmadsSame(IVirtualMachineAdapterGetter x, IVirtualMachineAdapterGetter y)
+        private bool TryGetMasterNames(string pluginFileName, out IEnumerable<string> masterNames)
+        {
+            var path = Path.Combine(DataDirectory, pluginFileName);
+            try
+            {
+                using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
+                masterNames = mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Plugin {pluginName} appears to be corrupt and cannot be loaded.", pluginFileName);
+                masterNames = Enumerable.Empty<string>();
+                return false;
+            }
+        }
+
+        private static bool VmadsSame(IVirtualMachineAdapterGetter? x, IVirtualMachineAdapterGetter? y)
         {
             if (ReferenceEquals(x, y))
                 return true;
-            if (x == null ^ y == null)
+            if (x is null || y is null)
                 return false;
             return
                 x.ObjectFormat == y.ObjectFormat &&

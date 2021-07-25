@@ -12,6 +12,8 @@
     <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.30.6" />
     <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.30.6" />
     <PackageReference Include="niflysharp" Version="1.2.8" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>

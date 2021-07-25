@@ -1,8 +1,11 @@
 ﻿using Focus.Files;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Archives;
+using Mutagen.Bethesda.Archives.Exceptions;
+using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,12 +15,15 @@ namespace Focus.Providers.Mutagen
 {
     public class MutagenArchiveProvider : IArchiveProvider
     {
+        private readonly HashSet<string> badArchivePaths = new(StringComparer.OrdinalIgnoreCase);
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
+        private readonly ILogger log;
         private readonly IReadOnlyList<FileName> order;
 
-        public MutagenArchiveProvider(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment)
+        public MutagenArchiveProvider(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, ILogger log)
         {
             this.environment = environment;
+            this.log = log;
             order = Archive.GetIniListings(GameRelease.SkyrimSE)
                 .Concat(environment.LoadOrder.ListedOrder.SelectMany(x => new[] {
                     // Not all of these will exist, but it doesn't matter, as these are only used for sorting and won't
@@ -30,21 +36,33 @@ namespace Focus.Providers.Mutagen
 
         public bool ContainsFile(string archivePath, string archiveFilePath)
         {
-            var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
-            return reader.Files.Any(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
+            return Safe(archivePath, () =>
+            {
+                var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
+                return reader.Files.Any(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
+            });
         }
 
-        public IEnumerable<string> GetArchiveFileNames(string archivePath, string path = "")
+        public IEnumerable<string> GetArchiveFileNames(string archivePath, string path)
         {
-            var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
-            return reader.Files
-                .Where(f => string.IsNullOrEmpty(path) || f.Path.StartsWith(path, StringComparison.OrdinalIgnoreCase))
-                .Select(f => f.Path);
+            return Safe(archivePath, () =>
+            {
+                var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
+                return reader.Files
+                    .Select(f => Safe(archivePath, () => f.Path))
+                    .NotNull()
+                    .Where(p => string.IsNullOrEmpty(path) || p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
+            }) ?? Enumerable.Empty<string>();
         }
 
         public string GetArchivePath(string archiveName)
         {
             return Path.Combine(environment.GetRealDataDirectory(), archiveName);
+        }
+
+        public IEnumerable<string> GetBadArchivePaths()
+        {
+            return badArchivePaths;
         }
 
         public IEnumerable<string> GetLoadedArchivePaths()
@@ -64,6 +82,28 @@ namespace Focus.Providers.Mutagen
             if (file == null)
                 throw new Exception($"Couldn't find file {archiveFilePath} in archive {archivePath}");
             return file.GetSpan();
+        }
+
+        private T? Safe<T>(string archivePath, Func<T> action)
+        {
+            if (badArchivePaths.Contains(archivePath))
+                return default;
+            try
+            {
+                return action();
+            }
+            catch (InvalidDataException ex)
+            {
+                // This type of error happens in the BsaFileNameBlock and means we'll never be able to use the archive.
+                log.Error(ex, "Archive {archivePath} is invalid, corrupt or unreadable", archivePath);
+                badArchivePaths.Add(archivePath);
+            }
+            catch (ArchiveException ex)
+            {
+                // This could happen with an individual file; other parts of the archive may still be readable.
+                log.Error(ex, "Problem reading from archive {archivePath}", archivePath);
+            }
+            return default;
         }
     }
 }

@@ -7,8 +7,10 @@ namespace Focus.Apps.EasyNpc.GameData.Records
     public interface INpc<TKey> : IRecordKey
         where TKey : struct
     {
+        RecordKey DefaultRace { get; }
         string EditorId { get; }
         bool IsFemale { get; }
+        bool IsSupported { get; }
         TKey Key { get; }
         string Name { get; }
         IReadOnlyList<NpcOverride<TKey>> Overrides { get; }
@@ -31,6 +33,7 @@ namespace Focus.Apps.EasyNpc.GameData.Records
         public bool ModifiesOutfits { get; init; }
         public string ItpoPluginName { get; init; }
         public string PluginName { get; private init; }
+        public RecordKey Race { get; init; }
         public NpcWigInfo<TKey> Wig { get; init; }
 
         public NpcOverride(string pluginName)

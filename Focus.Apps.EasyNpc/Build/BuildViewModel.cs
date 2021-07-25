@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profile;
 using Focus.Files;
 using Focus.ModManagers;
@@ -20,11 +21,10 @@ namespace Focus.Apps.EasyNpc.Build
         where TKey : struct
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<BuildWarning> WarningExpanded;
 
         public bool EnableDewiggify { get; set; } = true;
         [DependsOn("Problems")]
-        public bool HasProblems => Problems?.Any() ?? false;
+        public bool HasProblems => PreBuildReport?.Warnings.Any() ?? false;
         public bool HasWigs { get; private set; }
         public bool IsBuildCompleted { get; private set; }
         [DependsOn("Progress")]
@@ -42,7 +42,7 @@ namespace Focus.Apps.EasyNpc.Build
         public string OutputDirectory { get; private set; }
         public string OutputModName { get; set; } = $"NPC Merge {DateTime.Now:yyyy-MM-dd}";
         public string OutputPluginName => FileStructure.MergeFileName;
-        public IEnumerable<BuildWarning> Problems { get; private set; }
+        public PreBuildReport PreBuildReport { get; private set; }
         public BuildProgressViewModel Progress { get; private set; }
         public BuildWarning SelectedWarning { get; set; }
 
@@ -70,6 +70,20 @@ namespace Focus.Apps.EasyNpc.Build
             this.modResolver = modResolver;
             this.wigResolver = wigResolver;
             Npcs = npcs.ToList().AsReadOnly();
+
+            // We don't want to prevent users from switching back and forth between the build warnings and profile, and
+            // using that to fix warnings in the profile. That's an intended flow. However, due to the way the UI is
+            // currently designed, we DO want to persuade them to run a check again IF they dismissed the previous
+            // checks (or there were no previous warnings) AND they've changed the profile since then.
+            //
+            // An improved pre-build UI could eliminate the need for this hack, i.e. we could show a warning that
+            // "profile" has been changed without actually flipping back a few steps. But currently there's no logical
+            // place to put this in the UI.
+            MessageBus.Subscribe<NpcConfigurationChanged>(_ =>
+            {
+                if (IsReadyToBuild)
+                    Reset();
+            });
         }
 
         public async void BeginBuild()
@@ -110,21 +124,11 @@ namespace Focus.Apps.EasyNpc.Build
         // TODO: Add a check for missing textures - requires much deeper inspection of both plugins and meshes.
         public async void CheckForProblems()
         {
-            Progress = null;
+            Reset();
             IsProblemCheckerVisible = false;
-            IsProblemReportVisible = false;
             IsProblemCheckingInProgress = true;
-            IsReadyToBuild = false;
             var buildSettings = GetBuildSettings();
-            var warnings = await Task.Run(() => buildChecker.CheckAll(Npcs, buildSettings).ToList());
-            var suppressions = GetBuildWarningSuppressions();
-            Problems = warnings
-                .Where(x =>
-                    string.IsNullOrEmpty(x.PluginName) ||
-                    x.Id == null ||
-                    !suppressions[x.PluginName].Contains((BuildWarningId)x.Id))
-                .OrderBy(x => x.Id)
-                .ThenBy(x => x.PluginName);
+            PreBuildReport = await Task.Run(() => buildChecker.CheckAll(Npcs, buildSettings));
             IsProblemCheckingInProgress = false;
             IsProblemReportVisible = true;
         }
@@ -135,11 +139,17 @@ namespace Focus.Apps.EasyNpc.Build
             IsReadyToBuild = true;
         }
 
+        public void ExpandMasterDependency(PreBuildReport.MasterDependency masterDependency)
+        {
+            MessageBus.Send(new JumpToProfile(new JumpToProfile.FilterOverrides
+            {
+                DefaultPlugin = masterDependency.PluginName
+            }));
+        }
+
         public void ExpandWarning(BuildWarning warning)
         {
-            // There isn't actually any notion of expansion in this context, aside from the info panel which is more of
-            // a "select" action. This just serves as a signal for an external component to handle the request.
-            WarningExpanded?.Invoke(this, warning);
+            MessageBus.Send(new JumpToNpc(warning.RecordKey));
         }
 
         public void OpenBuildOutput()
@@ -226,18 +236,20 @@ namespace Focus.Apps.EasyNpc.Build
             }
         }
 
-        private static ILookup<string, BuildWarningId> GetBuildWarningSuppressions()
-        {
-            return Settings.Default.BuildWarningWhitelist
-                .SelectMany(x => x.IgnoredWarnings.Select(id => new { Plugin = x.PluginName, Id = id }))
-                .ToLookup(x => x.Plugin, x => x.Id);
-        }
-
         private static bool ModDirectoryIsNotEmpty(string modName)
         {
             var modRootDirectory = Settings.Default.ModRootDirectory;
             var modDirectory = Path.Combine(modRootDirectory, modName);
             return Directory.Exists(modDirectory) && Directory.EnumerateFiles(modDirectory).Any();
+        }
+
+        private void Reset()
+        {
+            Progress = null;
+            IsProblemCheckerVisible = true;
+            IsProblemReportVisible = false;
+            IsReadyToBuild = false;
+            PreBuildReport = null;
         }
     }
 

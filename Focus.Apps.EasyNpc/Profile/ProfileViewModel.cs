@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.GameData.Records;
+using Focus.Apps.EasyNpc.Messages;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
 using System;
@@ -21,7 +22,7 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public ColumnDefinitions Columns { get; private init; }
 
-        [DependsOn("NpcConfigurations", "OnlyFaceOverrides", "ShowSinglePluginOverrides", "DisplayedNpcsSentinel")]
+        [DependsOn("OnlyFaceOverrides", "ShowSinglePluginOverrides", "DisplayedNpcsSentinel")]
         public IEnumerable<NpcConfiguration<TKey>> DisplayedNpcs
         {
             get
@@ -36,11 +37,13 @@ namespace Focus.Apps.EasyNpc.Profile
         public NpcFilters Filters { get; private init; } = new NpcFilters();
         public Mugshot FocusedMugshot { get; set; }
         public NpcOverrideConfiguration<TKey> FocusedNpcOverride { get; set; }
+        public bool HasForcedFilter { get; set; }
         [DependsOn("SelectedNpc")]
         public bool HasSelectedNpc => SelectedNpc != null;
         public IReadOnlyList<string> LoadedPluginNames { get; private init; }
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
         public bool OnlyFaceOverrides { get; set; }
+        public IProfileRuleSet RuleSet => ruleSet;
         public NpcOverrideConfiguration<TKey> SelectedOverrideConfig { get; private set; }
         public NpcConfiguration<TKey> SelectedNpc { get; set; }
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> SelectedNpcOverrides { get; private set; }
@@ -56,6 +59,7 @@ namespace Focus.Apps.EasyNpc.Profile
         private readonly Dictionary<TKey, NpcConfiguration<TKey>> npcConfigurations = new();
         private readonly IReadOnlyList<TKey> npcOrder;
         private readonly ProfileEventLog profileEventLog;
+        private readonly IProfileRuleSet ruleSet;
 
         public ProfileViewModel(
             IEnumerable<INpc<TKey>> npcs, IModPluginMapFactory modPluginMapFactory,
@@ -64,20 +68,33 @@ namespace Focus.Apps.EasyNpc.Profile
             this.modPluginMapFactory = modPluginMapFactory;
             LoadedPluginNames = loadedPluginNames.OrderBy(x => x).ToList().AsReadOnly();
             loadedPluginNamesSet = LoadedPluginNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var npcsWithOverrides = npcs.Where(npc => npc.Overrides.Count > 0);
-            var profileRuleSet = StandardProfileRuleSet.Create(masterNames, npcs);
+            var npcsWithOverrides = npcs
+                .Where(npc => npc.IsSupported)
+                .Where(npc => npc.Overrides.Count > 0);
+            ruleSet = StandardProfileRuleSet.Create(masterNames, npcs);
 
             var npcOrder = new List<TKey>();
             foreach (var npc in npcsWithOverrides)
             {
                 npcOrder.Add(npc.Key);
-                var npcConfig = new NpcConfiguration<TKey>(npc, modPluginMapFactory, profileRuleSet);
+                var npcConfig = new NpcConfiguration<TKey>(npc, modPluginMapFactory, ruleSet);
                 npcConfigurations.Add(npc.Key, npcConfig);
             }
             this.npcOrder = npcOrder.AsReadOnly();
 
             this.profileEventLog = profileEventLog;
             var restored = RestoreProfileAutosave(profileEventLog.FileName).ToLookup(x => x.Item1.Key, x => x.Item2);
+            // NPCs that were pointing to vanilla for "face mod" won't have profile events. If such an NPC was already
+            // in the profile, we have to overwrite any detection attempt that may have occurred on startup.
+            // See: https://github.com/focustense/easymod/issues/65
+            foreach (var restoredPair in restored)
+            {
+                if (restoredPair.Contains(NpcProfileField.FacePlugin) && !restoredPair.Contains(NpcProfileField.FaceMod) &&
+                    npcConfigurations.TryGetValue(restoredPair.Key, out var npcConfig))
+                {
+                    npcConfig.SetFaceMod(null, false);
+                }
+            }
             var allProfileFields = Enum.GetValues<NpcProfileField>();
             foreach (var npcConfig in npcConfigurations.Values)
             {
@@ -101,6 +118,29 @@ namespace Focus.Apps.EasyNpc.Profile
             };
 
             Filters.PropertyChanged += (_, _) => RefreshDisplayedNpcs();
+
+            MessageBus.Subscribe<JumpToProfile>(message =>
+            {
+                if (message.Filters != null)
+                {
+                    Filters.ResetToDefault();
+                    if (message.Filters.Conflicts.HasValue)
+                        Filters.Conflicts = message.Filters.Conflicts.Value;
+                    if (message.Filters.DefaultPlugin != null)  // Allow "empty" override
+                        Filters.DefaultPlugin = message.Filters.DefaultPlugin;
+                    if (message.Filters.FacePlugin != null)
+                        Filters.FacePlugin = message.Filters.FacePlugin;
+                    if (message.Filters.Missing.HasValue)
+                        Filters.Missing = message.Filters.Missing.Value;
+                    if (message.Filters.NonDlc.HasValue)
+                        Filters.NonDlc = message.Filters.NonDlc.Value;
+                    if (message.Filters.Wigs.HasValue)
+                        Filters.Wigs = message.Filters.Wigs.Value;
+                    HasForcedFilter = true;
+                }
+                    
+                MessageBus.Send(new NavigateToPage(MainPage.Profile));
+            });
         }
 
         public IEnumerable<NpcConfiguration<TKey>> GetAllNpcConfigurations()
@@ -220,11 +260,6 @@ namespace Focus.Apps.EasyNpc.Profile
             }
         }
 
-        protected void OnNpcConfigurationsChanged()
-        {
-            ClearFilterBypass();
-        }
-
         protected void OnOnlyFaceOverridesChanged()
         {
             ClearFilterBypass();
@@ -339,11 +374,13 @@ namespace Focus.Apps.EasyNpc.Profile
         private void OnNpcProfilePropertyChanged(object sender, ProfileEvent e)
         {
             profileEventLog.Append(e);
+            MessageBus.Send(new NpcConfigurationChanged(e));
         }
 
         private void RefreshDisplayedNpcs()
         {
             filterBypassNpc = null;
+            HasForcedFilter = false;
             DisplayedNpcsSentinel = !DisplayedNpcsSentinel;
         }
 
@@ -397,8 +434,29 @@ namespace Focus.Apps.EasyNpc.Profile
             public string DefaultPlugin { get; set; }
             public string FacePlugin { get; set; }
             public bool Missing { get; set; }
-            public bool NonDlc { get; set; } = true;
+            public bool NonDlc { get; set; }
             public bool Wigs { get; set; }
+
+            [DependsOn("Conflicts", "DefaultPlugin", "FacePlugin", "Missing", "NonDlc", "Wigs")]
+            public bool IsNonDefault =>
+                !NonDlc || Conflicts || Missing || Wigs ||
+                !string.IsNullOrEmpty(DefaultPlugin) ||
+                !string.IsNullOrEmpty(FacePlugin);
+
+            public NpcFilters()
+            {
+                ResetToDefault();
+            }
+
+            public void ResetToDefault()
+            {
+                Conflicts = false;
+                DefaultPlugin = null;
+                FacePlugin = null;
+                Missing = false;
+                NonDlc = true;
+                Wigs = false;
+            }
         }
     }
 

@@ -47,6 +47,14 @@ namespace Focus.Apps.EasyNpc.Build
             Model.OpenBuildOutput();
         }
 
+        private void MasterDependenciesListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left)
+                return;
+            if (MasterDependenciesListBox.SelectedItem is PreBuildReport.MasterDependency masterDependency)
+                Model.ExpandMasterDependency(masterDependency);
+        }
+
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             Model?.QuickRefresh();

@@ -80,11 +80,12 @@ namespace Focus.Apps.EasyNpc.Build
                                     DirectoryPath = modPath,
                                     RelativePath = Path.GetRelativePath(modPath, f)
                                 }))
-                            .GroupBy(x => x.RelativePath)
+                            .GroupBy(x => x.RelativePath, StringComparer.OrdinalIgnoreCase)
                             .Select(g => g.Last())
                             .ToDictionary(x => x.RelativePath, StringComparer.OrdinalIgnoreCase),
                         ArchiveFiles = modPluginMap.GetArchivesForMod(modName)
                                 .Select(archiveName => archiveProvider.GetArchivePath(archiveName))
+                                .Distinct(StringComparer.OrdinalIgnoreCase)
                                 .Select(archivePath => new
                                 {
                                     ArchivePath = archivePath,

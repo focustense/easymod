@@ -11,12 +11,14 @@ namespace Focus.Apps.EasyNpc.Build
     {
         ModDirectoryNotSpecified = 1,
         ModDirectoryNotFound,
+        BadArchive,
         MasterPluginRemoved,
         SelectedPluginRemoved,
         MultipleArchiveSources,
         FaceModNotSpecified,
         FaceModNotInstalled,
         FaceModPluginMismatch,
+        FaceModChangesRace,
         FaceModMissingFaceGen,
         FaceModExtraFaceGen,
         FaceModMultipleFaceGen,
@@ -82,6 +84,19 @@ namespace Focus.Apps.EasyNpc.Build
         private static readonly string ModRootJustification =
             "Without direct access to your mod structure, this program can only generate a merged plugin, which " +
             "will probably break NPC appearances unless you are manually organizing the facegen data.";
+
+        public static string BadArchive(string path)
+        {
+            return $"Archive '{path}' is corrupt or unreadable.";
+        }
+
+        public static string FaceModChangesRace(
+            string editorId, string name, string pluginName, string defaultPluginName)
+        {
+            return
+                $"Plugin {pluginName} changes the race of NPC {NpcLabel(editorId, name)} that is set by the default " +
+                $"plugin {defaultPluginName}.";
+        }
 
         public static string FaceModExtraFaceGen(string editorId, string name, string modName)
         {

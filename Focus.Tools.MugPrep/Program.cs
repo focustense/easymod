@@ -5,6 +5,9 @@ using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using nifly;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,6 +25,9 @@ namespace Focus.Tools.MugPrep
 
         [Option('p', "pause")]
         public bool PauseOnStart { get; set; }
+
+        [Option('v', "verbose")]
+        public bool Verbose { get; set; }
     }
 
     class Program
@@ -34,6 +40,12 @@ namespace Focus.Tools.MugPrep
 
         private static void Run(Options options)
         {
+            var loggingLevelSwitch =
+                new LoggingLevelSwitch(options.Verbose ? LogEventLevel.Debug : LogEventLevel.Information);
+            var log = new LoggerConfiguration()
+                .MinimumLevel.ControlledBy(loggingLevelSwitch)
+                .WriteTo.Console()
+                .CreateLogger();
             if (options.PauseOnStart)
             {
                 Console.WriteLine("Press any key...");
@@ -46,7 +58,7 @@ namespace Focus.Tools.MugPrep
             var faceGenDirectory = Path.Combine(baseDirectory, "meshes", "actors", "character", "facegendata", "facegeom");
             using var tempFileCache = new TempFileCache();
             var processingOptions = new FaceGenProcessingOptions { FixCubeMaps = options.FixCubeMaps };
-            var faceGenProcessor = new FaceGenProcessor(env, faceGenDirectory, tempFileCache, processingOptions);
+            var faceGenProcessor = new FaceGenProcessor(env, faceGenDirectory, tempFileCache, processingOptions, log);
 
             var faceGenPaths = faceGenProcessor.GetPaths();
             foreach (var faceGenPath in faceGenPaths)
@@ -92,13 +104,13 @@ namespace Focus.Tools.MugPrep
 
         public FaceGenProcessor(
             GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env, string faceGenDirectory,
-            TempFileCache tempFileCache, FaceGenProcessingOptions options)
+            TempFileCache tempFileCache, FaceGenProcessingOptions options, ILogger log)
         {
             this.env = env;
             this.faceGenDirectory = faceGenDirectory;
             this.options = options;
             this.tempFileCache = tempFileCache;
-            var archiveProvider = new MutagenArchiveProvider(env);
+            var archiveProvider = new MutagenArchiveProvider(env, log);
             fileProvider = new GameFileProvider(env.GetRealDataDirectory(), archiveProvider);
         }
 

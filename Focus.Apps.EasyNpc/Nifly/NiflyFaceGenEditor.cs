@@ -71,18 +71,6 @@ namespace Focus.Apps.EasyNpc.Nifly
             faceGenFile.Save(faceGenPath);
         }
 
-        private void CopyToTempFile(string fileName)
-        {
-            var data = fileProvider.ReadBytes(fileName);
-            if (data == null)
-            {
-                log.Error("Missing asset file {FileName} for FaceGen injection", fileName);
-                return;
-            }
-            var tempFilePath = Path.GetTempFileName();
-
-        }
-
         private static IEnumerable<BSDynamicTriShape> GetChildShapes(NifFile file, NiNode parent)
         {
             var header = file.GetHeader();

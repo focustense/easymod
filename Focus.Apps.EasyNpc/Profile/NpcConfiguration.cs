@@ -21,12 +21,14 @@ namespace Focus.Apps.EasyNpc.Profile
         public string BasePluginName => npc.BasePluginName;
         public NpcOverrideConfiguration<TKey> DefaultConfiguration => defaultConfig;
         public string DefaultPluginName => defaultConfig?.PluginName;
+        public RecordKey DefaultPluginRace => defaultConfig?.Race;
         public string DescriptiveLabel => $"'{Name}' ({BasePluginName} - {EditorId})";
         public string EditorId => npc.EditorId;
         public string ExtendedFormId => $"{BasePluginName}#{LocalFormIdHex}";
         public NpcOverrideConfiguration<TKey> FaceConfiguration => faceConfig;
         public string FaceModName { get; private set; }
         public string FacePluginName => faceConfig?.PluginName;
+        public RecordKey FacePluginRace => faceConfig?.Race;
         public TKey Key => npc.Key;
         public bool IsFemale => npc.IsFemale;
         public string LocalFormIdHex => npc.LocalFormIdHex;
@@ -40,6 +42,10 @@ namespace Focus.Apps.EasyNpc.Profile
 
         private NpcOverrideConfiguration<TKey> defaultConfig;
         private NpcOverrideConfiguration<TKey> faceConfig;
+        // "Invalid" names are if we tried to restore the autosave and those plugins were no longer found.
+        // This keeps track of them for change detection, even though they are effectively invisible outside.
+        private string invalidDefaultPluginName;
+        private string invalidFacePluginName;
 
         public NpcConfiguration(INpc<TKey> npc, IModPluginMapFactory modPluginMapFactory, IProfileRuleSet ruleSet)
         {
@@ -97,7 +103,7 @@ namespace Focus.Apps.EasyNpc.Profile
             if (defaults)
                 SetDefaultPlugin(configDefaults.DefaultPlugin);
             if (faces)
-                SetFacePlugin(configDefaults.FacePlugin, true);
+                SetFacePlugin(configDefaults.FacePlugin, true, true);
         }
 
         public void RestoreFromProfileEvent(ProfileEvent e)
@@ -108,13 +114,15 @@ namespace Focus.Apps.EasyNpc.Profile
                 // we never want to activate these in restore mode, because there will be separate events for each,
                 // and allowing the side effects could lead to an end state that's different from what was saved.
                 case NpcProfileField.DefaultPlugin:
-                    SetDefaultPlugin(e.NewValue);
+                    if (!SetDefaultPlugin(e.NewValue))
+                        invalidDefaultPluginName = e.NewValue;
                     break;
                 case NpcProfileField.FaceMod:
                     SetFaceMod(e.NewValue, false);
                     break;
                 case NpcProfileField.FacePlugin:
-                    SetFacePlugin(e.NewValue, false);
+                    if (!SetFacePlugin(e.NewValue, false))
+                        invalidFacePluginName = e.NewValue;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -127,7 +135,9 @@ namespace Focus.Apps.EasyNpc.Profile
             var oldValue = defaultConfig?.PluginName;
             if (defaultConfig != null)
                 defaultConfig.IsDefaultSource = false;
-            if (overrideConfig == null)
+            if (overrideConfig != null)
+                invalidDefaultPluginName = null;
+            else
                 overrideConfig = Overrides[0];  // Use the master if nothing else is specified
             if (overrideConfig != null)
                 overrideConfig.IsDefaultSource = true;
@@ -135,10 +145,11 @@ namespace Focus.Apps.EasyNpc.Profile
             LogProfileEvent(NpcProfileField.DefaultPlugin, oldValue, overrideConfig?.PluginName);
         }
 
-        public void SetDefaultPlugin(string pluginName)
+        public bool SetDefaultPlugin(string pluginName)
         {
             var foundOverride = FindOverride(pluginName);
             SetDefaultPlugin(foundOverride);
+            return foundOverride != null;
         }
 
         public void SetFaceMod(string modName, bool detectPlugin)
@@ -166,12 +177,15 @@ namespace Focus.Apps.EasyNpc.Profile
                 SetFacePlugin(lastMatchingPlugin, false);
         }
 
-        public void SetFacePlugin(NpcOverrideConfiguration<TKey> faceConfig, bool detectFaceMod)
+        public void SetFacePlugin(
+            NpcOverrideConfiguration<TKey> faceConfig, bool detectFaceMod, bool allowNullFaceMod = false)
         {
             var oldValue = this.faceConfig?.PluginName;
             if (this.faceConfig != null)
                 this.faceConfig.IsFaceSource = false;
-            if (faceConfig == null)
+            if (faceConfig != null)
+                invalidFacePluginName = null;
+            else
                 faceConfig = Overrides[0];  // Use the master if nothing else is specified
             if (faceConfig != null)
                 faceConfig.IsFaceSource = true;
@@ -183,20 +197,24 @@ namespace Focus.Apps.EasyNpc.Profile
                 .GetModsForPlugin(faceConfig.PluginName)
                 .OrderBy(f => Mugshot.Exists(f, BasePluginName, LocalFormIdHex))
                 .LastOrDefault();
-            if (!string.IsNullOrEmpty(lastMatchingModName))
+            if (allowNullFaceMod || !string.IsNullOrEmpty(lastMatchingModName))
                 SetFaceMod(lastMatchingModName, false);
         }
 
-        public void SetFacePlugin(string pluginName, bool detectFaceMod)
+        public bool SetFacePlugin(string pluginName, bool detectFaceMod, bool allowNullFaceMod = false)
         {
             var foundOverride = FindOverride(pluginName);
-            SetFacePlugin(foundOverride, detectFaceMod);
+            SetFacePlugin(foundOverride, detectFaceMod, allowNullFaceMod);
+            return foundOverride != null;
         }
 
         protected void LogProfileEvent(NpcProfileField field, string oldValue, string newValue)
         {
             // For efficiency, don't log events that don't actually change anything.
             // These "re-sets" may have an effect in the UI, but don't affect the outcome or the profile.
+            var previousInvalidValue = GetPreviousInvalidValue(field);
+            if (!string.IsNullOrEmpty(previousInvalidValue))
+                oldValue = previousInvalidValue;
             if (Equals(newValue, oldValue))
                 return;
             ProfilePropertyChanged?.Invoke(this, new ProfileEvent
@@ -230,9 +248,16 @@ namespace Focus.Apps.EasyNpc.Profile
         {
             var sources = npc.Overrides.Select(x => new NpcOverrideConfiguration<TKey>(this, x));
             // The base plugin is always a valid source for any kind of data, so we need to include that in the list.
-            var master = new NpcOverrideConfiguration<TKey>(this, BasePluginName);
+            var master = new NpcOverrideConfiguration<TKey>(this, BasePluginName, npc.DefaultRace);
             return sources.Prepend(master);
         }
+
+        private string GetPreviousInvalidValue(NpcProfileField field) => field switch
+        {
+            NpcProfileField.DefaultPlugin => invalidDefaultPluginName,
+            NpcProfileField.FacePlugin => invalidFacePluginName,
+            _ => null
+        };
 
         private static Func<NpcConfiguration<TKey>, string> ToFieldGetter(NpcProfileField field) => field switch
         {
@@ -261,11 +286,12 @@ namespace Focus.Apps.EasyNpc.Profile
         public bool IsSelected { get; set; }
         public string ItpoFileName { get; private init; }
         public string PluginName { get; private init; }
+        public RecordKey Race { get; private init; }
         public NpcWigInfo<TKey> Wig { get; private init; }
 
         private readonly NpcConfiguration<TKey> parentConfig;
 
-        public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, string pluginName)
+        public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, string pluginName, RecordKey race)
             : this(parentConfig)
         {
             PluginName = pluginName;
@@ -273,6 +299,7 @@ namespace Focus.Apps.EasyNpc.Profile
             HasFaceOverride = true;
             HasFaceGenOverride = true;
             HasOutfitOverride = true;
+            Race = race;
         }
 
         public NpcOverrideConfiguration(NpcConfiguration<TKey> parentConfig, NpcOverride<TKey> @override)
@@ -285,6 +312,7 @@ namespace Focus.Apps.EasyNpc.Profile
             HasFaceGenOverride = @override.FaceOverridesAffectFaceGen;
             HasOutfitOverride = @override.ModifiesOutfits;
             ItpoFileName = @override.ItpoPluginName;
+            Race = @override.Race;
             Wig = @override.Wig;
         }
 
