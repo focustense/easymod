@@ -64,6 +64,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{
 		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Localization", "Focus.Localization\Focus.Localization.csproj", "{E79A67AB-C470-4D97-986A-6B6EC2D20E15}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -338,6 +340,18 @@ Global
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}.Release|x64.Build.0 = Release|Any CPU
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}.Release|x86.ActiveCfg = Release|Any CPU
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}.Release|x86.Build.0 = Release|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Debug|x64.Build.0 = Debug|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Debug|x86.Build.0 = Debug|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Release|x64.ActiveCfg = Release|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Release|x64.Build.0 = Release|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Release|x86.ActiveCfg = Release|Any CPU
+		{E79A67AB-C470-4D97-986A-6B6EC2D20E15}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
