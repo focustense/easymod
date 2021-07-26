@@ -23,6 +23,9 @@ namespace Focus.Tools.MugPrep
         [Option('c', "fix-cubemaps", Default = true)]
         public bool FixCubeMaps { get; set; }
 
+        [Option('c', "fix-facetints", Default = true)]
+        public bool FixFaceTints { get; set; }
+
         [Option('p', "pause")]
         public bool PauseOnStart { get; set; }
 
@@ -57,7 +60,10 @@ namespace Focus.Tools.MugPrep
                 options.DirectoryPath : Path.Combine(env.DataFolderPath, "data");
             var faceGenDirectory = Path.Combine(baseDirectory, "meshes", "actors", "character", "facegendata", "facegeom");
             using var tempFileCache = new TempFileCache();
-            var processingOptions = new FaceGenProcessingOptions { FixCubeMaps = options.FixCubeMaps };
+            var processingOptions = new FaceGenProcessingOptions {
+                FixCubeMaps = options.FixCubeMaps,
+                FixFaceTints = options.FixFaceTints
+            };
             var faceGenProcessor = new FaceGenProcessor(env, faceGenDirectory, tempFileCache, processingOptions, log);
 
             var faceGenPaths = faceGenProcessor.GetPaths();
@@ -89,6 +95,19 @@ namespace Focus.Tools.MugPrep
     class FaceGenProcessingOptions
     {
         public bool FixCubeMaps { get; init; }
+        public bool FixFaceTints { get; init; }
+    }
+
+    enum TextureSlot
+    {
+        Diffuse = 0,
+        Normal = 1,
+        Emissive = 2,
+        Height = 3, // Or parallax
+        Environment = 4, // Or cubemap
+        EnvironmentMask = 5, // Or reflection
+        InnerLayerDiffuse = 6, // Or tint
+        Specular = 7,
     }
 
     class FaceGenProcessor
@@ -96,8 +115,10 @@ namespace Focus.Tools.MugPrep
         private static readonly string DefaultEyeCubeMapPath = @"textures\cubemaps\eyecubemap.dds";
 
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env;
+        private IReadOnlySet<string> eyeNodeNames;
         private readonly string faceGenDirectory;
         private readonly IFileProvider fileProvider;
+        private IReadOnlySet<string> faceNodeNames;
         private readonly FaceGenProcessingOptions options;
         private readonly Dictionary<string, SkeletonResolver> skeletonResolvers = new(StringComparer.OrdinalIgnoreCase);
         private readonly TempFileCache tempFileCache;
@@ -123,6 +144,7 @@ namespace Focus.Tools.MugPrep
 
         public void Process(FaceGenPath faceGenPath)
         {
+            EnsureNodeNames();
             var npc = faceGenPath.AsFormKey().AsLink<INpcGetter>().Resolve(env.LinkCache);
             if (npc.Race.IsNull)
             {
@@ -152,37 +174,68 @@ namespace Focus.Tools.MugPrep
             {
                 if (options.FixCubeMaps)
                     FixCubeMaps(file, faceGenNode);
+                if (options.FixFaceTints)
+                    FixFaceTints(file, faceGenNode, faceGenPath.DirectoryName, faceGenPath.FormId);
             }
             file.Save(absolutePath);
             Console.WriteLine($"Processed {faceGenPath.FilePath}");
         }
 
+        private void EnsureNodeNames()
+        {
+            if (eyeNodeNames != null)
+                return;
+            eyeNodeNames = GetHeadPartNodeNames(HeadPart.TypeEnum.Eyes);
+            faceNodeNames = GetHeadPartNodeNames(HeadPart.TypeEnum.Face);
+        }
+
         private void FixCubeMaps(NifFile file, NiNode faceGenNode)
         {
-            var childShapes = GetChildShapes(file, faceGenNode);
-            var eyeShapes = childShapes.Where(x => x.vertexDesc.HasFlag(VertexFlags.VF_EYEDATA));
+            var eyeShapes = GetChildShapes(file, faceGenNode)
+                .Where(x => x.vertexDesc.HasFlag(VertexFlags.VF_EYEDATA) || eyeNodeNames.Contains(x.name.get()));
             foreach (var eyeShape in eyeShapes)
+                ReplaceTexturePath(file, eyeShape, TextureSlot.Environment, DefaultEyeCubeMapPath, IsNullOrMissing);
+        }
+
+        private void FixFaceTints(NifFile file, NiNode faceGenNode, string modName, string formId)
+        {
+            var faceShapes = GetChildShapes(file, faceGenNode).Where(x => faceNodeNames.Contains(x.name.get()));
+            foreach (var faceShape in faceShapes)
             {
-                var shader = eyeShape.HasShaderProperty() ?
-                    file.GetHeader().GetBlockById(eyeShape.ShaderPropertyRef().index) as BSLightingShaderProperty :
-                    null;
-                if (shader == null)
-                    continue;
-                var textureSet = shader.HasTextureSet() ?
-                    file.GetHeader().GetBlockById(shader.TextureSetRef().index) as BSShaderTextureSet : null;
-                if (textureSet == null)
-                    continue;
-                var textures = textureSet.textures.items();
-                var cubeMapTexture = textures[4].get();
-                if (!string.IsNullOrEmpty(cubeMapTexture) &&
-                    !cubeMapTexture.StartsWith("textures", StringComparison.OrdinalIgnoreCase))
-                    cubeMapTexture = Path.Combine("textures", cubeMapTexture);
-                if (string.IsNullOrEmpty(cubeMapTexture) || !fileProvider.Exists(cubeMapTexture))
-                {
-                    textures[4] = new NiString(DefaultEyeCubeMapPath);
-                    textureSet.textures.SetItems(textures);
-                }
+                var defaultTintPath = $@"textures\actors\character\facegendata\facetint\{modName}\{formId}.dds";
+                ReplaceTexturePath(file, faceShape, TextureSlot.InnerLayerDiffuse, defaultTintPath, IsNullOrMissing);
             }
+        }
+
+        private bool IsNullOrMissing(string filePath)
+        {
+            return string.IsNullOrEmpty(filePath) || !fileProvider.Exists(filePath);
+        }
+
+        private static bool ReplaceTexturePath(
+            NifFile file, BSDynamicTriShape shape, TextureSlot slot, string newPath, Predicate<string> oldPathCondition)
+        {
+            var shader = shape.HasShaderProperty() ?
+                file.GetHeader().GetBlockById(shape.ShaderPropertyRef().index) as BSLightingShaderProperty : null;
+            if (shader == null)
+                return false;
+            var textureSet = shader.HasTextureSet() ?
+                file.GetHeader().GetBlockById(shader.TextureSetRef().index) as BSShaderTextureSet : null;
+            if (textureSet == null)
+                return false;
+            var textures = textureSet.textures.items();
+            var slotIndex = (int)slot;
+            var oldTexture = textures[slotIndex].get();
+            if (!string.IsNullOrEmpty(oldTexture) &&
+                !oldTexture.StartsWith("textures", StringComparison.OrdinalIgnoreCase))
+                oldTexture = Path.Combine("textures", oldTexture);
+            if (oldPathCondition == null || oldPathCondition(oldTexture))
+            {
+                textures[slotIndex] = new NiString(newPath);
+                textureSet.textures.SetItems(textures);
+                return true;
+            }
+            return false;
         }
 
         private static IEnumerable<BSDynamicTriShape> GetChildShapes(NifFile file, NiNode parent)
@@ -194,6 +247,14 @@ namespace Focus.Tools.MugPrep
                 .Select(x => header.GetBlockById(x.index))
                 .Where(x => x is BSDynamicTriShape)
                 .Cast<BSDynamicTriShape>();
+        }
+
+        private IReadOnlySet<string> GetHeadPartNodeNames(HeadPart.TypeEnum type)
+        {
+            return env.LoadOrder.PriorityOrder.HeadPart().WinningOverrides()
+                .Where(x => x.Type == type)
+                .Select(x => x.EditorID)
+                .ToHashSet();
         }
 
         private SkeletonResolver GetSkeletonResolver(string skeletonFileName)
