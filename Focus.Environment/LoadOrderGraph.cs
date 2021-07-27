@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc.GameData.Plugins
+namespace Focus.Environment
 {
     public class LoadOrderGraph : ILoadOrderGraph
     {
@@ -21,6 +21,7 @@ namespace Focus.Apps.EasyNpc.GameData.Plugins
                     // reachable in the graph.
                     node.CanLoad = false;
                 node.IsEnabled = plugin.IsEnabled;
+                node.IsImplicit = plugin.IsImplicit;
                 foreach (var master in plugin.Masters)
                 {
                     var masterNode = GetOrAddNode(master);
@@ -36,10 +37,27 @@ namespace Focus.Apps.EasyNpc.GameData.Plugins
             return nodesByName.TryGetValue(pluginName, out var node) && node.CanLoad;
         }
 
-        public IEnumerable<string> GetAllMasters(string pluginName)
+        public IEnumerable<string> GetAllMasters(string pluginName, bool includeImplicit)
         {
-            return nodesByName.TryGetValue(pluginName, out var node) ?
-                node.Masters.Select(x => x.PluginName) : Enumerable.Empty<string>();
+            if (!nodesByName.TryGetValue(pluginName, out var node))
+                return Enumerable.Empty<string>();
+            var masterNodes = includeImplicit ?
+                GetMastersRecursive(node, new()).Where(p => p.PluginName != pluginName) :
+                node.Masters;
+            return masterNodes.Select(x => x.PluginName);
+        }
+
+        public IEnumerable<string> GetAllPluginNames()
+        {
+            return nodesByName.Values.Select(x => x.PluginName);
+        }
+
+        private IEnumerable<LoadOrderNode> GetMastersRecursive(LoadOrderNode node, HashSet<LoadOrderNode> visitedNodes)
+        {
+            if (visitedNodes.Contains(node))
+                return Enumerable.Empty<LoadOrderNode>();
+            visitedNodes.Add(node);
+            return node.Masters.SelectMany(x => GetMastersRecursive(x, visitedNodes)).Append(node);
         }
 
         public IEnumerable<string> GetMissingMasters(string pluginName)
@@ -52,6 +70,11 @@ namespace Focus.Apps.EasyNpc.GameData.Plugins
         public bool IsEnabled(string pluginName)
         {
             return nodesByName.TryGetValue(pluginName, out var node) && node.IsEnabled;
+        }
+
+        public bool IsImplicit(string pluginName)
+        {
+            return nodesByName.TryGetValue(pluginName, out var node) && node.IsImplicit;
         }
 
         public void SetEnabled(string pluginName, bool enabled)
@@ -76,7 +99,7 @@ namespace Focus.Apps.EasyNpc.GameData.Plugins
             return node;
         }
 
-        private void Validate(LoadOrderNode node, HashSet<string> visitedNodes = null)
+        private void Validate(LoadOrderNode node, HashSet<string>? visitedNodes = null)
         {
             if (visitedNodes == null)
                 visitedNodes = new(StringComparer.OrdinalIgnoreCase);
@@ -105,6 +128,7 @@ namespace Focus.Apps.EasyNpc.GameData.Plugins
         public bool CanLoad { get; set; } = true;
         public bool IsBlacklisted { get; set; }
         public bool IsEnabled { get; set; }
+        public bool IsImplicit { get; set; }
         public string PluginName { get; private init; }
 
         public LoadOrderNode(string pluginName)

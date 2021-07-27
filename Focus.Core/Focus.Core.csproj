@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Focus</RootNamespace>
+    <AssemblyTitle>Low-level types</AssemblyTitle>
+    <Product>EasyMod</Product>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+</Project>

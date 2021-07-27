@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Debug
 {
+    using Environment = System.Environment;
+
     public class LogViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;

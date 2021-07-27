@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc.GameData.Plugins
+namespace Focus.Environment
 {
     public class PluginInfo
     {
         public string FileName { get; init; }
         public bool IsEnabled { get; init; }
+        public bool IsImplicit { get; init; }
         public bool IsReadable { get; init; }
         public IReadOnlyList<string> Masters { get; init; }
 
         public PluginInfo()
+            : this("", Enumerable.Empty<string>(), false, false)
         {
         }
 

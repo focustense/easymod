@@ -1,4 +1,4 @@
-﻿namespace Focus.Apps.EasyNpc.GameData.Plugins
+﻿namespace Focus.Environment
 {
     public interface ILoadOrderGraph : IReadOnlyLoadOrderGraph
     {

@@ -1,5 +1,4 @@
-﻿using Focus.Apps.EasyNpc.GameData.Records;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 

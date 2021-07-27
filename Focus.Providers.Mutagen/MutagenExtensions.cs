@@ -1,4 +1,5 @@
 ﻿using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 using System;
 using System.IO;
@@ -16,5 +17,15 @@ namespace Focus.Providers.Mutagen
                 env.DataFolderPath : Path.Combine(env.DataFolderPath, "data");
 
         }
+        public static FormKey ToFormKey(this IRecordKey recordKey)
+        {
+            return FormKey.Factory($"{recordKey.LocalFormIdHex}:{recordKey.BasePluginName}");
+        }
+
+        public static RecordKey ToRecordKey(this FormKey formKey)
+        {
+            return new RecordKey(formKey.ModKey.FileName, formKey.IDString());
+        }
+
     }
 }

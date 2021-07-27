@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Focus.Apps.EasyNpc.GameData.Records
+namespace Focus
 {
     public interface IRecordKey
     {
@@ -40,7 +40,7 @@ namespace Focus.Apps.EasyNpc.GameData.Records
             this.comparisonType = comparisonType;
         }
 
-        public bool Equals(IRecordKey x, IRecordKey y)
+        public bool Equals(IRecordKey? x, IRecordKey? y)
         {
             if (ReferenceEquals(x, y))
                 return true;
@@ -54,6 +54,14 @@ namespace Focus.Apps.EasyNpc.GameData.Records
         public int GetHashCode([DisallowNull] IRecordKey obj)
         {
             return $"{obj.LocalFormIdHex}:{obj.BasePluginName}".GetHashCode(comparisonType);
+        }
+    }
+
+    public static class RecordKeyExtensions
+    {
+        public static bool EqualsPlugin(this IRecordKey key, string pluginName)
+        {
+            return key.BasePluginName.Equals(pluginName, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

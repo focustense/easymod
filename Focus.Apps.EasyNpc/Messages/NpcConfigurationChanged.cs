@@ -1,6 +1,4 @@
-﻿using Focus.Apps.EasyNpc.GameData.Records;
-
-namespace Focus.Apps.EasyNpc.Messages
+﻿namespace Focus.Apps.EasyNpc.Messages
 {
     public class NpcConfigurationChanged
     {

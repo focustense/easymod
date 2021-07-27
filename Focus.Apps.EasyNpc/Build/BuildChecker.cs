@@ -1,8 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
-using Focus.Apps.EasyNpc.GameData.Plugins;
-using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.Environment;
 using Focus.Files;
 using Focus.ModManagers;
 using Serilog;

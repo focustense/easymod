@@ -4,9 +4,9 @@ using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Compatibility;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
-using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
 using Focus.Apps.EasyNpc.Main;
+using Focus.Environment;
 using Focus.Files;
 using Focus.ModManagers;
 using Focus.Providers.Mutagen;
@@ -57,12 +57,21 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         public IEnumerable<PluginInfo> GetAvailablePlugins()
         {
+            var implicits = Implicits.BaseMasters.Skyrim(SkyrimRelease.SkyrimSE)
+                .Select(x => x.FileName.String)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             return LoadOrder.GetListings(GameRelease.SkyrimSE, DataDirectory, true)
                 .Select((x, i) =>
                 {
                     var isReadable = TryGetMasterNames(x.ModKey.FileName, out var masterNames);
-                    return new PluginInfo(
-                        x.ModKey.FileName.String, masterNames, isReadable, x.Enabled);
+                    return new PluginInfo
+                    {
+                        FileName = x.ModKey.FileName.String,
+                        IsEnabled = x.Enabled,
+                        IsImplicit = implicits.Contains(x.ModKey.FileName.String),
+                        IsReadable = isReadable,
+                        Masters = masterNames.ToList().AsReadOnly(),
+                    };
                 })
                 .Where(x => x is not null);
         }

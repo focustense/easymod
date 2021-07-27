@@ -1,9 +1,10 @@
-﻿using Focus.Apps.EasyNpc.Configuration;
-using System;
+﻿using System;
 using System.IO;
 
 namespace Focus.Apps.EasyNpc.Configuration
 {
+    using Environment = System.Environment;
+
     static class ProgramData
     {
         public static string ConfiguredMugshotsPath => !string.IsNullOrEmpty(Settings.Default.MugshotsDirectory) ?

@@ -1,14 +1,12 @@
 ﻿using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
-using Focus.Apps.EasyNpc.GameData.Plugins;
 using Focus.Apps.EasyNpc.GameData.Records;
+using Focus.Environment;
 using PropertyChanged;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 

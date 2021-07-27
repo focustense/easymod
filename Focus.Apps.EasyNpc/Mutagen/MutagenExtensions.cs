@@ -40,11 +40,6 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 .SingleOrDefault();
         }
 
-        public static RecordKey ToRecordKey(this FormKey formKey)
-        {
-            return new RecordKey(formKey.ModKey.FileName, formKey.IDString());
-        }
-
         public static TMajor? TryResolve<TMajor>(
             this IFormLinkGetter<TMajor> link, ILinkCache cache, IMajorRecordGetter? source, ILogger log,
             string? consequence = null)
