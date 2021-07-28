@@ -36,7 +36,7 @@
                             Grid.Column="0"/>
             <TextBlock Margin="16,0,0,0" FontSize="36" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding Title}" d:Text="Warning"/>
             <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
-                <ContentControl Content="{Binding Content}" d:Content="{d:DesignInstance Type=main:UnsupportedGameContent, IsDesignTimeCreatable=True}">
+                <ContentControl Content="{Binding Content}" d:Content="{d:DesignInstance Type=main:MissingGameDataContent, IsDesignTimeCreatable=True}">
                     <ContentControl.Resources>
                         <ControlTemplate x:Key="ListItem" TargetType="ContentControl">
                             <BulletDecorator Margin="16,0,0,0">
@@ -69,7 +69,7 @@
                                 </TextBlock>
                             </ui:SimpleStackPanel>
                         </DataTemplate>
-                        <DataTemplate DataType="{x:Type main:UnsupportedGameContent}">
+                        <DataTemplate DataType="{x:Type main:MissingGameDataContent}">
                             <ui:SimpleStackPanel>
                                 <TextBlock Style="{StaticResource ParagraphStyle}">
                                     <Run Text="{StaticResource AppName}"/> was not able to locate the game data folder for <Run Text="{Binding GameId}"/> (<Run Text="{Binding GameName}"/>).
@@ -98,6 +98,20 @@
                                     <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding IssuesUrl, Mode=OneWay}">check for an existing issue</Hyperlink>
                                     to see if it has already been solved in a current or upcoming version. Otherwise, start a new bug report and
                                     <Run FontWeight="SemiBold">make sure to specify</Run> your game edition, distribution (store), and when you installed the game.
+                                </TextBlock>
+                            </ui:SimpleStackPanel>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type main:UnsupportedGameContent}">
+                            <ui:SimpleStackPanel>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    <Run Text="{StaticResource AppName}"/> was launched with an unsupported game ID: <Run Text="{Binding GameId}"/>
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource ParagraphStyle}" Visibility="{Binding IsGameKnown, Converter={StaticResource BoolToVisibility}}">
+                                    This game (<Run Text="{Binding GameName}"/>) is not currently supported.
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource ParagraphStyle}" Visibility="{Binding IsGameKnown, Converter={StaticResource InvBoolToVisibility}}">
+                                    This ID does not correspond to any known game. Please double-check the command-line arguments being used to start the app (e.g. in your mod manager settings),
+                                    correct any misspellings or other errors, and try running the app again.
                                 </TextBlock>
                             </ui:SimpleStackPanel>
                         </DataTemplate>

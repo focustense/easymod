@@ -43,11 +43,17 @@ namespace Focus.Apps.EasyNpc
                 Settings.Default.ModRootDirectory = modResolver.GetDefaultModRootDirectory();
             try
             {
-                var mainViewModel = new MainViewModel(modResolver, isFirstLaunch, options.DebugMode);
+                var mainViewModel =
+                    new MainViewModel(options.GameName, options.GamePath, modResolver, isFirstLaunch, options.DebugMode);
                 var mainWindow = MainWindow = new MainWindow(mainViewModel);
                 mainWindow.Show();
             }
-            catch (MissingGameException ex)
+            catch (MissingGameDataException ex)
+            {
+                Warn(StartupWarnings.MissingGameData(ex.GameId, ex.GameName), true);
+                Current.Shutdown();
+            }
+            catch (UnsupportedGameException ex)
             {
                 Warn(StartupWarnings.UnsupportedGame(ex.GameId, ex.GameName), true);
                 Current.Shutdown();

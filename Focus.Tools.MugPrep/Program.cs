@@ -131,7 +131,7 @@ namespace Focus.Tools.MugPrep
             this.faceGenDirectory = faceGenDirectory;
             this.options = options;
             this.tempFileCache = tempFileCache;
-            var archiveProvider = new MutagenArchiveProvider(env, log);
+            var archiveProvider = new MutagenArchiveProvider(env, GameRelease.SkyrimSE, log);
             fileProvider = new GameFileProvider(env.GetRealDataDirectory(), archiveProvider);
         }
 

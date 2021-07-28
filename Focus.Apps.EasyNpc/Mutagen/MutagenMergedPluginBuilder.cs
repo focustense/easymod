@@ -23,11 +23,14 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
         private readonly ILogger log;
+        private readonly SkyrimRelease skyrimRelease;
 
-        public MutagenMergedPluginBuilder(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, ILogger log)
+        public MutagenMergedPluginBuilder(
+            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, SkyrimRelease skyrimRelease, ILogger log)
         {
             this.environment = environment;
             this.log = log.ForContext<MutagenMergedPluginBuilder>();
+            this.skyrimRelease = skyrimRelease;
         }
 
         public MergedPluginResult Build(
@@ -45,7 +48,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             }
 
             progress.StartStage("Starting the merge");
-            var mergedMod = new SkyrimMod(ModKey.FromNameAndExtension(MergeFileName), SkyrimRelease.SkyrimSE);
+            var mergedMod = new SkyrimMod(ModKey.FromNameAndExtension(MergeFileName), skyrimRelease);
             var context = new MergeContext(environment, mergedMod, log);
 
             var customizedNpcs = new List<Tuple<NpcConfiguration<FormKey>, Npc>>();
@@ -247,7 +250,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             if (File.Exists(fileName))
                 return;
             var modKey = ModKey.FromNameAndExtension(Path.GetFileName(fileName));
-            var dummyMod = new SkyrimMod(modKey, SkyrimRelease.SkyrimSE);
+            var dummyMod = new SkyrimMod(modKey, skyrimRelease);
             dummyMod.ModHeader.Flags |= SkyrimModHeader.HeaderFlag.LightMaster;
             dummyMod.WriteToBinary(fileName);
         }

@@ -44,7 +44,8 @@ namespace Focus.Apps.EasyNpc.Main
 
         private readonly IGameDataEditor<TKey> gameDataEditor;
 
-        public MainViewModel(IModResolver modResolver, bool isFirstLaunch, bool debugMode)
+        public MainViewModel(
+            string gameName, string gamePath, IModResolver modResolver, bool isFirstLaunch, bool debugMode)
         {
             ModResolver = modResolver;
 
@@ -64,7 +65,7 @@ namespace Focus.Apps.EasyNpc.Main
             if (debugMode)
                 Logger.Debug("Debug mode enabled");
 
-            gameDataEditor = CreateEditor();
+            gameDataEditor = CreateEditor(gameName, gamePath);
 
             Log = new LogViewModel(gameDataEditor.Log);
             logViewModelSink.ViewModel = Log;
@@ -109,17 +110,19 @@ namespace Focus.Apps.EasyNpc.Main
             });
         }
 
-        protected abstract IGameDataEditor<TKey> CreateEditor();
+        protected abstract IGameDataEditor<TKey> CreateEditor(string gameName, string gamePath);
     }
 
     public class MainViewModel : MainViewModel<FormKey>
     {
-        public MainViewModel(IModResolver modResolver, bool isFirstLaunch = false, bool debugMode = false)
-            : base(modResolver, isFirstLaunch, debugMode) { }
+        public MainViewModel(
+            string gameName, string gamePath, IModResolver modResolver, bool isFirstLaunch = false,
+            bool debugMode = false)
+            : base(gameName, gamePath, modResolver, isFirstLaunch, debugMode) { }
 
-        protected override IGameDataEditor<FormKey> CreateEditor()
+        protected override IGameDataEditor<FormKey> CreateEditor(string gameName, string gamePath)
         {
-            return new MutagenAdapter(ModResolver, Logger);
+            return new MutagenAdapter(gameName, gamePath, ModResolver, Logger);
         }
     }
 }

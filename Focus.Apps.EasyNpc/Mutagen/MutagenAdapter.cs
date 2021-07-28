@@ -39,28 +39,40 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod).NotNull();
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }
 
+        private readonly GameRelease gameRelease;
         private readonly ILogger log;
         private readonly IModResolver modResolver;
+        private readonly SkyrimRelease skyrimRelease;
 
         private CompatibilityRuleSet<INpcGetter> npcCompatibilityRuleSet;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public MutagenAdapter(IModResolver modResolver, ILogger log)
+        public MutagenAdapter(string gameName, string gamePath, IModResolver modResolver, ILogger log)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
-            if (!GameLocations.TryGetDataFolder(GameRelease.SkyrimSE, out var dataFolder))
-                throw new MissingGameException(Enum.GetName(GameRelease.SkyrimSE)!, GetGameName(GameRelease.SkyrimSE));
-            DataDirectory = dataFolder;
+            var isValidGameName = Enum.TryParse<GameRelease>(gameName, true, out var gameRelease);
+            if (!isValidGameName || !Enum.TryParse<SkyrimRelease>(gameName, true, out var skyrimRelease))
+                throw new UnsupportedGameException(gameName, isValidGameName ? GetGameName(gameRelease) : null);
+            this.gameRelease = gameRelease;
+            this.skyrimRelease = skyrimRelease;
+            if (!string.IsNullOrEmpty(gamePath))
+                DataDirectory = gamePath;
+            else
+            {
+                if (!GameLocations.TryGetDataFolder(gameRelease, out var dataFolder))
+                    throw new MissingGameDataException(Enum.GetName(gameRelease)!, GetGameName(gameRelease));
+                DataDirectory = dataFolder;
+            }
             this.log = log;
             this.modResolver = modResolver;
         }
 
         public IEnumerable<PluginInfo> GetAvailablePlugins()
         {
-            var implicits = Implicits.BaseMasters.Skyrim(SkyrimRelease.SkyrimSE)
+            var implicits = Implicits.BaseMasters.Skyrim(skyrimRelease)
                 .Select(x => x.FileName.String)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            return LoadOrder.GetListings(GameRelease.SkyrimSE, DataDirectory, true)
+            return LoadOrder.GetListings(gameRelease, DataDirectory, true)
                 .Select((x, i) =>
                 {
                     var isReadable = TryGetMasterNames(x.ModKey.FileName, out var masterNames);
@@ -100,17 +112,17 @@ namespace Focus.Apps.EasyNpc.Mutagen
             return Task.Run(() =>
             {
                 var loadOrderKeys = pluginNames.Select(pluginName => ModKey.FromNameAndExtension(pluginName));
-                var loadOrder = LoadOrder.Import<ISkyrimModGetter>(DataDirectory, loadOrderKeys, GameRelease.SkyrimSE);
+                var loadOrder = LoadOrder.Import<ISkyrimModGetter>(DataDirectory, loadOrderKeys, gameRelease);
                 var linkCache = loadOrder.ToImmutableLinkCache<ISkyrimMod, ISkyrimModGetter>();
                 // If we actually managed to get here, then earlier code already managed to find the listings file.
-                var listingsFile = PluginListings.GetListingsFile(GameRelease.SkyrimSE);
-                var creationClubFile = CreationClubListings.GetListingsPath(GameRelease.SkyrimSE.ToCategory(), DataDirectory);
+                var listingsFile = PluginListings.GetListingsFile(gameRelease);
+                var creationClubFile = CreationClubListings.GetListingsPath(gameRelease.ToCategory(), DataDirectory);
                 Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
                     DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
-                ArchiveProvider = new MutagenArchiveProvider(Environment, log);
-                MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, log);
-                ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, modResolver);
+                ArchiveProvider = new MutagenArchiveProvider(Environment, gameRelease, log);
+                MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, skyrimRelease, log);
+                ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, gameRelease, modResolver);
                 npcCompatibilityRuleSet = new CompatibilityRuleSet<INpcGetter>(npc => $"{npc.FormKey} '{npc.EditorID}'", log)
                     .Add(new FacegenHeadRule(Environment))
                     .Add(new NoChildrenRule(Environment));
@@ -584,7 +596,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
             var path = Path.Combine(DataDirectory, pluginFileName);
             try
             {
-                using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), SkyrimRelease.SkyrimSE);
+                using var mod = SkyrimMod.CreateFromBinaryOverlay(ModPath.FromPath(path), skyrimRelease);
                 masterNames = mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
                 return true;
             }

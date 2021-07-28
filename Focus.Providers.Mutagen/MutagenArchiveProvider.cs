@@ -17,14 +17,17 @@ namespace Focus.Providers.Mutagen
     {
         private readonly HashSet<string> badArchivePaths = new(StringComparer.OrdinalIgnoreCase);
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
+        private readonly GameRelease gameRelease;
         private readonly ILogger log;
         private readonly IReadOnlyList<FileName> order;
 
-        public MutagenArchiveProvider(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, ILogger log)
+        public MutagenArchiveProvider(
+            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, GameRelease gameRelease, ILogger log)
         {
             this.environment = environment;
+            this.gameRelease = gameRelease;
             this.log = log;
-            order = Archive.GetIniListings(GameRelease.SkyrimSE)
+            order = Archive.GetIniListings(gameRelease)
                 .Concat(environment.LoadOrder.ListedOrder.SelectMany(x => new[] {
                     // Not all of these will exist, but it doesn't matter, as these are only used for sorting and won't
                     // affect the actual set of paths returned.
@@ -38,7 +41,7 @@ namespace Focus.Providers.Mutagen
         {
             return Safe(archivePath, () =>
             {
-                var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
+                var reader = Archive.CreateReader(gameRelease, archivePath);
                 return reader.Files.Any(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
             });
         }
@@ -47,7 +50,7 @@ namespace Focus.Providers.Mutagen
         {
             return Safe(archivePath, () =>
             {
-                var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
+                var reader = Archive.CreateReader(gameRelease, archivePath);
                 return reader.Files
                     .Select(f => Safe(archivePath, () => f.Path))
                     .NotNull()
@@ -68,12 +71,12 @@ namespace Focus.Providers.Mutagen
         public IEnumerable<string> GetLoadedArchivePaths()
         {
             var dataFolderPath = new DirectoryPath(environment.GetRealDataDirectory());
-            return Archive.GetApplicableArchivePaths(GameRelease.SkyrimSE, dataFolderPath).Select(x => x.Path);
+            return Archive.GetApplicableArchivePaths(gameRelease, dataFolderPath).Select(x => x.Path);
         }
 
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
         {
-            var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
+            var reader = Archive.CreateReader(gameRelease, archivePath);
             var folderName = Path.GetDirectoryName(archiveFilePath)?.ToLower();  // Mutagen is case-sensitive
             if (string.IsNullOrEmpty(folderName))
                 throw new Exception($"Archive path '{archivePath}' is missing directory info.");

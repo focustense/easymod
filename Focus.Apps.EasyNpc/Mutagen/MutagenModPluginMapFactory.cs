@@ -11,12 +11,15 @@ namespace Focus.Apps.EasyNpc.Mutagen
     public class MutagenModPluginMapFactory : IModPluginMapFactory
     {
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
+        private readonly GameRelease gameRelease;
         private readonly IModResolver modResolver;
 
         public MutagenModPluginMapFactory(
-            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, IModResolver modResolver)
+            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, GameRelease gameRelease,
+            IModResolver modResolver)
         {
             this.environment = environment;
+            this.gameRelease = gameRelease;
             this.modResolver = modResolver;
         }
 
@@ -24,7 +27,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
             var pluginNames = environment.LoadOrder.Select(x => x.Key.FileName);
             var archiveNames = Archive
-                .GetApplicableArchivePaths(GameRelease.SkyrimSE, environment.DataFolderPath)
+                .GetApplicableArchivePaths(gameRelease, environment.DataFolderPath)
                 .Select(f => Path.GetFileName(f));
             return ModPluginMap.ForDirectory(
                 modRootDirectory, modResolver, pluginNames.Select(f => f.String), archiveNames);
