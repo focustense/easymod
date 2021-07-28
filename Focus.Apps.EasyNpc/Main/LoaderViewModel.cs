@@ -104,9 +104,13 @@ namespace Focus.Apps.EasyNpc.Main
             var materializedPlugins = plugins.ToList();
             if (materializedPlugins.Count == 0)
                 return;
-            var shouldLoad = materializedPlugins.Any(x => !x.ShouldLoad);
+            var shouldLoad = materializedPlugins.Any(x => !x.ShouldLoad && x.CanLoad);
+            // If enabling plugins, iteration should be sensitive to side effects - i.e. "CanLoad" may be false due to
+            // disabled master, but if the master is also being enabled, then "CanLoad" may change to true during
+            // iteration. When disabling plugins, however, we want the exact opposite of this - all of the plugins that
+            // were selected should each be disabled, regardless of whether it becomes unloadable during iteration.
             foreach (var plugin in materializedPlugins)
-                if (plugin.CanLoad) // Row shouldn't be editable otherwise
+                if (plugin.CanLoad || !shouldLoad) // Row shouldn't be editable otherwise
                     plugin.ShouldLoad = shouldLoad;
         }
 

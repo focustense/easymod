@@ -60,9 +60,42 @@ namespace Focus.Apps.EasyNpc.GameData.Records
                 // Edits to Face Texture Set, Face Tints and Hair Color do not seem to trigger facegen conflicts.
                 // Those are ignored here.
                 a.HeadPartIds.SequenceEqual(b.HeadPartIds) &&
-                a.FaceMorphs == b.FaceMorphs &&
+                EqualsFaceMorphs(a.FaceMorphs, b.FaceMorphs) &&
                 a.FaceParts == b.FaceParts &&
                 a.FaceTints.SequenceEqual(b.FaceTints);
+        }
+
+        private static bool EqualsFaceMorphs(NpcFaceMorphs a, NpcFaceMorphs b)
+        {
+            if (ReferenceEquals(a, b))
+                return true;
+            if (a is null || b is null)
+                return false;
+            return
+                NearlyEquals(a.BrowsForwardBack, b.BrowsForwardBack) &&
+                NearlyEquals(a.BrowsInOut, b.BrowsInOut) &&
+                NearlyEquals(a.BrowsUpDown, b.BrowsUpDown) &&
+                NearlyEquals(a.CheeksForwardBack, b.CheeksForwardBack) &&
+                NearlyEquals(a.CheeksUpDown, b.CheeksUpDown) &&
+                NearlyEquals(a.ChinThinWide, b.ChinThinWide) &&
+                NearlyEquals(a.ChinUnderbiteOverbite, b.ChinUnderbiteOverbite) &&
+                NearlyEquals(a.ChinUpDown, b.ChinUpDown) &&
+                NearlyEquals(a.EyesForwardBack, b.EyesForwardBack) &&
+                NearlyEquals(a.EyesInOut, b.EyesInOut) &&
+                NearlyEquals(a.EyesUpDown, b.EyesUpDown) &&
+                NearlyEquals(a.JawForwardBack, b.JawForwardBack) &&
+                NearlyEquals(a.JawNarrowWide, b.JawNarrowWide) &&
+                NearlyEquals(a.JawUpDown, b.JawUpDown) &&
+                NearlyEquals(a.LipsInOut, b.LipsInOut) &&
+                NearlyEquals(a.LipsUpDown, b.LipsUpDown) &&
+                NearlyEquals(a.NoseLongShort, b.NoseLongShort) &&
+                NearlyEquals(a.NoseUpDown, b.NoseUpDown);
+        }
+
+        private static bool NearlyEquals(double x, double y)
+        {
+            // We use float here because the data comes from float, even though it is widened to double.
+            return Math.Abs(x - y) > 3 * float.Epsilon;
         }
     }
 

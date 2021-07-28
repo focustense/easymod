@@ -110,16 +110,32 @@ namespace Focus.Apps.EasyNpc.Profile
 
             const double behaviorlessModifierPercentThreshold = 0.85;
             var pluginStats = npcs
-                .SelectMany(x => x.Overrides.Select(o => new { Npc = x, Override = o }))
-                .GroupBy(x => x.Override.PluginName)
+                .SelectMany(x => x.Overrides
+                    .Select(o => new
+                    {
+                        x.BasePluginName,
+                        o.PluginName,
+                        o.ModifiesBehavior,
+                        o.ModifiesFace,
+                    })
+                    .Prepend(new
+                    {
+                        BasePluginName = x.BasePluginName,
+                        PluginName = x.BasePluginName,
+                        ModifiesBehavior = true,
+                        ModifiesFace = true,
+                    }))
+                .GroupBy(x => x.PluginName)
                 .Where(p => !FileStructure.IsVanilla(p.Key) && !FileStructure.IsDlc(p.Key))
                 .Select(p => new
                 {
                     PluginName = p.Key,
                     TotalNpcCount = p.Count(),
-                    FaceModifierCount = p.Count(x => x.Override.ModifiesFace),
+                    FaceModifierCount = p.Count(x =>
+                        !x.BasePluginName.Equals(p.Key, StringComparison.OrdinalIgnoreCase) &&
+                        x.ModifiesFace),
                     BehaviorlessFaceModifierCount = p.Count(x =>
-                        x.Override.ModifiesFace && !x.Override.ModifiesBehavior),
+                        x.ModifiesFace && !x.ModifiesBehavior),
                 });
             return pluginStats
                 .Where(p => p.FaceModifierCount > 0)
