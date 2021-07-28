@@ -16,6 +16,29 @@ namespace Focus.Providers.Mutagen.Analysis
     {
         public RecordType RecordType => RecordType.Npc;
 
+        private static readonly Func<INpcFaceMorphGetter, float>[] faceMorphValueSelectors =
+            new Func<INpcFaceMorphGetter, float>[]
+        {
+            x => x.BrowsForwardVsBack,
+            x => x.BrowsInVsOut,
+            x => x.BrowsUpVsDown,
+            x => x.CheeksForwardVsBack,
+            x => x.CheeksUpVsDown,
+            x => x.ChinNarrowVsWide,
+            x => x.ChinUnderbiteVsOverbite,
+            x => x.ChinUpVsDown,
+            x => x.EyesForwardVsBack,
+            x => x.EyesInVsOut,
+            x => x.EyesUpVsDown,
+            x => x.JawForwardVsBack,
+            x => x.JawNarrowVsWide,
+            x => x.JawUpVsDown,
+            x => x.LipsInVsOut,
+            x => x.LipsUpVsDown,
+            x => x.NoseLongVsShort,
+            x => x.NoseUpVsDown,
+        };
+
         private readonly GroupCache groups;
         private readonly ILinkCache<ISkyrimMod, ISkyrimModGetter> linkCache;
         private readonly ILogger log;
@@ -128,13 +151,21 @@ namespace Focus.Providers.Mutagen.Analysis
         {
             return x.Equals(y, new Npc.TranslationMask(false, false)
             {
-                FaceMorph = true,
                 FaceParts = true,
                 HairColor = true,
                 HeadTexture = true,
                 TextureLighting = true,
                 TintLayers = true,
-            }) && HeadPartsEqual(x, y);
+            }) && FaceMorphsEqual(x.FaceMorph, y.FaceMorph) && HeadPartsEqual(x, y);
+        }
+
+        private static bool FaceMorphsEqual(INpcFaceMorphGetter? a, INpcFaceMorphGetter? b)
+        {
+            if (ReferenceEquals(a, b))
+                return true;
+            if (a is null || b is null)
+                return false;
+            return faceMorphValueSelectors.All(m => NearlyEquals(m(a), m(b)));
         }
 
         private IEnumerable<IHeadPartGetter> GetMainHeadParts(INpcGetter npc)
@@ -222,13 +253,9 @@ namespace Focus.Providers.Mutagen.Analysis
             return previousOverrides.All(x => !BehaviorsEqual(npc, x.Record));
         }
 
-        private static bool OutfitsEqual(INpcGetter x, INpcGetter y)
+        private static bool NearlyEquals(float x, float y)
         {
-            // Outfits are currently a tossup in terms of whether they should be treated with the same logic as face
-            // overrides (only check PO or Declaring Master), or behavior overrides (check all masters), especially
-            // we don't actually handle outfit carry-over yet, only using it as a signal for other checks.
-            // This may change once outfits are actually implemented.
-            return x.DefaultOutfit == y.DefaultOutfit && x.SleepingOutfit == y.SleepingOutfit;
+            return Math.Abs(x - y) > 3 * float.Epsilon;
         }
 
         private static bool NpcsEqual(INpcGetter x, INpcGetter y, Action<Npc.TranslationMask>? configure = null)
@@ -300,6 +327,15 @@ namespace Focus.Providers.Mutagen.Analysis
                 x.Perks.SequenceEqualSafe(y.Perks, p => p.Perk.FormKey) &&
                 PlayerSkillsEqual(x.PlayerSkills, y.PlayerSkills) &&
                 VmadsEqual(x.VirtualMachineAdapter, y.VirtualMachineAdapter);
+        }
+
+        private static bool OutfitsEqual(INpcGetter x, INpcGetter y)
+        {
+            // Outfits are currently a tossup in terms of whether they should be treated with the same logic as face
+            // overrides (only check PO or Declaring Master), or behavior overrides (check all masters), especially
+            // we don't actually handle outfit carry-over yet, only using it as a signal for other checks.
+            // This may change once outfits are actually implemented.
+            return x.DefaultOutfit == y.DefaultOutfit && x.SleepingOutfit == y.SleepingOutfit;
         }
 
         private static bool PlayerSkillsEqual(IPlayerSkillsGetter? x, IPlayerSkillsGetter? y)
