@@ -74,7 +74,9 @@ namespace Focus.Providers.Mutagen
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
         {
             var reader = Archive.CreateReader(GameRelease.SkyrimSE, archivePath);
-            var folderName = Path.GetDirectoryName(archiveFilePath).ToLower();  // Mutagen is case-sensitive
+            var folderName = Path.GetDirectoryName(archiveFilePath)?.ToLower();  // Mutagen is case-sensitive
+            if (string.IsNullOrEmpty(folderName))
+                throw new Exception($"Archive path '{archivePath}' is missing directory info.");
             if (!reader.TryGetFolder(folderName, out var folder))
                 throw new Exception($"Couldn't find folder {folderName} in archive {archivePath}");
             var file = folder.Files

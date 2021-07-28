@@ -20,16 +20,16 @@ namespace Focus.ModManagers.Vortex
         public ulong LastModifiedTimeMs { get; set; }
 
         [Key("merged")]
-        public List<string> MergedMods { get; set; }
+        public List<string> MergedMods { get; set; } = new();
 
         [Key("relPath")]
-        public string RelativePath { get; set; }
+        public string RelativePath { get; set; } = string.Empty;
 
         [Key("source")]
-        public string SourceFileName { get; set; }
+        public string SourceFileName { get; set; } = string.Empty;
 
         [Key("target")]
-        public string TargetDirectory { get; set; }
+        public string TargetDirectory { get; set; } = string.Empty;
 
         [IgnoreMember]
         IEnumerable<string> IReadOnlyDeployedFile.MergedMods => MergedMods;

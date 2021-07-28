@@ -5,7 +5,7 @@ namespace Focus.ModManagers
 {
     public interface IModResolver
     {
-        string GetDefaultModRootDirectory();
+        string? GetDefaultModRootDirectory();
         IEnumerable<string> GetModDirectories(string modName);
         string GetModName(string directoryPath);
     }

@@ -7,17 +7,18 @@ namespace Focus.ModManagers.ModOrganizer
 {
     public class ModOrganizerModResolver : IModResolver
     {
-        private readonly ModOrganizerConfiguration config;
+        private readonly ModOrganizerConfiguration? config;
 
         public ModOrganizerModResolver(string exePath)
         {
             var instanceName = GetCurrentInstanceName();
             var entryIniPath = !string.IsNullOrEmpty(instanceName) ?
                 GetInstanceIniPath(instanceName) : GetPortableIniPath(exePath);
-            config = File.Exists(entryIniPath) ? new ModOrganizerConfiguration(entryIniPath) : null;
+            config = !string.IsNullOrEmpty(entryIniPath) && File.Exists(entryIniPath) ?
+                new ModOrganizerConfiguration(entryIniPath) : null;
         }
 
-        public string GetDefaultModRootDirectory()
+        public string? GetDefaultModRootDirectory()
         {
             return config?.ModsDirectory;
         }
@@ -32,7 +33,7 @@ namespace Focus.ModManagers.ModOrganizer
             return new DirectoryInfo(directoryPath).Name;
         }
 
-        private static string GetCurrentInstanceName()
+        private static string? GetCurrentInstanceName()
         {
             using var hkcu = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default);
             return
@@ -40,7 +41,7 @@ namespace Focus.ModManagers.ModOrganizer
                 GetKeyValue(hkcu, @"SOFTWARE\Tannin\Mod Organizer", "CurrentInstance");
         }
 
-        private static string GetKeyValue(RegistryKey key, string subkeyPath, string name)
+        private static string? GetKeyValue(RegistryKey key, string subkeyPath, string name)
         {
             using var subKey = key.OpenSubKey(subkeyPath);
             return subKey != null ? subKey.GetValue(name, "") as string : null;
@@ -55,7 +56,8 @@ namespace Focus.ModManagers.ModOrganizer
         private static string GetPortableIniPath(string exePath)
         {
             var directoryPath = Path.GetDirectoryName(exePath);
-            return Path.Combine(directoryPath, "ModOrganizer.ini");
+            return !string.IsNullOrEmpty(directoryPath) ?
+                Path.Combine(directoryPath, "ModOrganizer.ini") : string.Empty;
         }
     }
 }

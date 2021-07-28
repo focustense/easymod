@@ -18,8 +18,8 @@ namespace Focus.ModManagers.ModOrganizer
         public ModOrganizerConfiguration(string entryIniPath)
         {
             var entryIni = parser.ReadFile(entryIniPath);
-            var settings = entryIni["Settings"];
-            BaseDirectory = settings["base_directory"] ?? Path.GetDirectoryName(entryIniPath);
+            var settings = entryIni["Settings"] ?? new KeyDataCollection();
+            BaseDirectory = settings["base_directory"] ?? Path.GetDirectoryName(entryIniPath) ?? string.Empty;
             DownloadDirectory = ResolveDirectory(settings, "download_directory", "%BASE_DIR%/downloads", BaseDirectory);
             ModsDirectory = ResolveDirectory(settings, "mod_directory", "%BASE_DIR%/mods", BaseDirectory);
             OverwriteDirectory =

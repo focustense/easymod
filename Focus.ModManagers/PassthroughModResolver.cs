@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
 namespace Focus.ModManagers
 {
     public class PassthroughModResolver : IModResolver
     {
-        public string GetDefaultModRootDirectory()
+        public string? GetDefaultModRootDirectory()
         {
             return null;
         }

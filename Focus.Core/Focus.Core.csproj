@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
     <RootNamespace>Focus</RootNamespace>
     <AssemblyTitle>Low-level types</AssemblyTitle>
     <Product>EasyMod</Product>
