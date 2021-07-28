@@ -1,13 +1,10 @@
-﻿#nullable enable
-
-using Mutagen.Bethesda.Plugins;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus
 {
-    static class EnumerableExtensions
+    public static class EnumerableExtensions
     {
         public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> sequence) where T : class
         {
@@ -33,22 +30,6 @@ namespace Focus.Apps.EasyNpc
             if (first == null ^ second == null)
                 return false;
             return first!.SequenceEqual(second!);
-        }
-
-        public static bool SequenceEqualSafe<T>(
-            this IEnumerable<T>? first, IEnumerable<T>? second, Func<T, FormKey> keySelector)
-        {
-            // FormKey instances aren't Comparable.
-            // To compare sequences, we don't care about the "correct order" (i.e. load order), only that the order is
-            // consistent between both sequences.
-            Func<T, string> wrappedKeySelector = x => keySelector(x).ToString();
-            return first.OrderBySafe(wrappedKeySelector).SequenceEqualSafe(second.OrderBySafe(wrappedKeySelector));
-        }
-
-        public static bool SequenceEqualSafeBy<T, TKey>(
-            this IEnumerable<T>? first, IEnumerable<T>? second, Func<T, TKey> keySelector)
-        {
-            return first.OrderBySafe(keySelector).SequenceEqualSafe(second.OrderBySafe(keySelector));
         }
 
         public static IEnumerable<T> Tap<T>(this IEnumerable<T> sequence, Action<T> action)

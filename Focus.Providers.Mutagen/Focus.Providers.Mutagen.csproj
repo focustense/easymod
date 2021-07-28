@@ -4,6 +4,9 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
+    <AssemblyTitle>Service implementations based on the Mutagen library</AssemblyTitle>
+    <Product>EasyMod</Product>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
