@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Focus.Environment
 {
-    public class PluginInfo
+    public record PluginInfo
     {
         public string FileName { get; init; }
         public bool IsEnabled { get; init; }
@@ -17,7 +17,7 @@ namespace Focus.Environment
         {
         }
 
-        public PluginInfo(string fileName, IEnumerable<string> masters, bool isReadable, bool isEnabled)
+        public PluginInfo(string fileName, IEnumerable<string> masters, bool isReadable = true, bool isEnabled = true)
         {
             FileName = fileName;
             Masters = masters.ToList().AsReadOnly();

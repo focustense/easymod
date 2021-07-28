@@ -37,13 +37,11 @@ namespace Focus.Environment
             return nodesByName.TryGetValue(pluginName, out var node) && node.CanLoad;
         }
 
-        public IEnumerable<string> GetAllMasters(string pluginName, bool includeImplicit)
+        public IEnumerable<string> GetAllMasters(string pluginName, bool includeImplicit = false)
         {
             if (!nodesByName.TryGetValue(pluginName, out var node))
                 return Enumerable.Empty<string>();
-            var masterNodes = includeImplicit ?
-                GetMastersRecursive(node, new()).Where(p => p.PluginName != pluginName) :
-                node.Masters;
+            var masterNodes = includeImplicit ? GetMastersRecursive(node) : node.Masters;
             return masterNodes.Select(x => x.PluginName);
         }
 
@@ -52,18 +50,10 @@ namespace Focus.Environment
             return nodesByName.Values.Select(x => x.PluginName);
         }
 
-        private IEnumerable<LoadOrderNode> GetMastersRecursive(LoadOrderNode node, HashSet<LoadOrderNode> visitedNodes)
-        {
-            if (visitedNodes.Contains(node))
-                return Enumerable.Empty<LoadOrderNode>();
-            visitedNodes.Add(node);
-            return node.Masters.SelectMany(x => GetMastersRecursive(x, visitedNodes)).Append(node);
-        }
-
         public IEnumerable<string> GetMissingMasters(string pluginName)
         {
             return nodesByName.TryGetValue(pluginName, out var node) ?
-                node.Masters.Where(x => !x.IsEnabled || !x.CanLoad).Select(x => x.PluginName) :
+                GetMastersRecursive(node).Where(x => !x.IsEnabled || !x.CanLoad).Select(x => x.PluginName) :
                 Enumerable.Empty<string>();
         }
 
@@ -87,6 +77,18 @@ namespace Focus.Environment
                 return;
             node.IsEnabled = enabled;
             Validate(node);
+        }
+
+        private IEnumerable<LoadOrderNode> GetMastersRecursive(LoadOrderNode node, HashSet<LoadOrderNode>? visitedNodes = null)
+        {
+            bool includeSelf = visitedNodes != null && visitedNodes.Count > 0;
+            if (visitedNodes == null)
+                visitedNodes = new();
+            if (visitedNodes.Contains(node))
+                return Enumerable.Empty<LoadOrderNode>();
+            visitedNodes.Add(node);
+            var masterNodes = node.Masters.SelectMany(x => GetMastersRecursive(x, visitedNodes));
+            return includeSelf ? masterNodes.Append(node) : masterNodes;
         }
 
         private LoadOrderNode GetOrAddNode(string pluginName)
