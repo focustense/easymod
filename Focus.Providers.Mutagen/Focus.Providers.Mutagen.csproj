@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Focus.Analysis\Focus.Analysis.csproj" />
     <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
     <ProjectReference Include="..\Focus.Files\Focus.Files.csproj" />
   </ItemGroup>

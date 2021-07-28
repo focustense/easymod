@@ -1,6 +1,7 @@
 ﻿using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +11,26 @@ namespace Focus.Providers.Mutagen
 {
     public static class MutagenExtensions
     {
-        public static string GetRealDataDirectory<TModSetter, TModGetter>(this GameEnvironmentState<TModSetter, TModGetter> env)
+        public static TModGetter? TryGetMod<TModSetter, TModGetter>(
+            this GameEnvironmentState<TModSetter, TModGetter> env, string pluginName, ILogger log)
+            where TModSetter : class, IContextMod<TModSetter, TModGetter>, TModGetter
+            where TModGetter : class, IContextGetterMod<TModSetter, TModGetter>
+        {
+            if (!ModKey.TryFromNameAndExtension(pluginName, out var modKey))
+            {
+                log.Error("Invalid plugin name: {pluginName}", pluginName);
+                return null;
+            }
+            if (!env.LoadOrder.TryGetIfEnabledAndExists(modKey, out var mod))
+            {
+                log.Error("Missing or disabled plugin: {pluginName}", pluginName);
+                return null;
+            }
+            return mod;
+        }
+
+        public static string GetRealDataDirectory<TModSetter, TModGetter>(
+            this GameEnvironmentState<TModSetter, TModGetter> env)
             where TModSetter : class, IContextMod<TModSetter, TModGetter>, TModGetter
             where TModGetter : class, IContextGetterMod<TModSetter, TModGetter>
         {
@@ -19,6 +39,7 @@ namespace Focus.Providers.Mutagen
                 env.DataFolderPath : Path.Combine(env.DataFolderPath, "data");
 
         }
+
         public static bool SequenceEqualSafe<T>(
             this IEnumerable<T>? first, IEnumerable<T>? second, Func<T, FormKey?> keySelector)
         {
@@ -45,5 +66,10 @@ namespace Focus.Providers.Mutagen
             return new RecordKey(formKey.ModKey.FileName, formKey.IDString());
         }
 
+        public static IReadOnlyList<RecordKey> ToRecordKeys<T>(this IReadOnlyList<IFormLinkGetter<T>> formLinks)
+            where T : class, IMajorRecordCommonGetter
+        {
+            return formLinks.Select(x => x.FormKeyNullable).NotNull().Select(x => x.ToRecordKey()).ToList().AsReadOnly();
+        }
     }
 }
