@@ -10,7 +10,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Profile
@@ -22,7 +21,7 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public ColumnDefinitions Columns { get; private init; }
 
-        [DependsOn("OnlyFaceOverrides", "ShowSinglePluginOverrides", "DisplayedNpcsSentinel")]
+        [DependsOn("DisplayedNpcsSentinel")]
         public IEnumerable<NpcConfiguration<TKey>> DisplayedNpcs
         {
             get
@@ -42,12 +41,10 @@ namespace Focus.Apps.EasyNpc.Profile
         public bool HasSelectedNpc => SelectedNpc != null;
         public IReadOnlyList<string> LoadedPluginNames { get; private init; }
         public IReadOnlyList<Mugshot> Mugshots { get; private set; }
-        public bool OnlyFaceOverrides { get; set; }
         public IProfileRuleSet RuleSet => ruleSet;
         public NpcOverrideConfiguration<TKey> SelectedOverrideConfig { get; private set; }
         public NpcConfiguration<TKey> SelectedNpc { get; set; }
         public IReadOnlyList<NpcOverrideConfiguration<TKey>> SelectedNpcOverrides { get; private set; }
-        public bool ShowSinglePluginOverrides { get; set; } = true;
 
         // PropertyChanged.Fody doesn't have supported for "nested" properties, so this is a convenient way for an
         // internal handler to force the DisplayedNpcs to update (just invert the value).
@@ -301,7 +298,7 @@ namespace Focus.Apps.EasyNpc.Profile
         private IEnumerable<NpcConfiguration<TKey>> ApplyFilters(IEnumerable<NpcConfiguration<TKey>> npcs)
         {
             var displayedNpcs = npcs;
-            var minOverrideCount = ShowSinglePluginOverrides ? 1 : 2;
+            var minOverrideCount = !Filters.MultipleChoices ? 1 : 2;
             ApplyColumnFilter(ref displayedNpcs, Columns.BasePluginName, x => x.BasePluginName);
             ApplyColumnFilter(ref displayedNpcs, Columns.LocalFormIdHex, x => x.LocalFormIdHex);
             ApplyColumnFilter(ref displayedNpcs, Columns.EditorId, x => x.EditorId);
@@ -340,7 +337,7 @@ namespace Focus.Apps.EasyNpc.Profile
                     (!string.IsNullOrEmpty(x.FaceModName) && !modPluginMap.IsModInstalled(x.FaceModName)));
             }
             displayedNpcs = displayedNpcs
-                .Where(x => x.GetOverrideCount(!Filters.NonDlc, !OnlyFaceOverrides) >= minOverrideCount);
+                .Where(x => x.GetOverrideCount(!Filters.NonDlc, !Filters.FaceChanges) >= minOverrideCount);
             return filterBypassNpc != null ? displayedNpcs.Union(new[] { filterBypassNpc }) : displayedNpcs;
         }
 
@@ -432,12 +429,16 @@ namespace Focus.Apps.EasyNpc.Profile
 
             public bool Conflicts { get; set; }
             public string DefaultPlugin { get; set; }
+            public bool FaceChanges { get; set; }
             public string FacePlugin { get; set; }
             public bool Missing { get; set; }
+            public bool MultipleChoices { get; set; }
             public bool NonDlc { get; set; }
             public bool Wigs { get; set; }
 
-            [DependsOn("Conflicts", "DefaultPlugin", "FacePlugin", "Missing", "NonDlc", "Wigs")]
+            [DependsOn(
+                "Conflicts", "DefaultPlugin", "FaceChange", "FacePlugin", "Missing", "MultipleChoices", "NonDlc",
+                "Wigs")]
             public bool IsNonDefault =>
                 !NonDlc || Conflicts || Missing || Wigs ||
                 !string.IsNullOrEmpty(DefaultPlugin) ||
@@ -452,8 +453,10 @@ namespace Focus.Apps.EasyNpc.Profile
             {
                 Conflicts = false;
                 DefaultPlugin = null;
+                FaceChanges = false;
                 FacePlugin = null;
                 Missing = false;
+                MultipleChoices = false;
                 NonDlc = true;
                 Wigs = false;
             }

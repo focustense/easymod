@@ -44,6 +44,7 @@
 
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+            <local:InverseBooleanConverter x:Key="InverseBoolean"/>
             <math:MathConverter x:Key="Math" />
             <build:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>
 

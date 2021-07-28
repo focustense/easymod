@@ -188,11 +188,11 @@
                         </ui:DropDownButton.Flyout>
                     </ui:DropDownButton>
                     <CheckBox Content="Show Non-Conflicting Overrides"
-                              IsChecked="{Binding ShowSinglePluginOverrides}"
+                              IsChecked="{Binding Filters.MultipleChoices, Converter={StaticResource InverseBoolean}}"
                               Margin="16,0,0,0"
                               ToolTip="List NPCs who only have a single face customization option available within all active mods."/>
                     <CheckBox Content="Only Face Overrides"
-                              IsChecked="{Binding OnlyFaceOverrides}"
+                              IsChecked="{Binding Filters.FaceChanges}"
                               Margin="16,0,0,0"
                               ToolTip="Hide NPCs with no face customizations available, i.e. who only have changes being made to items, AI behavior, etc."/>
                 </ui:SimpleStackPanel>
