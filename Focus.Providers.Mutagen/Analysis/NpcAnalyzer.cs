@@ -56,7 +56,7 @@ namespace Focus.Providers.Mutagen.Analysis
             if (npc == null)
                 return new() { BasePluginName = key.BasePluginName, LocalFormIdHex = key.LocalFormIdHex };
             var mod = groups.GetMod(pluginName)!; // If the record was found, then the mod must exist.
-            var isOverride = !key.EqualsPlugin(pluginName);
+            var isOverride = !key.PluginEquals(pluginName);
             var overrideContexts = isOverride ?
                 npc.AsLink().ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>(linkCache) :
                 Enumerable.Empty<IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>>();
@@ -229,7 +229,7 @@ namespace Focus.Providers.Mutagen.Analysis
         {
             var lhsParts = GetMainHeadParts(x).Select(x => x.FormKey.ToRecordKey());
             var rhsParts = GetMainHeadParts(y).Select(x => x.FormKey.ToRecordKey());
-            return new HashSet<RecordKey>(lhsParts, RecordKeyComparer.OrdinalIgnoreCase).SetEquals(rhsParts);
+            return new HashSet<RecordKey>(lhsParts).SetEquals(rhsParts);
         }
 
         private bool ModifiesBehavior(INpcGetter npc, ISkyrimModGetter contextMod)

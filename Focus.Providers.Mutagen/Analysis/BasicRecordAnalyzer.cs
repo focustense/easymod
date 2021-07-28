@@ -21,7 +21,7 @@ namespace Focus.Providers.Mutagen.Analysis
             var group = groups.Get(pluginName, recordType);
             var formKey = key.ToFormKey();
             var record = group?.TryGetValue(formKey);
-            var isOverride = !key.EqualsPlugin(pluginName);
+            var isOverride = !key.PluginEquals(pluginName);
             return new BasicRecordAnalysis(recordType)
             {
                 BasePluginName = key.BasePluginName,

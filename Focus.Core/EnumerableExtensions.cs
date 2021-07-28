@@ -27,7 +27,7 @@ namespace Focus
         {
             if (ReferenceEquals(first, second))
                 return true;
-            if (first == null ^ second == null)
+            if (first is null || second is null)
                 return false;
             return first!.SequenceEqual(second!);
         }
