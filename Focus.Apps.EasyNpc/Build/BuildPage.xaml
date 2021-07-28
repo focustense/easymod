@@ -128,7 +128,7 @@
                 </GroupBox>
             </Border>
             <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Visible">
-                <GroupBox Header="Ready to build">
+                <GroupBox x:Name="BuildConfirmationGroup" Header="Ready to build">
                     <ui:SimpleStackPanel>
                         <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
                             <TextBlock Style="{StaticResource FirstParagraphStyle}">All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
@@ -148,7 +148,9 @@
                             </TextBlock>
                             <TextBlock Text="Master Dependencies" Style="{StaticResource LoweredFormLabelStyle}"/>
                             <ListBox x:Name="MasterDependenciesListBox"
+                                     MaxHeight="{Binding ElementName=BuildConfirmationGroup, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter=x-365}"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                                      ItemsSource="{Binding PreBuildReport.Masters}"
                                      MouseDoubleClick="MasterDependenciesListBox_MouseDoubleClick">
                                 <ListBox.Resources>

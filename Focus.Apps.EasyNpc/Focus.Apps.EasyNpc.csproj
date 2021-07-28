@@ -39,6 +39,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FontAwesome5" Version="2.1.1" />
+    <PackageReference Include="MathConverter" Version="1.2.1.6" />
     <PackageReference Include="ModernWpfUI" Version="0.9.4" />
     <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.30.4" />
     <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.30.4" />
