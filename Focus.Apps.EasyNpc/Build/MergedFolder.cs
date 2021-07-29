@@ -7,6 +7,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -246,7 +247,7 @@ namespace Focus.Apps.EasyNpc.Build
                 progress.StartStage("Processing wig conversions");
                 progress.AdjustRemaining(mergeInfo.WigConversions.Count, 0.2f);
                 var npcsByFormId = npcs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
-                using var tempFileCache = new TempFileCache();
+                using var tempFileCache = new TempFileCache(new FileSystem());
                 Parallel.ForEach(mergeInfo.WigConversions, wigConversion =>
                 {
                     var npcKey = Tuple.Create(wigConversion.BasePluginName, wigConversion.LocalFormIdHex);

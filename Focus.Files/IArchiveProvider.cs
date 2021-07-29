@@ -9,7 +9,7 @@ namespace Focus.Files
         IEnumerable<string> GetArchiveFileNames(string archivePath, string path = "");
         IEnumerable<string> GetBadArchivePaths();
         string GetArchivePath(string archiveName);
-        IEnumerable<string> GetLoadedArchivePaths();
+        IEnumerable<string> GetLoadedArchivePaths(); // Priority order, not listed order!
         ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath);
     }
 }

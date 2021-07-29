@@ -11,6 +11,7 @@ using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 
 namespace Focus.Tools.MugPrep
@@ -59,12 +60,13 @@ namespace Focus.Tools.MugPrep
             var baseDirectory = !string.IsNullOrEmpty(options.DirectoryPath) ?
                 options.DirectoryPath : Path.Combine(env.DataFolderPath, "data");
             var faceGenDirectory = Path.Combine(baseDirectory, "meshes", "actors", "character", "facegendata", "facegeom");
-            using var tempFileCache = new TempFileCache();
+            var fs = new FileSystem();
+            using var tempFileCache = new TempFileCache(fs);
             var processingOptions = new FaceGenProcessingOptions {
                 FixCubeMaps = options.FixCubeMaps,
                 FixFaceTints = options.FixFaceTints
             };
-            var faceGenProcessor = new FaceGenProcessor(env, faceGenDirectory, tempFileCache, processingOptions, log);
+            var faceGenProcessor = new FaceGenProcessor(env, fs, faceGenDirectory, tempFileCache, processingOptions, log);
 
             var faceGenPaths = faceGenProcessor.GetPaths();
             foreach (var faceGenPath in faceGenPaths)
@@ -118,21 +120,23 @@ namespace Focus.Tools.MugPrep
         private IReadOnlySet<string> eyeNodeNames;
         private readonly string faceGenDirectory;
         private readonly IFileProvider fileProvider;
+        private readonly IFileSystem fs;
         private IReadOnlySet<string> faceNodeNames;
         private readonly FaceGenProcessingOptions options;
         private readonly Dictionary<string, SkeletonResolver> skeletonResolvers = new(StringComparer.OrdinalIgnoreCase);
         private readonly TempFileCache tempFileCache;
 
         public FaceGenProcessor(
-            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env, string faceGenDirectory,
+            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env, IFileSystem fs, string faceGenDirectory,
             TempFileCache tempFileCache, FaceGenProcessingOptions options, ILogger log)
         {
             this.env = env;
             this.faceGenDirectory = faceGenDirectory;
+            this.fs = fs;
             this.options = options;
             this.tempFileCache = tempFileCache;
             var archiveProvider = new MutagenArchiveProvider(env, GameRelease.SkyrimSE, log);
-            fileProvider = new GameFileProvider(env.GetRealDataDirectory(), archiveProvider);
+            fileProvider = new GameFileProvider(fs, env.GetRealDataDirectory(), archiveProvider);
         }
 
         public IEnumerable<FaceGenPath> GetPaths()

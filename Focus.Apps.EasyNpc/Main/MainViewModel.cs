@@ -15,6 +15,7 @@ using Serilog.Core;
 using Serilog.Events;
 using System;
 using System.ComponentModel;
+using System.IO.Abstractions;
 
 namespace Focus.Apps.EasyNpc.Main
 {
@@ -90,7 +91,8 @@ namespace Focus.Apps.EasyNpc.Main
                 var npcConfigs = Profile.GetAllNpcConfigurations();
                 Maintenance = new MaintenanceViewModel<TKey>(npcConfigs, profileEventLog, Loader.LoadedPluginNames);
                 var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
-                var fileProvider = new GameFileProvider(gameDataEditor.DataDirectory, gameDataEditor.ArchiveProvider);
+                var fileProvider = new GameFileProvider(
+                    new FileSystem(), gameDataEditor.DataDirectory, gameDataEditor.ArchiveProvider);
                 var faceGenEditor = new NiflyFaceGenEditor(fileProvider, Logger);
                 var buildChecker = new BuildChecker<TKey>(
                     Loader.LoadedPluginNames, Loader.Graph, npcConfigs, Profile.RuleSet, modResolver,

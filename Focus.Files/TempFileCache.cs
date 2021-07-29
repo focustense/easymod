@@ -1,14 +1,21 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.IO.Abstractions;
 
 namespace Focus.Files
 {
     public class TempFileCache : IDisposable
     {
+        private readonly IFileSystem fs;
         private readonly ConcurrentDictionary<string, string> pathMap = new(StringComparer.OrdinalIgnoreCase);
 
         private bool disposed;
+
+        public TempFileCache(IFileSystem fs)
+        {
+            this.fs = fs;
+        }
 
         public void Dispose()
         {
@@ -25,10 +32,10 @@ namespace Focus.Files
             return pathMap.GetOrAdd(sourceFileName, _ =>
             {
                 var data = fileProvider.ReadBytes(sourceFileName);
-                var path = Path.GetTempFileName();
-                using var fs = File.Create(path);
-                fs.Write(data);
-                fs.Flush();
+                var path = fs.Path.GetTempFileName();
+                using var stream = fs.File.Create(path);
+                stream.Write(data);
+                stream.Flush();
                 return path;
             });
         }
@@ -38,7 +45,7 @@ namespace Focus.Files
             try
             {
                 foreach (var destPath in pathMap.Values)
-                    File.Delete(destPath);
+                    fs.File.Delete(destPath);
             }
             catch (IOException)
             {

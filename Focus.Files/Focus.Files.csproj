@@ -6,4 +6,8 @@
     <WarningsAsErrors>nullable</WarningsAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.IO.Abstractions" Version="13.2.43" />
+  </ItemGroup>
+
 </Project>

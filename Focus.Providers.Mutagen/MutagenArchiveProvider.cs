@@ -71,7 +71,7 @@ namespace Focus.Providers.Mutagen
         public IEnumerable<string> GetLoadedArchivePaths()
         {
             var dataFolderPath = new DirectoryPath(environment.GetRealDataDirectory());
-            return Archive.GetApplicableArchivePaths(gameRelease, dataFolderPath).Select(x => x.Path);
+            return Archive.GetApplicableArchivePaths(gameRelease, dataFolderPath, order).Select(x => x.Path);
         }
 
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
