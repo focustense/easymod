@@ -15,6 +15,20 @@ namespace Focus
         public string BasePluginName { get; private init; }
         public string LocalFormIdHex { get; private init; }
 
+        public static RecordKey Parse(string value)
+        {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            var tokens = value.Split(':');
+            if (tokens.Length != 2)
+                throw new ArgumentException(
+                    $"Invalid record key format: '{value}'. Must be of the form '0123456:Plugin.esp'.", nameof(value));
+            // Currently not doing any validation of the tokens themselves. Not likely to be an issue when all actual
+            // keys generally come from the game data, and those that don't (i.e. saved in a user profile) simply won't
+            // match the game data and will be ignored.
+            return new RecordKey(tokens[1], tokens[0]);
+        }
+
         public RecordKey(string basePluginName, string localFormIdHex)
         {
             BasePluginName = basePluginName;
@@ -47,6 +61,11 @@ namespace Focus
         public override int GetHashCode()
         {
             return $"{LocalFormIdHex}:{BasePluginName}".GetHashCode(DefaultComparison);
+        }
+
+        public override string ToString()
+        {
+            return $"{LocalFormIdHex}:{BasePluginName}";
         }
 
         public static bool operator ==(RecordKey x, IRecordKey y)

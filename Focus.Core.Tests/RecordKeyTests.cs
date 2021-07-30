@@ -68,8 +68,35 @@ namespace Focus.Core.Tests
             }
         }
 
+        public class Parse
+        {
+            [Fact]
+            public void WhenValueIsNull_Throws()
+            {
+                Assert.Throws<ArgumentNullException>(() => RecordKey.Parse(null));
+            }
+
+            [Fact]
+            public void WhenValueHasNoSeparator_Throws()
+            {
+                Assert.Throws<ArgumentException>(() => RecordKey.Parse("invalid"));
+            }
+
+            [Fact]
+            public void WhenValueHasTooManySeparators_Throws()
+            {
+                Assert.Throws<ArgumentException>(() => RecordKey.Parse("foo:bar:baz"));
+            }
+
+            [Fact]
+            public void WhenValueHasSingleSeparator_IncludesEachSide()
+            {
+                Assert.Equal(new RecordKey("bar", "foo"), RecordKey.Parse("foo:bar"));
+            }
+        }
+
         [Fact]
-        public void HashCodeIsCaseInsensitive()
+        public void GetHashCode_IsCaseInsensitive()
         {
             Assert.Equal(
                 new RecordKey("foo.esm", "1A2B3C").GetHashCode(),
@@ -77,12 +104,18 @@ namespace Focus.Core.Tests
         }
 
         [Fact]
-        public void PluginNameEqualsIsCaseInsensitive()
+        public void PluginNameEquals_IsCaseInsensitive()
         {
             var key = new RecordKey("Foo.esm", "dummy");
             Assert.True(key.PluginEquals("Foo.esm"));
             Assert.True(key.PluginEquals("foo.ESM"));
             Assert.False(key.PluginEquals("Bar.esm"));
+        }
+
+        [Fact]
+        public void ToString_IsColonDelimitedPair()
+        {
+            Assert.Equal("0123456:Foo.esp", new RecordKey("Foo.esp", "0123456").ToString());
         }
 
         [Fact]
