@@ -54,14 +54,19 @@ namespace Focus.Analysis.Execution
 
         public LoadOrderAnalysis Run()
         {
-            var loadedPlugins = availablePlugins.Where(p => loadOrderGraph.IsEnabled(p));
+            var loadedPlugins = availablePlugins.Where(p => loadOrderGraph.IsEnabled(p)).ToList();
             var pluginAnalyses = loadedPlugins
                 .AsParallel()
                 .Where(p => !loadOrderGraph.IsImplicit(p))
                 .Select(p => RunForPlugin(p));
             return new LoadOrderAnalysis
             {
-                Plugins = pluginAnalyses.ToList().AsReadOnly(),
+                Plugins = pluginAnalyses
+                    // Might be slow, but probably faster than any other part of the analysis and therefore not
+                    // important enough to be noticeable.
+                    .OrderBy(x => loadedPlugins.IndexOf(x.FileName))
+                    .ToList()
+                    .AsReadOnly(),
             };
         }
 
