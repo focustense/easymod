@@ -29,6 +29,14 @@ namespace Focus.Providers.Mutagen
             return mod;
         }
 
+        public static string GetRealDataDirectory<TModGetter>(this IReadOnlyGameEnvironment<TModGetter> env)
+            where TModGetter : class, IModGetter
+        {
+            var leafDirectory = new DirectoryInfo(env.DataFolderPath).Name;
+            return leafDirectory.Equals("data", StringComparison.OrdinalIgnoreCase) ?
+                env.DataFolderPath : Path.Combine(env.DataFolderPath, "data");
+        }
+
         public static string GetRealDataDirectory<TModSetter, TModGetter>(
             this GameEnvironmentState<TModSetter, TModGetter> env)
             where TModSetter : class, IContextMod<TModSetter, TModGetter>, TModGetter
@@ -37,7 +45,6 @@ namespace Focus.Providers.Mutagen
             var leafDirectory = new DirectoryInfo(env.DataFolderPath).Name;
             return leafDirectory.Equals("data", StringComparison.OrdinalIgnoreCase) ?
                 env.DataFolderPath : Path.Combine(env.DataFolderPath, "data");
-
         }
 
         public static bool SequenceEqualSafe<T>(
