@@ -109,6 +109,9 @@
             <Style TargetType="fa:SvgAwesome">
                 <Setter Property="Foreground" Value="{StaticResource SystemControlForegroundBaseMediumHighBrush}"/>
             </Style>
+
+            <!-- This is not supposed to be any different from AccentButtonStyle, but is easier for WPF to "find". -->
+            <Style TargetType="Button" x:Key="LocalAccentButtonStyle" BasedOn="{StaticResource AccentButtonStyle}"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

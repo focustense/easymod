@@ -1,0 +1,118 @@
+﻿<UserControl x:Class="Focus.Apps.EasyNpc.Build.PreBuildReportViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
+             xmlns:fa="http://schemas.fontawesome.com/icons/"
+             xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignData SamplePreBuildReport.xaml}"
+             d:DesignHeight="750" d:DesignWidth="1000">
+    <d:UserControl.DataContext>
+        <build:PreBuildReportV2>
+            <build:PreBuildReportV2.NpcSummaryItems>
+                <rpt:SummaryItem Category="CountFull" Description="Total NPCs" Value="12345"/>
+                <rpt:SummaryItem Category="CountIncluded" Description="Modded NPCs" Value="3049"/>
+                <rpt:SummaryItem Category="CountExcluded" Description="Ignored NPCs" Value="241"/>
+                <rpt:SummaryItem Category="CountEmpty" Description="Vanilla NPCs" Value="1763"/>
+                <rpt:SummaryItem Category="CountUnavailable" Description="Unmoddable NPCs" Value="7292"/>
+            </build:PreBuildReportV2.NpcSummaryItems>
+            <build:PreBuildReportV2.PluginSummaryItems>
+                <rpt:SummaryItem Category="StatusInfo" Description="Required masters" Value="23"/>
+                <rpt:SummaryItem Category="StatusWarning" Description="Suspicious masters" Value="2"/>
+                <rpt:SummaryItem Category="SpecialFlag" Description="Global replacers" Value="3"/>
+                <rpt:SummaryItem Category="StatusInfo" Description="Merged overhauls" Value="65"/>
+            </build:PreBuildReportV2.PluginSummaryItems>
+            <build:PreBuildReportV2.AlertSummaryItems>
+                <rpt:SummaryItem Category="StatusError" Description="Incompatible mods" Value="2"/>
+                <rpt:SummaryItem Category="StatusError" Description="Invalid NPC profiles" Value="13"/>
+                <rpt:SummaryItem Category="StatusWarning" Description="Missing resources" Value="36"/>
+                <rpt:SummaryItem Category="StatusWarning" Description="Possible conflicts" Value="108"/>
+                <rpt:SummaryItem Category="StatusInfo" Description="Suppressed warnings" Value="841"/>
+            </build:PreBuildReportV2.AlertSummaryItems>
+            <build:PreBuildReportV2.OutputSummaryItems>
+                <rpt:SummaryItem Category="StatusOk" Description="Output path is valid" Value=""/>
+                <rpt:SummaryItem Category="StatusOk" Description="Output directory is empty" Value=""/>
+                <rpt:SummaryItem Category="StatusInfo" Description="GB assets" Value="34.8"/>
+                <rpt:SummaryItem Category="StatusInfo" Description="GB packed (est.)" Value="3.7"/>
+            </build:PreBuildReportV2.OutputSummaryItems>
+        </build:PreBuildReportV2>
+    </d:UserControl.DataContext>
+    <DockPanel Background="White">
+        <ListBox DockPanel.Dock="Left">
+            <ListBoxItem>Summary</ListBoxItem>
+            <ListBoxItem>NPCs</ListBoxItem>
+            <ListBoxItem>Plugins</ListBoxItem>
+            <ListBoxItem>Alerts</ListBoxItem>
+            <ListBoxItem>Output</ListBoxItem>
+        </ListBox>
+        <Rectangle DockPanel.Dock="Left" Width="1" Fill="LightGray"/>
+        <ui:SimpleStackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <rpt:SummaryGroup Grid.Column="0" Margin="8" Title="NPCs" Items="{Binding NpcSummaryItems}"/>
+                <rpt:SummaryGroup Grid.Column="1" Margin="8" Title="Plugins" Items="{Binding PluginSummaryItems}"/>
+                <rpt:SummaryGroup Grid.Column="2" Margin="8" Title="Alerts" Items="{Binding AlertSummaryItems}"/>
+                <rpt:SummaryGroup Grid.Column="3" Margin="8" Title="Output" Items="{Binding OutputSummaryItems}"/>
+            </Grid>
+            <Border Background="{StaticResource ErrorBackgroundBrush}" Margin="8" BorderBrush="LightGray" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                <DockPanel>
+                    <Button VerticalAlignment="Center" Style="{StaticResource LocalAccentButtonStyle}" DockPanel.Dock="Right">
+                        <ui:SimpleStackPanel Orientation="Horizontal">
+                            <fa:SvgAwesome Icon="Solid_Cogs" Height="20" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{Binding ElementName=BuildButtonText, Path=Foreground, Mode=OneWay}"/>
+                            <TextBlock x:Name="BuildButtonText" VerticalAlignment="Center">Build Anyway</TextBlock>
+                        </ui:SimpleStackPanel>
+                    </Button>
+                    <TextBlock VerticalAlignment="Center" Style="{StaticResource ParagraphStyle}">
+                        Building is <Run FontWeight="SemiBold">not recommended</Run> until problems are resolved.
+                    </TextBlock>
+                </DockPanel>
+            </Border>
+            <Separator Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Margin="8,4,8,4" Height="4"/>
+            <Expander Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" Margin="8" d:IsExpanded="False">
+                <Expander.Header>
+                    <TextBlock FontSize="18">NPC Details</TextBlock>
+                </Expander.Header>
+                <DataGrid AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Base Plugin"/>
+                        <DataGridTextColumn Header="Form ID"/>
+                        <DataGridTextColumn Header="Editor ID"/>
+                        <DataGridTextColumn Header="Full Name"/>
+                        <DataGridTextColumn Header="Default Plugin"/>
+                        <DataGridTextColumn Header="Face Plugin"/>
+                        <DataGridTextColumn Header="Face Mod"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Expander>
+            <Expander Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" Margin="8" IsExpanded="True" d:IsExpanded="True">
+                <Expander.Header>
+                    <TextBlock FontSize="18">Plugin Details</TextBlock>
+                </Expander.Header>
+                <DataGrid AutoGenerateColumns="False" Margin="0,8,0,0" d:ItemsSource="{d:DesignInstance Type=build:SamplePluginGroup, IsDesignTimeCreatable=True}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSuspicious}" Value="True">
+                                    <Setter Property="Background" Value="Pink"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Plugin Name" Binding="{Binding PluginName}" Width="Auto" FontSize="12"/>
+                        <DataGridTextColumn Header="Provided by Mod" Binding="{Binding ModName}" Width="*" FontSize="12"/>
+                        <DataGridTextColumn Header="Probable Type" Binding="{Binding Purpose}" Width="150" FontSize="12"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Expander>
+        </ui:SimpleStackPanel>
+    </DockPanel>
+</UserControl>

@@ -11,6 +11,16 @@ namespace Focus.Apps.EasyNpc.Build
         {
             public bool IsLikelyOverhaul { get; init; }
             public string PluginName { get; init; } = "";
+
+            public MasterDependency()
+            {
+            }
+
+            public MasterDependency(string pluginName, bool isLikelyOverhaul = false)
+            {
+                PluginName = pluginName;
+                IsLikelyOverhaul = isLikelyOverhaul;
+            }
         }
     }
 }
