@@ -4,11 +4,13 @@
 
     <Color x:Key="ContentHighlightColor">#FFFAFAD2</Color>
     <Color x:Key="DangerColor">#FF8B0000</Color>
+    <Color x:Key="ErrorForegroundColor">#FFFF0000</Color>
     <Color x:Key="ExpandoBackgroundColor">#FFFFF5EE</Color>
     <Color x:Key="GroupBorderColor">#FFD3D3D3</Color>
     <Color x:Key="HelpIconColor">#FF0000FF</Color>
     <Color x:Key="HelpPanelBackgroundColor">#FFF0F8FF</Color>
     <Color x:Key="MutedTextColor">#FF696969</Color>
+    <Color x:Key="SuccessForegroundColor">#FF008000</Color>
     <Color x:Key="TaskProgressBackgroundColor">#FFF0F8FF</Color>
     <Color x:Key="TaskProgressCompletedBackgroundColor">#FF98FB98</Color>
     <Color x:Key="TaskProgressFailedBackgroundColor">#FFFFC0CB</Color>

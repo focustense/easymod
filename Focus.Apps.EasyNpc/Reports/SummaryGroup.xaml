@@ -1,0 +1,100 @@
+﻿<UserControl x:Class="Focus.Apps.EasyNpc.Reports.SummaryGroup"
+             x:Name="SummaryGroupControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:fa="http://schemas.fontawesome.com/icons/"
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc.Reports"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <x:Array x:Key="ExampleItems" Type="{x:Type local:SummaryItem}">
+            <local:SummaryItem Category="CountFull" Value="511" Description="Things"/>
+            <local:SummaryItem Category="CountEmpty" Value="42" Description="Unused Things"/>
+            <local:SummaryItem Category="CountIncluded" Value="24" Description="Want"/>
+            <local:SummaryItem Category="CountExcluded" Value="179" Description="Do Not Want"/>
+            <local:SummaryItem Category="SpecialFlag" Value="6" Description="What's This?"/>
+            <local:SummaryItem Category="StatusError" Value="13" Description="Uh-ohs"/>
+            <local:SummaryItem Category="StatusWarning" Description="Better check that out"/>
+            <local:SummaryItem Category="StatusOk" Description="All good here"/>
+            <local:SummaryItem Category="StatusInfo" Description="About my case..."/>
+        </x:Array>
+    </UserControl.Resources>
+    <GroupBox Header="{Binding Title, ElementName=SummaryGroupControl, FallbackValue='All the Things'}" Grid.IsSharedSizeScope="True">
+        <ItemsControl ItemsSource="{Binding Items, ElementName=SummaryGroupControl, FallbackValue={StaticResource ExampleItems}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="ValueSizeGroup"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <fa:SvgAwesome Grid.Row="0" Grid.Column="0" Height="24" VerticalAlignment="Center">
+                            <fa:SvgAwesome.Style>
+                                <Style TargetType="fa:SvgAwesome">
+                                    <Setter Property="Foreground" Value="Blue"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.CountEmpty}">
+                                            <Setter Property="Icon" Value="Regular_Circle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.CountExcluded}">
+                                            <Setter Property="Icon" Value="Solid_MinusCircle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.CountFull}">
+                                            <Setter Property="Icon" Value="Solid_Circle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.CountIncluded}">
+                                            <Setter Property="Icon" Value="Regular_CheckCircle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.CountUnavailable}">
+                                            <Setter Property="Icon" Value="Regular_StopCircle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.SpecialFlag}">
+                                            <Setter Property="Foreground" Value="Purple"/>
+                                            <Setter Property="Icon" Value="Solid_Flag"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusError}">
+                                            <Setter Property="Foreground" Value="{StaticResource ErrorForegroundBrush}"/>
+                                            <Setter Property="Icon" Value="Solid_TimesCircle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusInfo}">
+                                            <Setter Property="Icon" Value="Solid_InfoCircle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusOk}">
+                                            <Setter Property="Foreground" Value="{StaticResource SuccessForegroundBrush}"/>
+                                            <Setter Property="Icon" Value="Solid_CheckCircle"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusWarning}">
+                                            <Setter Property="Foreground" Value="{StaticResource WarningForegroundBrush}"/>
+                                            <Setter Property="Icon" Value="Solid_ExclamationTriangle"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </fa:SvgAwesome.Style>
+                        </fa:SvgAwesome>
+                        <TextBlock FontWeight="Bold" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0" Text="{Binding Value}"/>
+                        <TextBlock Grid.Row="0" VerticalAlignment="Center" Margin="8,0,0,0" Text="{Binding Description}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
+                                    <Setter Property="Grid.Column" Value="2"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Value}" Value="{x:Null}">
+                                            <Setter Property="Grid.Column" Value="1"/>
+                                            <Setter Property="Grid.ColumnSpan" Value="2"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Value}" Value="">
+                                            <Setter Property="Grid.Column" Value="1"/>
+                                            <Setter Property="Grid.ColumnSpan" Value="2"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </GroupBox>
+</UserControl>
