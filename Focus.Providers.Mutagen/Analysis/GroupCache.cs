@@ -9,7 +9,7 @@ using RecordType = Focus.Analysis.Records.RecordType;
 
 namespace Focus.Providers.Mutagen.Analysis
 {
-    public class GroupCache
+    class GroupCache : IGroupCache
     {
         private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
         private readonly ConcurrentDictionary<Tuple<string, RecordType>, IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>?> commonGroups =

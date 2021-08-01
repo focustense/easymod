@@ -39,11 +39,11 @@ namespace Focus.Providers.Mutagen.Analysis
             x => x.NoseUpVsDown,
         };
 
-        private readonly GroupCache groups;
+        private readonly IGroupCache groups;
         private readonly ILinkCache<ISkyrimMod, ISkyrimModGetter> linkCache;
         private readonly ILogger log;
 
-        public NpcAnalyzer(GroupCache groups, ILinkCache<ISkyrimMod, ISkyrimModGetter> linkCache, ILogger log)
+        public NpcAnalyzer(IGroupCache groups, ILinkCache<ISkyrimMod, ISkyrimModGetter> linkCache, ILogger log)
         {
             this.groups = groups;
             this.linkCache = linkCache;

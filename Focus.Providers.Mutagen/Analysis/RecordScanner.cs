@@ -7,9 +7,9 @@ namespace Focus.Providers.Mutagen.Analysis
 {
     public class RecordScanner : IRecordScanner
     {
-        private readonly GroupCache groups;
+        private readonly IGroupCache groups;
 
-        public RecordScanner(GroupCache groups)
+        public RecordScanner(IGroupCache groups)
         {
             this.groups = groups;
         }

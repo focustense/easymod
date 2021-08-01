@@ -7,10 +7,10 @@ namespace Focus.Providers.Mutagen.Analysis
     {
         public RecordType RecordType => recordType;
 
-        private readonly GroupCache groups;
+        private readonly IGroupCache groups;
         private readonly RecordType recordType;
 
-        public BasicRecordAnalyzer(GroupCache groups, RecordType recordType)
+        public BasicRecordAnalyzer(IGroupCache groups, RecordType recordType)
         {
             this.groups = groups;
             this.recordType = recordType;
