@@ -2,9 +2,9 @@
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
+using System;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
-using RecordType = Focus.Analysis.Records.RecordType;
 
 namespace Focus.Providers.Mutagen.Analysis
 {
@@ -12,13 +12,13 @@ namespace Focus.Providers.Mutagen.Analysis
 
     static class ModExtensions
     {
-        private static readonly ConcurrentDictionary<RecordType, TopLevelGroupGetter?> topLevelGroupGetters = new();
+        private static readonly ConcurrentDictionary<Type, TopLevelGroupGetter?> topLevelGroupGetters = new();
 
-        public static IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>? GetTopLevelGroupGetter(this ISkyrimModGetter mod, RecordType type)
+        public static IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>? GetTopLevelGroupGetter(
+            this ISkyrimModGetter mod, Type groupType)
         {
-            var topLevelGroupGetter = topLevelGroupGetters.GetOrAdd(type, t =>
+            var topLevelGroupGetter = topLevelGroupGetters.GetOrAdd(groupType, t =>
             {
-                var groupType = type.GetGroupType();
                 if (groupType == null)
                     return null;
                 if (groupType == typeof(ICellGetter))

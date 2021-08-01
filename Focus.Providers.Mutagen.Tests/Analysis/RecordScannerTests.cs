@@ -31,7 +31,8 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         public void WhenGroupFound_GetKeys_ReturnsKeysInGroup()
         {
             var headPartCacheMock = new Mock<IReadOnlyCache<IHeadPartGetter, FormKey>>();
-            groupCacheMock.Setup(x => x.Get("plugin.esp", RecordType.HeadPart)).Returns(headPartCacheMock.Object);
+            groupCacheMock.Setup(x => x.Get("plugin.esp", typeof(IHeadPartGetter)))
+                .Returns(headPartCacheMock.Object);
             headPartCacheMock.SetupGet(x => x.Keys).Returns(new[]
             {
                 FormKey.Factory("000001:plugin.esp"),

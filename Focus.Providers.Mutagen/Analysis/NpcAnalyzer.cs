@@ -3,6 +3,7 @@ using Focus.Analysis.Records;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins.Cache;
 using Mutagen.Bethesda.Skyrim;
+using Noggog;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -40,29 +41,32 @@ namespace Focus.Providers.Mutagen.Analysis
         };
 
         private readonly IGroupCache groups;
-        private readonly ILinkCache<ISkyrimMod, ISkyrimModGetter> linkCache;
         private readonly ILogger log;
 
-        public NpcAnalyzer(IGroupCache groups, ILinkCache<ISkyrimMod, ISkyrimModGetter> linkCache, ILogger log)
+        public NpcAnalyzer(IGroupCache groups, ILogger log)
         {
             this.groups = groups;
-            this.linkCache = linkCache;
             this.log = log;
         }
 
         public NpcAnalysis Analyze(string pluginName, IRecordKey key)
         {
-            var npc = groups.Get(pluginName, x => x.Npcs)?.TryGetValue(key.ToFormKey());
+            var group = groups.Get(pluginName, x => x.Npcs);
+            var npc = group?.TryGetValue(key.ToFormKey());
             if (npc == null)
                 return new() { BasePluginName = key.BasePluginName, LocalFormIdHex = key.LocalFormIdHex };
-            var mod = groups.GetMod(pluginName)!; // If the record was found, then the mod must exist.
+            var mod = groups.GetMod(pluginName);
+            if (mod == null)
+                log.Warning("Unable to find {pluginName} in the load order, some checks will be disabled.");
             var isOverride = !key.PluginEquals(pluginName);
             var overrideContexts = isOverride ?
-                npc.AsLink().ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>(linkCache) :
-                Enumerable.Empty<IModContext<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>>();
-            var previous = overrideContexts.SkipWhile(x => x.ModKey != pluginName).Skip(1).FirstOrDefault();
+                npc.AsLink().AllFrom(groups) : Enumerable.Empty<IKeyValue<INpcGetter, string>>();
+            var previous = overrideContexts
+                .SkipWhile(x => !string.Equals(x.Key, pluginName, StringComparison.CurrentCultureIgnoreCase))
+                .Skip(1)
+                .FirstOrDefault();
             var master = overrideContexts.LastOrDefault();
-            var race = npc.Race.TryResolve(linkCache);
+            var race = npc.Race.WinnerFrom(groups);
             return new()
             {
                 BasePluginName = key.BasePluginName,
@@ -72,12 +76,12 @@ namespace Focus.Providers.Mutagen.Analysis
                 IsInjectedOrInvalid = isOverride && !groups.MasterExists(key.ToFormKey(), RecordType),
                 IsOverride = isOverride,
                 CanUseFaceGen = race?.Flags.HasFlag(Race.Flag.FaceGenHead) ?? false,
-                ComparisonToMaster = Compare(npc, master?.Record, master?.ModKey.FileName.String),
-                ComparisonToPreviousOverride = Compare(npc, previous?.Record, master?.ModKey.FileName.String),
+                ComparisonToMaster = Compare(npc, master?.Value, master?.Key),
+                ComparisonToPreviousOverride = Compare(npc, previous?.Value, master?.Key),
                 HeadParts = npc.HeadParts.ToRecordKeys(),
                 IsChild = race?.Flags.HasFlag(Race.Flag.Child) ?? false,
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
-                ModifiesBehavior = ModifiesBehavior(npc, mod),
+                ModifiesBehavior = mod != null ? ModifiesBehavior(npc, mod) : false,
                 UsedMeshes = Empty.ReadOnlyList<string>(),
                 UsedTextures = Empty.ReadOnlyList<string>(),
                 WigInfo = GetWigInfo(npc),
@@ -177,12 +181,12 @@ namespace Focus.Providers.Mutagen.Analysis
             // different head parts, then it is also a change. But what if some plugin in between the previous/RHS and
             // current/LHS changed the race's head parts and didn't change the NPCs, and the current/LHS matches that
             // in-between plugin modifying the race? Do we consider that a head part change, or not?
-            var race = npc.Race.TryResolve(linkCache);
+            var race = npc.Race.WinnerFrom(groups);
             var isFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female);
             var defaultHeadPartRefs = isFemale ? race?.HeadData?.Male?.HeadParts : race?.HeadData?.Female?.HeadParts;
             return (defaultHeadPartRefs ?? Enumerable.Empty<IHeadPartReferenceGetter>())
-                .Select(x => x.Head.TryResolve(linkCache))
-                .Concat(npc.HeadParts.Select(x => x.TryResolve(linkCache)))
+                .Select(x => x.Head.WinnerFrom(groups))
+                .Concat(npc.HeadParts.Select(x => x.WinnerFrom(groups)))
                 .NotNull()
                 // Some parts can be "misc", i.e. don't specify what type they are, but these should always be "extra
                 // parts" that are deterministically related to the "main" parts, so we can ignore them for comparison.
@@ -198,11 +202,11 @@ namespace Focus.Providers.Mutagen.Analysis
             var isBald = GetMainHeadParts(npc)
                 .Where(x => x.Type == HeadPart.TypeEnum.Hair)
                 .All(x => string.IsNullOrEmpty(x.Model?.File));
-            var wornArmor = npc.WornArmor.TryResolve(linkCache);
+            var wornArmor = npc.WornArmor.WinnerFrom(groups);
             if (wornArmor == null)
                 return null;
             return wornArmor.Armature
-                .Select(fk => fk.TryResolve(linkCache))
+                .Select(fk => fk.WinnerFrom(groups))
                 .NotNull()
                 .Where(x =>
                     // Search for ONLY hair, because some sadistic mod authors add hair flags to other parts.
@@ -244,13 +248,15 @@ namespace Focus.Providers.Mutagen.Analysis
             // This, of course, will not work at all if the extra master (e.g. USSEP) is changed and the plugin is not
             // updated. Which is why mod creators really should distribute compatibility patches as separate files,
             // despite the fact that some don't.
-            var masterKeys = contextMod.ModHeader.MasterReferences.Select(x => x.Master).ToHashSet();
+            var masterKeys = contextMod.ModHeader.MasterReferences
+                .Select(x => x.Master.FileName.String)
+                .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
             var previousOverrides = npc.AsLink()
-                .ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, INpc, INpcGetter>(linkCache)
-                .SkipWhile(x => x.ModKey != contextMod.ModKey)
+                .AllFrom(groups)
+                .SkipWhile(x => !string.Equals(x.Key, contextMod.ModKey.FileName, StringComparison.CurrentCultureIgnoreCase))
                 .Skip(1)
-                .Where(x => masterKeys.Contains(x.ModKey));
-            return previousOverrides.All(x => !BehaviorsEqual(npc, x.Record));
+                .Where(x => masterKeys.Contains(x.Key));
+            return previousOverrides.All(x => !BehaviorsEqual(npc, x.Value));
         }
 
         private static bool NearlyEquals(float x, float y)

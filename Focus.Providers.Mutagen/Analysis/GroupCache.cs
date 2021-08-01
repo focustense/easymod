@@ -1,9 +1,13 @@
-﻿using Mutagen.Bethesda.Plugins;
+﻿using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using RecordType = Focus.Analysis.Records.RecordType;
 
 namespace Focus.Providers.Mutagen.Analysis
@@ -11,9 +15,9 @@ namespace Focus.Providers.Mutagen.Analysis
     public class GroupCache : IGroupCache
     {
         private readonly IReadOnlyGameEnvironment<ISkyrimModGetter> environment;
-        private readonly ConcurrentDictionary<Tuple<string, RecordType>, IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>?> commonGroups =
-            new(new TupleEqualityComparer<string, RecordType>(StringComparer.OrdinalIgnoreCase));
-        private readonly ConcurrentDictionary<Tuple<string, Type>, IGroupGetter<ISkyrimMajorRecordGetter>?> genericGroups =
+        private readonly ConcurrentDictionary<Tuple<string, Type>, IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>?> commonGroups =
+            new(new TupleEqualityComparer<string, Type>(StringComparer.OrdinalIgnoreCase));
+        private readonly ConcurrentDictionary<Tuple<string, Type>, IGroupCommonGetter<ISkyrimMajorRecordGetter>?> genericGroups =
             new(new TupleEqualityComparer<string, Type>(StringComparer.OrdinalIgnoreCase));
         private readonly ILogger log;
 
@@ -23,23 +27,48 @@ namespace Focus.Providers.Mutagen.Analysis
             this.log = log;
         }
 
-        public IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>? Get(string pluginName, RecordType recordType)
+        public IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>? Get(string pluginName, Type groupType)
         {
-            return commonGroups.GetOrAdd(Tuple.Create(pluginName, recordType), x =>
+            var groupKey = Tuple.Create(pluginName, groupType);
+            return commonGroups.GetOrAdd(groupKey, x =>
             {
+                // Minor optimization since it doesn't work in reverse, but if we've already retrieved the group via the
+                // generic version of this method, we can reuse its record cache.
+                if (genericGroups.TryGetValue(groupKey, out var genericGroup) && genericGroup != null)
+                    return genericGroup.RecordCache;
                 var mod = GetMod(x.Item1);
-                return mod?.GetTopLevelGroupGetter(recordType);
+                return mod?.GetTopLevelGroupGetter(groupType);
             });
         }
 
-        public IGroupGetter<T>? Get<T>(string pluginName, Func<ISkyrimModGetter, IGroupGetter<T>> groupSelector)
+        public IGroupCommonGetter<T>? Get<T>(
+            string pluginName, Func<ISkyrimModGetter, IGroupCommonGetter<T>> groupSelector)
             where T : class, ISkyrimMajorRecordGetter
         {
-            return (IGroupGetter<T>?)genericGroups.GetOrAdd(Tuple.Create(pluginName, typeof(T)), x =>
+            return (IGroupCommonGetter<T>?)genericGroups.GetOrAdd(Tuple.Create(pluginName, typeof(T)), x =>
             {
                 var mod = GetMod(x.Item1);
                 return mod != null ? groupSelector(mod) : null;
             });
+        }
+
+        public IEnumerable<IKeyValue<T, string>> GetAll<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            if (!link.FormKeyNullable.HasValue)
+                yield break;
+            // Mutagen has `ResolveAllContexts` that would be useful here, but it requires an unreasonable amount of
+            // generic arguments for this simplified use case.
+            // Since we are already caching groups - that's the whole purpose of this class - it should make little
+            // difference performance-wise to iterate through "our" groups and bypass the link cache - at worst it has
+            // to repeat group accesses that the link cache has already done exactly one time each.
+            foreach (var listing in environment.LoadOrder.PriorityOrder)
+            {
+                var group = Get(listing.ModKey.FileName, typeof(T));
+                var record = group?.TryGetValue(link.FormKey);
+                if (record is T resolved)
+                    yield return new KeyValue<T, string>(listing.ModKey.FileName, resolved);
+            }
         }
 
         public ISkyrimModGetter? GetMod(string pluginName)
@@ -47,9 +76,15 @@ namespace Focus.Providers.Mutagen.Analysis
             return environment.TryGetMod(pluginName, log);
         }
 
+        public T? GetWinner<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            return link.TryResolve(environment.LinkCache);
+        }
+
         public bool MasterExists(FormKey formKey, RecordType recordType)
         {
-            var masterGroup = Get(formKey.ModKey.FileName.String, recordType);
+            var masterGroup = Get(formKey.ModKey.FileName.String, recordType.GetGroupType());
             return masterGroup?.ContainsKey(formKey) ?? false;
         }
     }
