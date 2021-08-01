@@ -1,5 +1,4 @@
-﻿using Mutagen.Bethesda;
-using Mutagen.Bethesda.Plugins;
+﻿using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
 using Serilog;
@@ -9,16 +8,16 @@ using RecordType = Focus.Analysis.Records.RecordType;
 
 namespace Focus.Providers.Mutagen.Analysis
 {
-    class GroupCache : IGroupCache
+    public class GroupCache : IGroupCache
     {
-        private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment;
+        private readonly IReadOnlyGameEnvironment<ISkyrimModGetter> environment;
         private readonly ConcurrentDictionary<Tuple<string, RecordType>, IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>?> commonGroups =
             new(new TupleEqualityComparer<string, RecordType>(StringComparer.OrdinalIgnoreCase));
         private readonly ConcurrentDictionary<Tuple<string, Type>, IGroupGetter<ISkyrimMajorRecordGetter>?> genericGroups =
             new(new TupleEqualityComparer<string, Type>(StringComparer.OrdinalIgnoreCase));
         private readonly ILogger log;
 
-        public GroupCache(GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, ILogger log)
+        public GroupCache(IReadOnlyGameEnvironment<ISkyrimModGetter> environment, ILogger log)
         {
             this.environment = environment;
             this.log = log;

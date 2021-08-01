@@ -29,6 +29,23 @@ namespace Focus.Providers.Mutagen
             return mod;
         }
 
+        public static TModGetter? TryGetMod<TModGetter>(
+            this IReadOnlyGameEnvironment<TModGetter> env, string pluginName, ILogger log)
+            where TModGetter : class, IModGetter
+        {
+            if (!ModKey.TryFromNameAndExtension(pluginName, out var modKey))
+            {
+                log.Error("Invalid plugin name: {pluginName}", pluginName);
+                return null;
+            }
+            if (!env.LoadOrder.TryGetIfEnabledAndExists(modKey, out var mod))
+            {
+                log.Error("Missing or disabled plugin: {pluginName}", pluginName);
+                return null;
+            }
+            return mod;
+        }
+
         public static string GetRealDataDirectory<TModGetter>(this IReadOnlyGameEnvironment<TModGetter> env)
             where TModGetter : class, IModGetter
         {
