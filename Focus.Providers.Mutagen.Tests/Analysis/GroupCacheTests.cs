@@ -20,6 +20,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         private readonly GroupCache groups;
         private readonly LoadOrder<IModListing<ISkyrimModGetter>> loadOrder;
         private readonly ILogger logger;
+        private readonly SkyrimRelease release = SkyrimRelease.SkyrimSE;
 
         public GroupCacheTests()
         {
@@ -31,6 +32,61 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             loadOrder = new LoadOrder<IModListing<ISkyrimModGetter>>();
             environmentMock.SetupGet(x => x.LoadOrder).Returns(loadOrder);
             groups = new GroupCache(environmentMock.Object, logger);
+        }
+
+        [Fact]
+        public void GetAll_ReturnsRecordsFromAllPluginsInPriorityOrder()
+        {
+            // Real mods shouldn't change editor IDs, but this is just a testing convenience to make sure we're actually
+            // getting the specific record data from the specific plugin.
+            var mod1 = AddLoadedMod("mod1.esp");
+            mod1.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod1Record1" });
+            mod1.Shouts.Add(new Shout(FormKey.Factory("000002:mod1.esp"), release) { EditorID = "Mod1Record2" });
+            var mod2 = AddLoadedMod("mod2.esp");
+            mod2.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod2Record1" });
+            mod2.Shouts.Add(new Shout(FormKey.Factory("000002:mod2.esp"), release) { EditorID = "Mod2Record2" });
+            var mod3 = AddLoadedMod("mod3.esp");
+            mod3.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod3Record1" });
+            mod3.Shouts.Add(new Shout(FormKey.Factory("000002:mod1.esp"), release) { EditorID = "Mod3Record2" });
+            mod3.Shouts.Add(new Shout(FormKey.Factory("000002:mod2.esp"), release) { EditorID = "Mod3Record3" });
+            
+            Assert.Collection(
+                groups.GetAll(FormKey.Factory("000001:mod1.esp").AsLink<IShoutGetter>()),
+                x =>
+                {
+                    Assert.Equal("mod3.esp", x.Key);
+                    Assert.Equal("Mod3Record1", x.Value.EditorID);
+                },
+                x => {
+                    Assert.Equal("mod2.esp", x.Key);
+                    Assert.Equal("Mod2Record1", x.Value.EditorID);
+                },
+                x => {
+                    Assert.Equal("mod1.esp", x.Key);
+                    Assert.Equal("Mod1Record1", x.Value.EditorID);
+                });
+            Assert.Collection(
+                groups.GetAll(FormKey.Factory("000002:mod1.esp").AsLink<IShoutGetter>()),
+                x =>
+                {
+                    Assert.Equal("mod3.esp", x.Key);
+                    Assert.Equal("Mod3Record2", x.Value.EditorID);
+                },
+                x => {
+                    Assert.Equal("mod1.esp", x.Key);
+                    Assert.Equal("Mod1Record2", x.Value.EditorID);
+                });
+            Assert.Collection(
+                groups.GetAll(FormKey.Factory("000002:mod2.esp").AsLink<IShoutGetter>()),
+                x =>
+                {
+                    Assert.Equal("mod3.esp", x.Key);
+                    Assert.Equal("Mod3Record3", x.Value.EditorID);
+                },
+                x => {
+                    Assert.Equal("mod2.esp", x.Key);
+                    Assert.Equal("Mod2Record2", x.Value.EditorID);
+                });
         }
 
         [Fact]
@@ -128,6 +184,23 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         [Fact]
+        public void GetWinner_ReturnsWinningOverride()
+        {
+            // Real mods shouldn't change editor IDs, but this is just a testing convenience to make sure we're actually
+            // getting the specific record data from the specific plugin.
+            var mod1 = AddLoadedMod("mod1.esp");
+            mod1.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod1Record" });
+            var mod2 = AddLoadedMod("mod2.esp");
+            mod2.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod2Record" });
+            mod2.Shouts.Add(new Shout(FormKey.Factory("000002:mod2.esp"), release) { EditorID = "DummyRecord" });
+            var mod3 = AddLoadedMod("mod3.esp");
+            mod3.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod3Record" });
+
+            var winner = groups.GetWinner(FormKey.Factory("000001:mod1.esp").AsLink<Shout>());
+            Assert.Equal("Mod3Record", winner.EditorID);
+        }
+
+        [Fact]
         public void MasterExists_WhenModNotLoaded_ReturnsFalse()
         {
             Assert.False(groups.MasterExists(FormKey.Factory("000002:mod.esp"), RecordType.Shout));
@@ -137,7 +210,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         public void MasterExists_WhenRecordMissingInMaster_ReturnsFalse()
         {
             var mod = AddLoadedMod("mod.esp");
-            mod.Shouts.Add(new Shout(FormKey.Factory("000001:mod.esp"), SkyrimRelease.SkyrimSE));
+            mod.Shouts.Add(new Shout(FormKey.Factory("000001:mod.esp"), release));
 
             Assert.False(groups.MasterExists(FormKey.Factory("000002:mod.esp"), RecordType.Shout));
         }
@@ -146,7 +219,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         public void MasterExists_WhenRecordWrongTypeInMaster_ReturnsFalse()
         {
             var mod = AddLoadedMod("mod.esp");
-            mod.Outfits.Add(new Outfit(FormKey.Factory("000002:mod.esp"), SkyrimRelease.SkyrimSE));
+            mod.Outfits.Add(new Outfit(FormKey.Factory("000002:mod.esp"), release));
 
             Assert.False(groups.MasterExists(FormKey.Factory("000002:mod.esp"), RecordType.Shout));
         }
@@ -155,14 +228,14 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         public void MasterExists_WhenRecordPresentInMaster_ReturnsTrue()
         {
             var mod = AddLoadedMod("mod.esp");
-            mod.Shouts.Add(new Shout(FormKey.Factory("000002:mod.esp"), SkyrimRelease.SkyrimSE));
+            mod.Shouts.Add(new Shout(FormKey.Factory("000002:mod.esp"), release));
 
             Assert.True(groups.MasterExists(FormKey.Factory("000002:mod.esp"), RecordType.Shout));
         }
 
         private ISkyrimMod AddLoadedMod(string fileName, InvocationTracker<ISkyrimMod> tracker = null)
         {
-            var mod = new SkyrimMod(fileName, SkyrimRelease.SkyrimSE);
+            var mod = new SkyrimMod(fileName, release);
             var interceptors = new List<IInterceptor>();
             if (tracker != null)
                 interceptors.Add(tracker);

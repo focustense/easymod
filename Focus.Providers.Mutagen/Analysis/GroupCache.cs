@@ -79,7 +79,9 @@ namespace Focus.Providers.Mutagen.Analysis
         public T? GetWinner<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {
-            return link.TryResolve(environment.LinkCache);
+            // Could use ILinkCache.TryResolve here, but this implementation is more consistent and easier to work with
+            // in tests, and should have very similar (?) performance characteristics.
+            return GetAll(link).FirstOrDefault()?.Value;
         }
 
         public bool MasterExists(FormKey formKey, RecordType recordType)
