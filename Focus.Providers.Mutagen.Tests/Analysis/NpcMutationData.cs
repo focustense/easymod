@@ -35,9 +35,9 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             x => x.AIData.Warn++,
             x => x.AIData.WarnOrAttack++,
             x => x.AttackRace.SetTo(dummyKey),
-            // TODO: Attacks
+            x => x.Attacks.Add(new Attack()),
             x => x.Class.SetTo(dummyKey),
-            // TODO: CombatOverridePackageList
+            x => x.CombatOverridePackageList.SetTo(dummyKey),
             x => x.CombatStyle.SetTo(dummyKey),
             x => x.Configuration.BleedoutOverride++,
             x => x.Configuration.CalcMaxLevel--,
@@ -55,7 +55,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             x => x.CrimeFaction.SetTo(dummyKey),
             x => x.DeathItem.SetTo(dummyKey),
             x => x.DefaultPackageList.SetTo(dummyKey),
-            // TODO: Destructible
+            x => x.Destructible = new() { Stages = { new() {  Model = new() { File = "destruct1.nif" } } } },
             x => x.Factions.RemoveAt(1),
             // TODO: FarAwayModel - is this "behavior"?
             x => x.FormVersion++,
@@ -77,11 +77,15 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             x => x.PlayerSkills.SkillOffsets[Skill.Enchanting] += 2,
             x => x.PlayerSkills.SkillValues[Skill.Conjuration] -= 3,
             // Race is behavior but also other things; needs its own test.
-            // TODO: Sound
+            x => x.Sound = new NpcSoundTypes { Types = { new() { Type = NpcSoundType.SoundType.LeftFoot } } },
             x => x.SoundLevel = GetAlternateValue(x.SoundLevel),
             x => x.SpectatorOverridePackageList.SetTo(dummyKey),
             x => x.Template.SetTo(dummyKey),
-            // TODO: VirtualMachineAdapter
+            x => x.VirtualMachineAdapter.Clear(),
+            x => x.VirtualMachineAdapter.ObjectFormat++,
+            x => x.VirtualMachineAdapter.Scripts[0].Flags |= ScriptEntry.Flag.InheritedAndRemoved,
+            x => x.VirtualMachineAdapter.Scripts[0].Properties[0] = new ScriptFloatProperty { Name = "Prop0", Data = 0.32f },
+            x => x.VirtualMachineAdapter.Version++,
             x => x.Voice.SetTo(dummyKey),
         });
 

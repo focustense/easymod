@@ -393,6 +393,179 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             });
         }
 
+        [Fact]
+        public void WhenHairOverridenWithSameReference_HairComparisons_AreEqual()
+        {
+            // What we're interested in here is if an NPC overrides the hair, but using a head part that is effectively
+            // the same as what that NPC would have had anyway, i.e. from the race.
+            // Since our fixture NPC already has custom hair, it needs to be removed from the controls.
+            void revertHair(Npc npc) =>
+                npc.HeadParts.RemoveAll(x => x.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Hair);
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", x => SetupNpcForComparison(x, revertHair));
+            Groups.AddRecords<Npc>("override.esp", "master.esp", x => SetupNpcForComparison(x, revertHair));
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                revertHair(npc);
+                var race = npc.Race.WinnerFrom(Groups);
+                npc.HeadParts.Add(GetDefaultHeadPartKey(race, true, HeadPart.TypeEnum.Hair));
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenHairOverridenWithDifferentReference_HairComparisons_AreNotEqual()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                var hairKeys = Groups.AddRecords<HeadPart>("plugin.esp", x =>
+                {
+                    x.EditorID = "HairFemaleNord2";
+                    x.Type = HeadPart.TypeEnum.Hair;
+                });
+                npc.HeadParts.RemoveAll(x => x.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Hair);
+                npc.HeadParts.Add(hairKeys[0].ToFormKey());
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.True(comparison.ModifiesFace);
+                Assert.True(comparison.ModifiesHair);
+                Assert.True(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenHairRevertedToRaceDefault_HairComparisons_AreNotEqual()
+        {
+            // If the master NPC does define a non-default hair, then changing it back to the default for the race IS an
+            // important edit and requires new facegen. Although this likely doesn't test any code that the "different
+            // reference" case doesn't already cover, it's worth having because there is special logic to deal with the
+            // NPC-race inheritance.
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                npc.HeadParts.RemoveAll(x => x.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Hair);
+                npc.HeadParts.Add(GetDefaultHeadPartKey(npc.Race.WinnerFrom(Groups), true, HeadPart.TypeEnum.Hair));
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.True(comparison.ModifiesFace);
+                Assert.True(comparison.ModifiesHair);
+                Assert.True(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenHeadPartOverridenWithSameReference_HeadPartComparisons_AreEqual()
+        {
+            void revertEyes(Npc npc) =>
+                npc.HeadParts.RemoveAll(x => x.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Eyes);
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", x => SetupNpcForComparison(x, revertEyes));
+            Groups.AddRecords<Npc>("override.esp", "master.esp", x => SetupNpcForComparison(x, revertEyes));
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                revertEyes(npc);
+                var race = npc.Race.WinnerFrom(Groups);
+                npc.HeadParts.Add(GetDefaultHeadPartKey(race, true, HeadPart.TypeEnum.Eyes));
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenHeadPartOverridenWithDifferentReference_HeadPartComparisons_AreNotEqual()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                var headPartKeys = Groups.AddRecords<HeadPart>("plugin.esp", x =>
+                {
+                    x.EditorID = "FemaleEyesHumanDemon";
+                    x.Type = HeadPart.TypeEnum.Eyes;
+                });
+                npc.HeadParts.RemoveAll(x => x.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Eyes);
+                npc.HeadParts.Add(headPartKeys[0].ToFormKey());
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.True(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.True(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenHeadPartRevertedToRaceDefault_HeadPartComparisons_AreNotEqual()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                npc.HeadParts.RemoveAll(x => x.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Eyes);
+                npc.HeadParts.Add(GetDefaultHeadPartKey(npc.Race.WinnerFrom(Groups), true, HeadPart.TypeEnum.Eyes));
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.True(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.True(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
         [Theory]
         [MemberData(nameof(NpcMutations.Outfits), MemberType = typeof(NpcMutations))]
         public void WhenOutfitsModified_OutfitComparisons_AreNotEqual(Action<Npc> mutation)
@@ -412,6 +585,182 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.True(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenRaceChangeAffectsHair_HairComparisons_AreNotEqual()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                // Race edit only matters if the NPC doesn't already override the head parts that would be changed.
+                // For this test, we need to remove the NPC's existing custom hair.
+                npc.HeadParts.RemoveAll(x => x.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Hair);
+
+                var oldRace = npc.Race.WinnerFrom(Groups);
+                var headPartKeys = Groups.AddRecords<HeadPart>("master.esp", x =>
+                {
+                    x.EditorID = "HairFemaleRacy1";
+                    x.Type = HeadPart.TypeEnum.Hair;
+                });
+                var raceKeys = Groups.AddRecords<Race>("racy.esp", r =>
+                {
+                    r.EditorID = "RacyRace";
+                    r.HeadData = new GenderedItem<HeadData>(
+                        oldRace.HeadData.Male.DeepCopy(), oldRace.HeadData.Female.DeepCopy());
+                    r.HeadData.Female.HeadParts
+                        .Single(x => x.Head.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Hair)
+                        .Head.SetTo(headPartKeys[0].ToFormKey());
+                });
+                npc.Race.SetTo(raceKeys[0].ToFormKey());
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
+                Assert.False(comparison.ModifiesBody);
+                Assert.True(comparison.ModifiesFace);
+                Assert.True(comparison.ModifiesHair);
+                Assert.True(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.True(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenRaceChangeDoesNotAffectHair_HairComparisons_AreEqual()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                // NOT removing the hair here means that the NPC still overrides the race default, and therefore her
+                // hair has not actually been affected by the race change.
+
+                var oldRace = npc.Race.WinnerFrom(Groups);
+                var headPartKeys = Groups.AddRecords<HeadPart>("master.esp", x =>
+                {
+                    x.EditorID = "HairFemaleRacy1";
+                    x.Type = HeadPart.TypeEnum.Hair;
+                });
+                var raceKeys = Groups.AddRecords<Race>("racy.esp", r =>
+                {
+                    r.EditorID = "RacyRace";
+                    r.HeadData = new GenderedItem<HeadData>(
+                        oldRace.HeadData.Male.DeepCopy(), oldRace.HeadData.Female.DeepCopy());
+                    r.HeadData.Female.HeadParts
+                        .Single(x => x.Head.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Hair)
+                        .Head.SetTo(headPartKeys[0].ToFormKey());
+                });
+                npc.Race.SetTo(raceKeys[0].ToFormKey());
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.True(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenRaceChangeAffectsHeadParts_HeadPartComparisons_AreNotEqual()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                var oldRace = npc.Race.WinnerFrom(Groups);
+                var headPartKeys = Groups.AddRecords<HeadPart>("master.esp", x =>
+                {
+                    x.EditorID = "FemaleHeadRacy";
+                    x.Type = HeadPart.TypeEnum.Face;
+                });
+                var raceKeys = Groups.AddRecords<Race>("racy.esp", r =>
+                {
+                    r.EditorID = "RacyRace";
+                    r.HeadData = new GenderedItem<HeadData>(
+                        oldRace.HeadData.Male.DeepCopy(), oldRace.HeadData.Female.DeepCopy());
+                    r.HeadData.Female.HeadParts
+                        .Single(x => x.Head.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Face)
+                        .Head.SetTo(headPartKeys[0].ToFormKey());
+                });
+                npc.Race.SetTo(raceKeys[0].ToFormKey());
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
+                Assert.False(comparison.ModifiesBody);
+                Assert.True(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.True(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.True(comparison.ModifiesRace);
+            });
+        }
+
+        [Fact]
+        public void WhenRaceChangeDoesNotAffectHeadParts_HeadPartComparisons_AreEqual()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                var oldRace = npc.Race.WinnerFrom(Groups);
+                // We should be able to replace ALL of the default race head parts that have types overridden by the
+                // NPC, and still not have it count as a "head part change".
+                // Hair has already been tested separately, no need to re-test.
+                var headPartKeys = Groups.AddRecords<HeadPart>(
+                    "master.esp",
+                    x =>
+                    {
+                        x.EditorID = "BrowsFemaleRacy1";
+                        x.Type = HeadPart.TypeEnum.Eyebrows;
+                    },
+                    x =>
+                    {
+                        x.EditorID = "EyesFemaleRacy1";
+                        x.Type = HeadPart.TypeEnum.Eyes;
+                    });
+                var raceKeys = Groups.AddRecords<Race>("racy.esp", r =>
+                {
+                    r.EditorID = "RacyRace";
+                    r.HeadData = new GenderedItem<HeadData>(
+                        oldRace.HeadData.Male.DeepCopy(), oldRace.HeadData.Female.DeepCopy());
+                    r.HeadData.Female.HeadParts
+                        .Single(x => x.Head.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Eyebrows)
+                        .Head.SetTo(headPartKeys[0].ToFormKey());
+                    r.HeadData.Female.HeadParts
+                        .Single(x => x.Head.WinnerFrom(Groups).Type == HeadPart.TypeEnum.Eyes)
+                        .Head.SetTo(headPartKeys[1].ToFormKey());
+                });
+                npc.Race.SetTo(raceKeys[0].ToFormKey());
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.True(comparison.ModifiesRace);
             });
         }
 
@@ -501,6 +850,15 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return female ? new GenderedItem<HeadData>(null, headData) : new GenderedItem<HeadData>(headData, null);
         }
 
+        private FormKey GetDefaultHeadPartKey(IRaceGetter race, bool female, HeadPart.TypeEnum type)
+        {
+            var headData = female ? race.HeadData.Female : race.HeadData.Male;
+            return headData.HeadParts
+                .Select(x => x.Head)
+                .SingleOrDefault(x => x.WinnerFrom(Groups).Type == type)
+                .FormKey;
+        }
+
         private void SetupNpcComparisonDependencies()
         {
             // NPCs need to reference a lot of other stuff in order to fully test comparisons - factions, races, voices,
@@ -526,8 +884,10 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 HairColorKey = AddEmptyRecords<ColorRecord>(pluginName, "Blond").Single(),
                 HeadPartKeys = Groups.AddRecords<HeadPart>(
                     pluginName,
-                    x => { x.EditorID = "FemaleEyesHumanBlue"; },
-                    x => { x.EditorID = "HairFemaleNord5"; }).ToFormKeys().ToList().AsReadOnly(),
+                    x => { x.EditorID = "FemaleEyesHumanBlue"; x.Type = HeadPart.TypeEnum.Eyes; },
+                    x => { x.EditorID = "HairFemaleNord5"; x.Type = HeadPart.TypeEnum.Hair; },
+                    x => { x.EditorID = "BrowsFemaleHuman2"; x.Type = HeadPart.TypeEnum.Eyebrows; })
+                    .ToFormKeys().ToList().AsReadOnly(),
                 HeadTextureKey = AddEmptyRecords<TextureSet>(pluginName, "SkinHeadFemaleNord").Single(),
                 ItemEntries = AddEmptyRecords<MiscItem>(pluginName, "Basket", "Health Potion", "Gold")
                     .Zip(new[] { 1, 5, 50 })
@@ -597,7 +957,6 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Warn = 50,
                 WarnOrAttack = 20,
             };
-            // Attacks? Hard to find these on NPCs, usually just on race.
             npc.Class.SetTo(comparisonDependencies.ClassKey);
             npc.CombatStyle.SetTo(comparisonDependencies.CombatStyleKey);
             npc.Configuration = new()
