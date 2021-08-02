@@ -329,32 +329,134 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         [Fact]
-        public void WhenIdenticalToMaster_AllComparisons_AreTrue()
+        public void WhenIdenticalToMaster_AllComparisons_AreEqual()
         {
             var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
             Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
             Groups.AddRecords<Npc>("plugin.esp", "master.esp", SetupNpcForComparison);
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
-            Assert.Equal("master.esp", analysis.ComparisonToMaster.PluginName);
-            Assert.True(analysis.ComparisonToMaster.IsIdentical);
-            Assert.False(analysis.ComparisonToMaster.ModifiesBehavior);
-            Assert.False(analysis.ComparisonToMaster.ModifiesBody);
-            Assert.False(analysis.ComparisonToMaster.ModifiesFace);
-            Assert.False(analysis.ComparisonToMaster.ModifiesHair);
-            Assert.False(analysis.ComparisonToMaster.ModifiesHeadParts);
-            Assert.False(analysis.ComparisonToMaster.ModifiesOutfits);
-            Assert.False(analysis.ComparisonToMaster.ModifiesRace);
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.True(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
 
-            Assert.Equal("override.esp", analysis.ComparisonToPreviousOverride.PluginName);
-            Assert.True(analysis.ComparisonToPreviousOverride.IsIdentical);
-            Assert.False(analysis.ComparisonToPreviousOverride.ModifiesBehavior);
-            Assert.False(analysis.ComparisonToPreviousOverride.ModifiesBody);
-            Assert.False(analysis.ComparisonToPreviousOverride.ModifiesFace);
-            Assert.False(analysis.ComparisonToPreviousOverride.ModifiesHair);
-            Assert.False(analysis.ComparisonToPreviousOverride.ModifiesHeadParts);
-            Assert.False(analysis.ComparisonToPreviousOverride.ModifiesOutfits);
-            Assert.False(analysis.ComparisonToPreviousOverride.ModifiesRace);
+        [Theory]
+        [MemberData(nameof(NpcMutations.Behavior), MemberType = typeof(NpcMutations))]
+        public void WhenBehaviorModified_BehaviorComparisons_AreNotEqual(Action<Npc> mutation)
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, mutation));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.True(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(NpcMutations.Face), MemberType = typeof(NpcMutations))]
+        public void WhenFaceModified_FaceComparisons_AreNotEqual(Action<Npc> mutation)
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, mutation));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.True(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(NpcMutations.Outfits), MemberType = typeof(NpcMutations))]
+        public void WhenOutfitsModified_OutfitComparisons_AreNotEqual(Action<Npc> mutation)
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, mutation));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.True(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(NpcMutations.Ignored), MemberType = typeof(NpcMutations))]
+        public void WhenIgnoredAttributesModified_AllComparisonsExceptIdentical_AreEqual(Action<Npc> mutation)
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, mutation));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(NpcMutations.Unused), MemberType = typeof(NpcMutations))]
+        public void WhenUnusedAttributesModified_AllComparisons_AreEqual(Action<Npc> mutation)
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, mutation));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.True(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+            });
         }
 
         // Special case of adding records that are really just markers, i.e. don't play a role in any logic we want to
@@ -368,6 +470,16 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 .ToFormKeys()
                 .ToList()
                 .AsReadOnly();
+        }
+
+        private void AssertComparisons(
+            NpcAnalysis analysis, string masterPluginName, string previousOverridePluginName,
+            Action<NpcComparison> comparisonAssert)
+        {
+            Assert.Equal(masterPluginName, analysis.ComparisonToMaster.PluginName);
+            comparisonAssert(analysis.ComparisonToMaster);
+            Assert.Equal(previousOverridePluginName, analysis.ComparisonToPreviousOverride.PluginName);
+            comparisonAssert(analysis.ComparisonToPreviousOverride);
         }
 
         private static HeadData CreateHeadData(IEnumerable<FormKey> headPartKeys)
@@ -457,6 +569,11 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         private void SetupNpcForComparison(Npc npc)
+        {
+            SetupNpcForComparison(npc, null);
+        }
+
+        private void SetupNpcForComparison(Npc npc, Action<Npc> mutation)
         {
             SetupNpcComparisonDependencies();
             // Tests for the comparisons, and by extension the defaults being set up here, are not going to be
@@ -594,10 +711,10 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             npc.TextureLighting = Color.GhostWhite;
             npc.TintLayers.AddRange(new[]
             {
-                new TintLayer { Index = 26, Color = Color.IndianRed },
-                new TintLayer { Index = 27, Color = Color.Indigo },
-                new TintLayer { Index = 28, Color = Color.Pink },
-                new TintLayer { Index = 29, Color = Color.Plum },
+                new TintLayer { Index = 26, Color = Color.IndianRed, InterpolationValue = 0.3f },
+                new TintLayer { Index = 27, Color = Color.Indigo, InterpolationValue = 0.67f },
+                new TintLayer { Index = 28, Color = Color.Pink, InterpolationValue = 0.89f },
+                new TintLayer { Index = 29, Color = Color.Plum, InterpolationValue = 0.5f },
             });
             npc.VirtualMachineAdapter = new VirtualMachineAdapter
             {
@@ -643,6 +760,8 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             };
             npc.Voice.SetTo(comparisonDependencies.VoiceKey);
             npc.Weight = 60.0f;
+            if (mutation != null)
+                mutation(npc);
         }
 
         class NpcComparisonDependencies

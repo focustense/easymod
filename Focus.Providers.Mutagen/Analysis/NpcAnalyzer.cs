@@ -153,14 +153,18 @@ namespace Focus.Providers.Mutagen.Analysis
 
         private bool FacesEqual(INpcGetter x, INpcGetter y)
         {
-            return x.Equals(y, new Npc.TranslationMask(false, false)
-            {
-                FaceParts = true,
-                HairColor = true,
-                HeadTexture = true,
-                TextureLighting = true,
-                TintLayers = true,
-            }) && FaceMorphsEqual(x.FaceMorph, y.FaceMorph) && HeadPartsEqual(x, y);
+            return
+                x.Equals(y, new Npc.TranslationMask(false, false)
+                {
+                    FaceParts = true,
+                    HairColor = true,
+                    HeadTexture = true,
+                    TextureLighting = true,
+                }) &&
+                FaceMorphsEqual(x.FaceMorph, y.FaceMorph) &&
+                // Mutagen bug: does not honor the Tint Layers mask if it specified to ignore the Preset.
+                TintLayersEqual(x.TintLayers, y.TintLayers) &&
+                HeadPartsEqual(x, y);
         }
 
         private static bool FaceMorphsEqual(INpcFaceMorphGetter? a, INpcFaceMorphGetter? b)
@@ -371,6 +375,29 @@ namespace Focus.Providers.Mutagen.Analysis
                 x.Name == y.Name &&
                 x.Flags == y.Flags &&
                 x.Properties.SequenceEqualSafeBy(y.Properties, p => p.Name);
+        }
+
+        private static bool TintLayersEqual(IReadOnlyList<ITintLayerGetter> a, IReadOnlyList<ITintLayerGetter> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+            return a.OrderBy(x => x.Index)
+                .Zip(b.OrderBy(x => x.Index))
+                .All(x => TintLayersEqual(x.First, x.Second));
+        }
+
+        private static bool TintLayersEqual(ITintLayerGetter x, ITintLayerGetter y)
+        {
+            if (ReferenceEquals(x, y))
+                return true;
+            if (x is null || y is null)
+                return false;
+            return x.Equals(y, new TintLayer.TranslationMask(false, false)
+            {
+                Color = true,
+                Index = true,
+                InterpolationValue = true,
+            });
         }
 
         private static bool VmadsEqual(IVirtualMachineAdapterGetter? x, IVirtualMachineAdapterGetter? y)

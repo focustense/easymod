@@ -1,7 +1,6 @@
 ﻿using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
-using Mutagen.Bethesda.Skyrim;
 using Serilog;
 using System;
 using System.Collections.Generic;
