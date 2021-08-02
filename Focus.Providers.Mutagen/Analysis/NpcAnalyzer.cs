@@ -77,7 +77,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 IsOverride = isOverride,
                 CanUseFaceGen = race?.Flags.HasFlag(Race.Flag.FaceGenHead) ?? false,
                 ComparisonToMaster = Compare(npc, master?.Value, master?.Key),
-                ComparisonToPreviousOverride = Compare(npc, previous?.Value, master?.Key),
+                ComparisonToPreviousOverride = Compare(npc, previous?.Value, previous?.Key),
                 IsChild = race?.Flags.HasFlag(Race.Flag.Child) ?? false,
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                 MainHeadParts = GetMainHeadParts(npc).Select(x => x.FormKey).ToRecordKeys(),
@@ -100,7 +100,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 ModifiesHair = !HairsEqual(current, previous),
                 ModifiesHeadParts = !HeadPartsEqual(current, previous),
                 ModifiesOutfits = !OutfitsEqual(current, previous),
-                ModifiesRace = current.Race != previous.Race,
+                ModifiesRace = current.Race.FormKey != previous.Race.FormKey,
                 IsIdentical = NpcsEqual(current, previous),
                 PluginName = pluginName,
             };
@@ -148,7 +148,7 @@ namespace Focus.Providers.Mutagen.Analysis
 
         private static bool BodiesEqual(INpcGetter x, INpcGetter y)
         {
-            return x.WornArmor == y.WornArmor;
+            return x.WornArmor.FormKey == y.WornArmor.FormKey;
         }
 
         private bool FacesEqual(INpcGetter x, INpcGetter y)
@@ -262,7 +262,7 @@ namespace Focus.Providers.Mutagen.Analysis
 
         private static bool NearlyEquals(float x, float y)
         {
-            return Math.Abs(x - y) > 3 * float.Epsilon;
+            return Math.Abs(x - y) < 3 * float.Epsilon;
         }
 
         private static bool NpcsEqual(INpcGetter x, INpcGetter y, Action<Npc.TranslationMask>? configure = null)
@@ -342,7 +342,9 @@ namespace Focus.Providers.Mutagen.Analysis
             // overrides (only check PO or Declaring Master), or behavior overrides (check all masters), especially
             // we don't actually handle outfit carry-over yet, only using it as a signal for other checks.
             // This may change once outfits are actually implemented.
-            return x.DefaultOutfit == y.DefaultOutfit && x.SleepingOutfit == y.SleepingOutfit;
+            return
+                x.DefaultOutfit.FormKey == y.DefaultOutfit.FormKey &&
+                x.SleepingOutfit.FormKey == y.SleepingOutfit.FormKey;
         }
 
         private static bool PlayerSkillsEqual(IPlayerSkillsGetter? x, IPlayerSkillsGetter? y)
