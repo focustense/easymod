@@ -1,5 +1,4 @@
-﻿using Mutagen.Bethesda;
-using Mutagen.Bethesda.Plugins;
+﻿using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
@@ -20,6 +19,8 @@ namespace Focus.Providers.Mutagen.Analysis
         private readonly ConcurrentDictionary<Tuple<string, Type>, IGroupCommonGetter<ISkyrimMajorRecordGetter>?> genericGroups =
             new(new TupleEqualityComparer<string, Type>(StringComparer.OrdinalIgnoreCase));
         private readonly ILogger log;
+        private readonly ConcurrentDictionary<FormKey, IReadOnlyList<IKeyValue<object, string>>> records = new();
+        private readonly ConcurrentDictionary<FormKey, object?> winningRecords = new();
 
         public GroupCache(IReadOnlyGameEnvironment<ISkyrimModGetter> environment, ILogger log)
         {
@@ -55,6 +56,32 @@ namespace Focus.Providers.Mutagen.Analysis
         public IEnumerable<IKeyValue<T, string>> GetAll<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {
+            return records.GetOrAdd(link.FormKey, _ => LoadAll(link).ToList().AsReadOnly())
+                .Cast<IKeyValue<T, string>>();
+        }
+
+        public ISkyrimModGetter? GetMod(string pluginName)
+        {
+            return environment.TryGetMod(pluginName, log);
+        }
+
+        public T? GetWinner<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            // Could use ILinkCache.TryResolve here, but this implementation is more consistent and easier to work with
+            // in tests, and should have very similar (?) performance characteristics.
+            return winningRecords.GetOrAdd(link.FormKey, _ => GetAll(link).FirstOrDefault()?.Value) as T;
+        }
+
+        public bool MasterExists(FormKey formKey, RecordType recordType)
+        {
+            var masterGroup = Get(formKey.ModKey.FileName.String, recordType.GetGroupType());
+            return masterGroup?.ContainsKey(formKey) ?? false;
+        }
+
+        private IEnumerable<IKeyValue<T, string>> LoadAll<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter
+        {
             if (!link.FormKeyNullable.HasValue)
                 yield break;
             // Mutagen has `ResolveAllContexts` that would be useful here, but it requires an unreasonable amount of
@@ -69,25 +96,6 @@ namespace Focus.Providers.Mutagen.Analysis
                 if (record is T resolved)
                     yield return new KeyValue<T, string>(listing.ModKey.FileName, resolved);
             }
-        }
-
-        public ISkyrimModGetter? GetMod(string pluginName)
-        {
-            return environment.TryGetMod(pluginName, log);
-        }
-
-        public T? GetWinner<T>(IFormLinkGetter<T> link)
-            where T : class, ISkyrimMajorRecordGetter
-        {
-            // Could use ILinkCache.TryResolve here, but this implementation is more consistent and easier to work with
-            // in tests, and should have very similar (?) performance characteristics.
-            return GetAll(link).FirstOrDefault()?.Value;
-        }
-
-        public bool MasterExists(FormKey formKey, RecordType recordType)
-        {
-            var masterGroup = Get(formKey.ModKey.FileName.String, recordType.GetGroupType());
-            return masterGroup?.ContainsKey(formKey) ?? false;
         }
     }
 }
