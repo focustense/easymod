@@ -9,7 +9,7 @@ namespace Focus.Analysis.Records
         public bool CanUseFaceGen { get; init; }
         public NpcComparison? ComparisonToMaster { get; init; }
         public NpcComparison? ComparisonToPreviousOverride { get; init; }
-        public IReadOnlyList<RecordKey> HeadParts { get; init; } = Empty.ReadOnlyList<RecordKey>();
+        public IReadOnlyList<RecordKey> MainHeadParts { get; init; } = Empty.ReadOnlyList<RecordKey>();
         public bool IsChild { get; init; }
         public bool IsFemale { get; init; }
         public bool ModifiesBehavior { get; init; }

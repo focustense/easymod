@@ -78,10 +78,10 @@ namespace Focus.Providers.Mutagen.Analysis
                 CanUseFaceGen = race?.Flags.HasFlag(Race.Flag.FaceGenHead) ?? false,
                 ComparisonToMaster = Compare(npc, master?.Value, master?.Key),
                 ComparisonToPreviousOverride = Compare(npc, previous?.Value, master?.Key),
-                HeadParts = npc.HeadParts.ToRecordKeys(),
                 IsChild = race?.Flags.HasFlag(Race.Flag.Child) ?? false,
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
-                ModifiesBehavior = mod != null ? ModifiesBehavior(npc, mod) : false,
+                MainHeadParts = GetMainHeadParts(npc).Select(x => x.FormKey).ToRecordKeys(),
+                ModifiesBehavior = mod != null && ModifiesBehavior(npc, mod),
                 UsedMeshes = Empty.ReadOnlyList<string>(),
                 UsedTextures = Empty.ReadOnlyList<string>(),
                 WigInfo = GetWigInfo(npc),
@@ -176,14 +176,14 @@ namespace Focus.Providers.Mutagen.Analysis
         {
             // TODO: One issue this could miss is if a plugin has actually changed the head parts of the vanilla race.
             // It can be difficult to sort out intent here; for example, if the current/LHS plugin being compared itself
-            // changes the race's head parts, that that plugin can be said to be responsible for changing the effective
+            // changes the race's head parts, then that plugin can be said to be responsible for changing the effective
             // head parts for the NPC. Or, we could say that if the effective race up to the previous/RHS plugin had
             // different head parts, then it is also a change. But what if some plugin in between the previous/RHS and
             // current/LHS changed the race's head parts and didn't change the NPCs, and the current/LHS matches that
             // in-between plugin modifying the race? Do we consider that a head part change, or not?
             var race = npc.Race.WinnerFrom(groups);
             var isFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female);
-            var defaultHeadPartRefs = isFemale ? race?.HeadData?.Male?.HeadParts : race?.HeadData?.Female?.HeadParts;
+            var defaultHeadPartRefs = isFemale ? race?.HeadData?.Female?.HeadParts : race?.HeadData?.Male?.HeadParts;
             return (defaultHeadPartRefs ?? Enumerable.Empty<IHeadPartReferenceGetter>())
                 .Select(x => x.Head.WinnerFrom(groups))
                 .Concat(npc.HeadParts.Select(x => x.WinnerFrom(groups)))
@@ -205,6 +205,7 @@ namespace Focus.Providers.Mutagen.Analysis
             var wornArmor = npc.WornArmor.WinnerFrom(groups);
             if (wornArmor == null)
                 return null;
+            var isFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female);
             return wornArmor.Armature
                 .Select(fk => fk.WinnerFrom(groups))
                 .NotNull()
@@ -214,7 +215,7 @@ namespace Focus.Providers.Mutagen.Analysis
                     x.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.LongHair ||
                     x.BodyTemplate?.FirstPersonFlags == (BipedObjectFlag.Hair | BipedObjectFlag.LongHair))
                 .Select(x => {
-                    var modelFileName = x.WorldModel?.Where(x => x is not null)?.FirstOrDefault()?.File;
+                    var modelFileName = x.WorldModel?.PickGender(isFemale)?.File;
                     var modelName = !string.IsNullOrEmpty(modelFileName) ?
                         Path.GetFileNameWithoutExtension(modelFileName) : null;
                     return new NpcWigInfo(x.FormKey.ToRecordKey(), modelName, isBald);
