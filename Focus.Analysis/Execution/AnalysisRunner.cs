@@ -5,6 +5,7 @@ using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Focus.Analysis.Execution
@@ -52,21 +53,26 @@ namespace Focus.Analysis.Execution
             return this;
         }
 
-        public LoadOrderAnalysis Run()
+        public LoadOrderAnalysis Run(bool includeImplicits = false)
         {
-            var loadedPlugins = availablePlugins.Where(p => loadOrderGraph.IsEnabled(p)).ToList();
+            var stopwatch = Stopwatch.StartNew();
+            var loadedPlugins = availablePlugins
+                .Where(p => loadOrderGraph.IsEnabled(p) && loadOrderGraph.CanLoad(p))
+                .ToList();
             var pluginAnalyses = loadedPlugins
+                .Where(p => includeImplicits || !loadOrderGraph.IsImplicit(p))
                 .AsParallel()
-                .Where(p => !loadOrderGraph.IsImplicit(p))
-                .Select(p => RunForPlugin(p));
+                .Select(p => RunForPlugin(p))
+                // Might be slow, but probably faster than any other part of the analysis and therefore not
+                // important enough to be noticeable.
+                .OrderBy(x => loadedPlugins.IndexOf(x.FileName))
+                .ToList()
+                .AsReadOnly();
+            stopwatch.Stop();
             return new LoadOrderAnalysis
             {
+                ElapsedTime = stopwatch.Elapsed,
                 Plugins = pluginAnalyses
-                    // Might be slow, but probably faster than any other part of the analysis and therefore not
-                    // important enough to be noticeable.
-                    .OrderBy(x => loadedPlugins.IndexOf(x.FileName))
-                    .ToList()
-                    .AsReadOnly(),
             };
         }
 
