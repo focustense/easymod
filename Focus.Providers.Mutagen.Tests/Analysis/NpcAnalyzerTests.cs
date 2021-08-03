@@ -23,6 +23,15 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         [Fact]
+        public void IncludesName()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("mod.esp", npc => npc.Name = "Bob");
+            var analysis = Analyzer.Analyze("mod.esp", npcKeys[0]);
+
+            Assert.Equal("Bob", analysis.Name);
+        }
+
+        [Fact]
         public void MergesRaceWithFemaleNpcHeadParts()
         {
             var vanillaHeadPartKeys = Groups.AddRecords<HeadPart>(

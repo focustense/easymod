@@ -82,6 +82,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                 MainHeadParts = GetMainHeadParts(npc).Select(x => x.FormKey).ToRecordKeys(),
                 ModifiesBehavior = mod != null && ModifiesBehavior(npc, mod),
+                Name = npc.Name?.String ?? string.Empty,
                 UsedMeshes = Empty.ReadOnlyList<string>(),
                 UsedTextures = Empty.ReadOnlyList<string>(),
                 WigInfo = GetWigInfo(npc),
@@ -90,7 +91,7 @@ namespace Focus.Providers.Mutagen.Analysis
 
         protected NpcComparison? Compare(INpcGetter current, INpcGetter? previous, string? pluginName)
         {
-            if (previous == null)
+            if (previous == null || ReferenceEquals(previous, current))
                 return null;
             return new NpcComparison
             {
