@@ -75,6 +75,26 @@ namespace Focus.Analysis.Tests
         }
 
         [Fact]
+        public void ForNonImplicitPlugins_BaseGame_IsFalse()
+        {
+            availablePlugins.AddRange(new[] { "plugin1", "plugin2", "plugin3" });
+            SetupLoadOrderGraph(new()
+            {
+                { "plugin1", Enumerable.Empty<string>() },
+                { "plugin2", new[] { "plugin1" } },
+                { "plugin3", new[] { "plugin1" } },
+            });
+            loadOrderGraphMock.Setup(x => x.GetAllMasters("plugin3", true)).Returns(new[] { "plugin1", "implicit1" });
+            var loadOrderAnalysis = runner.Run();
+
+            Assert.Collection(
+                loadOrderAnalysis.Plugins,
+                plugin => Assert.False(plugin.IsBaseGame),
+                plugin => Assert.False(plugin.IsBaseGame),
+                plugin => Assert.False(plugin.IsBaseGame));
+        }
+
+        [Fact]
         public void ForAllRecords_RunsConfiguredAnalyzers()
         {
             availablePlugins.AddRange(new[] { "plugin1", "plugin2" });
@@ -186,7 +206,7 @@ namespace Focus.Analysis.Tests
         }
 
         [Fact]
-        public void ForImplicitPlugins_Ignores()
+        public void WhenBaseNotRequested_IgnoresImplicits()
         {
             availablePlugins.AddRange(new[] { "plugin1", "plugin2", "plugin3" });
             SetupLoadOrderGraph(new()
@@ -203,6 +223,28 @@ namespace Focus.Analysis.Tests
 
             Assert.DoesNotContain(loadOrderAnalysis.Plugins, p => p.FileName == "plugin1");
             Assert.DoesNotContain(loadOrderAnalysis.Plugins, p => p.FileName == "plugin2");
+        }
+
+        [Fact]
+        public void WhenBaseRequested_IncludesImplicits()
+        {
+            availablePlugins.AddRange(new[] { "plugin1", "plugin2", "plugin3" });
+            SetupLoadOrderGraph(new()
+            {
+                { "plugin1", Enumerable.Empty<string>() },
+                { "plugin2", Enumerable.Empty<string>() },
+                { "plugin3", Enumerable.Empty<string>() },
+                { "plugin4", Enumerable.Empty<string>() },
+                { "plugin5", Enumerable.Empty<string>() },
+            });
+            loadOrderGraphMock.Setup(x => x.IsImplicit("plugin1")).Returns(true);
+            loadOrderGraphMock.Setup(x => x.IsImplicit("plugin2")).Returns(true);
+            var loadOrderAnalysis = runner.Run(includeBasePlugins: true);
+
+            Assert.Contains(loadOrderAnalysis.Plugins, p => p.FileName == "plugin1");
+            Assert.Contains(loadOrderAnalysis.Plugins, p => p.FileName == "plugin2");
+            Assert.True(loadOrderAnalysis.Plugins[0].IsBaseGame);
+            Assert.True(loadOrderAnalysis.Plugins[1].IsBaseGame);
         }
 
         private Mock<IRecordAnalyzer<RecordAnalysis>> DefaultAnalyzerMock(RecordType recordType, string editorIdPrefix)

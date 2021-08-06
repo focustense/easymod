@@ -53,14 +53,14 @@ namespace Focus.Analysis.Execution
             return this;
         }
 
-        public LoadOrderAnalysis Run(bool includeImplicits = false)
+        public LoadOrderAnalysis Run(bool includeBasePlugins = false)
         {
             var stopwatch = Stopwatch.StartNew();
             var loadedPlugins = availablePlugins
                 .Where(p => loadOrderGraph.IsEnabled(p) && loadOrderGraph.CanLoad(p))
                 .ToList();
             var pluginAnalyses = loadedPlugins
-                .Where(p => includeImplicits || !loadOrderGraph.IsImplicit(p))
+                .Where(p => includeBasePlugins || !loadOrderGraph.IsImplicit(p))
                 .AsParallel()
                 .Select(p => RunForPlugin(p))
                 // Might be slow, but probably faster than any other part of the analysis and therefore not
@@ -101,6 +101,7 @@ namespace Focus.Analysis.Execution
             {
                 ExplicitMasters = loadOrderGraph.GetAllMasters(pluginName, false).ToList().AsReadOnly(),
                 ImplicitMasters = loadOrderGraph.GetAllMasters(pluginName, true).ToList().AsReadOnly(),
+                IsBaseGame = loadOrderGraph.IsImplicit(pluginName),
                 Groups = recordGroups.ToDictionary(g => g.Type),
             };
             log.Information("Completed analysis of {pluginName}", pluginName);

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Focus
 {
@@ -44,23 +46,17 @@ namespace Focus
 
         public override bool Equals(object? obj)
         {
-            return obj is IRecordKey recordKey && Equals(recordKey);
+            return obj is IRecordKey recordKey && RecordKeyComparer.Default.Equals(this, recordKey);
         }
 
         public static bool Equals(IRecordKey? x, IRecordKey? y)
         {
-            if (ReferenceEquals(x, y))
-                return true;
-            if (x is null || y is null)
-                return false;
-            return
-                string.Equals(x.BasePluginName, y.BasePluginName, DefaultComparison) &&
-                string.Equals(x.LocalFormIdHex, y.LocalFormIdHex, DefaultComparison);
+            return RecordKeyComparer.Default.Equals(x, y);
         }
 
         public override int GetHashCode()
         {
-            return $"{LocalFormIdHex}:{BasePluginName}".GetHashCode(DefaultComparison);
+            return RecordKeyComparer.Default.GetHashCode(this);
         }
 
         public override string ToString()
@@ -79,11 +75,35 @@ namespace Focus
         }
     }
 
+    public class RecordKeyComparer : IEqualityComparer<IRecordKey>
+    {
+        public static readonly RecordKeyComparer Default = new();
+
+        internal static readonly StringComparison DefaultComparison = StringComparison.CurrentCultureIgnoreCase;
+
+        public bool Equals(IRecordKey? x, IRecordKey? y)
+        {
+            if (ReferenceEquals(x, y))
+                return true;
+            if (x is null || y is null)
+                return false;
+            return
+                string.Equals(x.BasePluginName, y.BasePluginName, DefaultComparison) &&
+                string.Equals(x.LocalFormIdHex, y.LocalFormIdHex, DefaultComparison);
+        }
+
+        public int GetHashCode([DisallowNull] IRecordKey obj)
+        {
+            return HashCode.Combine(
+                obj.BasePluginName.GetHashCode(DefaultComparison), obj.LocalFormIdHex.GetHashCode(DefaultComparison));
+        }
+    }
+
     public static class RecordKeyExtensions
     {
         public static bool PluginEquals(this IRecordKey recordKey, string pluginName)
         {
-            return string.Equals(recordKey.BasePluginName, pluginName, RecordKey.DefaultComparison);
+            return string.Equals(recordKey.BasePluginName, pluginName, RecordKeyComparer.DefaultComparison);
         }
     }
 }
