@@ -21,9 +21,13 @@ namespace Focus.Analysis.Execution
         {
             var runner = new AnalysisRunner(Scanner, availablePlugins, loadOrderGraph, Log);
             Configure(runner);
-            return runner.Run(includeImplicits);
+            var analysis = runner.Run(includeImplicits);
+            OnCompleted(analysis);
+            return analysis;
         }
 
         protected abstract void Configure(AnalysisRunner runner);
+
+        protected virtual void OnCompleted(LoadOrderAnalysis analysis) { }
     }
 }

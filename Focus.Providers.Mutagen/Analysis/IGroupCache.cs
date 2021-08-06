@@ -20,6 +20,7 @@ namespace Focus.Providers.Mutagen.Analysis
         T? GetWinner<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter;
         bool MasterExists(FormKey formKey, RecordType recordType);
+        void Purge();
     }
 
     public static class GroupCacheExtensions

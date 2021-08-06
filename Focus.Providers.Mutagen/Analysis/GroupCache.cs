@@ -79,6 +79,14 @@ namespace Focus.Providers.Mutagen.Analysis
             return masterGroup?.ContainsKey(formKey) ?? false;
         }
 
+        public void Purge()
+        {
+            commonGroups.Clear();
+            genericGroups.Clear();
+            records.Clear();
+            winningRecords.Clear();
+        }
+
         private IEnumerable<IKeyValue<T, string>> LoadAll<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {

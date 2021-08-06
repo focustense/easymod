@@ -18,6 +18,7 @@ namespace Focus.Analysis.Execution
 
         private readonly ConcurrentDictionary<RecordType, GroupAnalyzerAction?> analyzerActions = new();
         private readonly IEnumerable<string> availablePlugins;
+        private readonly HashSet<RecordType> ignoredTypes = new();
         private readonly IReadOnlyLoadOrderGraph loadOrderGraph;
         private readonly ILogger log;
         private readonly IRecordScanner scanner;
@@ -50,6 +51,13 @@ namespace Focus.Analysis.Execution
             where T : RecordAnalysis
         {
             defaultAnalyzerActionFactory = t => MakeAnalyzerAction(analyzerFactory(t));
+            return this;
+        }
+
+        public AnalysisRunner Ignore(params RecordType[] types)
+        {
+            foreach (var type in types)
+                ignoredTypes.Add(type);
             return this;
         }
 
@@ -93,6 +101,7 @@ namespace Focus.Analysis.Execution
             log.Information("Starting analysis of {pluginName}", pluginName);
             var recordGroups =
                 from type in recordTypes
+                where !ignoredTypes.Contains(type)
                 let analyzerAction = GetAnalyzerAction(type)
                 where analyzerAction != null
                 let keys = scanner.GetKeys(pluginName, type)

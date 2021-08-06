@@ -104,6 +104,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return GetCache(formKey.ModKey.FileName, recordType.GetGroupType()).ContainsKey(formKey);
         }
 
+        public void Purge()
+        {
+            groups.Clear();
+            typedGroups.Clear();
+        }
+
         public void SetLoadOrder(IEnumerable<string> pluginOrder)
         {
             this.pluginOrder = (pluginOrder ?? Enumerable.Empty<string>()).ToList();

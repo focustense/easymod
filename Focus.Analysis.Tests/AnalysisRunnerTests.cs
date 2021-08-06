@@ -247,6 +247,59 @@ namespace Focus.Analysis.Tests
             Assert.True(loadOrderAnalysis.Plugins[1].IsBaseGame);
         }
 
+        [Fact]
+        public void WhenRecordTypesIgnored_ExcludesFromAnalysis()
+        {
+            availablePlugins.AddRange(new[] { "plugin1", "plugin2", "plugin3" });
+            SetupLoadOrderGraph(new()
+            {
+                { "plugin1", Enumerable.Empty<string>() },
+                { "plugin2", new[] { "plugin1" } },
+                { "plugin3", new[] { "plugin1" } },
+            });
+            SetupRecordScanner("plugin1", new()
+            {
+                { RecordType.Armor, new[] { "armor1:plugin1" } },
+                { RecordType.Weapon, new[] { "weapon1:plugin1" } },
+                { RecordType.Water, new[] { "water1:plugin1" } },
+            });
+            SetupRecordScanner("plugin2", new()
+            {
+                { RecordType.Armor, new[] { "armor1:plugin1", "armor2:plugin2" } },
+                { RecordType.Weapon, new[] { "weapon1:plugin1", "weapon2:plugin2" } },
+            });
+            SetupRecordScanner("plugin3", new()
+            {
+                { RecordType.Armor, new[] { "armor1:plugin1", "armor2:plugin2", "armor3:plugin3" } },
+                { RecordType.Water, new[] { "water1:plugin1", "water3:plugin3" } },
+            });
+
+            var loadOrderAnalysis = runner
+                .Ignore(RecordType.Water)
+                .ConfigureDefault(t => DefaultAnalyzerMock(t, "Default").Object)
+                .Run();
+
+            var includedRecordTypes = loadOrderAnalysis.Plugins
+                .SelectMany(x => x.Groups)
+                .Where(x => x.Value.Records.Count > 0)
+                .Select(x => x.Key)
+                .Distinct();
+            var includedEditorIds = loadOrderAnalysis.Plugins
+                .SelectMany(x => x.Groups)
+                .SelectMany(x => x.Value.Records)
+                .Select(x => x.EditorId)
+                .Distinct();
+            Assert.Equal(new[] { RecordType.Armor, RecordType.Weapon }, includedRecordTypes);
+            Assert.Equal(new[]
+            {
+                "Default_armor1:plugin1",
+                "Default_weapon1:plugin1",
+                "Default_armor2:plugin2",
+                "Default_weapon2:plugin2",
+                "Default_armor3:plugin3"
+            }, includedEditorIds);
+        }
+
         private Mock<IRecordAnalyzer<RecordAnalysis>> DefaultAnalyzerMock(RecordType recordType, string editorIdPrefix)
         {
             var mock = new Mock<IRecordAnalyzer<RecordAnalysis>>();
