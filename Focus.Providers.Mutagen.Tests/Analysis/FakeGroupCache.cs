@@ -1,5 +1,6 @@
 ﻿using Focus.Providers.Mutagen.Analysis;
 using Loqui;
+using Moq;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
@@ -16,6 +17,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
     class FakeGroupCache : IGroupCache
     {
         private readonly Dictionary<Tuple<string, Type>, FakeReadOnlyCache> groups = new();
+        private readonly Dictionary<string, Mock<ISkyrimModGetter>> mods = new();
         private readonly Dictionary<string, uint> nextIds = new();
         private readonly Dictionary<Tuple<string, Type>, object> typedGroups = new();
 
@@ -50,6 +52,16 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return newKeys.Select(x => x.ToRecordKey()).ToArray();
         }
 
+        public void ConfigureMod(string pluginName, Action<Mock<ISkyrimModGetter>> configure)
+        {
+            if (!mods.TryGetValue(pluginName, out var modMock))
+            {
+                modMock = new Mock<ISkyrimModGetter>();
+                mods.Add(pluginName, modMock);
+            }
+            configure(modMock);
+        }
+
         public IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey> Get(string pluginName, Type groupType)
         {
             return GetCache(pluginName, groupType);
@@ -78,7 +90,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
 
         public ISkyrimModGetter GetMod(string pluginName)
         {
-            return default;
+            return mods.TryGetValue(pluginName, out var modMock) ? modMock.Object : default;
         }
 
         public T GetWinner<T>(IFormLinkGetter<T> link)

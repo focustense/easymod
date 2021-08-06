@@ -4,6 +4,7 @@ using Mutagen.Bethesda.Skyrim;
 using Noggog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RecordType = Focus.Analysis.Records.RecordType;
 
 namespace Focus.Providers.Mutagen.Analysis
@@ -35,10 +36,45 @@ namespace Focus.Providers.Mutagen.Analysis
             return cache.Get(pluginName, recordType.GetGroupType());
         }
 
+        public static ContextRelations<T> GetRelations<T>(this IGroupCache groups, IFormLink<T> link, string pluginName)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            var mod = groups.GetMod(pluginName);
+            var masterNames = mod?.ModHeader.MasterReferences
+                .Select(x => x.Master.FileName.String)
+                .ToHashSet(StringComparer.CurrentCultureIgnoreCase)
+                ?? new HashSet<string>();
+            var previousContexts = link.AllFrom(groups)
+                .SkipWhile(x => !string.Equals(x.Key, pluginName, StringComparison.CurrentCultureIgnoreCase))
+                .Skip(1)
+                .ToList();
+            return new()
+            {
+                // Contexts are in priority order, i.e. reverse of listing order. We want the opposite.
+                Base = previousContexts.Count > 0 ? previousContexts[^1] : null,
+                Previous = previousContexts.Count > 0 ? previousContexts[0] : null,
+                Masters = ReverseOf(previousContexts).Where(x => masterNames.Contains(x.Key)),
+            };
+        }
+
         public static T? WinnerFrom<T>(this IFormLinkGetter<T> link, IGroupCache cache)
             where T : class, ISkyrimMajorRecordGetter
         {
             return cache.GetWinner(link);
         }
+
+        private static IEnumerable<T> ReverseOf<T>(IList<T> list)
+        {
+            for (int i = list.Count - 1; i >= 0; i--)
+                yield return list[i];
+        }
+    }
+
+    public class ContextRelations<T>
+        where T : ISkyrimMajorRecordGetter
+    {
+        public IKeyValue<T, string>? Base { get; init; } = null;
+        public IEnumerable<IKeyValue<T, string>> Masters { get; init; } = Enumerable.Empty<IKeyValue<T, string>>();
+        public IKeyValue<T, string>? Previous { get; init; } = null;
     }
 }

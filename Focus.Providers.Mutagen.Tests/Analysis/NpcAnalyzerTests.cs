@@ -1,5 +1,6 @@
 ﻿using Focus.Analysis.Records;
 using Focus.Providers.Mutagen.Analysis;
+using Moq;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
@@ -355,6 +356,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -377,6 +379,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -399,6 +402,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -430,6 +434,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -460,6 +465,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.True(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -489,6 +495,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.True(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -517,6 +524,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -547,6 +555,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.True(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -572,6 +581,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.True(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -594,6 +604,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.True(comparison.ModifiesOutfits);
                 Assert.False(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -637,6 +648,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.True(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.True(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -679,6 +691,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.True(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -718,6 +731,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.True(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.True(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
             });
         }
 
@@ -770,6 +784,30 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesHeadParts);
                 Assert.False(comparison.ModifiesOutfits);
                 Assert.True(comparison.ModifiesRace);
+                Assert.False(comparison.ModifiesScales);
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(NpcMutations.Scales), MemberType = typeof(NpcMutations))]
+        public void WhenScalesModified_ScaleComparisons_AreNotEqual(Action<Npc> mutation)
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("override.esp", "master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, mutation));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.False(comparison.IsIdentical);
+                Assert.False(comparison.ModifiesBehavior);
+                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesFace);
+                Assert.False(comparison.ModifiesHair);
+                Assert.False(comparison.ModifiesHeadParts);
+                Assert.False(comparison.ModifiesOutfits);
+                Assert.False(comparison.ModifiesRace);
+                Assert.True(comparison.ModifiesScales);
             });
         }
 
@@ -817,6 +855,84 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             });
         }
 
+        [Fact]
+        public void ProvidesComparisonsForAllMasters_InListingOrder()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("master.esp", SetupNpcForComparison);
+            Groups.AddRecords<Npc>("plugin1.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                npc.FaceMorph.BrowsForwardVsBack = -0.1f;
+                npc.Height = 0.99f;
+            }));
+            Groups.AddRecords<Npc>("plugin2.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                var hairColorKeys = Groups.AddRecords<ColorRecord>("plugin2.esp", x => { });
+                npc.HairColor.SetTo(hairColorKeys[0].ToFormKey());
+            }));
+            Groups.AddRecords<Npc>("plugin3.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                npc.Configuration.DispositionBase = 2;
+            }));
+            Groups.AddRecords<Npc>("plugin4.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                var classKeys = Groups.AddRecords<Class>("plugin4.esp", x => { });
+                npc.Class.SetTo(classKeys[0].ToFormKey());
+            }));
+            Groups.AddRecords<Npc>("analyze.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                npc.FaceMorph.BrowsForwardVsBack = -0.1f;
+            }));
+            Groups.ConfigureMod("analyze.esp", modMock =>
+            {
+                var modHeaderMock = new Mock<ISkyrimModHeaderGetter>();
+                modHeaderMock.SetupGet(x => x.MasterReferences).Returns(new ExtendedList<MasterReference>(new[]
+                {
+                    new MasterReference { Master = "master.esp" },
+                    new MasterReference { Master = "plugin1.esp" },
+                    new MasterReference { Master = "plugin2.esp" },
+                    // Skip plugin3 just to test that this only includes actual masters - not all previous overrides.
+                    new MasterReference { Master = "plugin4.esp" },
+                }));
+                modMock.SetupGet(x => x.ModHeader).Returns(modHeaderMock.Object);
+            });
+            var analysis = Analyzer.Analyze("analyze.esp", npcKeys[0]);
+
+            Assert.Collection(
+                analysis.ComparisonToMasters,
+                x =>
+                {
+                    Assert.Equal("master.esp", x.PluginName);
+                    Assert.False(x.IsIdentical);
+                    Assert.False(x.ModifiesBehavior);
+                    Assert.True(x.ModifiesFace);
+                    Assert.False(x.ModifiesScales);
+                },
+                x =>
+                {
+                    Assert.Equal("plugin1.esp", x.PluginName);
+                    Assert.False(x.IsIdentical);
+                    Assert.False(x.ModifiesBehavior);
+                    Assert.False(x.ModifiesFace);
+                    Assert.True(x.ModifiesScales);
+                },
+                x =>
+                {
+                    Assert.Equal("plugin2.esp", x.PluginName);
+                    Assert.False(x.IsIdentical);
+                    Assert.False(x.ModifiesBehavior);
+                    Assert.True(x.ModifiesFace);
+                    Assert.False(x.ModifiesScales);
+                },
+                x =>
+                {
+                    Assert.Equal("plugin4.esp", x.PluginName);
+                    Assert.False(x.IsIdentical);
+                    Assert.True(x.ModifiesBehavior);
+                    Assert.True(x.ModifiesFace);
+                    Assert.False(x.ModifiesScales);
+                });
+        }
+
         // Special case of adding records that are really just markers, i.e. don't play a role in any logic we want to
         // test except by virtue of their presence/absence in a reference.
         // The editor ID just helps for debugging in the event of a test failure.
@@ -834,8 +950,8 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             NpcAnalysis analysis, string masterPluginName, string previousOverridePluginName,
             Action<NpcComparison> comparisonAssert)
         {
-            Assert.Equal(masterPluginName, analysis.ComparisonToMaster.PluginName);
-            comparisonAssert(analysis.ComparisonToMaster);
+            Assert.Equal(masterPluginName, analysis.ComparisonToBase.PluginName);
+            comparisonAssert(analysis.ComparisonToBase);
             Assert.Equal(previousOverridePluginName, analysis.ComparisonToPreviousOverride.PluginName);
             comparisonAssert(analysis.ComparisonToPreviousOverride);
         }
@@ -1128,8 +1244,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             };
             npc.Voice.SetTo(comparisonDependencies.VoiceKey);
             npc.Weight = 60.0f;
-            if (mutation != null)
-                mutation(npc);
+            mutation?.Invoke(npc);
         }
 
         class NpcComparisonDependencies

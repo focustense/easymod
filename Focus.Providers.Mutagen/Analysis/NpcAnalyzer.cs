@@ -1,12 +1,12 @@
 ﻿using Focus.Analysis;
 using Focus.Analysis.Records;
 using Mutagen.Bethesda;
-using Mutagen.Bethesda.Plugins.Cache;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using RecordType = Focus.Analysis.Records.RecordType;
@@ -53,19 +53,17 @@ namespace Focus.Providers.Mutagen.Analysis
         {
             var group = groups.Get(pluginName, x => x.Npcs);
             var npc = group?.TryGetValue(key.ToFormKey());
-            if (npc == null)
+            if (npc is null)
                 return new() { BasePluginName = key.BasePluginName, LocalFormIdHex = key.LocalFormIdHex };
-            var mod = groups.GetMod(pluginName);
-            if (mod == null)
-                log.Warning("Unable to find {pluginName} in the load order, some checks will be disabled.");
+
             var isOverride = !key.PluginEquals(pluginName);
-            var overrideContexts = isOverride ?
-                npc.AsLink().AllFrom(groups) : Enumerable.Empty<IKeyValue<INpcGetter, string>>();
-            var previous = overrideContexts
-                .SkipWhile(x => !string.Equals(x.Key, pluginName, StringComparison.CurrentCultureIgnoreCase))
-                .Skip(1)
-                .FirstOrDefault();
-            var master = overrideContexts.LastOrDefault();
+            var relations = isOverride ? groups.GetRelations(npc.AsLink(), pluginName) : new();
+            var comparisonToMasters = relations.Masters.Select(x => Compare(npc, x.Value, x.Key)).ToList().AsReadOnly();
+            var comparisonToBase = FindComparison(comparisonToMasters, relations.Base?.Key) ??
+                Compare(npc, relations.Base?.Value, relations.Base?.Key);
+            var comparisonToPrevious = FindComparison(comparisonToMasters, relations.Previous?.Key) ??
+                Compare(npc, relations.Previous?.Value, relations.Previous?.Key);
+
             var race = npc.Race.WinnerFrom(groups);
             return new()
             {
@@ -76,12 +74,12 @@ namespace Focus.Providers.Mutagen.Analysis
                 IsInjectedOrInvalid = isOverride && !groups.MasterExists(key.ToFormKey(), RecordType),
                 IsOverride = isOverride,
                 CanUseFaceGen = race?.Flags.HasFlag(Race.Flag.FaceGenHead) ?? false,
-                ComparisonToMaster = Compare(npc, master?.Value, master?.Key),
-                ComparisonToPreviousOverride = Compare(npc, previous?.Value, previous?.Key),
+                ComparisonToBase = comparisonToBase,
+                ComparisonToMasters = comparisonToMasters,
+                ComparisonToPreviousOverride = comparisonToPrevious,
                 IsChild = race?.Flags.HasFlag(Race.Flag.Child) ?? false,
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                 MainHeadParts = GetMainHeadParts(npc).Select(x => x.FormKey).ToRecordKeys(),
-                ModifiesBehavior = mod != null && ModifiesBehavior(npc, mod),
                 Name = npc.Name?.String ?? string.Empty,
                 UsedMeshes = Empty.ReadOnlyList<string>(),
                 UsedTextures = Empty.ReadOnlyList<string>(),
@@ -89,9 +87,10 @@ namespace Focus.Providers.Mutagen.Analysis
             };
         }
 
+        [return: NotNullIfNotNull("previous")]
         protected NpcComparison? Compare(INpcGetter current, INpcGetter? previous, string? pluginName)
         {
-            if (previous == null || ReferenceEquals(previous, current))
+            if (previous is null || ReferenceEquals(previous, current))
                 return null;
             return new NpcComparison
             {
@@ -102,6 +101,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 ModifiesHeadParts = !HeadPartsEqual(current, previous),
                 ModifiesOutfits = !OutfitsEqual(current, previous),
                 ModifiesRace = current.Race.FormKey != previous.Race.FormKey,
+                ModifiesScales = !ScalesEqual(current, previous),
                 IsIdentical = NpcsEqual(current, previous),
                 PluginName = pluginName,
             };
@@ -177,6 +177,14 @@ namespace Focus.Providers.Mutagen.Analysis
             return faceMorphValueSelectors.All(m => NearlyEquals(m(a), m(b)));
         }
 
+        private static NpcComparison? FindComparison(IEnumerable<NpcComparison> comparisons, string? pluginName)
+        {
+            return !string.IsNullOrEmpty(pluginName) ?
+                comparisons.FirstOrDefault(x =>
+                    string.Equals(x.PluginName, pluginName, StringComparison.CurrentCultureIgnoreCase)) :
+                null;
+        }
+
         private IEnumerable<IHeadPartGetter> GetMainHeadParts(INpcGetter npc)
         {
             // TODO: One issue this could miss is if a plugin has actually changed the head parts of the vanilla race.
@@ -208,7 +216,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 .Where(x => x.Type == HeadPart.TypeEnum.Hair)
                 .All(x => string.IsNullOrEmpty(x.Model?.File));
             var wornArmor = npc.WornArmor.WinnerFrom(groups);
-            if (wornArmor == null)
+            if (wornArmor is null)
                 return null;
             var isFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female);
             return wornArmor.Armature
@@ -240,29 +248,6 @@ namespace Focus.Providers.Mutagen.Analysis
             var lhsParts = GetMainHeadParts(x).Select(x => x.FormKey.ToRecordKey());
             var rhsParts = GetMainHeadParts(y).Select(x => x.FormKey.ToRecordKey());
             return new HashSet<RecordKey>(lhsParts).SetEquals(rhsParts);
-        }
-
-        private bool ModifiesBehavior(INpcGetter npc, ISkyrimModGetter contextMod)
-        {
-            // The rules for behavior need to be a little different from those for the face, because the semi-common
-            // practice is for NPC overhauls to inherit from "foundation" mods like USSEP.
-            // Bethesda's multiple-master system is opaque and doesn't tell us anything about precisely *how* a master
-            // is being used, so for the time being, the solution is something equally blunt:
-            // Check to see if the behavior of this NPC is identical to the behavior of ANY of the plugin's masters. If
-            // so, it "probably" does not intend to be a behavior mod, and is just trying to avoid breaking other mods
-            // that do make intentional changes.
-            // This, of course, will not work at all if the extra master (e.g. USSEP) is changed and the plugin is not
-            // updated. Which is why mod creators really should distribute compatibility patches as separate files,
-            // despite the fact that some don't.
-            var masterKeys = contextMod.ModHeader.MasterReferences
-                .Select(x => x.Master.FileName.String)
-                .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
-            var previousOverrides = npc.AsLink()
-                .AllFrom(groups)
-                .SkipWhile(x => !string.Equals(x.Key, contextMod.ModKey.FileName, StringComparison.CurrentCultureIgnoreCase))
-                .Skip(1)
-                .Where(x => masterKeys.Contains(x.Key));
-            return previousOverrides.All(x => !BehaviorsEqual(npc, x.Value));
         }
 
         private static bool NearlyEquals(float x, float y)
@@ -368,6 +353,11 @@ namespace Focus.Providers.Mutagen.Analysis
                 }) &&
                 x.SkillOffsets.SequenceEqualSafe(y.SkillOffsets) &&
                 x.SkillValues.SequenceEqualSafe(y.SkillValues);
+        }
+
+        private static bool ScalesEqual(INpcGetter current, INpcGetter previous)
+        {
+            return NearlyEquals(current.Height, previous.Height) && NearlyEquals(current.Weight, previous.Weight);
         }
 
         private static bool ScriptEntriesSame(IScriptEntryGetter x, IScriptEntryGetter y)

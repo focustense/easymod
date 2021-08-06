@@ -110,9 +110,6 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         public static readonly NpcMutationData Ignored = new(new Action<Npc>[]
         {
             x => x.Configuration.Flags ^= NpcConfiguration.Flag.OppositeGenderAnims,
-            // TODO: Height/weight probably shouldn't just be "ignored", they need to be categorized.
-            x => x.Height += 0.05f,
-            x => x.Weight += 10,
             x => x.TintLayers[1].Preset = 4,
         });
 
@@ -120,6 +117,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         {
             x => x.DefaultOutfit.SetTo(dummyKey),
             x => x.SleepingOutfit.SetTo(dummyKey),
+        });
+
+        public static readonly NpcMutationData Scales = new(new Action<Npc>[]
+        {
+            x => x.Height += 0.04f,
+            x => x.Weight += 7,
         });
 
         // "Unused", unlike "ignored", means that the change is to some part of the record that is believed to have no
@@ -130,6 +133,8 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         {
             x => x.AIData.Unused++,
             x => x.FaceMorph.BrowsUpVsDown += float.Epsilon * 2,
+            x => x.Height += float.Epsilon * 2,
+            x => x.Weight -= float.Epsilon * 2,
             x => x.PlayerSkills.Unused += 5,
             x => x.PlayerSkills.Unused2 = new byte[] { 1, 2, 3 },
             x => x.Version2++,
