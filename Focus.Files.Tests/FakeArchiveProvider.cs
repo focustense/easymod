@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Focus.Files.Tests
@@ -9,12 +10,19 @@ namespace Focus.Files.Tests
     {
         private readonly Dictionary<string, Dictionary<string, byte[]>> files = new();
 
+        public string[] ArchiveExtensions { get; set; } = new[] { ".bsa" };
         public string[] BadArchivePaths { get; set; } = Array.Empty<string>();
         public string[] LoadedArchivePaths { get; set; } = Array.Empty<string>();
 
         public void AddFile(string archivePath, string archiveFilePath, byte[] data)
         {
             GetArchiveFiles(archivePath).Add(archiveFilePath, data);
+        }
+
+        public void AddFiles(string archivePath, params string[] archiveFilePaths)
+        {
+            foreach (var filePath in archiveFilePaths)
+                AddFile(archivePath, filePath, Array.Empty<byte>());
         }
 
         public bool ContainsFile(string archivePath, string archiveFilePath)
@@ -41,6 +49,11 @@ namespace Focus.Files.Tests
         public IEnumerable<string> GetLoadedArchivePaths()
         {
             return LoadedArchivePaths;
+        }
+
+        public bool IsArchiveFile(string path)
+        {
+            return ArchiveExtensions.Contains(Path.GetExtension(path));
         }
 
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
