@@ -12,6 +12,10 @@ namespace Focus.Files.Tests
         private readonly FileSystemIndex index;
         private readonly MockFileSystem fs;
         private readonly FakeFileSystemWatcher watcher;
+        private readonly List<FileEventArgs> addedEvents = new();
+        private readonly List<BucketedFileEventArgs> addedToBucketEvents = new();
+        private readonly List<FileEventArgs> removedEvents = new();
+        private readonly List<BucketedFileEventArgs> removedFromBucketEvents = new();
 
         public FileSystemIndexTests()
         {
@@ -34,6 +38,10 @@ namespace Focus.Files.Tests
             });
             index = FileSystemIndex.Build(
                 fs, @"C:\path\to\root", Bucketizers.TopLevelDirectory(), new[] { ".txt", ".log" });
+            index.Added += (sender, e) => addedEvents.Add(e);
+            index.AddedToBucket += (sender, e) => addedToBucketEvents.Add(e);
+            index.Removed += (sender, e) => removedEvents.Add(e);
+            index.RemovedFromBucket += (sender, e) => removedFromBucketEvents.Add(e);
             watcher = fakeFileSystemWatcherFactory.Watchers.Last();
         }
 
@@ -152,6 +160,30 @@ namespace Focus.Files.Tests
         }
 
         [Fact]
+        public void WhenFileAdded_FiresAddedEvents()
+        {
+            watcher.RaiseCreated(@"sub2\new.txt");
+            watcher.RaiseCreated(@"sub3\new.txt");
+
+            Assert.Collection(
+                addedEvents,
+                e => Assert.Equal(@"sub2\new.txt", e.Path),
+                e => Assert.Equal(@"sub3\new.txt", e.Path));
+            Assert.Collection(
+                addedToBucketEvents,
+                e =>
+                {
+                    Assert.Equal("sub2", e.BucketName);
+                    Assert.Equal("new.txt", e.Path);
+                },
+                e =>
+                {
+                    Assert.Equal("sub3", e.BucketName);
+                    Assert.Equal("new.txt", e.Path);
+                });
+        }
+
+        [Fact]
         public void WhenFileDeleted_ForgetsOldFile()
         {
             watcher.RaiseDeleted(@"sub1\insub1.log");
@@ -170,6 +202,31 @@ namespace Focus.Files.Tests
             Assert.False(index.Contains(@"sub2\common\a.txt"));
             Assert.False(index.Contains("sub1", "insub1.log"));
             Assert.False(index.Contains("sub2", @"common\a.txt"));
+        }
+
+        [Fact]
+        public void WhenFileDeleted_FiresRemovedEvents()
+        {
+            watcher.RaiseDeleted(@"sub1\insub1.log");
+            watcher.RaiseDeleted(@"sub2\common\a.txt");
+            watcher.RaiseDeleted(@"blah\blah\blah.log"); // Does nothing, but shouldn't fire events.
+
+            Assert.Collection(
+                removedEvents,
+                e => Assert.Equal(@"sub1\insub1.log", e.Path),
+                e => Assert.Equal(@"sub2\common\a.txt", e.Path));
+            Assert.Collection(
+                removedFromBucketEvents,
+                e =>
+                {
+                    Assert.Equal("sub1", e.BucketName);
+                    Assert.Equal("insub1.log", e.Path);
+                },
+                e =>
+                {
+                    Assert.Equal("sub2", e.BucketName);
+                    Assert.Equal(@"common\a.txt", e.Path);
+                });
         }
 
         [Fact]
@@ -195,6 +252,46 @@ namespace Focus.Files.Tests
             Assert.False(index.Contains(@"sub2\insub2.txt"));
             Assert.False(index.Contains("", "inroot.txt"));
             Assert.False(index.Contains("sub2", "insub2.txt"));
+        }
+
+        [Fact]
+        public void WhenFileRenamed_FiresAddedAndRemovedEvents()
+        {
+            watcher.RaiseRenamed("inroot.txt", "newinroot.txt");
+            watcher.RaiseRenamed(@"sub2\insub2.txt", @"sub3\insub3.log");
+
+            Assert.Collection(
+                addedEvents,
+                e => Assert.Equal("newinroot.txt", e.Path),
+                e => Assert.Equal(@"sub3\insub3.log", e.Path));
+            Assert.Collection(
+                addedToBucketEvents,
+                e =>
+                {
+                    Assert.Equal("", e.BucketName);
+                    Assert.Equal("newinroot.txt", e.Path);
+                },
+                e =>
+                {
+                    Assert.Equal("sub3", e.BucketName);
+                    Assert.Equal("insub3.log", e.Path);
+                });
+            Assert.Collection(
+                removedEvents,
+                e => Assert.Equal("inroot.txt", e.Path),
+                e => Assert.Equal(@"sub2\insub2.txt", e.Path));
+            Assert.Collection(
+                removedFromBucketEvents,
+                e =>
+                {
+                    Assert.Equal("", e.BucketName);
+                    Assert.Equal("inroot.txt", e.Path);
+                },
+                e =>
+                {
+                    Assert.Equal("sub2", e.BucketName);
+                    Assert.Equal("insub2.txt", e.Path);
+                });
         }
 
         private void AddFiles(IEnumerable<string> fileNames)

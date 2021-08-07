@@ -40,7 +40,7 @@ namespace Focus.Files
         }
     }
 
-    public sealed class FileSystemIndex : IBucketedFileIndex, IFileIndex, IDisposable
+    public sealed class FileSystemIndex : INotifyingBucketedFileIndex, INotifyingFileIndex, IDisposable
     {
         private readonly HashSet<string> allPaths = new(PathComparer.Default);
         private readonly Bucketizer bucketize;
@@ -52,6 +52,11 @@ namespace Focus.Files
         private readonly IFileSystemWatcher watcher;
 
         private bool isDisposed;
+
+        public event EventHandler<FileEventArgs>? Added;
+        public event EventHandler<BucketedFileEventArgs>? AddedToBucket;
+        public event EventHandler<FileEventArgs>? Removed;
+        public event EventHandler<BucketedFileEventArgs>? RemovedFromBucket;
 
         public static FileSystemIndex Build(string rootPath, IEnumerable<string>? extensions = null)
         {
@@ -185,17 +190,21 @@ namespace Focus.Files
             }
             bucketNames.Add(bucketedPath.BucketName);
             allPaths.Add(relativePath);
+            Added?.Invoke(this, new FileEventArgs(relativePath));
+            AddedToBucket?.Invoke(this, new BucketedFileEventArgs(bucketedPath.BucketName, bucketedPath.Path));
         }
 
         private void UntrackFile(string absolutePath)
         {
             var relativePath = fs.Path.GetRelativePath(rootDirectory.FullName, absolutePath);
             var bucketedPath = bucketize(relativePath);
-            if (buckets.TryGetValue(bucketedPath.BucketName, out var bucket))
-                bucket.Remove(bucketedPath.Path);
+            if (buckets.TryGetValue(bucketedPath.BucketName, out var bucket) && bucket.Remove(bucketedPath.Path))
+                RemovedFromBucket?.Invoke(this, new BucketedFileEventArgs(bucketedPath.BucketName, bucketedPath.Path));
             if (inverseBuckets.TryGetValue(bucketedPath.Path, out var bucketNames))
                 bucketNames.Remove(bucketedPath.BucketName);
-            allPaths.Remove(fs.Path.GetRelativePath(rootDirectory.FullName, absolutePath));
+            if (allPaths.Remove(relativePath))
+                Removed?.Invoke(this, new FileEventArgs(relativePath));
+            
         }
 
         private void Watcher_Renamed(object sender, RenamedEventArgs e)
