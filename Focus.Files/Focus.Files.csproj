@@ -10,4 +10,8 @@
     <PackageReference Include="System.IO.Abstractions" Version="13.2.43" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
+  </ItemGroup>
+
 </Project>
