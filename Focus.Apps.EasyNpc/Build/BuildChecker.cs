@@ -17,29 +17,30 @@ namespace Focus.Apps.EasyNpc.Build
     {
         private readonly ArchiveFileMap archiveFileMap;
         private readonly IArchiveProvider archiveProvider;
-        private readonly IReadOnlyList<string> loadOrder;
         private readonly IReadOnlyLoadOrderGraph loadOrderGraph;
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly IModResolver modResolver;
         private readonly IDictionary<Tuple<string, string>, NpcConfiguration<TKey>> npcConfigs;
         private readonly IReadOnlyProfileEventLog profileEventLog;
         private readonly IProfileRuleSet profileRuleSet;
+        private readonly IGameSettings settings;
 
         public BuildChecker(
-            IReadOnlyList<string> loadOrder, IReadOnlyLoadOrderGraph loadOrderGraph,
+            IGameSettings settings, IReadOnlyLoadOrderGraph loadOrderGraph,
             IEnumerable<NpcConfiguration<TKey>> npcConfigs, IProfileRuleSet profileRuleSet, IModResolver modResolver,
             IModPluginMapFactory modPluginMapFactory, IArchiveProvider archiveProvider,
             IReadOnlyProfileEventLog profileEventLog, ILogger log)
         {
             this.npcConfigs = npcConfigs.ToDictionary(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex));
             this.profileRuleSet = profileRuleSet;
-            this.loadOrder = loadOrder;
             this.loadOrderGraph = loadOrderGraph;
             this.modResolver = modResolver;
             this.modPluginMapFactory = modPluginMapFactory;
             this.archiveProvider = archiveProvider;
             this.profileEventLog = profileEventLog;
-            archiveFileMap = new ArchiveFileMap(archiveProvider, log);
+            this.settings = settings;
+            archiveFileMap = new ArchiveFileMap(
+                archiveProvider, settings.ArchiveOrder.Select(f => Path.Combine(settings.DataDirectory, f)), log);
         }
 
         public PreBuildReport CheckAll(
@@ -106,7 +107,7 @@ namespace Focus.Apps.EasyNpc.Build
             // So it may be an obscure theoretical problem that never comes up in practice, but if we do see it, then
             // it at least merits a warning, which the user can ignore if it's on purpose.
             var modPluginMap = modPluginMapFactory.DefaultMap();
-            return archiveProvider.GetLoadedArchivePaths()
+            return settings.ArchiveOrder
                 .AsParallel()
                 .Select(path => Path.GetFileName(path))
                 .Select(f => new
@@ -124,7 +125,7 @@ namespace Focus.Apps.EasyNpc.Build
         {
             return events
                 .MostRecentByNpc()
-                .WithMissingPlugins(loadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase))
+                .WithMissingPlugins(settings.PluginLoadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase))
                 .Select(x => npcConfigs.TryGetValue(Tuple.Create(x.BasePluginName, x.LocalFormIdHex), out var npc) ?
                     new
                     {
@@ -236,7 +237,7 @@ namespace Focus.Apps.EasyNpc.Build
         private IEnumerable<BuildWarning> CheckOrphanedNpcs(IEnumerable<ProfileEvent> events)
         {
             var allPluginsInProfile = events.Select(x => x.BasePluginName).Distinct().ToList();
-            var currentPlugins = loadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var currentPlugins = settings.PluginLoadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase);
             return allPluginsInProfile
                 .Where(p => !currentPlugins.Contains(p))
                 .Select(p => new BuildWarning(

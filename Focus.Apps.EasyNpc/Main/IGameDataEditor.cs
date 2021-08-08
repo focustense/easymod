@@ -19,6 +19,7 @@ namespace Focus.Apps.EasyNpc.Main
         IExternalLog Log { get; }
         IMergedPluginBuilder<TKey> MergedPluginBuilder { get; }
         IModPluginMapFactory ModPluginMapFactory { get; }
+        IGameSettings Settings { get; }
 
         IEnumerable<PluginInfo> GetAvailablePlugins();
         IEnumerable<string> GetLoadedPlugins();

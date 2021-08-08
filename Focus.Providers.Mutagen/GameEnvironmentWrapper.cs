@@ -22,6 +22,7 @@ namespace Focus.Providers.Mutagen
         where TModSetter : class, IContextMod<TModSetter, TModGetter>, TModGetter
         where TModGetter : class, IContextGetterMod<TModSetter, TModGetter>
     {
+        public IReadOnlyGameEnvironment<TModGetter> AsReadOnly => this;
         public DirectoryPath DataFolderPath => env.DataFolderPath;
         public FilePath LoadOrderFilePath => env.LoadOrderFilePath;
         public FilePath? CreationKitLoadOrderFilePath => env.CreationKitLoadOrderFilePath;

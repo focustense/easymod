@@ -1,6 +1,5 @@
 ﻿using Focus.Files;
 using Mutagen.Bethesda;
-using Mutagen.Bethesda.Skyrim;
 using Noggog;
 using Serilog;
 using System;
@@ -16,38 +15,19 @@ namespace Focus.Providers.Mutagen
     {
         private readonly IArchiveStatics archive;
         private readonly HashSet<string> badArchivePaths = new(StringComparer.OrdinalIgnoreCase);
-        private readonly IReadOnlyGameEnvironment<ISkyrimModGetter> environment;
         private readonly GameRelease gameRelease;
         private readonly ILogger log;
-        private readonly IReadOnlyList<FileName> order;
 
-        public MutagenArchiveProvider(
-            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> environment, GameRelease gameRelease, ILogger log)
-            : this(GameEnvironmentWrapper.Wrap(environment), ArchiveStaticsWrapper.Instance, gameRelease, log)
+        public MutagenArchiveProvider(GameRelease gameRelease, ILogger log)
+            : this(ArchiveStaticsWrapper.Instance, gameRelease, log)
         {
         }
 
-        public MutagenArchiveProvider(
-            IReadOnlyGameEnvironment<ISkyrimModGetter> environment, GameRelease gameRelease, ILogger log)
-            : this(environment, ArchiveStaticsWrapper.Instance, gameRelease, log)
+        public MutagenArchiveProvider(IArchiveStatics archive, GameRelease gameRelease, ILogger log)
         {
-        }
-
-        public MutagenArchiveProvider(
-            IReadOnlyGameEnvironment<ISkyrimModGetter> environment, IArchiveStatics archive, GameRelease gameRelease, ILogger log)
-        {
-            this.environment = environment;
             this.archive = archive;
             this.gameRelease = gameRelease;
             this.log = log;
-            order = archive.GetIniListings(gameRelease)
-                .Concat(environment.LoadOrder.ListedOrder.SelectMany(x => new[] {
-                    // Not all of these will exist, but it doesn't matter, as these are only used for sorting and won't
-                    // affect the actual set of paths returned.
-                    new FileName($"{x.ModKey.Name}.bsa"),
-                    new FileName($"{x.ModKey.Name} - Textures.bsa"),
-                }))
-                .ToList();
         }
 
         public bool ContainsFile(string archivePath, string archiveFilePath)
@@ -63,20 +43,17 @@ namespace Focus.Providers.Mutagen
         {
             return Safe(archivePath, () =>
             {
-                var prefix = NormalizePath(path);
+                var prefix = PathComparer.NormalizePath(path);
+                if (!string.IsNullOrEmpty(prefix))
+                    prefix += Path.DirectorySeparatorChar;
                 var reader = archive.CreateReader(gameRelease, archivePath);
                 return reader.Files
                     .Select(f => Safe(archivePath, () => f.Path))
                     .NotNull()
                     .Where(p =>
                         string.IsNullOrEmpty(prefix) ||
-                        NormalizePath(p).StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+                        PathComparer.NormalizePath(p).StartsWith(prefix));
             }) ?? Enumerable.Empty<string>();
-        }
-
-        public string GetArchivePath(string archiveName)
-        {
-            return Path.Combine(environment.GetRealDataDirectory(), archiveName);
         }
 
         public IEnumerable<string> GetBadArchivePaths()
@@ -84,10 +61,10 @@ namespace Focus.Providers.Mutagen
             return badArchivePaths;
         }
 
-        public IEnumerable<string> GetLoadedArchivePaths()
+        public bool IsArchiveFile(string path)
         {
-            var dataFolderPath = new DirectoryPath(environment.GetRealDataDirectory());
-            return archive.GetApplicableArchivePaths(gameRelease, dataFolderPath, order).Select(x => x.Path);
+            return string.Equals(
+                Path.GetExtension(path), archive.GetExtension(gameRelease), StringComparison.OrdinalIgnoreCase);
         }
 
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
@@ -103,15 +80,6 @@ namespace Focus.Providers.Mutagen
             if (file == null)
                 throw new ArchiveException($"Couldn't find file {archiveFilePath} in archive {archivePath}");
             return file.GetSpan();
-        }
-
-        private static string NormalizePath(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-                return path;
-            if (!Path.EndsInDirectorySeparator(path))
-                path += Path.DirectorySeparatorChar;
-            return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
         }
 
         private T? Safe<T>(string archivePath, Func<T> action)

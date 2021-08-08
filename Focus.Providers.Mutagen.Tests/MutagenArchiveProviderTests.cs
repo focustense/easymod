@@ -1,13 +1,8 @@
 using Focus.Files;
 using Moq;
 using Mutagen.Bethesda;
-using Mutagen.Bethesda.Plugins;
-using Mutagen.Bethesda.Plugins.Order;
-using Mutagen.Bethesda.Skyrim;
-using Noggog;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -18,8 +13,6 @@ namespace Focus.Providers.Mutagen.Tests
         private static readonly GameRelease GameRelease = GameRelease.SkyrimSE;
 
         private readonly Mock<IArchiveStatics> archiveMock;
-        private readonly Mock<IReadOnlyGameEnvironment<ISkyrimModGetter>> environmentMock;
-        private readonly Mock<ILoadOrder<IModListing<ISkyrimModGetter>>> loadOrderMock;
         private readonly ILogger logger;
         private readonly MutagenArchiveProvider provider;
 
@@ -30,21 +23,7 @@ namespace Focus.Providers.Mutagen.Tests
                 .WriteTo.Debug()
                 .CreateLogger();
             archiveMock = new Mock<IArchiveStatics>();
-            archiveMock.Setup(x => x.GetIniListings(GameRelease)).Returns(new[]
-            {
-                new FileName("ini1.bsa"),
-                new FileName("ini2.bsa"),
-            });
-            environmentMock = new Mock<IReadOnlyGameEnvironment<ISkyrimModGetter>>();
-            loadOrderMock = new Mock<ILoadOrder<IModListing<ISkyrimModGetter>>>();
-            loadOrderMock.Setup(x => x.ListedOrder).Returns(new[]
-            {
-                ModListing("plugin1.esp"),
-                ModListing("plugin2.esp"),
-                ModListing("plugin3.esp"),
-            });
-            environmentMock.SetupGet(x => x.LoadOrder).Returns(loadOrderMock.Object);
-            provider = new MutagenArchiveProvider(environmentMock.Object, archiveMock.Object, GameRelease, logger);
+            provider = new MutagenArchiveProvider(archiveMock.Object, GameRelease, logger);
         }
 
         [Fact]
@@ -85,49 +64,11 @@ namespace Focus.Providers.Mutagen.Tests
             Assert.Equal(
                 new[] { @"a\1", @"a\b\2", @"a\b\c\3", @"a\b\c\4" },
                 provider.GetArchiveFileNames("foo.bsa", @"a"));
-            Assert.Equal(new[] { @"a\b\2", @"a\b\c\3", @"a\b\c\4" }, provider.GetArchiveFileNames("foo.bsa", @"a\b\"));
-            Assert.Equal(new[] { @"a\b\c\3", @"a\b\c\4" }, provider.GetArchiveFileNames("foo.bsa", @"a\b/c"));
+            Assert.Equal(new[] { @"a\b\2", @"a\b\c\3", @"a\b\c\4" }, provider.GetArchiveFileNames("foo.bsa", @"a\B\"));
+            Assert.Equal(new[] { @"a\b\c\3", @"a\b\c\4" }, provider.GetArchiveFileNames("foo.bsa", @"A\b/C"));
             Assert.Equal(new[] { @"d\5", @"d\6", @"d\e\7", @"d\e\f\8" }, provider.GetArchiveFileNames("foo.bsa", @"d/"));
             Assert.Equal(new[] { @"d\e\7", @"d\e\f\8" }, provider.GetArchiveFileNames("foo.bsa", @"d/e"));
-            Assert.Equal(new[] { @"d\e\f\8" }, provider.GetArchiveFileNames("foo.bsa", @"d\e\f\"));
-        }
-
-        [Fact]
-        public void GetArchivePath_ReturnsArchiveInDataDirectory()
-        {
-            environmentMock.SetupGet(x => x.DataFolderPath).Returns(@"C:\Games\Skyrim\Data");
-
-            Assert.Equal(@"C:\Games\Skyrim\Data\Foo.bsa", provider.GetArchivePath("Foo.bsa"));
-        }
-
-        [Fact]
-        public void GetLoadedArchivePaths_GetsFromArchiveService_UsingListingOrder()
-        {
-            const string gameDataPath = @"C:\game\data";
-            environmentMock.SetupGet(x => x.DataFolderPath).Returns(gameDataPath);
-            archiveMock
-                .Setup(x => x.GetApplicableArchivePaths(
-                    GameRelease, gameDataPath, It.IsAny<IEnumerable<FileName>>()))
-                .Returns(new[]
-                {
-                    new FilePath(@"C:\game\data\dummy1.bsa"),
-                    new FilePath(@"C:\game\data\dummy2.bsa"),
-                });
-            var loadedArchivePaths = provider.GetLoadedArchivePaths();
-
-            Assert.Equal(
-                new[] { @"C:\game\data\dummy1.bsa", @"C:\game\data\dummy2.bsa" }, loadedArchivePaths);
-            var expectedOrdering = new[] {
-                new FileName("ini1.bsa"),
-                new FileName("ini2.bsa"),
-                new FileName("plugin1.bsa"),
-                new FileName("plugin1 - Textures.bsa"),
-                new FileName("plugin2.bsa"),
-                new FileName("plugin2 - Textures.bsa"),
-                new FileName("plugin3.bsa"),
-                new FileName("plugin3 - Textures.bsa"),
-            };
-            archiveMock.Verify(x => x.GetApplicableArchivePaths(GameRelease, @"C:\game\data", expectedOrdering));
+            Assert.Equal(new[] { @"d\e\f\8" }, provider.GetArchiveFileNames("foo.bsa", @"D\E\F\"));
         }
 
         [Fact]
@@ -182,13 +123,6 @@ namespace Focus.Providers.Mutagen.Tests
             Assert.False(provider.ContainsFile("foo.bsa", @"a\b\c\1"));
             Assert.Equal(Enumerable.Empty<string>(), provider.GetArchiveFileNames("foo.bsa"));
             Assert.Contains("foo.bsa", provider.GetBadArchivePaths());
-        }
-
-        private static IModListing<ISkyrimModGetter> ModListing(string pluginName)
-        {
-            var listingMock = new Mock<IModListing<ISkyrimModGetter>>();
-            listingMock.Setup(x => x.ModKey).Returns(ModKey.FromNameAndExtension(pluginName));
-            return listingMock.Object;
         }
     }
 }

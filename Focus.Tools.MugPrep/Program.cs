@@ -135,8 +135,9 @@ namespace Focus.Tools.MugPrep
             this.fs = fs;
             this.options = options;
             this.tempFileCache = tempFileCache;
-            var archiveProvider = new MutagenArchiveProvider(env, GameRelease.SkyrimSE, log);
-            fileProvider = new GameFileProvider(fs, env.GetRealDataDirectory(), archiveProvider);
+            var archiveProvider = new MutagenArchiveProvider(GameRelease.SkyrimSE, log);
+            var gameSettings = GameSettings.From(GameEnvironmentWrapper.Wrap(env), GameRelease.SkyrimSE);
+            fileProvider = new GameFileProvider(fs, gameSettings, archiveProvider);
         }
 
         public IEnumerable<FaceGenPath> GetPaths()

@@ -23,7 +23,7 @@ namespace Focus.Apps.EasyNpc.Build
         public static void Build<TKey>(
             IReadOnlyList<NpcConfiguration<TKey>> npcs, MergedPluginResult mergeInfo, IArchiveProvider archiveProvider,
             IFaceGenEditor faceGenEditor, ModPluginMap modPluginMap, IModResolver modResolver,
-            BuildSettings<TKey> buildSettings, ProgressViewModel progress, ILogger logger)
+            IGameSettings gameSettings, BuildSettings<TKey> buildSettings, ProgressViewModel progress, ILogger logger)
             where TKey : struct
         {
             var log = logger.ForContext("Type", "MergedFolder");
@@ -85,7 +85,7 @@ namespace Focus.Apps.EasyNpc.Build
                             .Select(g => g.Last())
                             .ToDictionary(x => x.RelativePath, StringComparer.OrdinalIgnoreCase),
                         ArchiveFiles = modPluginMap.GetArchivesForMod(modName)
-                                .Select(archiveName => archiveProvider.GetArchivePath(archiveName))
+                                .Select(archiveName => Path.Combine(gameSettings.DataDirectory, archiveName))
                                 .Distinct(StringComparer.OrdinalIgnoreCase)
                                 .Select(archivePath => new
                                 {

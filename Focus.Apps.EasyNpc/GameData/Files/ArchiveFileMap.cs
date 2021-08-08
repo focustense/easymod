@@ -16,16 +16,19 @@ namespace Focus.Apps.EasyNpc.GameData.Files
     // have to call this repeatedly for any reason.
     public class ArchiveFileMap
     {
+        private readonly IReadOnlyList<string> archivePaths;
+
         private Dictionary<string, IEnumerable<string>> archivesToFiles;
         private Dictionary<string, IEnumerable<string>> filesToArchives;
         private readonly ILogger log;
 
         private readonly IArchiveProvider archiveProvider;
 
-        public ArchiveFileMap(IArchiveProvider archiveProvider, ILogger log)
+        public ArchiveFileMap(IArchiveProvider archiveProvider, IEnumerable<string> archivePaths, ILogger log)
         {
             this.archiveProvider = archiveProvider;
             this.log = log;
+            this.archivePaths = archivePaths.ToList();
         }
 
         // Most code shouldn't need to call this, unless the map is going to be subsequently be used by parallel or
@@ -62,7 +65,7 @@ namespace Focus.Apps.EasyNpc.GameData.Files
             if (archivesToFiles != null || filesToArchives != null)
                 return;
             log.Information("Building file index from loaded archives");
-            var archivesWithFiles = archiveProvider.GetLoadedArchivePaths()
+            var archivesWithFiles = archivePaths
                 .Tap(path => log.Debug("Indexing archive {archivePath}", path))
                 .Select(path => new
                 {

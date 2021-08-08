@@ -22,6 +22,11 @@ namespace Focus.Providers.Mutagen
             return Archive.GetApplicableArchivePaths(release, dataFolderPath, archiveOrdering);
         }
 
+        public string GetExtension(GameRelease release)
+        {
+            return Archive.GetExtension(release);
+        }
+
         public IEnumerable<FileName> GetIniListings(GameRelease release)
         {
             return Archive.GetIniListings(release);

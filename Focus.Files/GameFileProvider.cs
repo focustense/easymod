@@ -6,16 +6,21 @@ namespace Focus.Files
 {
     public class GameFileProvider : CascadingFileProvider
     {
-        public GameFileProvider(IFileSystem fs, string dataDirectory, IArchiveProvider archiveProvider) :
-            base(GetFileProviders(fs, dataDirectory, archiveProvider)) { }
+        public GameFileProvider(IGameSettings settings, IArchiveProvider archiveProvider)
+            : this(new FileSystem(), settings, archiveProvider) { }
+
+        public GameFileProvider(IFileSystem fs, IGameSettings settings, IArchiveProvider archiveProvider) :
+            base(GetFileProviders(fs, settings, archiveProvider)) { }
 
         private static IEnumerable<IFileProvider> GetFileProviders(
-            IFileSystem fs, string dataDirectory, IArchiveProvider archiveProvider)
+            IFileSystem fs, IGameSettings settings, IArchiveProvider archiveProvider)
         {
-            return archiveProvider
-                .GetLoadedArchivePaths()
-                .Select(path => new ArchiveFileProvider(archiveProvider, path) as IFileProvider)
-                .Prepend(new DirectoryFileProvider(fs, dataDirectory));
+            return settings.ArchiveOrder
+                .Reverse()  // Listed -> Priority order
+                .Select(f =>
+                    new ArchiveFileProvider(archiveProvider, fs.Path.Combine(settings.DataDirectory, f))
+                    as IFileProvider)
+                .Prepend(new DirectoryFileProvider(fs, settings.DataDirectory));
         }
     }
 }

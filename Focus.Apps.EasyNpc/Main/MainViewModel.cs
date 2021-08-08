@@ -92,15 +92,15 @@ namespace Focus.Apps.EasyNpc.Main
                 Maintenance = new MaintenanceViewModel<TKey>(npcConfigs, profileEventLog, Loader.LoadedPluginNames);
                 var wigResolver = new SimpleWigResolver<TKey>(Loader.Hairs);
                 var fileProvider = new GameFileProvider(
-                    new FileSystem(), gameDataEditor.DataDirectory, gameDataEditor.ArchiveProvider);
+                    new FileSystem(), gameDataEditor.Settings, gameDataEditor.ArchiveProvider);
                 var faceGenEditor = new NiflyFaceGenEditor(fileProvider, Logger);
                 var buildChecker = new BuildChecker<TKey>(
-                    Loader.LoadedPluginNames, Loader.Graph, npcConfigs, Profile.RuleSet, modResolver,
+                    gameDataEditor.Settings, Loader.Graph, npcConfigs, Profile.RuleSet, modResolver,
                     Loader.ModPluginMapFactory, gameDataEditor.ArchiveProvider, profileEventLog, Logger);
                 Build = new BuildViewModel<TKey>(
                     gameDataEditor.ArchiveProvider, buildChecker, gameDataEditor.MergedPluginBuilder,
-                    Loader.ModPluginMapFactory, modResolver, Profile.GetAllNpcConfigurations(), wigResolver,
-                    faceGenEditor, Logger);
+                    Loader.ModPluginMapFactory, modResolver, gameDataEditor.Settings, Profile.GetAllNpcConfigurations(),
+                    wigResolver, faceGenEditor, Logger);
                 IsLoaded = true;
             };
 

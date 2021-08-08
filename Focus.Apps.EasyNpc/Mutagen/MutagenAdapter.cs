@@ -38,6 +38,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public IMergedPluginBuilder<FormKey> MergedPluginBuilder { get; private set; }
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod).NotNull();
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }
+        public IGameSettings Settings { get; private set; }
 
         private readonly GameRelease gameRelease;
         private readonly ILogger log;
@@ -120,9 +121,10 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
                     DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
-                ArchiveProvider = new MutagenArchiveProvider(Environment, gameRelease, log);
+                ArchiveProvider = new MutagenArchiveProvider(gameRelease, log);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, skyrimRelease, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, gameRelease, modResolver);
+                Settings = GameSettings.From(GameEnvironmentWrapper.Wrap(Environment), gameRelease);
                 npcCompatibilityRuleSet = new CompatibilityRuleSet<INpcGetter>(npc => $"{npc.FormKey} '{npc.EditorID}'", log)
                     .Add(new FacegenHeadRule(Environment))
                     .Add(new NoChildrenRule(Environment));

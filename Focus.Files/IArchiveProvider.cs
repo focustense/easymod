@@ -8,8 +8,7 @@ namespace Focus.Files
         bool ContainsFile(string archivePath, string archiveFilePath);
         IEnumerable<string> GetArchiveFileNames(string archivePath, string path = "");
         IEnumerable<string> GetBadArchivePaths();
-        string GetArchivePath(string archiveName);
-        IEnumerable<string> GetLoadedArchivePaths(); // Priority order, not listed order!
+        bool IsArchiveFile(string path);
         ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath);
     }
 }

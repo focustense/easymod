@@ -10,7 +10,7 @@ namespace Focus.Files
 
         public CascadingFileProvider(IEnumerable<IFileProvider> providers)
         {
-            this.providers = providers;
+            this.providers = providers.ToList();
         }
 
         public bool Exists(string fileName)

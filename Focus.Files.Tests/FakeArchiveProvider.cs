@@ -8,11 +8,10 @@ namespace Focus.Files.Tests
     // Mocks don't work well with IArchiveProvider due to the use of ReadOnlySpan.
     class FakeArchiveProvider : IArchiveProvider
     {
-        private readonly Dictionary<string, Dictionary<string, byte[]>> files = new();
-
         public string[] ArchiveExtensions { get; set; } = new[] { ".bsa" };
         public string[] BadArchivePaths { get; set; } = Array.Empty<string>();
-        public string[] LoadedArchivePaths { get; set; } = Array.Empty<string>();
+
+        private readonly Dictionary<string, Dictionary<string, byte[]>> files = new();
 
         public void AddFile(string archivePath, string archiveFilePath, byte[] data)
         {
@@ -36,19 +35,9 @@ namespace Focus.Files.Tests
                 .Where(f => string.IsNullOrEmpty(path) || f.StartsWith(path));
         }
 
-        public string GetArchivePath(string archiveName)
-        {
-            throw new NotImplementedException();
-        }
-
         public IEnumerable<string> GetBadArchivePaths()
         {
             return BadArchivePaths;
-        }
-
-        public IEnumerable<string> GetLoadedArchivePaths()
-        {
-            return LoadedArchivePaths;
         }
 
         public bool IsArchiveFile(string path)

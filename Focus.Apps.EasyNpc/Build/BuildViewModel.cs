@@ -50,6 +50,7 @@ namespace Focus.Apps.EasyNpc.Build
         private readonly BuildChecker<TKey> buildChecker;
         private readonly IMergedPluginBuilder<TKey> builder;
         private readonly IFaceGenEditor faceGenEditor;
+        private readonly IGameSettings settings;
         private readonly ILogger log;
         private readonly IModPluginMapFactory modPluginMapFactory;
         private readonly IModResolver modResolver;
@@ -57,7 +58,7 @@ namespace Focus.Apps.EasyNpc.Build
 
         public BuildViewModel(
             IArchiveProvider archiveProvider, BuildChecker<TKey> buildChecker, IMergedPluginBuilder<TKey> builder,
-            IModPluginMapFactory modPluginMapFactory, IModResolver modResolver,
+            IModPluginMapFactory modPluginMapFactory, IModResolver modResolver, IGameSettings settings,
             IEnumerable<NpcConfiguration<TKey>> npcs, IWigResolver<TKey> wigResolver, IFaceGenEditor faceGenEditor,
             ILogger logger)
         {
@@ -68,6 +69,7 @@ namespace Focus.Apps.EasyNpc.Build
             this.log = logger.ForContext<BuildViewModel<TKey>>();
             this.modPluginMapFactory = modPluginMapFactory;
             this.modResolver = modResolver;
+            this.settings = settings;
             this.wigResolver = wigResolver;
             Npcs = npcs.ToList().AsReadOnly();
 
@@ -101,7 +103,7 @@ namespace Focus.Apps.EasyNpc.Build
                 var mergeInfo = builder.Build(Npcs, buildSettings, Progress.MergedPlugin);
                 var modPluginMap = modPluginMapFactory.DefaultMap();
                 MergedFolder.Build(
-                    Npcs, mergeInfo, archiveProvider, faceGenEditor, modPluginMap, modResolver, buildSettings,
+                    Npcs, mergeInfo, archiveProvider, faceGenEditor, modPluginMap, modResolver, settings, buildSettings,
                     Progress.MergedFolder, log);
                 BuildArchive();
                 new BuildReport { ModName = buildSettings.OutputModName }.SaveToFile(Settings.Default.BuildReportPath);
