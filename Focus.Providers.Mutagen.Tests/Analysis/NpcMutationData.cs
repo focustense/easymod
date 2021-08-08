@@ -69,6 +69,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             x => x.ObjectBounds.Second = new Noggog.P3Int16(1, 2, 3),
             x => x.ObserveDeadBodyOverridePackageList.SetTo(dummyKey),
             x => x.Packages.RemoveAt(1),
+            x => x.Packages.Move(0, 2),
             x => x.Perks.RemoveAt(x.Perks.Count - 1),
             x => x.PlayerSkills.FarAwayModelDistance += 0.123f,
             x => x.PlayerSkills.Health += 5,

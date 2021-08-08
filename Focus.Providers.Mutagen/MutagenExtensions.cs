@@ -37,6 +37,14 @@ namespace Focus.Providers.Mutagen
         public static bool SequenceEqualSafe<T>(
             this IEnumerable<T>? first, IEnumerable<T>? second, Func<T, FormKey?> keySelector)
         {
+            Func<T, string> wrappedKeySelector = x => (keySelector(x) ?? FormKey.Null).ToString();
+            return (first ?? Enumerable.Empty<T>()).Select(wrappedKeySelector)
+                .SequenceEqual((second ?? Enumerable.Empty<T>()).Select(wrappedKeySelector));
+        }
+
+        public static bool SetEqualsSafe<T>(
+            this IEnumerable<T>? first, IEnumerable<T>? second, Func<T, FormKey?> keySelector)
+        {
             // FormKey instances aren't Comparable.
             // To compare sequences, we don't care about the "correct order" (i.e. load order), only that the order is
             // consistent between both sequences.
@@ -44,7 +52,7 @@ namespace Focus.Providers.Mutagen
             return first.OrderBySafe(wrappedKeySelector).SequenceEqualSafe(second.OrderBySafe(wrappedKeySelector));
         }
 
-        public static bool SequenceEqualSafeBy<T, TKey>(
+        public static bool SetEqualsSafeBy<T, TKey>(
             this IEnumerable<T>? first, IEnumerable<T>? second, Func<T, TKey> keySelector)
         {
             return first.OrderBySafe(keySelector).SequenceEqualSafe(second.OrderBySafe(keySelector));

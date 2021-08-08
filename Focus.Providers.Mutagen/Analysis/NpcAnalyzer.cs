@@ -314,14 +314,14 @@ namespace Focus.Providers.Mutagen.Analysis
             configure?.Invoke(mask);
             var workingEquals = x.Equals(y, mask);
             return workingEquals &&
-                x.ActorEffect.SequenceEqualSafe(y.ActorEffect, e => e.FormKey) &&
+                x.ActorEffect.SetEqualsSafe(y.ActorEffect, e => e.FormKey) &&
                 x.AIData.Equals(y.AIData, new AIData.TranslationMask(true, true) { Unused = false }) &&
-                x.Attacks.SequenceEqualSafe(y.Attacks, a => a.AttackData?.AttackType.FormKey) &&
-                x.Factions.SequenceEqualSafe(y.Factions, f => f.Faction.FormKey) &&
-                x.Items.SequenceEqualSafe(y.Items, i => i.Item.Item.FormKey) &&
-                x.Keywords.SequenceEqualSafe(y.Keywords, k => k.FormKey) &&
+                x.Attacks.SetEqualsSafe(y.Attacks, a => a.AttackData?.AttackType.FormKey) &&
+                x.Factions.SetEqualsSafe(y.Factions, f => f.Faction.FormKey) &&
+                x.Items.SetEqualsSafe(y.Items, i => i.Item.Item.FormKey) &&
+                x.Keywords.SetEqualsSafe(y.Keywords, k => k.FormKey) &&
                 x.Packages.SequenceEqualSafe(y.Packages, p => p.FormKey) &&
-                x.Perks.SequenceEqualSafe(y.Perks, p => p.Perk.FormKey) &&
+                x.Perks.SetEqualsSafe(y.Perks, p => p.Perk.FormKey) &&
                 PlayerSkillsEqual(x.PlayerSkills, y.PlayerSkills) &&
                 VmadsEqual(x.VirtualMachineAdapter, y.VirtualMachineAdapter);
         }
@@ -365,7 +365,7 @@ namespace Focus.Providers.Mutagen.Analysis
             return
                 x.Name == y.Name &&
                 x.Flags == y.Flags &&
-                x.Properties.SequenceEqualSafeBy(y.Properties, p => p.Name);
+                x.Properties.SetEqualsSafeBy(y.Properties, p => p.Name);
         }
 
         private static bool TintLayersEqual(IReadOnlyList<ITintLayerGetter> a, IReadOnlyList<ITintLayerGetter> b)

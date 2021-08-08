@@ -1022,7 +1022,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     .ToList()
                     .AsReadOnly(),
                 KeywordKeys = AddEmptyRecords<Keyword>(pluginName, "JobJarl", "TraitPowerHungry"),
-                PackageKeys = AddEmptyRecords<Package>(pluginName, "WatfordWork", "DefaultSandbox"),
+                PackageKeys = AddEmptyRecords<Package>(pluginName, "WatfordWork", "DefaultSandbox", "Eat", "Sing"),
                 PerkPlacements = AddEmptyRecords<Perk>(pluginName, "MagicResistance30", "Recovery30", "Regeneration")
                     .Zip(new byte[] { 2, 3, 1 })
                     .Select(x => new PerkPlacement { Perk = x.First.AsLink<IPerkGetter>(), Rank = x.Second })
