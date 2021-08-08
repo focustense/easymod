@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Linq;
+using Xunit;
 
 namespace Focus.Files.Tests
 {
@@ -45,6 +46,13 @@ namespace Focus.Files.Tests
             Assert.False(index.Contains("file1"));
             Assert.False(index.Contains(@"a\b\c\d\file1"));
             Assert.False(index.Contains(@"a\b\c\other"));
+        }
+
+        [Fact]
+        public void IsEmpty_IsFalseForNonEmptyIndex()
+        {
+            Assert.False(index.IsEmpty());
+            Assert.True(new ReadOnlyFileIndex(Enumerable.Empty<string>()).IsEmpty());
         }
     }
 }

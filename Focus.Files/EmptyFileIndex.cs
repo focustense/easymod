@@ -1,11 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Focus.Files
 {
-    public class EmptyFileIndex : IBucketedFileIndex, IFileIndex
+    public class EmptyFileIndex : INotifyingBucketedFileIndex, INotifyingFileIndex
     {
+        public event EventHandler<FileEventArgs>? Added;
+        public event EventHandler<FileEventArgs>? Removed;
+        public event EventHandler<BucketedFileEventArgs>? AddedToBucket;
+        public event EventHandler<BucketedFileEventArgs>? RemovedFromBucket;
+
         public bool Contains(string path)
+        {
+            return false;
+        }
+
+        public bool Contains(string bucketName, string pathInBucket)
         {
             return false;
         }
@@ -20,6 +31,11 @@ namespace Focus.Files
             return Enumerable.Empty<KeyValuePair<string, IEnumerable<string>>>();
         }
 
+        public IEnumerable<string> GetBucketNames()
+        {
+            return Enumerable.Empty<string>();
+        }
+
         public IEnumerable<string> GetFilePaths()
         {
             return Enumerable.Empty<string>();
@@ -28,6 +44,16 @@ namespace Focus.Files
         public IEnumerable<string> GetFilePaths(string bucketName)
         {
             return Enumerable.Empty<string>();
+        }
+
+        public bool IsEmpty()
+        {
+            return true;
+        }
+
+        public bool IsEmpty(string bucketName)
+        {
+            return true;
         }
     }
 }

@@ -21,5 +21,10 @@ namespace Focus.Files
         {
             return paths;
         }
+
+        public bool IsEmpty()
+        {
+            return paths.Count == 0;
+        }
     }
 }

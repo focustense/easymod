@@ -59,6 +59,7 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "", "inroot.txt"),
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.log", "insub1.txt"),
                 x => AssertBucket(x, "sub2", @"common\a.txt", "insub2.txt"));
+            Assert.Equal(new[] { "", "sub1", "sub2" }, index.GetBucketNames());
             Assert.Equal(new[] { "inroot.txt" }, index.GetFilePaths(""));
             Assert.Equal(
                 new[] { @"common\a.txt", "insub1.log", "insub1.txt" }, index.GetFilePaths("sub1").OrderBy(f => f));
@@ -75,6 +76,11 @@ namespace Focus.Files.Tests
             Assert.False(index.Contains("sub1", @"filtered.foo"));
             Assert.False(index.Contains("sub1", @"filtered.bar"));
             Assert.False(index.Contains("sub2", @"filtered.baz"));
+            Assert.False(index.IsEmpty());
+            Assert.False(index.IsEmpty(""));
+            Assert.False(index.IsEmpty("sub1"));
+            Assert.False(index.IsEmpty("sub2"));
+            Assert.True(index.IsEmpty("unknown"));
         }
 
         [Fact]
@@ -153,10 +159,12 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.log", "insub1.txt"),
                 x => AssertBucket(x, "sub2", @"common\a.txt", "insub2.txt", "new.txt"),
                 x => AssertBucket(x, "sub3", "new.txt"));
+            Assert.Equal(new[] { "", "sub1", "sub2", "sub3" }, index.GetBucketNames());
             Assert.True(index.Contains(@"sub2\new.txt"));
             Assert.True(index.Contains(@"sub3\new.txt"));
             Assert.True(index.Contains("sub2", "new.txt"));
             Assert.True(index.Contains("sub3", "new.txt"));
+            Assert.False(index.IsEmpty("sub3"));
         }
 
         [Fact]
@@ -198,6 +206,7 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "", "inroot.txt"),
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.txt"),
                 x => AssertBucket(x, "sub2", "insub2.txt"));
+            Assert.Equal(new[] { "", "sub1", "sub2" }, index.GetBucketNames());
             Assert.False(index.Contains(@"sub1\insub1.log"));
             Assert.False(index.Contains(@"sub2\common\a.txt"));
             Assert.False(index.Contains("sub1", "insub1.log"));
@@ -244,6 +253,7 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.log", "insub1.txt"),
                 x => AssertBucket(x, "sub2", @"common\a.txt"),
                 x => AssertBucket(x, "sub3", "insub3.log"));
+            Assert.Equal(new[] { "", "sub1", "sub2", "sub3" }, index.GetBucketNames());
             Assert.True(index.Contains("newinroot.txt"));
             Assert.True(index.Contains(@"sub3\insub3.log"));
             Assert.True(index.Contains("", "newinroot.txt"));
@@ -252,6 +262,7 @@ namespace Focus.Files.Tests
             Assert.False(index.Contains(@"sub2\insub2.txt"));
             Assert.False(index.Contains("", "inroot.txt"));
             Assert.False(index.Contains("sub2", "insub2.txt"));
+            Assert.False(index.IsEmpty("sub3"));
         }
 
         [Fact]
@@ -292,6 +303,16 @@ namespace Focus.Files.Tests
                     Assert.Equal("sub2", e.BucketName);
                     Assert.Equal("insub2.txt", e.Path);
                 });
+        }
+
+        [Fact]
+        public void WhenDirectoryFullyEmptied_BucketIsEmpty()
+        {
+            watcher.RaiseDeleted(@"sub1\insub1.log");
+            watcher.RaiseDeleted(@"sub1\insub1.txt");
+            watcher.RaiseDeleted(@"sub1\common\a.txt");
+
+            Assert.True(index.IsEmpty("sub1"));
         }
 
         private void AddFiles(IEnumerable<string> fileNames)

@@ -5,14 +5,18 @@ namespace Focus.Files
 {
     public interface IBucketedFileIndex
     {
+        bool Contains(string bucketName, string pathInBucket);
         IEnumerable<KeyValuePair<string, string>> FindInBuckets(string pathInBucket);
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> GetBucketedFilePaths();
+        IEnumerable<string> GetBucketNames();
         IEnumerable<string> GetFilePaths(string bucketName);
+        bool IsEmpty(string bucketName);
     }
 
     public interface IFileIndex
     {
         bool Contains(string path);
+        bool IsEmpty();
         IEnumerable<string> GetFilePaths();
     }
 

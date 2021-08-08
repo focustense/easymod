@@ -42,6 +42,17 @@ namespace Focus.Files
             }
         }
 
+        public void Clear()
+        {
+            contentPaths.Clear();
+            inverseContentPaths.Clear();
+        }
+
+        public bool Contains(string bucketName, string pathInBucket)
+        {
+            return contentPaths.TryGetValue(bucketName, out var contents) && contents.Contains(pathInBucket);
+        }
+
         public IEnumerable<KeyValuePair<string, string>> FindInBuckets(string pathInBucket)
         {
             return inverseContentPaths.TryGetValue(pathInBucket, out var archivePaths) ?
@@ -54,9 +65,19 @@ namespace Focus.Files
             return contentPaths.Select(x => new KeyValuePair<string, IEnumerable<string>>(x.Key, x.Value));
         }
 
+        public IEnumerable<string> GetBucketNames()
+        {
+            return contentPaths.Keys;
+        }
+
         public IEnumerable<string> GetFilePaths(string bucketName)
         {
             return contentPaths.TryGetValue(bucketName, out var contents) ? contents : Enumerable.Empty<string>();
+        }
+
+        public bool IsEmpty(string bucketName)
+        {
+            return !contentPaths.TryGetValue(bucketName, out var contents) || contents.Count == 0;
         }
 
         public bool RemoveArchive(string archivePath)

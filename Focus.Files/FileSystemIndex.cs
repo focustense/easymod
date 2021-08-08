@@ -149,6 +149,11 @@ namespace Focus.Files
             return buckets.Select(b => new KeyValuePair<string, IEnumerable<string>>(b.Key, b.Value));
         }
 
+        public IEnumerable<string> GetBucketNames()
+        {
+            return buckets.Keys;
+        }
+
         public IEnumerable<string> GetFilePaths(string bucketName)
         {
             return buckets.TryGetValue(bucketName, out var fileNames) ? fileNames : Enumerable.Empty<string>();
@@ -157,6 +162,16 @@ namespace Focus.Files
         public IEnumerable<string> GetFilePaths()
         {
             return allPaths;
+        }
+
+        public bool IsEmpty()
+        {
+            return allPaths.Count == 0;
+        }
+
+        public bool IsEmpty(string bucketName)
+        {
+            return !buckets.TryGetValue(bucketName, out var contents) || contents.Count == 0;
         }
 
         private void Dispose(bool disposing)
