@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Focus.Files;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Focus.Files.Tests
+namespace Focus.Testing.Files
 {
     // Mocks don't work well with IArchiveProvider due to the use of ReadOnlySpan.
-    class FakeArchiveProvider : IArchiveProvider
+    public class FakeArchiveProvider : IArchiveProvider
     {
         public string[] ArchiveExtensions { get; set; } = new[] { ".bsa" };
         public string[] BadArchivePaths { get; set; } = Array.Empty<string>();

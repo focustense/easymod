@@ -5,9 +5,9 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 
-namespace Focus.Files.Tests
+namespace Focus.Testing.Files
 {
-    class FakeFileSystemWatcher : IFileSystemWatcher
+    public class FakeFileSystemWatcher : IFileSystemWatcher
     {
         public bool IncludeSubdirectories { get; set; }
         public bool EnableRaisingEvents { get; set; }

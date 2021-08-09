@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Focus.Testing.Files;
+using System;
 using Xunit;
 
 namespace Focus.Files.Tests

@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Focus.Files\Focus.Files.csproj" />
+    <ProjectReference Include="..\Focus.Testing.Files\Focus.Testing.Files.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Focus.Testing.Files;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions.TestingHelpers;

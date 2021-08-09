@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO.Abstractions;
 
-namespace Focus.Files.Tests
+namespace Focus.Testing.Files
 {
-    class FakeFileSystemWatcherFactory : IFileSystemWatcherFactory
+    public class FakeFileSystemWatcherFactory : IFileSystemWatcherFactory
     {
         public IEnumerable<FakeFileSystemWatcher> Watchers => watchers;
 

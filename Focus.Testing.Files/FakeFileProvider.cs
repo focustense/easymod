@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Focus.Files;
+using System;
 using System.Collections.Generic;
 
-namespace Focus.Files.Tests
+namespace Focus.Testing.Files
 {
     // Mocks don't work well with IFileProvider due to the use of ReadOnlySpan.
-    class FakeFileProvider : IFileProvider
+    public class FakeFileProvider : IFileProvider
     {
         private readonly Dictionary<string, byte[]> files = new();
 
