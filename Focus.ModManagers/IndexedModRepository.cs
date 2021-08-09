@@ -58,7 +58,9 @@ namespace Focus.ModManagers
             modIdsToModNames = modIdsToComponents
                 .Where(x => !string.IsNullOrEmpty(x.Key))
                 .ToDictionary(x => x.Key, x => x.Value.First().ModKey.Name);
-            modNamesToModIds = modIdsToModNames.ToDictionary(x => x.Value, x => x.Key, NameComparer);
+            modNamesToModIds = modIdsToModNames
+                .GroupBy(x => x.Value, x => x.Key)
+                .ToDictionary(g => g.Key, g => g.First(), NameComparer);
 
             archiveIndex = new ArchiveIndex(archiveProvider);
             SetupArchiveIndex();
@@ -221,7 +223,8 @@ namespace Focus.ModManagers
                 !string.IsNullOrEmpty(component.ModKey.Name))
             {
                 modIdsToModNames[component.ModKey.Id] = component.ModKey.Name;
-                modNamesToModIds[component.ModKey.Name] = component.ModKey.Id;
+                if (!modNamesToModIds.ContainsKey(component.ModKey.Name))
+                    modNamesToModIds.Add(component.ModKey.Name, component.ModKey.Id);
             }
         }
 

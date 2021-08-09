@@ -25,6 +25,7 @@ namespace Focus.ModManagers.Tests
             modIndex.AddFiles("01_bar", "bar1", "bar2", "bar.bsa");
             modIndex.AddFiles("02_baz", "common/c1", "baz1", "baz2");
             modIndex.AddFiles("02_quux_disabled", "common/c1", "quux1", "quux2");
+            modIndex.AddFiles("03_dupe", "stuff1");
             modIndex.AddFiles("standalone", "foo2", "bar2");
             archiveProvider = new FakeArchiveProvider();
             archiveProvider.AddFiles(@$"{RootPath}\01_bar\bar.bsa", "bar3", "common/c1");
@@ -42,9 +43,29 @@ namespace Focus.ModManagers.Tests
             {
                 { "01", "modname1" },
                 { "02", "modname2" },
+                { "03", "modname2" },
             };
             modRepository = new IndexedModRepository(
                 modIndex, archiveProvider, componentResolverMock.Object, RootPath);
+        }
+
+        [Fact]
+        public void WhenInitialized_IgnoresDuplicateModNames()
+        {
+            // The behavior we expect here is not to ignore the duplicate mod completely - it should be indexed like any
+            // other mod, but should still be independent, not merged into the older conflicting mod just because it
+            // happens to have the same name. What this means is that it won't be addressable by name, but it is still
+            // addressable by ID, and by component name, and still shows up in search results.
+            IModLocatorKey originalModKey = new ModLocatorKey("02", "modname2");
+            IModLocatorKey dupeModKey = new ModLocatorKey("03", "modname2");
+            Assert.Equal(dupeModKey, modRepository.FindByComponentName("dupe"));
+            Assert.Equal(dupeModKey, modRepository.FindByComponentPath(@$"{RootPath}\03_dupe"));
+            Assert.Equal(dupeModKey, modRepository.FindByKey(dupeModKey));
+            Assert.Equal(dupeModKey, modRepository.GetById("03"));
+            Assert.Equal(originalModKey, modRepository.GetByName("modname2"));
+            Assert.Collection(
+                modRepository.SearchForFiles("stuff1", false, false),
+                x => AssertSearchResult(x, "modname2", "dupe"));
         }
 
         [Theory]
@@ -122,6 +143,21 @@ namespace Focus.ModManagers.Tests
                             Assert.Equal($@"{RootPath}\02_quux_disabled", x.Path);
                             Assert.Equal(new ModLocatorKey("02", "modname2"), x.ModKey);
                             Assert.False(x.IsEnabled);
+                        });
+                },
+                mod =>
+                {
+                    Assert.Equal("03", mod.Id);
+                    Assert.Equal("modname2", mod.Name);
+                    Assert.Collection(
+                        mod.Components,
+                        x =>
+                        {
+                            Assert.Equal("dupe_id", x.Id);
+                            Assert.Equal("dupe", x.Name);
+                            Assert.Equal($@"{RootPath}\03_dupe", x.Path);
+                            Assert.Equal(new ModLocatorKey("03", "modname2"), x.ModKey);
+                            Assert.True(x.IsEnabled);
                         });
                 },
                 mod =>
@@ -281,28 +317,46 @@ namespace Focus.ModManagers.Tests
         }
 
         [Fact]
+        public void WhenFileAddedToNewComponent_IgnoresDuplicateModNames()
+        {
+            modNames.Add("10", "modname2");
+            modIndex.AddFiles("10_new", "new1");
+
+            IModLocatorKey conflictingModKey = new ModLocatorKey("02", "modname2");
+            IModLocatorKey newModKey = new ModLocatorKey("10", "modname2");
+            Assert.Equal(newModKey, modRepository.FindByComponentName("new"));
+            Assert.Equal(newModKey, modRepository.FindByComponentPath(@$"{RootPath}\10_new"));
+            Assert.Equal(newModKey, modRepository.FindByKey(newModKey));
+            Assert.Equal(newModKey, modRepository.GetById("10"));
+            Assert.Equal(conflictingModKey, modRepository.GetByName("modname2"));
+            Assert.Collection(
+                modRepository.SearchForFiles("new1", false, false),
+                x => AssertSearchResult(x, "modname2", "new"));
+        }
+
+        [Fact]
         public void WhenFileAddedToNewComponent_IndexesNewFileAndComponent()
         {
-            IModLocatorKey modKey = new ModLocatorKey("03", "modname3");
+            IModLocatorKey modKey = new ModLocatorKey("20", "modname3");
             modNames.Add(modKey.Id, modKey.Name);
-            modIndex.AddFiles("03_new", "foo1", "new1", "new2");
+            modIndex.AddFiles("20_new", "foo1", "new1", "new2");
 
             Assert.Contains(modRepository, x =>
-                x.Id == "03" &&
+                x.Id == "20" &&
                 x.Name == "modname3" &&
-                x.Components[0].ModKey.Id == "03" &&
+                x.Components[0].ModKey.Id == "20" &&
                 x.Components[0].ModKey.Name == "modname3" &&
                 x.Components[0].Id == "new_id" &&
                 x.Components[0].Name == "new" &&
-                x.Components[0].Path == $@"{RootPath}\03_new" &&
+                x.Components[0].Path == $@"{RootPath}\20_new" &&
                 x.Components[0].IsEnabled);
-            var mod = modRepository.GetById("03");
+            var mod = modRepository.GetById("20");
             Assert.NotNull(mod);
             Assert.True(modRepository.ContainsFile(mod, "foo1", false, false));
             Assert.True(modRepository.ContainsFile(mod, "new1", false, false));
             Assert.True(modRepository.ContainsFile(mod, "new2", false, false));
             Assert.Equal(modKey, modRepository.FindByComponentName("new"));
-            Assert.Equal(modKey, modRepository.FindByComponentPath($@"{RootPath}\03_new"));
+            Assert.Equal(modKey, modRepository.FindByComponentPath($@"{RootPath}\20_new"));
             Assert.Equal(modKey, modRepository.FindByKey(modKey));
             Assert.Equal(modKey, modRepository.GetByName("modname3"));
             Assert.Collection(
