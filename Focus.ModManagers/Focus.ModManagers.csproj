@@ -9,4 +9,9 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
+    <ProjectReference Include="..\Focus.Files\Focus.Files.csproj" />
+  </ItemGroup>
+
 </Project>

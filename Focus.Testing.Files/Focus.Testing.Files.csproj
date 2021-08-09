@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
     <ProjectReference Include="..\Focus.Files\Focus.Files.csproj" />
   </ItemGroup>
 
