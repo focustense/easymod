@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Focus.ModManagers.ModOrganizer
 {
-    class ModOrganizerConfiguration
+    public class IniConfiguration : IModOrganizerConfiguration
     {
         private static readonly FileIniDataParser parser = new();
 
@@ -15,11 +15,30 @@ namespace Focus.ModManagers.ModOrganizer
         public string OverwriteDirectory { get; private init; }
         public string ProfilesDirectory { get; private init; }
 
-        public ModOrganizerConfiguration(string entryIniPath)
+        public static IniConfiguration AutoDetect(string exePath)
         {
-            var entryIni = parser.ReadFile(entryIniPath);
+            var entryIniPath = IniLocator.Default.DetectIniPath(exePath);
+            return LoadFromFile(entryIniPath);
+        }
+
+        public static IniConfiguration LoadFromFile(string entryIniPath)
+        {
+            var defaultBaseDirectoryPath = Path.GetDirectoryName(entryIniPath) ?? string.Empty;
+            using var fs = File.OpenRead(entryIniPath);
+            return LoadFromStream(fs, defaultBaseDirectoryPath);
+        }
+
+        public static IniConfiguration LoadFromStream(Stream stream, string defaultBaseDirectoryPath)
+        {
+            using var reader = new StreamReader(stream);
+            var entryIni = parser.ReadData(reader) ?? new IniData();
+            return new IniConfiguration(entryIni, defaultBaseDirectoryPath);
+        }
+
+        public IniConfiguration(IniData entryIni, string defaultBaseDirectoryPath)
+        {
             var settings = entryIni["Settings"] ?? new KeyDataCollection();
-            BaseDirectory = settings["base_directory"] ?? Path.GetDirectoryName(entryIniPath) ?? string.Empty;
+            BaseDirectory = settings["base_directory"] ?? defaultBaseDirectoryPath;
             DownloadDirectory = ResolveDirectory(settings, "download_directory", "%BASE_DIR%/downloads", BaseDirectory);
             ModsDirectory = ResolveDirectory(settings, "mod_directory", "%BASE_DIR%/mods", BaseDirectory);
             OverwriteDirectory =
