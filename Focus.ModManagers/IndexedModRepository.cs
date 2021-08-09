@@ -45,9 +45,19 @@ namespace Focus.ModManagers
             this.modIndex = modIndex;
             this.rootPath = rootPath;
 
-            bucketNamesToComponents = modIndex.GetBucketNames()
+            // In theory, we don't need the temporary list - it's really just a waste of CPU and memory to materialize
+            // eagerly before adding to the following dictionary.
+            // However, there doesn't seem to be any other way to maintain a stable ordering as it gets added to the
+            // dictionary. Simply using AsOrdered will destabilize the tests, specifically the ones that verify behavior
+            // of mod name/key duplication.
+            // There might be a better way - but most of the real latency is in the resolver anyway, so despite being a
+            // little wasteful, it's mostly invisible.
+            var bucketComponentList = modIndex.GetBucketNames()
+                .AsParallel().AsOrdered()
                 .Select(b => new { BucketName = b, Component = componentResolver.ResolveComponentInfo(b) })
-                .ToDictionary(x => x.BucketName, x => x.Component, NameComparer);
+                .ToList();
+            bucketNamesToComponents =
+                bucketComponentList.ToDictionary(x => x.BucketName, x => x.Component, NameComparer);
             componentNamesToBucketNames =
                 bucketNamesToComponents.ToDictionary(x => x.Value.Name, x => x.Key, NameComparer);
             componentNamesToComponents = bucketNamesToComponents.Values.ToDictionary(x => x.Name, NameComparer);
