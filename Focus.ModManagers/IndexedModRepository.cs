@@ -4,11 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Focus.ModManagers
 {
     public class IndexedModRepository : IModRepository
     {
+        record ResolvedBucket(string BucketName, ModComponentInfo Component);
+
         // For all names used here: Bucket names, component names, mod names.
         private static readonly StringComparer NameComparer = StringComparer.CurrentCultureIgnoreCase;
 
@@ -45,19 +48,8 @@ namespace Focus.ModManagers
             this.modIndex = modIndex;
             this.rootPath = rootPath;
 
-            // In theory, we don't need the temporary list - it's really just a waste of CPU and memory to materialize
-            // eagerly before adding to the following dictionary.
-            // However, there doesn't seem to be any other way to maintain a stable ordering as it gets added to the
-            // dictionary. Simply using AsOrdered will destabilize the tests, specifically the ones that verify behavior
-            // of mod name/key duplication.
-            // There might be a better way - but most of the real latency is in the resolver anyway, so despite being a
-            // little wasteful, it's mostly invisible.
-            var bucketComponentList = modIndex.GetBucketNames()
-                .AsParallel().AsOrdered()
-                .Select(b => new { BucketName = b, Component = componentResolver.ResolveComponentInfo(b) })
-                .ToList();
-            bucketNamesToComponents =
-                bucketComponentList.ToDictionary(x => x.BucketName, x => x.Component, NameComparer);
+            var bucketComponents = ResolveAllBuckets().Result;
+            bucketNamesToComponents = bucketComponents.ToDictionary(x => x.BucketName, x => x.Component, NameComparer);
             componentNamesToBucketNames =
                 bucketNamesToComponents.ToDictionary(x => x.Value.Name, x => x.Key, NameComparer);
             componentNamesToComponents = bucketNamesToComponents.Values.ToDictionary(x => x.Name, NameComparer);
@@ -238,6 +230,14 @@ namespace Focus.ModManagers
             }
         }
 
+        private async Task<IEnumerable<ResolvedBucket>> ResolveAllBuckets()
+        {
+            var resolveTasks = modIndex.GetBucketNames()
+                .Select(async b => new ResolvedBucket(b, await componentResolver.ResolveComponentInfo(b)));
+            var resolved = await Task.WhenAll(resolveTasks);
+            return resolved.NotNull();
+        }
+
         private void SetupArchiveIndex()
         {
             var archivePathPairs = modIndex.GetBucketedFilePaths()
@@ -268,7 +268,7 @@ namespace Focus.ModManagers
 
                 if (!bucketNamesToComponents.ContainsKey(e.BucketName))
                 {
-                    var component = componentResolver.ResolveComponentInfo(e.BucketName);
+                    var component = componentResolver.ResolveComponentInfo(e.BucketName).Result;
                     RegisterComponent(component, e.BucketName);
                 }
             };

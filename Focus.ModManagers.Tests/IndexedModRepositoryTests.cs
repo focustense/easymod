@@ -1,9 +1,8 @@
 using Focus.Testing.Files;
 using Moq;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Focus.ModManagers.Tests
@@ -31,14 +30,14 @@ namespace Focus.ModManagers.Tests
             archiveProvider.AddFiles(@$"{RootPath}\01_bar\bar.bsa", "bar3", "common/c1");
             componentResolverMock = new Mock<IComponentResolver>();
             componentResolverMock.Setup(x => x.ResolveComponentInfo(It.IsAny<string>()))
-                .Returns((string componentName) => new ModComponentInfo(
+                .Returns((string componentName) => Task.FromResult(new ModComponentInfo(
                     componentName.IndexOf('_') == 2 ?
                         new ModLocatorKey(componentName[0..2], modNames[componentName[0..2]]) :
                         ModLocatorKey.Empty,
                     componentName.IndexOf('_') == 2 ? $"{componentName[3..]}_id" : $"{componentName}_id",
                     componentName.IndexOf('_') == 2 ? componentName[3..] : componentName,
                     Path.Combine(RootPath, componentName),
-                    !componentName.EndsWith("_disabled")));
+                    !componentName.EndsWith("_disabled"))));
             modNames = new()
             {
                 { "01", "modname1" },

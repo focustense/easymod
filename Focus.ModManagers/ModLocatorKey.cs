@@ -59,12 +59,12 @@ namespace Focus.ModManagers
             return prefix + string.Join(separator, Id, Name);
         }
 
-        public static bool operator ==(ModLocatorKey x, IModLocatorKey y)
+        public static bool operator ==(ModLocatorKey? x, IModLocatorKey? y)
         {
             return Equals(x, y);
         }
 
-        public static bool operator !=(ModLocatorKey x, IModLocatorKey y)
+        public static bool operator !=(ModLocatorKey? x, IModLocatorKey? y)
         {
             return !(x == y);
         }

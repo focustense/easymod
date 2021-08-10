@@ -1,7 +1,9 @@
-﻿namespace Focus.ModManagers
+﻿using System.Threading.Tasks;
+
+namespace Focus.ModManagers
 {
     public interface IComponentResolver
     {
-        ModComponentInfo ResolveComponentInfo(string componentName);
+        Task<ModComponentInfo> ResolveComponentInfo(string componentName);
     }
 }

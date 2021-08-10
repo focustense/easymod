@@ -26,9 +26,9 @@ namespace Focus.ModManagers.ModOrganizer.Tests
         }
 
         [Fact]
-        public void WhenMetaIniNotFound_ResolvesDefaultComponent()
+        public async Task WhenMetaIniNotFound_ResolvesDefaultComponent()
         {
-            var component = componentResolver.ResolveComponentInfo("foo");
+            var component = await componentResolver.ResolveComponentInfo("foo");
 
             Assert.Equal("foo", component.Id);
             Assert.Equal("foo", component.Name);
@@ -38,10 +38,10 @@ namespace Focus.ModManagers.ModOrganizer.Tests
         }
 
         [Fact]
-        public void WhenMetaIniIsEmpty_ResolvesDefaultComponent()
+        public async Task WhenMetaIniIsEmpty_ResolvesDefaultComponent()
         {
             fs.AddFile(@$"{RootPath}\foo\meta.ini", new MockFileData(""));
-            var component = componentResolver.ResolveComponentInfo("foo");
+            var component = await componentResolver.ResolveComponentInfo("foo");
 
             Assert.Equal("foo", component.Id);
             Assert.Equal("foo", component.Name);
@@ -51,7 +51,7 @@ namespace Focus.ModManagers.ModOrganizer.Tests
         }
 
         [Fact]
-        public void WhenMetaProvidesModInfo_AndNoDownloadAvailable_ReturnsDefaultWithId()
+        public async Task WhenMetaProvidesModInfo_AndNoDownloadAvailable_ReturnsDefaultWithId()
         {
             var ini = new IniData();
             ini.AddSection("General", new()
@@ -64,7 +64,7 @@ namespace Focus.ModManagers.ModOrganizer.Tests
                 { @"1\fileid", "12345" },
             });
             fs.AddFile(@$"{RootPath}\foo\meta.ini", new MockFileData(ini.ToString()));
-            var component = componentResolver.ResolveComponentInfo("foo");
+            var component = await componentResolver.ResolveComponentInfo("foo");
 
             Assert.Equal("12345", component.Id);
             Assert.Equal("foo", component.Name);
@@ -74,7 +74,7 @@ namespace Focus.ModManagers.ModOrganizer.Tests
         }
 
         [Fact]
-        public void WhenMetaProvidesModInfo_AndLinksToValidDownload_ReturnsFullModInfo()
+        public async Task WhenMetaProvidesModInfo_AndLinksToValidDownload_ReturnsFullModInfo()
         {
             const string downloadDirectory = @"D:\Mod Organizer Downloads";
             configurationMock.SetupGet(x => x.DownloadDirectory).Returns(downloadDirectory);
@@ -92,7 +92,7 @@ namespace Focus.ModManagers.ModOrganizer.Tests
                 { "modName", "My Awesome Mod" },
             });
             fs.AddFile($@"{downloadDirectory}\foo_file.7z.meta", downloadIni.ToString());
-            var component = componentResolver.ResolveComponentInfo("foo");
+            var component = await componentResolver.ResolveComponentInfo("foo");
 
             Assert.Equal("8372", component.Id);
             Assert.Equal("foo", component.Name);
@@ -102,20 +102,20 @@ namespace Focus.ModManagers.ModOrganizer.Tests
         }
 
         [Fact]
-        public void WhenComponentNameIsBackup_AndMetaIniNotFound_ReturnsDisabledComponent()
+        public async Task WhenComponentNameIsBackup_AndMetaIniNotFound_ReturnsDisabledComponent()
         {
-            var component = componentResolver.ResolveComponentInfo("foo_backup4");
+            var component = await componentResolver.ResolveComponentInfo("foo_backup4");
 
             Assert.False(component.IsEnabled);
         }
 
         [Fact]
-        public void WhenComponentNameIsBackup_AndMetaProvidesModInfo_ReturnsDisabledComponent()
+        public async Task WhenComponentNameIsBackup_AndMetaProvidesModInfo_ReturnsDisabledComponent()
         {
             var ini = new IniData();
             ini.AddSection("General", new() { { "modid", "17436" } });
             fs.AddFile(@$"{RootPath}\foo\meta.ini", new MockFileData(ini.ToString()));
-            var component = componentResolver.ResolveComponentInfo("foo_backup26");
+            var component = await componentResolver.ResolveComponentInfo("foo_backup26");
 
             Assert.False(component.IsEnabled);
         }

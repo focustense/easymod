@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.IO.Abstractions;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Focus.ModManagers.ModOrganizer
 {
@@ -29,7 +30,7 @@ namespace Focus.ModManagers.ModOrganizer
             this.rootPath = rootPath;
         }
 
-        public ModComponentInfo ResolveComponentInfo(string componentName)
+        public async Task<ModComponentInfo> ResolveComponentInfo(string componentName)
         {
             // TODO: To actually know if a mod is enabled, we would need to first determine the current profile and then
             // look at that profile's INI. For the moment, this is just a quick fix to prevent backups from appearing.
@@ -46,7 +47,7 @@ namespace Focus.ModManagers.ModOrganizer
             var installationFile = string.Empty;
             try
             {
-                var metaIni = ReadIniFile(metaPath);
+                var metaIni = await ReadIniFile(metaPath);
                 modId = metaIni?["General"]?["modid"] ?? string.Empty;
                 installationFile = metaIni?["General"]?["installationFile"] ?? string.Empty;
                 fileId = metaIni?["installedFiles"]?[@"1\fileid"] ?? string.Empty;
@@ -60,7 +61,7 @@ namespace Focus.ModManagers.ModOrganizer
                 try
                 {
                     var downloadMetaPath = fs.Path.Combine(config.DownloadDirectory, $"{installationFile}.meta");
-                    var downloadIni = ReadIniFile(downloadMetaPath);
+                    var downloadIni = await ReadIniFile(downloadMetaPath);
                     if (string.IsNullOrEmpty(fileId))
                         fileId = downloadIni?["General"]["fileID"] ?? string.Empty;
                     modName = downloadIni?["General"]["modName"] ?? string.Empty;
@@ -79,11 +80,16 @@ namespace Focus.ModManagers.ModOrganizer
             return new ModComponentInfo(key, componentId, componentName, modPath, isEnabled);
         }
 
-        private IniData ReadIniFile(string fileName)
+        private async Task<IniData> ReadIniFile(string fileName)
         {
             if (!fs.File.Exists(fileName))
                 return new IniData();
-            using var stream = fs.File.OpenRead(fileName);
+            // The IniParser doesn't directly support async I/O, but since the resolver is going to be processing a
+            // whole lot of files, it's very important that we don't depend on blocking I/O.
+            // Since the INI files are quite small, one hacky solution is to copy their contents (asynchronously) into
+            // a memory stream, and then let the INI parser handle that.
+            var bytes = await fs.File.ReadAllBytesAsync(fileName);
+            using var stream = new MemoryStream(bytes);
             using var reader = new StreamReader(stream);
             return IniParser.ReadData(reader);
         }
