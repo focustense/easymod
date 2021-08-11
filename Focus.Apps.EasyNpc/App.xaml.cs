@@ -69,7 +69,8 @@ namespace Focus.Apps.EasyNpc
             switch (startupInfo.Launcher)
             {
                 case ModManager.ModOrganizer:
-                    return new ModOrganizerModResolver(startupInfo.ParentProcessPath);
+                    var config = IniConfiguration.AutoDetect(startupInfo.ParentProcessPath);
+                    return new ModOrganizerModResolver(config);
                 default:
                     return defaultModResolver;
             }
