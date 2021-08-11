@@ -7,5 +7,6 @@
         string ModsDirectory { get; }
         string OverwriteDirectory { get; }
         string ProfilesDirectory { get; }
+        string SelectedProfileName { get; }
     }
 }

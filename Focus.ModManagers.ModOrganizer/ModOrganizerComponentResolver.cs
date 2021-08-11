@@ -1,6 +1,7 @@
 ﻿using IniParser;
 using IniParser.Model;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Text.RegularExpressions;
@@ -18,6 +19,8 @@ namespace Focus.ModManagers.ModOrganizer
         private readonly IFileSystem fs;
         private readonly string rootPath;
 
+        private readonly Lazy<Task<HashSet<string>?>> enabledModNamesInit;
+
         public ModOrganizerComponentResolver(IModOrganizerConfiguration config, string rootPath)
             : this(new FileSystem(), config, rootPath)
         {
@@ -28,13 +31,16 @@ namespace Focus.ModManagers.ModOrganizer
             this.config = config;
             this.fs = fs;
             this.rootPath = rootPath;
+
+            enabledModNamesInit = new(() => ReadEnabledModNamesFromProfile());
         }
 
         public async Task<ModComponentInfo> ResolveComponentInfo(string componentName)
         {
-            // TODO: To actually know if a mod is enabled, we would need to first determine the current profile and then
-            // look at that profile's INI. For the moment, this is just a quick fix to prevent backups from appearing.
-            var isEnabled = !BackupRegex.IsMatch(componentName);
+            var enabledModNames = await enabledModNamesInit.Value;
+            var isEnabled =
+                !BackupRegex.IsMatch(componentName) &&
+                (enabledModNames is null || enabledModNames.Contains(componentName));
 
             var modPath = fs.Path.Combine(rootPath, componentName);
             var metaPath = fs.Path.Combine(rootPath, componentName, "meta.ini");
@@ -78,6 +84,25 @@ namespace Focus.ModManagers.ModOrganizer
             var key = new ModLocatorKey(modId != NullModId ? modId : string.Empty, modName);
             var componentId = !string.IsNullOrEmpty(fileId) ? fileId : componentName;
             return new ModComponentInfo(key, componentId, componentName, modPath, isEnabled);
+        }
+
+        private async Task<HashSet<string>?> ReadEnabledModNamesFromProfile()
+        {
+            if (string.IsNullOrEmpty(config.SelectedProfileName))
+                return null;
+            var modListPath = fs.Path.Combine(config.ProfilesDirectory, config.SelectedProfileName, "modlist.txt");
+            if (!fs.File.Exists(modListPath))
+                return null;
+            var result = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
+            using var stream = fs.File.OpenRead(modListPath);
+            using var reader = new StreamReader(stream);
+            string? nextLine;
+            while ((nextLine = await reader.ReadLineAsync()) is not null)
+            {
+                if (nextLine.StartsWith('+'))
+                    result.Add(nextLine[1..]);
+            }
+            return result;
         }
 
         private async Task<IniData> ReadIniFile(string fileName)

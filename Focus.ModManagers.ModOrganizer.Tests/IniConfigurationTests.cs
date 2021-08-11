@@ -56,5 +56,23 @@ namespace Focus.ModManagers.ModOrganizer.Tests
             Assert.Equal(@"D:\SSE\ModOrganizer\overwrite", config.OverwriteDirectory);
             Assert.Equal(@"D:\SSE\ModOrganizer\data\profiles", config.ProfilesDirectory);
         }
+
+        [Fact]
+        public void WhenSelectedProfileIsByteArrayWrapped_ReadsSelectedProfile()
+        {
+            iniData.AddSection("General", new() { { "selected_profile", "@ByteArray(My Profile)" } });
+            var config = new IniConfiguration(iniData, DefaultBaseDirectory);
+
+            Assert.Equal("My Profile", config.SelectedProfileName);
+        }
+
+        [Fact]
+        public void WhenSelectedProfileIsPlainText_ReadsSelectedProfile()
+        {
+            iniData.AddSection("General", new() { { "selected_profile", "My Profile" } });
+            var config = new IniConfiguration(iniData, DefaultBaseDirectory);
+
+            Assert.Equal("My Profile", config.SelectedProfileName);
+        }
     }
 }

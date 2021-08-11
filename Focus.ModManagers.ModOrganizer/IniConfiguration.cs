@@ -14,6 +14,7 @@ namespace Focus.ModManagers.ModOrganizer
         public string ModsDirectory { get; private init; }
         public string OverwriteDirectory { get; private init; }
         public string ProfilesDirectory { get; private init; }
+        public string SelectedProfileName { get; private init; }
 
         public static IniConfiguration AutoDetect(string exePath)
         {
@@ -44,6 +45,12 @@ namespace Focus.ModManagers.ModOrganizer
             OverwriteDirectory =
                 ResolveDirectory(settings, "overwrite_directory", "%BASE_DIR%/overwrite", BaseDirectory);
             ProfilesDirectory = ResolveDirectory(settings, "profiles_directory", "%BASE_DIR%/profiles", BaseDirectory);
+
+            var general = entryIni["General"] ?? new KeyDataCollection();
+            var selectedProfileValue = general["selected_profile"] ?? string.Empty;
+            if (selectedProfileValue.StartsWith("@ByteArray("))
+                selectedProfileValue = selectedProfileValue[11..^1];
+            SelectedProfileName = selectedProfileValue;
         }
 
         private static string ResolveDirectory(
