@@ -22,7 +22,14 @@ namespace Focus.Apps.EasyNpc.Profile
             return new SavedProfile { Npcs = npcs };
         }
 
-        public IList<SavedNpcConfiguration> Npcs { get; init; } = new List<SavedNpcConfiguration>();
+        public IEnumerable<SavedNpcConfiguration> Npcs { get; init; } = new List<SavedNpcConfiguration>();
+
+        public SavedProfile() { }
+
+        public SavedProfile(IEnumerable<SavedNpcConfiguration> npcs)
+        {
+            Npcs = npcs;
+        }
 
         public void SaveToFile(string fileName)
         {

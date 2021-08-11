@@ -9,7 +9,7 @@ using System.IO;
 
 namespace Focus.Apps.EasyNpc.Configuration
 {
-    public class Settings
+    public class Settings : IAppSettings
     {
         // This needs to be first (contrary to default sorting rules) so that it can be used in the Default
         // construction.
@@ -22,7 +22,11 @@ namespace Focus.Apps.EasyNpc.Configuration
             Formatting = Formatting.Indented,
         };
 
-        public static Settings Default = new(ProgramData.SettingsPath);
+        public static readonly Settings Default = new(ProgramData.SettingsPath);
+
+        
+        [JsonIgnore] // Report path is a command-line setting used for interop; we don't save it.
+        public string BuildReportPath { get; set; } = Path.Combine(ProgramData.DirectoryPath, "BuildReport.json");
 
         public List<BuildWarningSuppression> BuildWarningWhitelist { get; set; } = new();
         public string ModRootDirectory { get; set; }
@@ -68,9 +72,9 @@ namespace Focus.Apps.EasyNpc.Configuration
             },
         };
         public string MugshotsDirectory { get; set; }
-        // Report path is a command-line setting used for interop; we don't save it.
-        [JsonIgnore]
-        public string BuildReportPath { get; set; } = Path.Combine(ProgramData.DirectoryPath, "BuildReport.json");
+
+        IEnumerable<BuildWarningSuppression> IAppSettings.BuildWarningWhitelist => BuildWarningWhitelist;
+        IEnumerable<MugshotRedirect> IAppSettings.MugshotRedirects => MugshotRedirects;
 
         private readonly string path;
 

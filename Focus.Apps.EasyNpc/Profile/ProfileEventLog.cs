@@ -7,7 +7,18 @@ namespace Focus.Apps.EasyNpc.Profile
 {
     public interface IReadOnlyProfileEventLog : IEnumerable<ProfileEvent> { }
 
-    public class ProfileEventLog : IDisposable, IReadOnlyProfileEventLog
+    public interface IProfileEventLog : IReadOnlyProfileEventLog
+    {
+        void Append(ProfileEvent e);
+    }
+
+    public interface ISuspendableProfileEventLog : IProfileEventLog
+    {
+        void Resume();
+        void Suspend();
+    }
+
+    public class ProfileEventLog : IDisposable, ISuspendableProfileEventLog
     {
         public static IEnumerable<ProfileEvent> ReadEventsFromFile(string fileName)
         {
@@ -22,7 +33,8 @@ namespace Focus.Apps.EasyNpc.Profile
 
         public string FileName { get; private init; }
 
-        private bool disposed = false;
+        private bool isDisposed;
+        private bool isSuspended;
         private StreamWriter writer;
 
         public ProfileEventLog(string fileName)
@@ -31,13 +43,10 @@ namespace Focus.Apps.EasyNpc.Profile
             OpenLogFile();
         }
 
-        ~ProfileEventLog()
-        {
-            Dispose(false);
-        }
-
         public void Append(ProfileEvent e)
         {
+            if (isSuspended)
+                return;
             writer.WriteLine(e.Serialize());
             // Auto-flush since this is used to recover from crashes
             writer.Flush();
@@ -62,6 +71,16 @@ namespace Focus.Apps.EasyNpc.Profile
             return ReadEventsFromFile(FileName).GetEnumerator();
         }
 
+        public void Resume()
+        {
+            isSuspended = false;
+        }
+
+        public void Suspend()
+        {
+            isSuspended = true;
+        }
+
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
@@ -69,11 +88,11 @@ namespace Focus.Apps.EasyNpc.Profile
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!isDisposed)
             {
                 if (disposing)
                     writer.Dispose();
-                disposed = true;
+                isDisposed = true;
             }
         }
 
