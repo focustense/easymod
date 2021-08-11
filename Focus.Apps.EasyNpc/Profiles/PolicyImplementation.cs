@@ -163,11 +163,8 @@ namespace Focus.Apps.EasyNpc.Profiles
             // and move down the list.
             if (npc.ComparisonToBase is not null && predicate(npc.ComparisonToBase))
                 return npc.ComparisonToBase;
-            // TODO: Verify if the masters are really in reverse order, and consider "fixing" if so. It's very confusing
-            // if the chain is top-down, but the comparisons are bottom-up.
-            for (int i = npc.ComparisonToMasters.Count - 1; i >= 0; i--)
+            foreach (var comparison in npc.ComparisonToMasters)
             {
-                var comparison = npc.ComparisonToMasters[i];
                 if (comparison != npc.ComparisonToBase &&
                     (!alwaysCheckPreviousOverride || comparison != npc.ComparisonToPreviousOverride) &&
                     predicate(comparison))

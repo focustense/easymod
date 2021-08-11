@@ -64,9 +64,6 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             if (FaceGenOverride is not null)
                 return new[] { FaceGenOverride.Name };
-            // TODO: This may include mods for vanilla such as "cleaned masters". Need to be careful when using the
-            // results, and either not call this for vanilla plugins, or make sure to treat vanilla mugshots or
-            // placeholders specially by not looking at the mod names.
             return modRepository.SearchForFiles(FaceOption.PluginName, false).Select(x => x.ModKey.Name);
         }
 
