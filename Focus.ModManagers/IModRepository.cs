@@ -1,9 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Focus.ModManagers
 {
     public interface IModRepository : IEnumerable<ModInfo>
     {
+        bool ContainsFile(
+            IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives,
+            bool includeDisabled = false);
         bool ContainsFile(ModInfo mod, string relativePath, bool includeArchives, bool includeDisabled = false);
         ModInfo? FindByComponentName(string componentName);
         ModInfo? FindByComponentPath(string componentPath);
@@ -19,5 +23,10 @@ namespace Focus.ModManagers
         ModInfo? GetById(string modId);
         IEnumerable<ModSearchResult> SearchForFiles(
             string relativePath, bool includeArchives, bool includeDisabled = false);
+    }
+
+    public interface IConfigurableModRepository<TConfig> : IModRepository
+    {
+        Task Configure(TConfig config);
     }
 }

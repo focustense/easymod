@@ -8,48 +8,65 @@ using System.Threading.Tasks;
 
 namespace Focus.ModManagers
 {
-    public class IndexedModRepository : IModRepository
+    public interface IIndexedModRepository : IModRepository
     {
-        record ResolvedBucket(string BucketName, ModComponentInfo Component);
+        Task ConfigureIndex(
+            INotifyingBucketedFileIndex modIndex, string rootPath, IComponentResolver componentResolver);
+    }
 
+    public class IndexedModRepository : IIndexedModRepository, IDisposable
+    {
         // For all names used here: Bucket names, component names, mod names.
         private static readonly StringComparer NameComparer = StringComparer.CurrentCultureIgnoreCase;
 
         private readonly ArchiveIndex archiveIndex;
         private readonly IArchiveProvider archiveProvider;
         private readonly Dictionary<string, HashSet<string>> bucketNamesToArchivePaths = new(NameComparer);
-        private readonly Dictionary<string, ModComponentInfo> bucketNamesToComponents = new(NameComparer);
-        private readonly Dictionary<string, string> componentNamesToBucketNames = new(NameComparer);
-        private readonly Dictionary<string, ModComponentInfo> componentNamesToComponents = new(NameComparer);
-        private readonly Dictionary<string, ModComponentInfo> componentPathsToComponents = new(PathComparer.Default);
-        private readonly IComponentResolver componentResolver;
+
+        private Dictionary<string, ModComponentInfo> bucketNamesToComponents = new(NameComparer);
+        private Dictionary<string, string> componentNamesToBucketNames = new(NameComparer);
+        private Dictionary<string, ModComponentInfo> componentNamesToComponents = new(NameComparer);
+        private Dictionary<string, ModComponentInfo> componentPathsToComponents = new(PathComparer.Default);
+        private IComponentResolver? componentResolver;
+        private bool isDisposed;
         // Some components will not have a mod ID (e.g. installed from file, generated patches, etc.). Therefore, the
         // mods-to-buckets map will generally have an empty group with all the "standalone" ungroupable components.
-        private readonly Dictionary<string, HashSet<ModComponentInfo>> modIdsToComponents;
+        private Dictionary<string, HashSet<ModComponentInfo>> modIdsToComponents = new();
         // Storing a map of mod IDs to mod names helps ensure consistency, in case the component resolver manages to
         // return components with the same (non-empty) mod ID, but different names. The name map here should contain
         // the first non-empty name for that ID, as without additional information, there is no better algorithm for
         // choosing the name. (If one exists, the subclass should implement it *before* returning any mod key.)
-        private readonly Dictionary<string, string> modIdsToModNames;
-        private readonly INotifyingBucketedFileIndex modIndex;
+        private Dictionary<string, string> modIdsToModNames = new();
+        private INotifyingBucketedFileIndex modIndex = new EmptyFileIndex();
         // We don't have any guarantee that a mod name is unique. The name of a mod can change, and then possibly,
         // another mod takes its old name - but the same user can have both mods installed.
         // There isn't a lot we can do in this edge case that's sensible, so just keep track of one association, under
         // the assumption that in most cases there will only be one.
-        private readonly Dictionary<string, string> modNamesToModIds = new(NameComparer);
-        private readonly string rootPath;
+        private Dictionary<string, string> modNamesToModIds = new(NameComparer);
+        private string rootPath = string.Empty;
+        private Task setupTask = Task.CompletedTask;
 
-        public IndexedModRepository(
-            INotifyingBucketedFileIndex modIndex, IArchiveProvider archiveProvider,
-            IComponentResolver componentResolver, string rootPath)
+        public IndexedModRepository(IArchiveProvider archiveProvider)
         {
             this.archiveProvider = archiveProvider;
+
+            archiveIndex = new ArchiveIndex(archiveProvider);
+        }
+
+        public async Task ConfigureIndex(
+            INotifyingBucketedFileIndex modIndex, string rootPath, IComponentResolver componentResolver)
+        {
+            var tcs = new TaskCompletionSource();
+            setupTask = tcs.Task;
+
+            UnwatchIndex();
             this.componentResolver = componentResolver;
             this.modIndex = modIndex;
             this.rootPath = rootPath;
 
-            var bucketComponents = ResolveAllBuckets().Result;
-            bucketNamesToComponents = bucketComponents.ToDictionary(x => x.BucketName, x => x.Component, NameComparer);
+            var bucketComponents = await componentResolver.ResolveAll(this.modIndex.GetBucketNames())
+                .ConfigureAwait(true);
+            bucketNamesToComponents = bucketComponents.ToDictionary(x => x.Key, x => x.Component, NameComparer);
             componentNamesToBucketNames =
                 bucketNamesToComponents.ToDictionary(x => x.Value.Name, x => x.Key, NameComparer);
             componentNamesToComponents = bucketNamesToComponents.Values.ToDictionary(x => x.Name, NameComparer);
@@ -64,14 +81,17 @@ namespace Focus.ModManagers
                 .GroupBy(x => x.Value, x => x.Key)
                 .ToDictionary(g => g.Key, g => g.First(), NameComparer);
 
-            archiveIndex = new ArchiveIndex(archiveProvider);
             SetupArchiveIndex();
-            SetupEvents();
+            WatchIndex();
+
+            tcs.SetResult();
         }
 
-        public bool ContainsFile(ModInfo mod, string relativePath, bool includeArchives, bool includeDisabled)
+        public bool ContainsFile(
+            IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives,
+            bool includeDisabled = false)
         {
-            var bucketNames = mod.Components
+            var bucketNames = components
                 .Where(x => includeDisabled || x.IsEnabled)
                 .Select(x => componentNamesToBucketNames.GetOrDefault(x.Name))
                 .NotNull();
@@ -81,6 +101,17 @@ namespace Focus.ModManagers
                 return false;
             var archivePaths = bucketNames.SelectMany(GetArchivePaths);
             return archivePaths.Any(p => archiveIndex.Contains(p, relativePath));
+        }
+
+        public bool ContainsFile(ModInfo mod, string relativePath, bool includeArchives, bool includeDisabled = false)
+        {
+            return ContainsFile(mod.Components, relativePath, includeArchives, includeDisabled);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public ModInfo? FindByComponentName(string componentName)
@@ -168,6 +199,15 @@ namespace Focus.ModManagers
             return mainResults.Concat(archiveResults);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed)
+                return;
+            if (disposing)
+                UnwatchIndex();
+            isDisposed = true;
+        }
+
         protected string GetAbsolutePath(string bucketName, string componentPath = "")
         {
             return Path.Combine(rootPath, bucketName, componentPath);
@@ -209,6 +249,44 @@ namespace Focus.ModManagers
                 Path.GetFileName(contentPath) == contentPath;
         }
 
+        private async void ModIndex_AddedToBucket(object? sender, BucketedFileEventArgs e)
+        {
+            await setupTask; // Avoid conflicts with initial index processing.
+
+            if (IsArchive(e.Path))
+            {
+                archiveIndex.AddArchive(GetAbsolutePath(e.BucketName, e.Path));
+                var archivePaths =
+                    bucketNamesToArchivePaths.GetOrAdd(e.BucketName, () => new(PathComparer.Default));
+                archivePaths.Add(GetAbsolutePath(e.BucketName, e.Path));
+            }
+
+            // Component resolver should never actually be null here - it's an invariant, and these event handlers are
+            // set up after the resolver is updated. This is just to make the compiler happy.
+            if (componentResolver is not null && !bucketNamesToComponents.ContainsKey(e.BucketName))
+            {
+                var component = await componentResolver.ResolveComponentInfo(e.BucketName);
+                RegisterComponent(component, e.BucketName);
+            }
+        }
+
+        private async void ModIndex_RemovedFromBucket(object? sender, BucketedFileEventArgs e)
+        {
+            await setupTask; // Avoid conflicts with initial index processing.
+
+            if (IsArchive(e.Path))
+            {
+                archiveIndex.RemoveArchive(GetAbsolutePath(e.BucketName, e.Path));
+                if (bucketNamesToArchivePaths.TryGetValue(e.BucketName, out var archivePaths))
+                    archivePaths.Remove(GetAbsolutePath(e.BucketName, e.Path));
+                if (modIndex.IsEmpty(e.BucketName) &&
+                    bucketNamesToComponents.TryGetValue(e.BucketName, out var component))
+                    UnregisterComponent(component);
+            }
+            // Currently we don't detect if an entire bucket (i.e. mod directory) is removed. It likely should not
+            // matter if there are no files left in the directory.
+        }
+
         private void RegisterComponent(ModComponentInfo component, string bucketName)
         {
             if (string.IsNullOrEmpty(component.Name))
@@ -230,16 +308,10 @@ namespace Focus.ModManagers
             }
         }
 
-        private async Task<IEnumerable<ResolvedBucket>> ResolveAllBuckets()
-        {
-            var resolveTasks = modIndex.GetBucketNames()
-                .Select(async b => new ResolvedBucket(b, await componentResolver.ResolveComponentInfo(b)));
-            var resolved = await Task.WhenAll(resolveTasks);
-            return resolved.NotNull();
-        }
-
         private void SetupArchiveIndex()
         {
+            archiveIndex.Clear();
+            bucketNamesToArchivePaths.Clear();
             var archivePathPairs = modIndex.GetBucketedFilePaths()
                 .AsParallel()
                 .Select(x => new
@@ -254,40 +326,6 @@ namespace Focus.ModManagers
             archiveIndex.AddArchives(archivePathPairs.SelectMany(x => x.ArchivePaths));
         }
 
-        private void SetupEvents()
-        {
-            modIndex.AddedToBucket += (sender, e) =>
-            {
-                if (IsArchive(e.Path))
-                {
-                    archiveIndex.AddArchive(GetAbsolutePath(e.BucketName, e.Path));
-                    var archivePaths =
-                        bucketNamesToArchivePaths.GetOrAdd(e.BucketName, () => new(PathComparer.Default));
-                    archivePaths.Add(GetAbsolutePath(e.BucketName, e.Path));
-                }
-
-                if (!bucketNamesToComponents.ContainsKey(e.BucketName))
-                {
-                    var component = componentResolver.ResolveComponentInfo(e.BucketName).Result;
-                    RegisterComponent(component, e.BucketName);
-                }
-            };
-            modIndex.RemovedFromBucket += (sender, e) =>
-            {
-                if (IsArchive(e.Path))
-                {
-                    archiveIndex.RemoveArchive(GetAbsolutePath(e.BucketName, e.Path));
-                    if (bucketNamesToArchivePaths.TryGetValue(e.BucketName, out var archivePaths))
-                        archivePaths.Remove(GetAbsolutePath(e.BucketName, e.Path));
-                    if (modIndex.IsEmpty(e.BucketName) &&
-                        bucketNamesToComponents.TryGetValue(e.BucketName, out var component))
-                        UnregisterComponent(component);
-                }
-                // Currently we don't detect if an entire bucket (i.e. mod directory) is removed. It likely should not
-                // matter if there are no files left in the directory.
-            };
-        }
-
         private void UnregisterComponent(ModComponentInfo component)
         {
             if (!componentNamesToBucketNames.TryGetValue(component.Name, out var bucketName))
@@ -298,6 +336,22 @@ namespace Focus.ModManagers
             componentPathsToComponents.Remove(component.Path);
             if (modIdsToComponents.TryGetValue(component.ModKey.Id, out var modComponents))
                 modComponents.Remove(component);
+        }
+
+        private void UnwatchIndex()
+        {
+            if (modIndex is null)
+                return;
+            modIndex.AddedToBucket -= ModIndex_AddedToBucket;
+            modIndex.RemovedFromBucket -= ModIndex_RemovedFromBucket;
+        }
+
+        private void WatchIndex()
+        {
+            if (modIndex is null)
+                return;
+            modIndex.AddedToBucket += ModIndex_AddedToBucket;
+            modIndex.RemovedFromBucket += ModIndex_RemovedFromBucket;
         }
     }
 }

@@ -7,11 +7,12 @@ using Xunit;
 
 namespace Focus.ModManagers.Tests
 {
-    public class IndexedModRepositoryTests
+    public class IndexedModRepositoryTests : IAsyncLifetime
     {
         private const string RootPath = @"C:\root";
 
         private readonly FakeArchiveProvider archiveProvider;
+        private readonly List<KeyedComponent> componentManifest = new();
         private readonly Mock<IComponentResolver> componentResolverMock;
         private readonly FakeBucketedFileIndex modIndex;
         private readonly Dictionary<string, string> modNames;
@@ -44,8 +45,17 @@ namespace Focus.ModManagers.Tests
                 { "02", "modname2" },
                 { "03", "modname2" },
             };
-            modRepository = new IndexedModRepository(
-                modIndex, archiveProvider, componentResolverMock.Object, RootPath);
+            modRepository = new IndexedModRepository(archiveProvider);
+        }
+
+        public Task DisposeAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task InitializeAsync()
+        {
+            return modRepository.ConfigureIndex(modIndex, RootPath, componentResolverMock.Object);
         }
 
         [Fact]
