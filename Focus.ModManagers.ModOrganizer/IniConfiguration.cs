@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Focus.ModManagers.ModOrganizer
 {
-    public class IniConfiguration : IModOrganizerConfiguration
+    public class IniConfiguration : IModOrganizerConfiguration, IModManagerConfiguration
     {
         private static readonly FileIniDataParser parser = new();
 
