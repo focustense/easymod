@@ -5,11 +5,18 @@ using System.Collections.Generic;
 
 namespace Focus.Providers.Mutagen
 {
-    public class ArchiveStaticsWrapper : IArchiveStatics
+    public interface IArchiveStatics
     {
-        public static readonly ArchiveStaticsWrapper Instance = new();
+        IArchiveReader CreateReader(GameRelease gameRelease, FilePath path);
+        IEnumerable<FilePath> GetApplicableArchivePaths(
+            GameRelease release, DirectoryPath dataFolderPath, IEnumerable<FileName>? archiveOrdering);
+        public string GetExtension(GameRelease release);
+        IEnumerable<FileName> GetIniListings(GameRelease release);
+    }
 
-        private ArchiveStaticsWrapper() { }
+    public class ArchiveStatics : IArchiveStatics
+    {
+        public static readonly ArchiveStatics Instance = new();
 
         public IArchiveReader CreateReader(GameRelease gameRelease, FilePath path)
         {
