@@ -1,5 +1,4 @@
-﻿using Mutagen.Bethesda;
-using Mutagen.Bethesda.Plugins.Records;
+﻿using Mutagen.Bethesda.Plugins.Records;
 using Noggog;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +8,10 @@ namespace Focus.Providers.Mutagen
     public static class GameSettings
     {
         public static GameSettings<TModGetter> From<TModGetter>(
-            IReadOnlyGameEnvironment<TModGetter> env, GameRelease gameRelease)
+            IReadOnlyGameEnvironment<TModGetter> env, GameSelection game)
             where TModGetter : class, IModGetter
         {
-            return new GameSettings<TModGetter>(env, ArchiveStaticsWrapper.Instance, gameRelease);
+            return new GameSettings<TModGetter>(env, ArchiveStatics.Instance, game);
         }
     }
 
@@ -21,15 +20,15 @@ namespace Focus.Providers.Mutagen
     {
         private readonly IArchiveStatics archive;
         private readonly IReadOnlyGameEnvironment<TModGetter> env;
-        private readonly GameRelease gameRelease;
+        private readonly GameSelection game;
         private readonly IReadOnlyList<FileName> order;
 
-        public GameSettings(IReadOnlyGameEnvironment<TModGetter> env, IArchiveStatics archive, GameRelease gameRelease)
+        public GameSettings(IReadOnlyGameEnvironment<TModGetter> env, IArchiveStatics archive, GameSelection game)
         {
             this.archive = archive;
             this.env = env;
-            this.gameRelease = gameRelease;
-            order = archive.GetIniListings(gameRelease)
+            this.game = game;
+            order = archive.GetIniListings(game.GameRelease)
                 .Concat(env.LoadOrder.ListedOrder.SelectMany(x => new[] {
                     // Not all of these will exist, but it doesn't matter, as these are only used for sorting and won't
                     // affect the actual set of paths returned.
@@ -40,7 +39,7 @@ namespace Focus.Providers.Mutagen
         }
 
         public IEnumerable<string> ArchiveOrder => archive
-            .GetApplicableArchivePaths(gameRelease, env.DataFolderPath, order)
+            .GetApplicableArchivePaths(game.GameRelease, env.DataFolderPath, order)
             .Select(x => x.Name.String);
         public string DataDirectory => env.GetRealDataDirectory();
         public IEnumerable<string> PluginLoadOrder => env.LoadOrder.ListedOrder.Select(x => x.ModKey.FileName.String);

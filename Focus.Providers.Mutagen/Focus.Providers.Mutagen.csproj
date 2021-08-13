@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net5.0-windows10.0.19041</TargetFramework>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <AssemblyTitle>Service implementations based on the Mutagen library</AssemblyTitle>
@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.30.4" />
     <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.30.4" />
     <PackageReference Include="Serilog" Version="2.10.0" />
   </ItemGroup>

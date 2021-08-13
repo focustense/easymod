@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus
 {
     public class MissingGameDataException : Exception
     {
-        public string GameId { get; private init; }
-        public string GameName { get; private init; }
+        public string GameId { get; private init; } = string.Empty;
+        public string GameName { get; private init; } = string.Empty;
 
         public MissingGameDataException(string gameId)
             : base(GetMessage(gameId))
@@ -34,7 +34,8 @@ namespace Focus.Apps.EasyNpc
             GameName = gameName;
         }
 
-        protected MissingGameDataException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected MissingGameDataException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
         {
         }
 

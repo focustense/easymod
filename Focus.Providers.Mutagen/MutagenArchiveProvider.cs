@@ -1,5 +1,4 @@
 ﻿using Focus.Files;
-using Mutagen.Bethesda;
 using Noggog;
 using Serilog;
 using System;
@@ -15,18 +14,18 @@ namespace Focus.Providers.Mutagen
     {
         private readonly IArchiveStatics archive;
         private readonly HashSet<string> badArchivePaths = new(StringComparer.OrdinalIgnoreCase);
-        private readonly GameRelease gameRelease;
+        private readonly GameSelection game;
         private readonly ILogger log;
 
-        public MutagenArchiveProvider(GameRelease gameRelease, ILogger log)
-            : this(ArchiveStaticsWrapper.Instance, gameRelease, log)
+        public MutagenArchiveProvider(GameSelection game, ILogger log)
+            : this(ArchiveStatics.Instance, game, log)
         {
         }
 
-        public MutagenArchiveProvider(IArchiveStatics archive, GameRelease gameRelease, ILogger log)
+        public MutagenArchiveProvider(IArchiveStatics archive, GameSelection game, ILogger log)
         {
             this.archive = archive;
-            this.gameRelease = gameRelease;
+            this.game = game;
             this.log = log;
         }
 
@@ -34,7 +33,7 @@ namespace Focus.Providers.Mutagen
         {
             return Safe(archivePath, () =>
             {
-                var reader = archive.CreateReader(gameRelease, archivePath);
+                var reader = archive.CreateReader(game.GameRelease, archivePath);
                 return reader.Files.Any(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
             });
         }
@@ -46,7 +45,7 @@ namespace Focus.Providers.Mutagen
                 var prefix = PathComparer.NormalizePath(path);
                 if (!string.IsNullOrEmpty(prefix))
                     prefix += Path.DirectorySeparatorChar;
-                var reader = archive.CreateReader(gameRelease, archivePath);
+                var reader = archive.CreateReader(game.GameRelease, archivePath);
                 return reader.Files
                     .Select(f => Safe(archivePath, () => f.Path))
                     .NotNull()
@@ -64,12 +63,12 @@ namespace Focus.Providers.Mutagen
         public bool IsArchiveFile(string path)
         {
             return string.Equals(
-                Path.GetExtension(path), archive.GetExtension(gameRelease), StringComparison.OrdinalIgnoreCase);
+                Path.GetExtension(path), archive.GetExtension(game.GameRelease), StringComparison.OrdinalIgnoreCase);
         }
 
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
         {
-            var reader = archive.CreateReader(gameRelease, archivePath);
+            var reader = archive.CreateReader(game.GameRelease, archivePath);
             var folderName = Path.GetDirectoryName(archiveFilePath)?.ToLower();  // Mutagen is case-sensitive
             if (string.IsNullOrEmpty(folderName))
                 throw new ArgumentException($"Archive path '{archivePath}' is missing directory info.", nameof(archivePath));

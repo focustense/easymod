@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus
 {
     public class UnsupportedGameException : Exception
     {
-        public string GameId { get; private init; }
-        public string GameName { get; private init; }
+        public string GameId { get; private init; } = string.Empty;
+        public string GameName { get; private init; } = string.Empty;
 
         public UnsupportedGameException(string gameId)
             : base(GetMessage(gameId))
@@ -34,13 +34,14 @@ namespace Focus.Apps.EasyNpc
             GameName = gameName;
         }
 
-        protected UnsupportedGameException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected UnsupportedGameException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
         {
         }
 
         private static string GetMessage(string gameId)
         {
-            return $"Couldn't find {gameId} game data folder";
+            return $"Game '{gameId}' is not supported";
         }
     }
 }

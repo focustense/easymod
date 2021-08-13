@@ -121,10 +121,11 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
                     DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
-                ArchiveProvider = new MutagenArchiveProvider(gameRelease, log);
+                var gameSelection = new GameSelection(gameRelease);
+                ArchiveProvider = new MutagenArchiveProvider(gameSelection, log);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, skyrimRelease, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, gameRelease, modResolver);
-                Settings = GameSettings.From(GameEnvironmentWrapper.Wrap(Environment), gameRelease);
+                Settings = GameSettings.From(GameEnvironmentWrapper.Wrap(Environment), gameSelection);
                 npcCompatibilityRuleSet = new CompatibilityRuleSet<INpcGetter>(npc => $"{npc.FormKey} '{npc.EditorID}'", log)
                     .Add(new FacegenHeadRule(Environment))
                     .Add(new NoChildrenRule(Environment));

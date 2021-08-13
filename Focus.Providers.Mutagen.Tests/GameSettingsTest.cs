@@ -4,11 +4,8 @@ using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Focus.Providers.Mutagen.Tests
@@ -42,7 +39,8 @@ namespace Focus.Providers.Mutagen.Tests
             });
             environmentMock.SetupGet(x => x.DataFolderPath).Returns(GameDataPath);
             environmentMock.SetupGet(x => x.LoadOrder).Returns(loadOrderMock.Object);
-            settings = new GameSettings<ISkyrimModGetter>(environmentMock.Object, archiveMock.Object, GameRelease);
+            var gameSelection = new GameSelection(GameRelease);
+            settings = new GameSettings<ISkyrimModGetter>(environmentMock.Object, archiveMock.Object, gameSelection);
         }
 
         [Fact]

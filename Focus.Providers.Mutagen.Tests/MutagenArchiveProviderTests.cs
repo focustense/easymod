@@ -23,7 +23,8 @@ namespace Focus.Providers.Mutagen.Tests
                 .WriteTo.Debug()
                 .CreateLogger();
             archiveMock = new Mock<IArchiveStatics>();
-            provider = new MutagenArchiveProvider(archiveMock.Object, GameRelease, logger);
+            var gameSelection = new GameSelection(GameRelease);
+            provider = new MutagenArchiveProvider(archiveMock.Object, gameSelection, logger);
         }
 
         [Fact]
