@@ -1,4 +1,5 @@
-﻿using Focus.Apps.EasyNpc.GameData.Records;
+﻿using Focus.Analysis.Records;
+using Focus.Apps.EasyNpc.GameData.Records;
 using System;
 using System.Collections.Generic;
 using System.IO;

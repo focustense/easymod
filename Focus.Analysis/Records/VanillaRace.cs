@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Focus.Apps.EasyNpc.GameData.Records
+﻿namespace Focus.Analysis.Records
 {
     public enum VanillaRace
     {

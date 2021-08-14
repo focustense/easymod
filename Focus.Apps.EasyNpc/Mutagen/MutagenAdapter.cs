@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using Focus.Analysis.Records;
 using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Compatibility;
 using Focus.Apps.EasyNpc.Debug;
