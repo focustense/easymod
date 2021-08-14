@@ -35,7 +35,6 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public string DataDirectory { get; private set; }
         // Mutagen doesn't have an internal log, like XEdit Lib. (Because it doesn't need to, as it's a .NET library and
         // works with ordinary exception handling)
-        public IExternalLog Log { get; init; } = new NullExternalLog();
         public IMergedPluginBuilder<FormKey> MergedPluginBuilder { get; private set; }
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod).NotNull();
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }

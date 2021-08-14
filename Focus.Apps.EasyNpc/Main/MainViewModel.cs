@@ -68,12 +68,11 @@ namespace Focus.Apps.EasyNpc.Main
 
             gameDataEditor = CreateEditor(gameName, gamePath);
 
-            Log = new LogViewModel(gameDataEditor.Log);
+            Log = new LogViewModel();
             logViewModelSink.ViewModel = Log;
             Logger.Information(
                 "Initialized: {appName:l} version {version:l}, built on {buildDate}",
                 AssemblyProperties.Name, AssemblyProperties.Version, AssemblyProperties.BuildTimestampUtc);
-            Log.ResumeExternalMonitoring();
 
             Settings = new SettingsViewModel(modResolver) { IsWelcomeScreen = isFirstLaunch };
             Settings.WelcomeAcked += (sender, e) =>
@@ -82,7 +81,6 @@ namespace Focus.Apps.EasyNpc.Main
             };
             Loader = new LoaderViewModel<TKey>(gameDataEditor, Log, Logger);
             Loader.Loaded += () => {
-                Log.PauseExternalMonitoring();
                 Settings.AvailablePlugins = Loader.LoadedPluginNames;
                 var profileEventLog = new ProfileEventLog(ProgramData.ProfileLogFileName);
                 Profile = new ProfileViewModel<TKey>(

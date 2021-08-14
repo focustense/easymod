@@ -16,7 +16,6 @@ namespace Focus.Apps.EasyNpc.Main
     {
         IArchiveProvider ArchiveProvider { get; }
         string DataDirectory { get; }
-        IExternalLog Log { get; }
         IMergedPluginBuilder<TKey> MergedPluginBuilder { get; }
         IModPluginMapFactory ModPluginMapFactory { get; }
         IGameSettings Settings { get; }
