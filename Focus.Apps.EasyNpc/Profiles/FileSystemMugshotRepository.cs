@@ -1,10 +1,13 @@
 ﻿#nullable enable
 
+using Focus.Apps.EasyNpc.Configuration;
 using Focus.Files;
 using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Profiles
@@ -15,23 +18,22 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public static string[] DefaultExtensions => new[] { ".jpg", ".jpeg", ".png" };
 
+        private readonly Subject<bool> disposed = new();
         private readonly HashSet<string> extensions;
         private readonly IFileSystem fs;
 
         private string currentDirectoryPath = string.Empty;
-        private bool disposed;
         private Task<IBucketedFileIndex> indexTask = Task.FromResult<IBucketedFileIndex>(new EmptyFileIndex());
 
-        public FileSystemMugshotRepository(IObservable<string> directoryPathObs, IEnumerable<string>? extensions = null)
-            : this(new FileSystem(), directoryPathObs, extensions) { }
-
         public FileSystemMugshotRepository(
-            IFileSystem fs, IObservable<string> directoryPathObs, IEnumerable<string>? extensions = null)
+            IFileSystem fs, IObservableAppSettings settings, IEnumerable<string>? extensions = null)
         {
             this.extensions = new HashSet<string>(extensions ?? DefaultExtensions, StringComparer.OrdinalIgnoreCase);
             this.fs = fs;
 
-            directoryPathObs.Subscribe(RebuildIndex);
+            settings.MugshotsDirectoryObservable
+                .TakeUntil(disposed)
+                .Subscribe(RebuildIndex);
         }
 
         public void Dispose()
@@ -52,11 +54,14 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            if (disposed.IsDisposed)
                 return;
             if (disposing)
+            {
                 DisposeIndex();
-            disposed = true;
+            }
+            disposed.OnNext(true);
+            disposed.Dispose();
         }
 
         private void DisposeIndex()

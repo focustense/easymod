@@ -1,54 +1,63 @@
 ﻿#nullable enable
 
+using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Environment;
 using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
     public interface ILineupBuilder
     {
-        IAsyncEnumerable<MugshotModel> Build(
-            INpcBasicInfo npc, IEnumerable<string> affectingPlugins, ILookup<string, string> modSynonyms);
+        IAsyncEnumerable<MugshotModel> Build(INpcBasicInfo npc, IEnumerable<string> affectingPlugins);
     }
 
-    public class LineupBuilder : ILineupBuilder
+    public class LineupBuilder : ILineupBuilder, IDisposable
     {
         // Placeholder mod for tracking base game plugins.
         private static readonly ModInfo BaseGameMod = new(string.Empty, "Vanilla");
 
-        private readonly IReadOnlySet<string> basePluginNames;
+        private readonly Subject<bool> disposed = new();
         private readonly IFileSystem fs;
         private readonly MugshotFile genericFemaleFile;
         private readonly MugshotFile genericMaleFile;
+        private readonly IReadOnlyLoadOrderGraph loadOrderGraph;
         private readonly IModRepository modRepository;
         private readonly IMugshotRepository mugshotRepository;
 
+        private ILookup<string, string> modSynonyms = Enumerable.Empty<string>().ToLookup(x => x);
+
         public LineupBuilder(
-            IMugshotRepository mugshotRepository, IModRepository modRepository, string appAssetsPath,
-            IReadOnlySet<string> basePluginNames)
-            : this(new FileSystem(), mugshotRepository, modRepository, appAssetsPath, basePluginNames)
+            IObservableAppSettings appSettings, IMugshotRepository mugshotRepository, IModRepository modRepository,
+            IReadOnlyLoadOrderGraph loadOrderGraph)
+            : this(new FileSystem(), appSettings, mugshotRepository, modRepository, loadOrderGraph)
         {
         }
 
         public LineupBuilder(
-            IFileSystem fs, IMugshotRepository mugshotRepository, IModRepository modRepository, string appAssetsPath,
-            IReadOnlySet<string> basePluginNames)
+            IFileSystem fs, IObservableAppSettings appSettings, IMugshotRepository mugshotRepository,
+            IModRepository modRepository, IReadOnlyLoadOrderGraph loadOrderGraph)
         {
             this.fs = fs;
-            this.basePluginNames = basePluginNames;
+            this.loadOrderGraph = loadOrderGraph;
             this.modRepository = modRepository;
             this.mugshotRepository = mugshotRepository;
 
-            genericFemaleFile = GetPlaceholderFile(appAssetsPath, true);
-            genericMaleFile = GetPlaceholderFile(appAssetsPath, false);
+            genericFemaleFile = GetPlaceholderFile(appSettings.StaticAssetsPath, true);
+            genericMaleFile = GetPlaceholderFile(appSettings.StaticAssetsPath, false);
+
+            appSettings.MugshotRedirectsObservable
+                .TakeUntil(disposed)
+                .Subscribe(x => modSynonyms = x.ToLookup(r => r.ModName, r => r.Mugshots));
         }
 
-        public async IAsyncEnumerable<MugshotModel> Build(
-            INpcBasicInfo npc, IEnumerable<string> affectingPlugins, ILookup<string, string> modSynonyms)
+        public async IAsyncEnumerable<MugshotModel> Build(INpcBasicInfo npc, IEnumerable<string> affectingPlugins)
         {
             var mugshotFiles = (await mugshotRepository.GetMugshotFiles(npc))
                 // We use ToLookup here instead of ToDictionary, because duplicates are actually possible, e.g. the same
@@ -58,7 +67,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
             var modNamesFromPlugins = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
             var pluginGroups = affectingPlugins
-                .SelectMany(p => basePluginNames.Contains(p) ?
+                .SelectMany(p => loadOrderGraph.IsImplicit(p) ?
                     new[] { new { Plugin = p, ModKey = BaseGameMod as IModLocatorKey } } :
                     modRepository.SearchForFiles(p, false).Select(x => new { Plugin = p, x.ModKey }))
                 .GroupBy(x => x.ModKey, x => x.Plugin, ModLocatorKeyComparer.Default)
@@ -93,6 +102,20 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .SelectMany(g => g.Select(file => (g.Key, file)));
             foreach (var (modKey, file) in extraMugshotFiles)
                 yield return CreateMugshotModel(file, new ModLocatorKey(string.Empty, modKey));
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed.IsDisposed)
+                return;
+            disposed.OnNext(true);
+            disposed.Dispose();
         }
 
         private MugshotModel CreateMugshotModel(

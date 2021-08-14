@@ -26,18 +26,13 @@ namespace Focus.Apps.EasyNpc.Profiles
         public NpcViewModel? SelectedNpc { get; private set; }
 
         private readonly HashSet<IRecordKey> alwaysVisibleNpcKeys = new(RecordKeyComparer.Default);
-        private readonly IAppSettings appSettings;
-        private readonly IGameSettings gameSettings;
         private readonly ILineupBuilder lineupBuilder;
         private readonly Dictionary<IRecordKey, NpcModel> npcs = new(RecordKeyComparer.Default);
         private readonly Dictionary<string, int> pluginOrder;
         private readonly Profile profile;
 
-        public ProfileViewModel(
-            Profile profile, ILineupBuilder lineupBuilder, IAppSettings appSettings, IGameSettings gameSettings)
+        public ProfileViewModel(Profile profile, ILineupBuilder lineupBuilder, IGameSettings gameSettings)
         {
-            this.appSettings = appSettings;
-            this.gameSettings = gameSettings;
             this.lineupBuilder = lineupBuilder;
             this.npcs = profile.Npcs.ToDictionary(x => new RecordKey(x), RecordKeyComparer.Default);
             this.profile = profile;
@@ -139,10 +134,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             var affectingPlugins = npc.Options
                 .Where(x => !string.Equals(x.PluginName, FileStructure.MergeFileName, StringComparison.CurrentCultureIgnoreCase))
                 .Select(x => x.PluginName);
-            // TODO: Rebuilding this dictionary every time is slow, but currently we aren't tracking individual changes
-            // to the synonym settings. Fix that, then rewrite this.
-            var modSynonyms = appSettings.MugshotRedirects.ToLookup(x => x.ModName, x => x.Mugshots);
-            return lineupBuilder.Build(npc, affectingPlugins, modSynonyms);
+            return lineupBuilder.Build(npc, affectingPlugins);
         }
 
         private void UpdateSelectedNpc(NpcModel? npc)
