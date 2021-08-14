@@ -65,7 +65,7 @@ namespace Focus.ModManagers
             this.rootPath = rootPath;
 
             var bucketComponents = await componentResolver.ResolveAll(this.modIndex.GetBucketNames())
-                .ConfigureAwait(true);
+                .ConfigureAwait(false);
             bucketNamesToComponents = bucketComponents.ToDictionary(x => x.Key, x => x.Component, NameComparer);
             componentNamesToBucketNames =
                 bucketNamesToComponents.ToDictionary(x => x.Value.Name, x => x.Key, NameComparer);
@@ -81,7 +81,7 @@ namespace Focus.ModManagers
                 .GroupBy(x => x.Value, x => x.Key)
                 .ToDictionary(g => g.Key, g => g.First(), NameComparer);
 
-            SetupArchiveIndex();
+            await Task.Run(() => SetupArchiveIndex()).ConfigureAwait(false);
             WatchIndex();
 
             tcs.SetResult();

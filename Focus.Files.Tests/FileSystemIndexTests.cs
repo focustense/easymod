@@ -60,7 +60,7 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "", "inroot.txt"),
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.log", "insub1.txt"),
                 x => AssertBucket(x, "sub2", @"common\a.txt", "insub2.txt"));
-            Assert.Equal(new[] { "", "sub1", "sub2" }, index.GetBucketNames());
+            Assert.Equal(new[] { "", "sub1", "sub2" }, index.GetBucketNames().OrderBy(x => x));
             Assert.Equal(new[] { "inroot.txt" }, index.GetFilePaths(""));
             Assert.Equal(
                 new[] { @"common\a.txt", "insub1.log", "insub1.txt" }, index.GetFilePaths("sub1").OrderBy(f => f));
@@ -160,7 +160,7 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.log", "insub1.txt"),
                 x => AssertBucket(x, "sub2", @"common\a.txt", "insub2.txt", "new.txt"),
                 x => AssertBucket(x, "sub3", "new.txt"));
-            Assert.Equal(new[] { "", "sub1", "sub2", "sub3" }, index.GetBucketNames());
+            Assert.Equal(new[] { "", "sub1", "sub2", "sub3" }, index.GetBucketNames().OrderBy(x => x));
             Assert.True(index.Contains(@"sub2\new.txt"));
             Assert.True(index.Contains(@"sub3\new.txt"));
             Assert.True(index.Contains("sub2", "new.txt"));
@@ -207,7 +207,7 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "", "inroot.txt"),
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.txt"),
                 x => AssertBucket(x, "sub2", "insub2.txt"));
-            Assert.Equal(new[] { "", "sub1", "sub2" }, index.GetBucketNames());
+            Assert.Equal(new[] { "", "sub1", "sub2" }, index.GetBucketNames().OrderBy(x => x));
             Assert.False(index.Contains(@"sub1\insub1.log"));
             Assert.False(index.Contains(@"sub2\common\a.txt"));
             Assert.False(index.Contains("sub1", "insub1.log"));
@@ -254,7 +254,7 @@ namespace Focus.Files.Tests
                 x => AssertBucket(x, "sub1", @"common\a.txt", "insub1.log", "insub1.txt"),
                 x => AssertBucket(x, "sub2", @"common\a.txt"),
                 x => AssertBucket(x, "sub3", "insub3.log"));
-            Assert.Equal(new[] { "", "sub1", "sub2", "sub3" }, index.GetBucketNames());
+            Assert.Equal(new[] { "", "sub1", "sub2", "sub3" }, index.GetBucketNames().OrderBy(x => x));
             Assert.True(index.Contains("newinroot.txt"));
             Assert.True(index.Contains(@"sub3\insub3.log"));
             Assert.True(index.Contains("", "newinroot.txt"));

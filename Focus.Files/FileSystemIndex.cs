@@ -76,6 +76,7 @@ namespace Focus.Files
             var extensionsSet = extensions?.ToHashSet(StringComparer.CurrentCultureIgnoreCase);
             var initialFiles = rootDirectory.Exists ?
                 rootDirectory.EnumerateFiles("*", SearchOption.AllDirectories)
+                    .AsParallel()
                     .Where(x => extensionsSet is null || extensionsSet.Contains(x.Extension))
                     .Select(x => fs.Path.GetRelativePath(rootDirectory.FullName, x.FullName)) :
                 Enumerable.Empty<string>();
@@ -99,14 +100,16 @@ namespace Focus.Files
             this.fs = fs;
             this.rootDirectory = rootDirectory;
             this.watcher = watcher;
-
+            
             allPaths = initialFiles.ToHashSet(PathComparer.Default);
             buckets = allPaths
+                .AsParallel()
                 .Select(f => bucketize(f))
                 .GroupBy(x => x.BucketName, x => x.Path, StringComparer.CurrentCultureIgnoreCase)
                 .Select(g => new { BucketName = g.Key, Items = g.ToHashSet(PathComparer.Default) })
                 .ToDictionary(x => x.BucketName, x => x.Items, StringComparer.CurrentCultureIgnoreCase);
             inverseBuckets = buckets
+                .AsParallel()
                 .SelectMany(b => b.Value.Select(path => new { BucketName = b.Key, FilePath = path }))
                 .GroupBy(x => x.FilePath, PathComparer.Default)
                 .Select(g => new
