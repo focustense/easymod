@@ -10,7 +10,15 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class ProfileFactory
+    public interface IProfileFactory
+    {
+        Profile CreateNew(LoadOrderAnalysis analysis);
+        Profile RestoreSaved(
+            LoadOrderAnalysis analysis, out IReadOnlyList<NpcRestorationFailure> failures,
+            out IReadOnlyList<NpcModel> newNpcs);
+    }
+
+    public class ProfileFactory : IProfileFactory
     {
         private readonly IModRepository modRepository;
         private readonly ISuspendableProfileEventLog profileEventLog;
@@ -28,7 +36,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public Profile CreateNew(LoadOrderAnalysis analysis)
         {
             var policy = policyFactory.GetPolicy(analysis);
-            return Create(analysis, npc => InitialSetup(npc, policy));
+            return Create(analysis, policy, npc => npc.ApplyPolicy(true, true));
         }
 
         public Profile RestoreSaved(
@@ -50,7 +58,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             Profile profile;
             try
             {
-                profile = Create(analysis, npc =>
+                profile = Create(analysis, policy, npc =>
                 {
                     var npcKey = new RecordKey(npc);
                     var isDefaultPluginInvalid =
@@ -101,13 +109,13 @@ namespace Focus.Apps.EasyNpc.Profiles
                 profileEventLog.Resume();
             }
             foreach (var newNpc in newNpcsList)
-                InitialSetup(newNpc, policy);
+                newNpc.ApplyPolicy(true, true);
             failures = failuresList.AsReadOnly();
             newNpcs = newNpcsList.AsReadOnly();
             return profile;
         }
 
-        private Profile Create(LoadOrderAnalysis analysis, Action<NpcModel> defaultAction)
+        private Profile Create(LoadOrderAnalysis analysis, IProfilePolicy policy, Action<NpcModel> defaultAction)
         {
             var baseGamePluginNames = analysis.Plugins
                 .Where(x => x.IsBaseGame)
@@ -119,16 +127,9 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .Where(x =>
                     x.Master.CanUseFaceGen && !x.Master.IsChild && x.Count > 1 &&
                     x.Any(r => r.Analysis.ComparisonToBase?.ModifiesFace == true))
-                .Select(x => new NpcModel(x, baseGamePluginNames, modRepository, profileEventLog))
+                .Select(x => new NpcModel(x, baseGamePluginNames, modRepository, profileEventLog, policy))
                 .Tap(defaultAction);
             return new Profile(npcs);
-        }
-
-        private static void InitialSetup(NpcModel npc, IProfilePolicy policy)
-        {
-            var setupAttributes = policy.GetSetupRecommendation(npc);
-            npc.SetDefaultOption(setupAttributes.DefaultPluginName);
-            npc.SetFaceOption(setupAttributes.FacePluginName);
         }
     }
 }

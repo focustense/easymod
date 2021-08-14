@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
@@ -80,6 +79,16 @@ namespace Focus.Apps.EasyNpc.Profiles
             };
             if (dialog.ShowDialog(dialogOwner).GetValueOrDefault())
                 profile.Save(dialog.FileName);
+        }
+
+        public bool SelectNpc(IRecordKey key)
+        {
+            if (npcs.TryGetValue(key, out var npc))
+            {
+                Grid.SelectedNpc = npc;
+                return true;
+            }
+            return false;
         }
 
         private void ApplyFilters()

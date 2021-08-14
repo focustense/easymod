@@ -3,7 +3,6 @@
 using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
 using Focus.Apps.EasyNpc.Profile;
-using Focus.Environment;
 using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
@@ -33,15 +32,17 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         private readonly IReadOnlySet<string> baseGamePluginNames;
         private readonly IModRepository modRepository;
+        private readonly IProfilePolicy policy;
         private readonly IProfileEventLog profileEventLog;
         private readonly RecordAnalysisChain<NpcAnalysis> records;
 
         public NpcModel(
             RecordAnalysisChain<NpcAnalysis> records, IReadOnlySet<string> baseGamePluginNames,
-            IModRepository modRepository, IProfileEventLog profileEventLog)
+            IModRepository modRepository, IProfileEventLog profileEventLog, IProfilePolicy policy)
         {
             this.baseGamePluginNames = baseGamePluginNames;
             this.modRepository = modRepository;
+            this.policy = policy;
             this.profileEventLog = profileEventLog;
             this.records = records;
 
@@ -73,6 +74,17 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .Where(x => includeBaseGame || !x.IsBaseGame)
                 .Where(x => includeNonFaces || x.Analysis.ComparisonToBase?.ModifiesFace != false)
                 .Count();
+        }
+
+        public void ApplyPolicy(bool resetDefaultPlugin = false, bool resetFacePlugin = false)
+        {
+            if (!resetDefaultPlugin && !resetFacePlugin)
+                return;
+            var setupAttributes = policy.GetSetupRecommendation(this);
+            if (resetDefaultPlugin)
+                SetDefaultOption(setupAttributes.DefaultPluginName);
+            if (resetFacePlugin)
+                SetFaceOption(setupAttributes.FacePluginName);
         }
 
         public ChangeResult SetDefaultOption(string pluginName)
@@ -115,6 +127,15 @@ namespace Focus.Apps.EasyNpc.Profiles
             else
                 MissingFacePluginName = pluginName;
             return option is null ? ChangeResult.Invalid : ChangeResult.Redundant;
+        }
+
+        // Does NOT need to be called in normal usage - happens automatically. Only used when rewriting the autosave.
+        public void WriteToEventLog()
+        {
+            LogProfileEvent(NpcProfileField.DefaultPlugin, null, DefaultOption.PluginName);
+            LogProfileEvent(NpcProfileField.FacePlugin, null, FaceOption.PluginName);
+            if (FaceGenOverride is not null)
+                LogProfileEvent(NpcProfileField.FaceMod, null, new ModLocatorKey(FaceGenOverride).ToString());
         }
 
         private ChangeResult SetFaceGenOverride(ModInfo? mod)

@@ -10,6 +10,7 @@ namespace Focus.Apps.EasyNpc.Profile
     public interface IProfileEventLog : IReadOnlyProfileEventLog
     {
         void Append(ProfileEvent e);
+        void Erase();
     }
 
     public interface ISuspendableProfileEventLog : IProfileEventLog
