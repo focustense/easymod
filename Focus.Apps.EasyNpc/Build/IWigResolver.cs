@@ -1,21 +1,20 @@
-﻿using Focus.Apps.EasyNpc.GameData.Records;
-using System;
+﻿using Focus.Analysis.Records;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build
 {
-    public interface IWigResolver<TKey>
+    public interface IWigResolver
     {
-        public IEnumerable<WigMatch<TKey>> ResolveAll(IEnumerable<NpcWigInfo<TKey>> wigs);
+        public IEnumerable<WigMatch> ResolveAll(IEnumerable<NpcWigInfo> wigs);
     }
 
-    public class WigMatch<TKey>
+    public class WigMatch
     {
-        public TKey WigKey { get; private init; }
-        public IReadOnlyList<TKey> HairKeys { get; private init; }
+        public IRecordKey WigKey { get; private init; }
+        public IReadOnlyList<IRecordKey> HairKeys { get; private init; }
 
-        public WigMatch(TKey wigKey, IEnumerable<TKey> hairKeys)
+        public WigMatch(IRecordKey wigKey, IEnumerable<IRecordKey> hairKeys)
         {
             WigKey = wigKey;
             HairKeys = hairKeys.ToList().AsReadOnly();

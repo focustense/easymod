@@ -13,7 +13,8 @@ namespace Focus.Apps.EasyNpc.Build
         BadArchive,
         MasterPluginRemoved,
         SelectedPluginRemoved,
-        MultipleArchiveSources,
+        MissingFaceGen,
+        MultipleFaceGen,
         FaceModNotSpecified,
         FaceModNotInstalled,
         FaceModPluginMismatch,
@@ -24,6 +25,8 @@ namespace Focus.Apps.EasyNpc.Build
         FaceModWigNotMatched,
         FaceModWigNotMatchedBald,
         FaceModWigConversionDisabled,
+        MultipleArchiveSources,
+        FaceGenOverride,
     }
 
     public class BuildWarning
@@ -87,6 +90,13 @@ namespace Focus.Apps.EasyNpc.Build
         public static string BadArchive(string path)
         {
             return $"Archive '{path}' is corrupt or unreadable.";
+        }
+
+        public static string FaceGenOverride(string editorId, string name, string modName)
+        {
+            return
+                $"{NpcLabel(editorId, name)} is configured to use mod '{modName}' as a FaceGen override, which " +
+                $"bypasses FaceGen consistency checks.";
         }
 
         public static string FaceModChangesRace(
@@ -159,6 +169,21 @@ namespace Focus.Apps.EasyNpc.Build
         public static string MasterPluginRemoved(string pluginName)
         {
             return $"NPC master plugin {pluginName} is no longer installed.";
+        }
+
+        public static string MissingFaceGen(
+            string editorId, string name, string pluginName, IEnumerable<string> modNames)
+        {
+            return
+                $"Plugin '{pluginName}' makes edits to {NpcLabel(editorId, name)} that require a FaceGen file, but " +
+                $"it was not found in any of the mods: [{string.Join(", ", modNames)}]";
+        }
+
+        public static string MultipleFaceGen(string editorId, string name, IEnumerable<string> modNames)
+        {
+            return
+                $"FaceGen file for {NpcLabel(editorId, name)} is being provided by multiple mods/components: " +
+                $"[{string.Join(", ", modNames)}].";
         }
 
         public static string ModDirectoryNotFound(string directoryName)

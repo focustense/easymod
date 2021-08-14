@@ -19,9 +19,19 @@ namespace Focus.Apps.EasyNpc.GameData.Files
 
         private static readonly HashSet<string> dlcPluginSet = new(DlcPluginNames, StringComparer.OrdinalIgnoreCase);
 
+        public static string GetFaceMeshFileName(IRecordKey key)
+        {
+            return GetFaceMeshFileName(key.BasePluginName, key.LocalFormIdHex);
+        }
+
         public static string GetFaceMeshFileName(string basePluginName, string localFormIdHex)
         {
             return Path.Combine(FaceMeshesPath, basePluginName, $"00{localFormIdHex}.nif");
+        }
+
+        public static string GetFaceTintFileName(IRecordKey key)
+        {
+            return GetFaceTintFileName(key.BasePluginName, key.LocalFormIdHex);
         }
 
         public static string GetFaceTintFileName(string basePluginName, string localFormIdHex)
