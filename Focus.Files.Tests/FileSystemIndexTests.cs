@@ -133,7 +133,7 @@ namespace Focus.Files.Tests
                 Assert.Equal(bucketName, x.Key);
                 Assert.Equal(pathInBucket, x.Value);
             }));
-            Assert.Collection(results, assertions.ToArray());
+            Assert.Collection(results.OrderBy(x => x.Key).ThenBy(x => x.Value), assertions.ToArray());
         }
 
         [Fact]

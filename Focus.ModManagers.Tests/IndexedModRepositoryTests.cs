@@ -2,6 +2,7 @@ using Focus.Testing.Files;
 using Moq;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -242,6 +243,9 @@ namespace Focus.ModManagers.Tests
             Assert.Collection(
                 modRepository.SearchForFiles("bar.bsa", false, false),
                 x => AssertSearchResult(x, "modname1", "bar"));
+            Assert.Collection(
+                modRepository.SearchForFiles(GetComponents("foo", "bar", "baz"), "foo2", false, false),
+                x => AssertSearchResult(x, "modname1", "foo"));
 
             Assert.Empty(modRepository.SearchForFiles("bar3", false, false));
             Assert.Empty(modRepository.SearchForFiles("quux1", false, false));
@@ -258,6 +262,10 @@ namespace Focus.ModManagers.Tests
             Assert.Collection(
                 modRepository.SearchForFiles("bar3", true, false),
                 x => AssertSearchResult(x, "modname1", "bar", "bar.bsa"));
+            Assert.Collection(
+                modRepository.SearchForFiles(GetComponents("foo", "bar", "quux_disabled"), "common/c1", true, false),
+                x => AssertSearchResult(x, "modname1", "foo"),
+                x => AssertSearchResult(x, "modname1", "bar", "bar.bsa"));
         }
 
         [Fact]
@@ -270,6 +278,10 @@ namespace Focus.ModManagers.Tests
                 x => AssertSearchResult(x, "modname2", "quux_disabled"));
             Assert.Collection(
                 modRepository.SearchForFiles("quux1", false, true),
+                x => AssertSearchResult(x, "modname2", "quux_disabled"));
+            Assert.Collection(
+                modRepository.SearchForFiles(GetComponents("foo", "quux_disabled"), "common/c1", false, true),
+                x => AssertSearchResult(x, "modname1", "foo"),
                 x => AssertSearchResult(x, "modname2", "quux_disabled"));
         }
 
@@ -431,6 +443,17 @@ namespace Focus.ModManagers.Tests
             Assert.Equal(modName, result.ModKey.Name);
             Assert.Equal(componentName, result.ModComponent.Name);
             Assert.Equal(archiveName, result.ArchiveName);
+        }
+
+        private IEnumerable<ModComponentInfo> GetComponents(params string[] componentNames)
+        {
+            foreach (var componentName in componentNames)
+            {
+                var mod = modRepository.FindByComponentName(componentName);
+                var component = mod.Components.Where(x => x.Name == componentName).FirstOrDefault();
+                if (component is not null)
+                    yield return component;
+            }
         }
     }
 }

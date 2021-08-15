@@ -87,6 +87,17 @@ namespace Focus.ModManagers
             tcs.SetResult();
         }
 
+        public bool ContainsFile(string relativePath, bool includeArchives, bool includeDisabled = false)
+        {
+            var looseFileComponents = modIndex.FindInBuckets(relativePath)
+                .Select(x => bucketNamesToComponents.GetOrDefault(x.Key))
+                .NotNull()
+                .Where(x => includeDisabled || x.IsEnabled);
+            if (looseFileComponents.Any())
+                return true;
+            return includeArchives && archiveIndex.FindInBuckets(relativePath).Any();
+        }
+
         public bool ContainsFile(
             IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives,
             bool includeDisabled = false)
@@ -197,6 +208,14 @@ namespace Focus.ModManagers
                     new ModSearchResult(x.Component, relativePath, x.ArchiveName) : null)
                 .NotNull();
             return mainResults.Concat(archiveResults);
+        }
+
+        public IEnumerable<ModSearchResult> SearchForFiles(
+            IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives, bool includeDisabled)
+        {
+            var componentSet = components.ToHashSet();
+            return SearchForFiles(relativePath, includeArchives, includeDisabled)
+                .Where(x => componentSet.Contains(x.ModComponent));
         }
 
         protected virtual void Dispose(bool disposing)

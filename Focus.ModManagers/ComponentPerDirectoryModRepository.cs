@@ -27,6 +27,11 @@ namespace Focus.ModManagers
             await inner.ConfigureIndex(index, config.RootPath, resolver);
         }
 
+        public bool ContainsFile(string relativePath, bool includeArchives, bool includeDisabled = false)
+        {
+            return inner.ContainsFile(relativePath, includeArchives, includeDisabled);
+        }
+
         public bool ContainsFile(
             IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives,
             bool includeDisabled = false)
@@ -73,6 +78,12 @@ namespace Focus.ModManagers
             string relativePath, bool includeArchives, bool includeDisabled = false)
         {
             return inner.SearchForFiles(relativePath, includeArchives, includeDisabled);
+        }
+
+        public IEnumerable<ModSearchResult> SearchForFiles(
+            IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives, bool includeDisabled = false)
+        {
+            return inner.SearchForFiles(components, relativePath, includeArchives, includeDisabled);
         }
 
         protected virtual Task<INotifyingBucketedFileIndex> BuildIndexAsync(TConfig config)

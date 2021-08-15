@@ -5,6 +5,7 @@ namespace Focus.ModManagers
 {
     public interface IModRepository : IEnumerable<ModInfo>
     {
+        bool ContainsFile(string relativePath, bool includeArchives, bool includeDisabled = false);
         bool ContainsFile(
             IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives,
             bool includeDisabled = false);
@@ -23,6 +24,9 @@ namespace Focus.ModManagers
         ModInfo? GetById(string modId);
         IEnumerable<ModSearchResult> SearchForFiles(
             string relativePath, bool includeArchives, bool includeDisabled = false);
+        IEnumerable<ModSearchResult> SearchForFiles(
+            IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives,
+            bool includeDisabled = false);
     }
 
     public interface IConfigurableModRepository<TConfig> : IModRepository
