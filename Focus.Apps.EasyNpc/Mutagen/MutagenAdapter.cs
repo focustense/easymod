@@ -33,8 +33,6 @@ namespace Focus.Apps.EasyNpc.Mutagen
         public IArchiveProvider ArchiveProvider { get; private set; }
         public GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> Environment { get; private set; }
         public string DataDirectory { get; private set; }
-        // Mutagen doesn't have an internal log, like XEdit Lib. (Because it doesn't need to, as it's a .NET library and
-        // works with ordinary exception handling)
         public IMergedPluginBuilder<FormKey> MergedPluginBuilder { get; private set; }
         public IEnumerable<ISkyrimModGetter> Mods => Environment.LoadOrder.Select(x => x.Value.Mod).NotNull();
         public IModPluginMapFactory ModPluginMapFactory { get; private set; }
@@ -66,6 +64,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
             }
             this.log = log;
             this.modResolver = modResolver;
+
+            var gameSelection = new GameSelection(gameRelease);
+            ArchiveProvider = new MutagenArchiveProvider(gameSelection, log);
         }
 
         public IEnumerable<PluginInfo> GetAvailablePlugins()
@@ -121,11 +122,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 Environment = new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
                     DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
                 Environment.LinkCache.Warmup<Npc>();
-                var gameSelection = new GameSelection(gameRelease);
-                ArchiveProvider = new MutagenArchiveProvider(gameSelection, log);
                 MergedPluginBuilder = new MutagenMergedPluginBuilder(Environment, skyrimRelease, log);
                 ModPluginMapFactory = new MutagenModPluginMapFactory(Environment, gameRelease, modResolver);
-                Settings = GameSettings.From(GameEnvironmentWrapper.Wrap(Environment), gameSelection);
+                Settings = GameSettings.From(GameEnvironmentWrapper.Wrap(Environment), new GameSelection(gameRelease));
                 npcCompatibilityRuleSet = new CompatibilityRuleSet<INpcGetter>(npc => $"{npc.FormKey} '{npc.EditorID}'", log)
                     .Add(new FacegenHeadRule(Environment))
                     .Add(new NoChildrenRule(Environment));

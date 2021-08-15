@@ -82,8 +82,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                         record.HeadParts.Add(mergedHair.Value);
                     wigConversions.Add(new NpcWigConversion
                     {
-                        BasePluginName = model.BasePluginName,
-                        LocalFormIdHex = model.LocalFormIdHex,
+                        Key = new RecordKey(model),
                         HairColor = GetHairColor(record),
                         AddedHeadParts = mergedHair.HasValue ?
                             DescribeHeadParts(mergedHair.Value, patch.Importer).ToList().AsReadOnly() :

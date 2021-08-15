@@ -24,16 +24,15 @@ namespace Focus.Apps.EasyNpc.Build
 
     public class NpcWigConversion
     {
-        public string BasePluginName { get; init; }
-        public string LocalFormIdHex { get; init; }
+        public IRecordKey Key { get; init; } = RecordKey.Null;
         public Color? HairColor { get; init; }
-        public IReadOnlyList<HeadPartInfo> AddedHeadParts { get; init; }
-        public IReadOnlyList<HeadPartInfo> RemovedHeadParts { get; init; }
+        public IReadOnlyList<HeadPartInfo> AddedHeadParts { get; init; } = new List<HeadPartInfo>().AsReadOnly();
+        public IReadOnlyList<HeadPartInfo> RemovedHeadParts { get; init; } = new List<HeadPartInfo>().AsReadOnly();
     }
 
     public class HeadPartInfo
     {
-        public string EditorId { get; init; }
-        public string FileName { get; init; }
+        public string? EditorId { get; init; }
+        public string? FileName { get; init; }
     }
 }

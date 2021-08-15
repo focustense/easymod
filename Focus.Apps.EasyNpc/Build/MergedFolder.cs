@@ -250,7 +250,7 @@ namespace Focus.Apps.EasyNpc.Build
                 using var tempFileCache = new TempFileCache(new FileSystem());
                 Parallel.ForEach(mergeInfo.WigConversions, wigConversion =>
                 {
-                    var npcKey = Tuple.Create(wigConversion.BasePluginName, wigConversion.LocalFormIdHex);
+                    var npcKey = Tuple.Create(wigConversion.Key.BasePluginName, wigConversion.Key.LocalFormIdHex);
                     var npc = npcsByFormId[npcKey];
                     var faceMeshFileName = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
                     var faceGenPath = Path.Combine(buildSettings.OutputDirectory, faceMeshFileName);

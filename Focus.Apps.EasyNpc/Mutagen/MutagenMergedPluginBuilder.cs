@@ -187,8 +187,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                             npc.DescriptiveLabel, npc.FacePluginName, npc.FaceConfiguration.Wig.Key);
                         wigConversions.Add(new NpcWigConversion
                         {
-                            BasePluginName = npc.BasePluginName,
-                            LocalFormIdHex = npc.LocalFormIdHex,
+                            Key = new RecordKey(npc),
                             HairColor = GetHairColor(mergedNpcRecord),
                             AddedHeadParts = mergedHair.HasValue ?
                                 DescribeHeadParts(mergedHair.Value, context).ToList().AsReadOnly() :
