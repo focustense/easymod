@@ -10,7 +10,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
     public interface IBuildTask
     {
-        IObservable<string> ActivityName { get; }
         Exception? Exception { get; }
         IObservable<int> ItemCount { get; }
         IObservable<int> ItemIndex { get; }
@@ -34,7 +33,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public Exception? Exception { get; private set; }
         public abstract string Name { get; }
 
-        protected BehaviorSubject<string> ActivityName { get; } = new(string.Empty);
         protected BehaviorSubject<int> ItemCount { get; } = new(0);
         protected BehaviorSubject<int> ItemIndex { get; } = new(0);
         protected BehaviorSubject<string> ItemName = new(string.Empty);
@@ -42,7 +40,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         protected CancellationToken CancellationToken => cancellationTokenSource.Token;
 
-        IObservable<string> IBuildTask.ActivityName => ActivityName;
         IObservable<int> IBuildTask.ItemCount => ItemCount;
         IObservable<int> IBuildTask.ItemIndex => ItemIndex;
         IObservable<string> IBuildTask.ItemName => ItemName;
@@ -70,11 +67,26 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             try
             {
                 CancellationToken.ThrowIfCancellationRequested();
-                var result = await Run(settings);
+                TResult result;
+                try
+                {
+                    result = await Run(settings);
+                }
+                // Unwrapping the AggregateException here, as opposed to the outer exception handlers, allows us to
+                // reuse those handlers without having to write a special one for the Aggregate case.
+                catch (AggregateException ex)
+                {
+                    throw ex.InnerExceptions[0];
+                }
                 State.OnNext(BuildTaskState.Completed);
                 return result;
             }
             catch (TaskCanceledException)
+            {
+                State.OnNext(BuildTaskState.Cancelled);
+                throw;
+            }
+            catch (OperationCanceledException)
             {
                 State.OnNext(BuildTaskState.Cancelled);
                 throw;
@@ -85,14 +97,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 State.OnNext(BuildTaskState.Failed);
                 throw;
             }
-            finally
-            {
-                ActivityName.OnCompleted();
-                ItemCount.OnCompleted();
-                ItemIndex.OnCompleted();
-                ItemName.OnCompleted();
-                State.OnCompleted();
-            }
         }
 
         protected virtual void Dispose(bool disposing)
@@ -102,7 +106,12 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             if (disposing)
             {
                 cancellationTokenSource.Dispose();
-                ActivityName.Dispose();
+
+                ItemCount.OnCompleted();
+                ItemIndex.OnCompleted();
+                ItemName.OnCompleted();
+                State.OnCompleted();
+
                 ItemCount.Dispose();
                 ItemIndex.Dispose();
                 ItemName.Dispose();
@@ -114,7 +123,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         protected void NextItem(string name, int increment = 1)
         {
             ItemName.OnNext(name);
-            ItemIndex.OnNext(ItemIndex.Value + increment);
+            if (increment > 0)
+                ItemIndex.OnNext(ItemIndex.Value + increment);
         }
 
         protected void NextItemSync(string name)

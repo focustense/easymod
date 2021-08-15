@@ -94,6 +94,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public IObservable<IBuildTask> Tasks => tasks;
 
         private readonly Dictionary<Type, object> availableResults = new();
+        private readonly List<IDisposable> completionDisposables = new();
         private readonly ILifetimeScope container;
         private readonly TaskCompletionSource<TResult> outcomeSource = new();
         private readonly List<TaskRegistration> remainingRegistrations;
@@ -115,9 +116,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public void Cancel()
         {
-            foreach (var (buildTask, _) in remainingTasks)
-                if (buildTask is ICancellableBuildTask cancellableTask)
-                    cancellableTask.Cancel();
             outcomeSource.SetCanceled();
             Cleanup();
         }
@@ -132,7 +130,19 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             if (ended)
                 return;
             ended = true;
-            await Task.WhenAll(remainingTasks.Select(x => x.Item2));
+            foreach (var (buildTask, _) in remainingTasks)
+                if (buildTask is ICancellableBuildTask cancellableTask)
+                    cancellableTask.Cancel();
+            try
+            {
+                await Task.WhenAll(remainingTasks.Select(x => x.Item2));
+            }
+            catch (AggregateException) { }
+            catch (TaskCanceledException) { }
+            catch (OperationCanceledException) { }
+            foreach (var disposable in completionDisposables)
+                disposable.Dispose();
+            completionDisposables.Clear();
             scope.Dispose();
         }
 
@@ -152,30 +162,41 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 Complete();
                 return;
             }
-            var ready = new List<(TaskRegistration registration, IBuildTask task)>();
-            foreach (var reg in remainingRegistrations)
+            try
             {
-                var args = reg.ArgumentTypes.Select(t => TryResolve(t)).ToArray();
-                if (args.All(x => x is not null))
+                var ready = new List<(TaskRegistration registration, IBuildTask task)>();
+                foreach (var reg in remainingRegistrations)
                 {
-                    if (reg.Factory.Method.Invoke(null, args) is not IBuildTask task)
-                        throw new BuildException(
-                            $"Task factory {reg.Factory.GetType().FullName} did not return a valid build task.");
-                    ready.Add((reg, task));
+                    var args = reg.ArgumentTypes.Select(t => TryResolve(t)).ToArray();
+                    if (args.All(x => x is not null))
+                    {
+                        if (reg.Factory.DynamicInvoke(args) is not IBuildTask task)
+                            throw new BuildException(
+                                $"Task factory {reg.Factory.GetType().FullName} did not return a valid build task.");
+                        ready.Add((reg, task));
+                    }
+                }
+                foreach (var (registration, buildTask) in ready)
+                {
+                    tasks.OnNext(buildTask);
+                    if (buildTask is IDisposable disposable)
+                        completionDisposables.Add(disposable);
+                    remainingRegistrations.Remove(registration);
+                    var runtimeTask = StartAndWatch(buildTask);
+                }
+                if (remainingTasks.Count == 0 && ready.Count == 0)
+                {
+                    var remainingRegistrationTypeNames =
+                        remainingRegistrations.Select(x => x.Factory.GetType().FullName);
+                    throw new BuildException(
+                        $"Failed to start any new tasks after all current tasks completed. The build cannot " +
+                        $"complete. Remaining tasks are: [{string.Join(", ", remainingRegistrationTypeNames)}]");
                 }
             }
-            foreach (var (registration, buildTask) in ready)
+            catch (Exception ex)
             {
-                remainingRegistrations.Remove(registration);
-                var runtimeTask = StartAndWatch(buildTask);
-                tasks.OnNext(buildTask);
-            }
-            if (remainingTasks.Count == 0 && ready.Count == 0)
-            {
-                var remainingRegistrationTypeNames = remainingRegistrations.Select(x => x.Factory.GetType().FullName);
-                throw new BuildException(
-                    $"Failed to start any new tasks after all current tasks completed. The build cannot complete. " +
-                    $"Remaining tasks are: [{string.Join(", ", remainingRegistrationTypeNames)}]");
+                outcomeSource.TrySetException(new BuildException("Unexpected error during build.", ex));
+                Cleanup();
             }
         }
 

@@ -41,7 +41,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             return Task.Run(() =>
             {
                 var outputPath =
-                fs.Path.Combine(settings.OutputDirectory, settings.OutputModName, patch.Mod.ModKey.FileName);
+                fs.Path.Combine(settings.OutputDirectory, patch.Mod.ModKey.FileName);
                 BackupPreviousMerge(outputPath);
                 SaveMod(patch.Mod, outputPath);
                 return new Result(patch.Mod, outputPath);
@@ -50,7 +50,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         private void BackupPreviousMerge(string mergeFilePath)
         {
-            ActivityName.OnNext("Backing up previous merge");
             if (fs.File.Exists(mergeFilePath))
             {
                 var backupPath = $"{mergeFilePath}.{DateTime.Now:yyyyMMdd_HHmmss}.bak";

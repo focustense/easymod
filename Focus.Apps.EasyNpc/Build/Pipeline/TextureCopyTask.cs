@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Focus.Apps.EasyNpc.GameData.Files;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -33,7 +34,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         {
             return Task.Run(() =>
             {
-                var texturePaths = extracted.TexturePaths.ToHashSet();
+                var texturePaths = extracted.TexturePaths
+                    .Where(p => !FileStructure.IsFaceGen(p))
+                    .ToHashSet();
                 ItemCount.OnNext(texturePaths.Count);
                 copier.CopyAll(texturePaths, settings.OutputDirectory, NextItemSync, CancellationToken);
                 return new Result(texturePaths);

@@ -13,7 +13,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         public class Result { }
 
-        public delegate NpcFacesTask Factory(NpcDefaultsTask.Result defaults);
+        public delegate NpcFacesTask Factory(PatchInitializationTask.Result patch, NpcDefaultsTask.Result defaults);
 
         public override string Name => "Apply Face Customizations";
 

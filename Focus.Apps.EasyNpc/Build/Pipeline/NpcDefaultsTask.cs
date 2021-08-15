@@ -21,7 +21,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             }
         }
 
-        public delegate NpcDefaultsTask Factory();
+        public delegate NpcDefaultsTask Factory(PatchInitializationTask.Result patch);
 
         public override string Name => "Import NPC Defaults";
 

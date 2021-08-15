@@ -20,7 +20,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             }
         }
 
-        public delegate HeadPartResourceCopyTask Factory(PatchSaveTask.Result result);
+        public delegate HeadPartResourceCopyTask Factory(PatchSaveTask.Result patch);
 
         private readonly IFileCopier copier;
         private readonly IModRepository modRepository;

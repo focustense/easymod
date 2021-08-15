@@ -62,16 +62,21 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 })
                 .NotNullOrEmpty()
                 .Select(x => x.PrefixPath("textures"));
-            var pathsFromMeshes = await Task.WhenAll(
-                meshPaths.Select(path =>
+            var extractTasks = meshPaths
+                .Select(path =>
                 {
                     CancellationToken.ThrowIfCancellationRequested();
                     NextItemSync(path);
                     return GetReferencedTexturePaths(fs.Path.Combine(settings.OutputDirectory, path));
-                }));
+                })
+                .ToList();
+            var pathsFromMeshes = await Task
+                .WhenAll(extractTasks)
+                .ConfigureAwait(false);
             var allTexturePaths = pathsFromMeshes
                 .SelectMany(p => p)
                 .Concat(pathsFromTextureSets)
+                .AsParallel()
                 .Select(NormalizeTexturePath)
                 .ToHashSet(PathComparer.Default);
             return new Result(allTexturePaths);
@@ -85,9 +90,11 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         // Parsing the NIF using nifly would be more accurate - but this is much faster, and it has never been shown
         // to be inaccurate.
-        private async Task<IEnumerable<string>> GetReferencedTexturePaths(string nifFileName)
+        private async Task<IReadOnlyList<string>> GetReferencedTexturePaths(string nifFileName)
         {
             var texturePaths = new List<string>();
+            if (!fs.File.Exists(nifFileName))
+                return texturePaths;
             var fileText = await fs.File.ReadAllTextAsync(nifFileName).ConfigureAwait(false);
             var match = TexturePathExpression.Match(fileText);
             while (match.Success)
@@ -95,7 +102,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 texturePaths.Add(match.Value);
                 match = match.NextMatch();
             }
-            return texturePaths;
+            return texturePaths.ToList();
         }
 
         private string NormalizeTexturePath(string rawTexturePath)
