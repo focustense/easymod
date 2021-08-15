@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Focus.Apps.EasyNpc.Profile;
+﻿using Focus.Apps.EasyNpc.Profile;
 using Focus.ModManagers;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +9,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public class Profile
     {
+        public int Count => npcs.Count;
         public IEnumerable<NpcModel> Npcs => npcs.Values;
 
         private readonly Dictionary<RecordKey, NpcModel> npcs = new();

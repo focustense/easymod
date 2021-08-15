@@ -16,6 +16,11 @@ namespace Focus
             return sequence.Where(x => x.HasValue).Select(x => x!.Value);
         }
 
+        public static IEnumerable<string> NotNullOrEmpty(this IEnumerable<string?> sequence)
+        {
+            return sequence.Where(x => !string.IsNullOrEmpty(x))!;
+        }
+
         public static IEnumerable<T>? OrderBySafe<T, TKey>(this IEnumerable<T>? sequence, Func<T, TKey> keySelector)
         {
             // If we use null-projection inline, then C# interprets the final expression differently. This essentially

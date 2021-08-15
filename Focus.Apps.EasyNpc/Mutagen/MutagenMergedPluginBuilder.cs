@@ -3,6 +3,7 @@
 using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Profile;
+using Focus.Providers.Mutagen;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;

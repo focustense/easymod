@@ -12,6 +12,8 @@ namespace Focus
 
     public class RecordKey : IRecordKey
     {
+        public static readonly RecordKey Null = new(string.Empty, string.Empty);
+
         internal static readonly StringComparison DefaultComparison = StringComparison.CurrentCultureIgnoreCase;
 
         public string BasePluginName { get; private init; }

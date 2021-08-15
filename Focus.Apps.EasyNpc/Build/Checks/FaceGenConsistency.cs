@@ -34,9 +34,6 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             if (npc.FaceOption.IsBaseGame)
                 yield break;
 
-            // TODO: IMPORTANT IMPORTANT IMPORTANT: This check is now optimized for explicit head part patches!
-            // The patch builder MUST copy all head part refs (including inherited parts) explicitly for this to work!
-            // Allowing the patch to fall back to race defaults may result in broken stuff!
             var defaultHeadParts = npc.DefaultOption.Analysis.MainHeadParts;
             var faceHeadParts = npc.FaceOption.Analysis.MainHeadParts;
             var requiresFaceGen = !faceHeadParts.ToHashSet().SetEquals(defaultHeadParts);

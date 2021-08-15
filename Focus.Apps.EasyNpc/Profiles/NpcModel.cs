@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-using Focus.Analysis.Plugins;
+﻿using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
 using Focus.Apps.EasyNpc.Profile;
 using Focus.ModManagers;
@@ -15,6 +15,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public enum ChangeResult { OK, Invalid, Redundant }
 
         public string BasePluginName => records.Key.BasePluginName;
+        public string DescriptiveLabel => $"{EditorId} '{Name}' ({LocalFormIdHex}:{BasePluginName})";
         public string EditorId => records.Master.EditorId;
         public string LocalFormIdHex => records.Key.LocalFormIdHex;
         public string Name => records.Master.Name;
@@ -30,7 +31,6 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string? MissingFacePluginName { get; private set; }
         public IReadOnlyList<NpcOption> Options { get; private init; }
 
-        private readonly IReadOnlySet<string> baseGamePluginNames;
         private readonly IModRepository modRepository;
         private readonly IProfilePolicy policy;
         private readonly IProfileEventLog profileEventLog;
@@ -40,7 +40,6 @@ namespace Focus.Apps.EasyNpc.Profiles
             RecordAnalysisChain<NpcAnalysis> records, IReadOnlySet<string> baseGamePluginNames,
             IModRepository modRepository, IProfileEventLog profileEventLog, IProfilePolicy policy)
         {
-            this.baseGamePluginNames = baseGamePluginNames;
             this.modRepository = modRepository;
             this.policy = policy;
             this.profileEventLog = profileEventLog;
