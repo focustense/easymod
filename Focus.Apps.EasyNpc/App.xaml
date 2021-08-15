@@ -57,6 +57,10 @@
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="LightGray"/>
             </Style>
+            <Style TargetType="DataGridRow" x:Key="DataGridRowStyle" BasedOn="{StaticResource DefaultDataGridRowStyle}"/>
+            <Style TargetType="DataGridCell" x:Key="DataGridCellTrimmed" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+                <Setter Property="TextBlock.TextTrimming" Value="WordEllipsis"/>
+            </Style>
 
             <Style TargetType="TextBlock" x:Key="FormLabelStyle" BasedOn="{StaticResource BodyTextBlockStyle}">
                 <Setter Property="Margin" Value="0,8,0,4"/>

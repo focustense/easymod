@@ -14,6 +14,7 @@
     <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}"/>
     <SolidColorBrush x:Key="SuccessForegroundBrush" Color="{StaticResource SuccessForegroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressBackgroundBrush" Color="{StaticResource TaskProgressBackgroundColor}"/>
+    <SolidColorBrush x:Key="TaskProgressCancelledBackgroundBrush" Color="{StaticResource TaskProgressCancelledBackgroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressCompletedBackgroundBrush" Color="{StaticResource TaskProgressCompletedBackgroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressFailedBackgroundBrush" Color="{StaticResource TaskProgressFailedBackgroundColor}"/>
     <SolidColorBrush x:Key="WarningForegroundBrush" Color="{StaticResource WarningForegroundColor}"/>
