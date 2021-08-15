@@ -14,4 +14,11 @@ namespace Focus.Providers.Mutagen
         public ILoadOrder<IModListing<TModGetter>> LoadOrder { get; }
         public ILinkCache LinkCache { get; }
     }
+
+    public interface IMutableGameEnvironment<TMod, TModGetter> : IReadOnlyGameEnvironment<TModGetter>
+        where TModGetter : class, IModGetter
+        where TMod : class, IMod, TModGetter
+    {
+        new ILinkCache<TMod, TModGetter> LinkCache { get; }
+    }
 }

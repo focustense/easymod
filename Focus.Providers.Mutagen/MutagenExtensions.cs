@@ -1,11 +1,14 @@
-﻿using Mutagen.Bethesda;
+﻿using Loqui;
+using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Cache;
 using Mutagen.Bethesda.Plugins.Records;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Focus.Providers.Mutagen
 {
@@ -27,6 +30,16 @@ namespace Focus.Providers.Mutagen
             var leafDirectory = new DirectoryInfo(env.DataFolderPath).Name;
             return leafDirectory.Equals("data", StringComparison.OrdinalIgnoreCase) ?
                 env.DataFolderPath : Path.Combine(env.DataFolderPath, "data");
+        }
+
+        public static string GetRecordTypeName<T>()
+        {
+            return GetRecordTypeName(typeof(T));
+        }
+
+        public static string GetRecordTypeName(Type recordType)
+        {
+            return LoquiRegistration.TryGetRegister(recordType, out var reg) ? reg.Name : recordType.Name;
         }
 
         public static T PickGender<T>(this IGenderedItemGetter<T> item, bool female)
@@ -117,6 +130,36 @@ namespace Focus.Providers.Mutagen
                 return null;
             }
             return mod;
+        }
+
+        public static TMajor? TryResolve<TMajor>(
+            this IFormLinkGetter<TMajor> link, ILinkCache cache, IMajorRecordGetter? source, ILogger log,
+            string? consequence = null)
+            where TMajor : class, IMajorRecordCommonGetter
+        {
+            if (link.IsNull)
+                return null;
+            var record = link.TryResolve(cache);
+            if (record == null)
+            {
+                var message = new StringBuilder();
+                var messageArgs = new List<object?>();
+                if (source != null)
+                {
+                    var sourceType = GetRecordTypeName(source.GetType());
+                    message.Append("{sourceType:l} {formKey} ({editorId}) includes");
+                    messageArgs.AddRange(new object?[] { sourceType, source.FormKey, source.EditorID });
+                }
+                else
+                    message.Append("found");
+                var linkType = GetRecordTypeName<TMajor>();
+                message.Append(" reference to missing {linkType:l} {referencedFormKey}.");
+                messageArgs.AddRange(new object[] { linkType, link.FormKey });
+                if (!string.IsNullOrEmpty(consequence))
+                    message.Append(' ').Append(consequence);
+                log.Warning(message.ToString(), messageArgs.ToArray());
+            }
+            return record;
         }
     }
 }

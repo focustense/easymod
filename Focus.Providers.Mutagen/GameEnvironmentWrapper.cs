@@ -18,7 +18,7 @@ namespace Focus.Providers.Mutagen
     }
 
     public class GameEnvironmentWrapper<TModSetter, TModGetter> :
-        IReadOnlyGameEnvironment<TModGetter>
+        IMutableGameEnvironment<TModSetter, TModGetter>
         where TModSetter : class, IContextMod<TModSetter, TModGetter>, TModGetter
         where TModGetter : class, IContextGetterMod<TModSetter, TModGetter>
     {
@@ -27,7 +27,9 @@ namespace Focus.Providers.Mutagen
         public FilePath LoadOrderFilePath => env.LoadOrderFilePath;
         public FilePath? CreationKitLoadOrderFilePath => env.CreationKitLoadOrderFilePath;
         public ILoadOrder<IModListing<TModGetter>> LoadOrder => env.LoadOrder;
-        public ILinkCache LinkCache => env.LinkCache;
+        public ILinkCache<TModSetter, TModGetter> LinkCache => env.LinkCache;
+
+        ILinkCache IReadOnlyGameEnvironment<TModGetter>.LinkCache => env.LinkCache;
 
         private readonly GameEnvironmentState<TModSetter, TModGetter> env;
 
