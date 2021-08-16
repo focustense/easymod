@@ -1,4 +1,5 @@
-﻿using Focus.Storage.Archives;
+﻿using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Storage.Archives;
 using System;
 using System.IO.Abstractions;
 using System.Linq;
@@ -15,6 +16,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             TextureCopyTask.Result textures);
 
         public override string Name => "Pack BSA Archive";
+
+        private const long GB = 1024 * 1024 * 1024;
 
         private readonly IDummyPluginBuilder dummyPluginBuilder;
         private readonly FaceGenCopyTask.Result faceGens;
@@ -37,8 +40,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         protected override async Task<Result> Run(BuildSettings settings)
         {
-            const long GB = 1024 * 1024 * 1024;
-
+            // FaceGen files are usually much larger and therefore more expensive than other meshes/textures.
+            // Applying extra weight to these gives a somewhat more realistic ETA.
+            const int FaceGenWeightMultiplier = 3;
             const int MeshProgressWeight = 1;
             // Textures are considerably more expensive to add due to the the type of compression, so applying a higher
             // weight to them avoids "rushing" the progress while the meshes are running in parallel. We'll still get
@@ -53,19 +57,35 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             // the mesh settings.
             const long MaxTexturesUncompressedSize = 15 * GB;
 
-            var meshProgressSize =
-                MeshProgressWeight *
-                (faceGens.MeshPaths.Count + headParts.MeshPaths.Count + headParts.MorphPaths.Count);
-            var textureProgessSize = TextureProgressWeight * textures.TexturePaths.Count;
+            var meshProgressSize = MeshProgressWeight *
+                (faceGens.MeshPaths.Count * FaceGenWeightMultiplier +
+                headParts.MeshPaths.Count + headParts.MorphPaths.Count);
+            var textureProgressSize = TextureProgressWeight *
+                (faceGens.TintPaths.Count * FaceGenWeightMultiplier + textures.TexturePaths.Count);
             // The "+5" below adds some headroom for follow-up tasks - dummy plugins and file cleanup.
-            ItemCount.OnNext(meshProgressSize + textureProgessSize + 5);
+            ItemCount.OnNext(meshProgressSize + textureProgressSize + 5);
 
             var baseName = fs.Path.GetFileNameWithoutExtension(patch.Path);
-            var meshesTask = Task.Run(() => BuildFilteredArchive(
-                settings.OutputDirectory, baseName, "meshes", MaxMeshesUncompressedSize, MeshProgressWeight));
-            var texturesTask = Task.Run(() => BuildFilteredArchive(
-                settings.OutputDirectory, $"{baseName} - Textures", "textures", MaxTexturesUncompressedSize,
-                TextureProgressWeight));
+            var meshesTask = Task.Run(() => BuildFilteredArchive(settings.OutputDirectory, new()
+            {
+                Name = baseName,
+                RelativePath = "meshes",
+                DefaultProgressWeight = MeshProgressWeight,
+                FaceGenProgressWeight = MeshProgressWeight * FaceGenWeightMultiplier,
+                EstimatedDefaultCompressionRatio = 0.7,
+                EstimatedFaceGenCompressionRatio = 0.5,
+                MaxUncompressedSize = MaxMeshesUncompressedSize,
+            }));
+            var texturesTask = Task.Run(() => BuildFilteredArchive(settings.OutputDirectory, new()
+            {
+                Name = $"{baseName} - Textures",
+                RelativePath = "textures",
+                DefaultProgressWeight = TextureProgressWeight,
+                FaceGenProgressWeight = TextureProgressWeight * FaceGenWeightMultiplier,
+                EstimatedDefaultCompressionRatio = 0.5,
+                EstimatedFaceGenCompressionRatio = 0.08,
+                MaxUncompressedSize = MaxTexturesUncompressedSize,
+            }));
             await Task.WhenAll(meshesTask, texturesTask);
 
             ItemName.OnNext("Creating dummy plugins");
@@ -82,30 +102,48 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             }
 
             ItemName.OnNext("Cleaning up loose files");
-            // TODO: Uncomment when this feels safe
-            //fs.Directory.Delete(fs.Path.Combine(settings.OutputDirectory, "meshes"), true);
-            //fs.Directory.Delete(fs.Path.Combine(settings.OutputDirectory, "textures"), true);
+            fs.Directory.Delete(fs.Path.Combine(settings.OutputDirectory, "meshes"), true);
+            fs.Directory.Delete(fs.Path.Combine(settings.OutputDirectory, "textures"), true);
 
             return new Result();
         }
 
-        private ArchiveBuilder.BuildResult BuildFilteredArchive(
-            string outputDirectory, string name, string relativePath, long maxUncompressedSize, int progressWeight)
+        private ArchiveBuilder.BuildResult BuildFilteredArchive(string outputDirectory, ArchiveSettings settings)
         {
-            var outputFileName = fs.Path.Combine(outputDirectory, name) + ".bsa";
+            var outputFileName = fs.Path.Combine(outputDirectory, settings.Name) + ".bsa";
             return new ArchiveBuilder(ArchiveType.SSE)
-                .AddDirectory(fs.Path.Combine(outputDirectory, relativePath), relativePath)
+                .AddDirectory(fs.Path.Combine(outputDirectory, settings.RelativePath), settings.RelativePath)
                 .Compress(true)
                 .ShareData(true)
-                .MaxUncompressedSize(maxUncompressedSize)
+                .MaxCompressedSize((long)(1.8 * GB /* leave headroom */), x =>
+                {
+                    var ratio = FileStructure.IsFaceGen(x.PathInArchive) ?
+                        settings.EstimatedFaceGenCompressionRatio : settings.EstimatedDefaultCompressionRatio;
+                    return (int)(x.Size * ratio);
+                })
+                .MaxUncompressedSize(settings.MaxUncompressedSize)
                 .OnBeforeBuild(entries => CancellationToken.ThrowIfCancellationRequested())
                 .OnPacking(entry =>
                 {
                     CancellationToken.ThrowIfCancellationRequested();
-                    NextItemSync($"[{name}.bsa] <- {entry.PathInArchive}", 0);
+                    NextItemSync($"[{settings.Name}.bsa] <- {entry.PathInArchive}", 0);
                 })
-                .OnPacked(entry => NextItemSync($"[{name}.bsa] <- {entry.PathInArchive}", progressWeight))
+                .OnPacked(entry => NextItemSync(
+                    $"[{settings.Name}.bsa] <- {entry.PathInArchive}",
+                    FileStructure.IsFaceGen(entry.PathInArchive) ?
+                        settings.FaceGenProgressWeight : settings.DefaultProgressWeight))
                 .Build(outputFileName);
+        }
+
+        class ArchiveSettings
+        {
+            public int DefaultProgressWeight { get; init; }
+            public double EstimatedDefaultCompressionRatio { get; init; }
+            public double EstimatedFaceGenCompressionRatio { get; init; }
+            public int FaceGenProgressWeight { get; init; }
+            public long MaxUncompressedSize { get; init; }
+            public string Name { get; init; } = string.Empty;
+            public string RelativePath { get; init; } = string.Empty;
         }
     }
 }

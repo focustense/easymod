@@ -15,6 +15,9 @@ namespace Focus.Storage.Archives
         private readonly List<FileEntry> fileEntries = new();
         private readonly ArchiveType type;
 
+        // If no estimation callback is specified, we use only the uncompressed size as a guide and ignore the estimate.
+        private Func<FileEntry, int> estimateCompressedSize = _ => 0;
+
         // 2 GB is the maximimum size for the archive itself. Even though some BSAs that are slightly larger than 2 GB
         // may appear to work - i.e. not crash at the loading screen - they are still liable to cause unpredictable
         // crashes or other bugs in the game, depending on which files actually end up in the above-2GB range.
@@ -23,6 +26,7 @@ namespace Focus.Storage.Archives
         // under 2 GB, but as of now, there is no way to determine this in advance. Therefore, the default uncompressed
         // size is still set to 2 GB, which may compress to a much smaller size, and callers can substitute their own
         // larger value instead if they're willing to take some risks.
+        private long maxCompressedSize = 2L * 1024 * 1024 * 1024;
         private long maxUncompressedSize = 2L * 1024 * 1024 * 1024;
         private bool shouldCompress = false;
         private bool shouldShareData = false;
@@ -92,6 +96,13 @@ namespace Focus.Storage.Archives
             return this;
         }
 
+        public ArchiveBuilder MaxCompressedSize(long maxCompressedSize, Func<FileEntry, int> estimateCompressedSize)
+        {
+            this.estimateCompressedSize = estimateCompressedSize;
+            this.maxCompressedSize = maxCompressedSize;
+            return this;
+        }
+
         public ArchiveBuilder MaxUncompressedSize(long maxUncompressedSize)
         {
             this.maxUncompressedSize = maxUncompressedSize;
@@ -142,12 +153,15 @@ namespace Focus.Storage.Archives
             var nextOverflowIndex = 0;
             foreach (var entry in fileEntries)
             {
-                if (group.Count > 0 && group.Size + entry.Size > maxUncompressedSize)
+                var estimatedCompressedSize = estimateCompressedSize(entry);
+                if (group.Count > 0 &&
+                    (group.Size + entry.Size > maxUncompressedSize ||
+                        group.EstimatedCompressedSize + entry.Size > maxCompressedSize))
                 {
                     yield return group;
                     group = new FileGroup { FileName = GetOverflowFileName(outputFileName, nextOverflowIndex++) };
                 }
-                group.Add(entry);
+                group.Add(entry, estimatedCompressedSize);
             }
             yield return group;
         }
@@ -185,15 +199,17 @@ namespace Focus.Storage.Archives
         {
             public int Count => entries.Count;
             public IEnumerable<FileEntry> Entries => entries;
+            public int EstimatedCompressedSize { get; private set; }
             public string FileName { get; init; }
             public long Size { get; private set; }
 
             private readonly List<FileEntry> entries = new();
 
-            public void Add(FileEntry entry)
+            public void Add(FileEntry entry, int estimatedCompressedSize)
             {
                 entries.Add(entry);
                 Size += entry.Size;
+                EstimatedCompressedSize += estimatedCompressedSize;
             }
         }
     }
