@@ -22,12 +22,7 @@ namespace Focus.Apps.EasyNpc.Main
                 .RegisterModule<SystemModule>()
                 .RegisterModule<ConfigurationModule>()
                 .RegisterModule<MessagingModule>()
-                // TODO: Reinstate Vortex ASAP
-                .RegisterModule(new ModOrganizerModule
-                {
-                    ExecutablePath = !string.IsNullOrEmpty(options.ModOrganizerExecutablePath) ?
-                        options.ModOrganizerExecutablePath : startupInfo.ParentProcessPath,
-                })
+                .RegisterModule(GetModManagerModule(options, startupInfo))
                 .RegisterModule(new MutagenModule
                 {
                     BlacklistedPluginNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -45,6 +40,22 @@ namespace Focus.Apps.EasyNpc.Main
                 .RegisterModule<MaintenanceModule>()
                 .RegisterModule<MainModule>();
             return builder.Build();
+        }
+
+        private static Module GetModManagerModule(CommandLineOptions options, StartupInfo startupInfo)
+        {
+            // Vortex manifest is a command-line option, so it automatically overrides detection-based mechanisms.
+            if (!string.IsNullOrEmpty(options.VortexManifest))
+                return new VortexModule { BootstrapFilePath = options.VortexManifest };
+            return startupInfo.Launcher switch
+            {
+                ModManager.ModOrganizer => new ModOrganizerModule
+                {
+                    ExecutablePath = !string.IsNullOrEmpty(options.ModOrganizerExecutablePath) ?
+                                           options.ModOrganizerExecutablePath : startupInfo.ParentProcessPath,
+                },
+                _ => new UnknownModManagerModule(),
+            };
         }
     }
 }
