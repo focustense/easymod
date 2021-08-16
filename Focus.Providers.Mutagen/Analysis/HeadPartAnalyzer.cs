@@ -40,6 +40,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 ExtraPartKeys = headPart.ExtraParts.ToRecordKeys(),
                 IsMainPart = !headPart.Flags.HasFlag(HeadPart.Flag.IsExtraPart),
                 ModelFileName = headPart.Model?.File,
+                Name = headPart.Name?.String ?? string.Empty,
                 PartType = ConvertHeadPartType(headPart.Type),
                 // If neither male nor female are defined in the flags, assume it applies to both/either.
                 // TODO: Is this a correct assumption?

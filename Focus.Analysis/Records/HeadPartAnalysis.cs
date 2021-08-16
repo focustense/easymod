@@ -24,6 +24,7 @@ namespace Focus.Analysis.Records
         public IReadOnlyList<IRecordKey> ExtraPartKeys { get; init; } = Empty.ReadOnlyList<IRecordKey>();
         public bool IsMainPart { get; init; }
         public string? ModelFileName { get; init; }
+        public string Name { get; init; } = string.Empty;
         public HeadPartType PartType { get; init; }
         public bool SupportsFemaleNpcs { get; init; }
         public bool SupportsMaleNpcs { get; init; }

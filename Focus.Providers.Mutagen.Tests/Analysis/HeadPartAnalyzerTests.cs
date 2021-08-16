@@ -102,6 +102,15 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         [Fact]
+        public void IncludesName()
+        {
+            var headPartKeys = Groups.AddRecords<HeadPart>("mod.esp", hp => hp.Name = "Test Name");
+            var analysis = Analyzer.Analyze("mod.esp", headPartKeys[0]);
+
+            Assert.Equal("Test Name", analysis.Name);
+        }
+
+        [Fact]
         public void WhenHasExtraPartFlag_IsNotMainPart()
         {
             var headPartKeys = Groups.AddRecords<HeadPart>("mod.esp", hp => hp.Flags |= HeadPart.Flag.IsExtraPart);
