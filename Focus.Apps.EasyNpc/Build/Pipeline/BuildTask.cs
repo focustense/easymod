@@ -28,10 +28,15 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         Task<TResult> Start(BuildSettings settings);
     }
 
-    public abstract class BuildTask<TResult> : IBuildTask<TResult>
+    public interface INameable
+    {
+        string Name { get; set; }
+    }
+
+    public abstract class BuildTask<TResult> : IBuildTask<TResult>, INameable
     {
         public Exception? Exception { get; private set; }
-        public abstract string Name { get; }
+        public string Name { get; set; } = string.Empty;
 
         protected BehaviorSubject<int> ItemCount { get; } = new(0);
         protected BehaviorSubject<int> ItemIndex { get; } = new(0);
@@ -152,20 +157,4 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             // until all patchers have finished with it.
         }
     }
-
-    // Planned process: run this like a mini-IoC container.
-    // - Register instances of IBuildTask<TResult> in the IoC container.
-    // - Use delegate factories to separate service dependencies from pipeline dependencies.
-    //   - i.e. factory accepts any previous results that the task depends on.
-    // - Pipeline immediately constructs and runs any parameterless factories.
-    // - Each time a task finishes and provides its TResult, see if any other tasks have their dependencies satisfied.
-    //   - If so, construct those with factories + previous build results and run them.
-    // - Keep going until either all tasks have completed, some tasks have failed/cancelled, OR it is no longer possible
-    //   to run the remaining tasks (i.e. due to dependencies not being fulfilled despite all other tasks having run to
-    //   completion). The latter is probably a configuration error.
-    // - Can register tasks with a name (separate from the name in the instance itself) for better error reporting,
-    //   especially if a task can never be created.
-    // - Consider pre-evaluating the graph - that is, check for cycles, or if the current registrations won't allow all
-    //   build tasks to be completed due to missing interim results.
-    // - May need ability to register or otherwise supply seed data, like the active Profile.
 }

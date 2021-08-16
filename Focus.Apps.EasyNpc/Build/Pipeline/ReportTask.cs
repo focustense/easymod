@@ -4,8 +4,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 {
     public class ReportTask : BuildTask<BuildReport>
     {
-        public override string Name => "Report Results";
-
         public delegate ReportTask Factory(PatchSaveTask.Result patch, ArchiveCreationTask.Result archive);
 
         public ReportTask(PatchSaveTask.Result patch, ArchiveCreationTask.Result archive)

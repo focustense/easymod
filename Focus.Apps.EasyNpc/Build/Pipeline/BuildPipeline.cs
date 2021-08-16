@@ -16,6 +16,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
     public interface IBuildProgress<TResult>
     {
+        IReadOnlyList<string> AllTaskNames { get; }
         Task<TResult> Outcome { get; }
         IObservable<IBuildTask> Tasks { get; }
 
@@ -94,6 +95,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
     class BuildInstance<TSettings, TResult> : IBuildProgress<TResult>
     {
+        public IReadOnlyList<string> AllTaskNames { get; private set; }
         public Task<TResult> Outcome => outcomeSource.Task;
         public IObservable<IBuildTask> Tasks => tasks;
 
@@ -116,6 +118,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             this.container = container;
             this.log = log;
             this.settings = settings;
+
+            AllTaskNames = registrations.Select(x => x.Name).ToList().AsReadOnly();
 
             remainingRegistrations = new(registrations);
             scope = container.BeginLifetimeScope();
@@ -203,6 +207,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                         if (reg.Factory.DynamicInvoke(args) is not IBuildTask task)
                             throw new BuildException(
                                 $"Task factory {reg.Factory.GetType().FullName} did not return a valid build task.");
+                        if (task is INameable nameable)
+                            nameable.Name = reg.Name;
                         log.Information("Created task '{taskName}'", task.Name);
                         ready.Add((reg, task));
                     }

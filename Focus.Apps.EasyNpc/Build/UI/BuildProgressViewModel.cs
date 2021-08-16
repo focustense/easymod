@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Build.Pipeline;
+using PropertyChanged;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -15,7 +16,10 @@ namespace Focus.Apps.EasyNpc.Build.UI
 
         public delegate BuildProgressViewModel<TResult> Factory(IBuildProgress<TResult> model);
 
+        [DependsOn(nameof(RemainingTaskNames))]
+        public bool HasRemainingTasks => RemainingTaskNames.Count > 0;
         public Task<TResult> Outcome => model.Outcome;
+        public ObservableCollection<string> RemainingTaskNames { get; private init; } = new();
         public ObservableCollection<BuildTaskViewModel> Tasks { get; private init; } = new();
 
         private readonly Subject<bool> disposed = new();
@@ -24,11 +28,16 @@ namespace Focus.Apps.EasyNpc.Build.UI
         public BuildProgressViewModel(BuildTaskViewModel.Factory taskViewModelFactory, IBuildProgress<TResult> model)
         {
             this.model = model;
+            RemainingTaskNames = new(model.AllTaskNames);
 
             model.Tasks
                 .TakeUntil(disposed)
                 .ObserveOn(Application.Current.Dispatcher)
-                .Subscribe(t => Tasks.Add(taskViewModelFactory(t)));
+                .Subscribe(t =>
+                {
+                    Tasks.Add(taskViewModelFactory(t));
+                    RemainingTaskNames.Remove(t.Name);
+                });
         }
 
         public void Dispose()

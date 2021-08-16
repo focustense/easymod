@@ -23,8 +23,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public delegate TexturePathExtractionTask Factory(
             PatchSaveTask.Result patch, HeadPartResourceCopyTask.Result headParts, FaceGenCopyTask.Result faceGen);
 
-        public override string Name => "Extract Texture Paths";
-
         private static readonly Regex TexturePathExpression = new(
             @"[\w\s\p{P}]+\.dds",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);

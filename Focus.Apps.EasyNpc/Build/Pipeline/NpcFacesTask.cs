@@ -15,8 +15,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public delegate NpcFacesTask Factory(PatchInitializationTask.Result patch, NpcDefaultsTask.Result defaults);
 
-        public override string Name => "Apply Face Customizations";
-
         private readonly NpcDefaultsTask.Result defaults;
         private readonly IReadOnlyGameEnvironment<ISkyrimModGetter> env;
         private readonly ILogger log;

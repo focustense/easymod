@@ -49,7 +49,6 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<BuildPipelineConfiguration<BuildReport>>();
             builder
                 .Register(ctx => ctx.Resolve<BuildPipelineConfiguration<BuildReport>>()
-                    // TODO: Look for a way to keep task names consistent with actual classes.
                     .RegisterTask<PatchInitializationTask.Factory>("Initialize Patch")
                     .RegisterTask<NpcDefaultsTask.Factory>("Import NPC Defaults")
                     .RegisterTask<NpcFacesTask.Factory>("Apply Face Customizations")
@@ -62,7 +61,7 @@ namespace Focus.Apps.EasyNpc.Modules
                     .RegisterTask<ArchiveCreationTask.Factory>("Pack BSA Archive")
                     .RegisterTask<ReportTask.Factory>("Report Results")
                     .CreatePipeline<BuildSettings>())
-                .As <IBuildPipeline<BuildSettings, BuildReport>>();
+                .As<IBuildPipeline<BuildSettings, BuildReport>>();
         }
     }
 }

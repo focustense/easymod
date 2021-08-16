@@ -26,8 +26,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public delegate FaceGenCopyTask Factory();
 
-        public override string Name => "Copy FaceGen Data";
-
         private readonly IArchiveProvider archiveProvider;
         private readonly IFileSystem fs;
         private readonly IModRepository modRepository;

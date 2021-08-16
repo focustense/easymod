@@ -15,8 +15,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             PatchSaveTask.Result patch, FaceGenCopyTask.Result faceGens, HeadPartResourceCopyTask.Result headParts,
             TextureCopyTask.Result textures);
 
-        public override string Name => "Pack BSA Archive";
-
         private const long GB = 1024 * 1024 * 1024;
 
         private readonly IDummyPluginBuilder dummyPluginBuilder;

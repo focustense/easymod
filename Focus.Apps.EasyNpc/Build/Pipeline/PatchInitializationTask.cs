@@ -23,8 +23,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public static readonly string MergeFileName = "NPC Appearances Merged.esp";
 
-        public override string Name => "Initialize Patch";
-
         private readonly GameSelection game;
         private readonly RecordImporter.Factory importerFactory;
 

@@ -25,8 +25,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public delegate DewiggifyRecordsTask Factory(
             PatchInitializationTask.Result patch, NpcDefaultsTask.Result defaults, NpcFacesTask.Result faces);
 
-        public override string Name => "De-wiggify Records";
-
         private readonly NpcDefaultsTask.Result defaults;
         private readonly IReadOnlyGameEnvironment<ISkyrimModGetter> env;
 

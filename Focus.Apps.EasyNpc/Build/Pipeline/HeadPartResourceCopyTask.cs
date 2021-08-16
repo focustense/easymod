@@ -33,8 +33,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             this.patch = patch;
         }
 
-        public override string Name => "Copy Head Part Meshes/Morphs";
-
         protected override Task<Result> Run(BuildSettings settings)
         {
             return Task.Run(() =>

@@ -19,8 +19,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public delegate TextureCopyTask Factory(TexturePathExtractionTask.Result extracted);
 
-        public override string Name => "Copy Textures";
-
         private readonly IFileCopier copier;
         private readonly TexturePathExtractionTask.Result extracted;
 

@@ -22,8 +22,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public delegate PatchSaveTask Factory(
             PatchInitializationTask.Result patch, NpcFacesTask.Result faces, DewiggifyRecordsTask.Result wigs);
 
-        public override string Name => "Save Patch";
-
         private readonly IFileSystem fs;
         private readonly PatchInitializationTask.Result patch;
 
