@@ -316,6 +316,23 @@ namespace Focus.Files.Tests
             Assert.True(index.IsEmpty("sub1"));
         }
 
+        [Fact]
+        public void WhenWatchingPaused_StopsRaisingEvents()
+        {
+            index.PauseWatching();
+
+            Assert.False(watcher.EnableRaisingEvents);
+        }
+
+        [Fact]
+        public void WhenWatchingResumed_StartsRaisingEvents()
+        {
+            index.PauseWatching();
+            index.ResumeWatching();
+
+            Assert.True(watcher.EnableRaisingEvents);
+        }
+
         private void AddFiles(IEnumerable<string> fileNames)
         {
             foreach (var fileName in fileNames)

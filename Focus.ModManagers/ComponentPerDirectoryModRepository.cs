@@ -8,11 +8,13 @@ namespace Focus.ModManagers
 {
     public record ComponentPerDirectoryConfiguration(string RootPath);
 
-    public abstract class ComponentPerDirectoryModRepository<TConfig> : IConfigurableModRepository<TConfig>
+    public abstract class ComponentPerDirectoryModRepository<TConfig> : IConfigurableModRepository<TConfig>, IWatchable
         where TConfig : ComponentPerDirectoryConfiguration
     {
         private readonly IFileSystem fs;
         private readonly IIndexedModRepository inner;
+
+        private INotifyingBucketedFileIndex? index;
 
         public ComponentPerDirectoryModRepository(IFileSystem fs, IIndexedModRepository inner)
         {
@@ -23,7 +25,7 @@ namespace Focus.ModManagers
         public async Task Configure(TConfig config)
         {
             var resolver = GetComponentResolver(config);
-            var index = await BuildIndexAsync(config);
+            index = await BuildIndexAsync(config);
             await inner.ConfigureIndex(index, config.RootPath, resolver);
         }
 
@@ -74,6 +76,18 @@ namespace Focus.ModManagers
             return inner.GetEnumerator();
         }
 
+        public void PauseWatching()
+        {
+            if (index is IWatchable watchable)
+                watchable.PauseWatching();
+        }
+
+        public void ResumeWatching()
+        {
+            if (index is IWatchable watchable)
+                watchable.ResumeWatching();
+        }
+
         public IEnumerable<ModSearchResult> SearchForFiles(
             string relativePath, bool includeArchives, bool includeDisabled = false)
         {
@@ -90,8 +104,8 @@ namespace Focus.ModManagers
         {
             // Building the index is synchronous because the relevant file system APIs are all synchronous (e.g.
             // Directory.EnumerateFiles), but we can still run it on a background thread.
-            return Task.Run(
-                () => FileSystemIndex.Build(fs, config.RootPath, Bucketizers.TopLevelDirectory())
+            return Task.Run(() =>
+                FileSystemIndex.Build(fs, config.RootPath, Bucketizers.TopLevelDirectory())
                 as INotifyingBucketedFileIndex);
         }
 

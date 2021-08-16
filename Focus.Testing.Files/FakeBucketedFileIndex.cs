@@ -12,13 +12,16 @@ namespace Focus.Testing.Files
 
         private readonly Dictionary<string, HashSet<string>> buckets = new();
 
+        private bool isWatchingPaused = false;
+
         public void AddFiles(string bucketName, params string[] paths)
         {
             var bucketFiles = buckets.GetOrAdd(bucketName, () => new HashSet<string>());
             foreach (var path in paths)
             {
                 bucketFiles.Add(path);
-                AddedToBucket?.Invoke(this, new(bucketName, path));
+                if (!isWatchingPaused)
+                    AddedToBucket?.Invoke(this, new(bucketName, path));
             }
         }
 
@@ -54,6 +57,11 @@ namespace Focus.Testing.Files
             return !buckets.TryGetValue(bucketName, out var bucketFiles) || bucketFiles.Count == 0;
         }
 
+        public void PauseWatching()
+        {
+            isWatchingPaused = true;
+        }
+
         public void RemoveFiles(string bucketName, params string[] paths)
         {
             if (!buckets.TryGetValue(bucketName, out var bucketFiles))
@@ -61,8 +69,14 @@ namespace Focus.Testing.Files
             foreach (var path in paths)
             {
                 if (bucketFiles.Remove(path))
-                    RemovedFromBucket?.Invoke(this, new(bucketName, path));
+                    if (!isWatchingPaused)
+                        RemovedFromBucket?.Invoke(this, new(bucketName, path));
             }
+        }
+
+        public void ResumeWatching()
+        {
+            isWatchingPaused = false;
         }
     }
 }

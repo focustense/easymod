@@ -20,7 +20,7 @@ namespace Focus.Files
         IEnumerable<string> GetFilePaths();
     }
 
-    public interface INotifyingBucketedFileIndex : IBucketedFileIndex
+    public interface INotifyingBucketedFileIndex : IBucketedFileIndex, IWatchable
     {
         event EventHandler<BucketedFileEventArgs> AddedToBucket;
         event EventHandler<BucketedFileEventArgs> RemovedFromBucket;

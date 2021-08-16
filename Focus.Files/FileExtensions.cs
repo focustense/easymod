@@ -21,6 +21,9 @@ namespace Focus.Files
         {
             if (data == null)
                 return false;
+            var directoryName = Path.GetDirectoryName(outFilePath);
+            if (!string.IsNullOrEmpty(directoryName))
+                Directory.CreateDirectory(directoryName);
             using var fs = File.Create(outFilePath);
             fs.Write(data);
             return true;

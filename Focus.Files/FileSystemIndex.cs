@@ -177,6 +177,16 @@ namespace Focus.Files
             return !buckets.TryGetValue(bucketName, out var contents) || contents.Count == 0;
         }
 
+        public void PauseWatching()
+        {
+            watcher.EnableRaisingEvents = false;
+        }
+
+        public void ResumeWatching()
+        {
+            watcher.EnableRaisingEvents = true;
+        }
+
         private void Dispose(bool disposing)
         {
             if (!isDisposed)

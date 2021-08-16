@@ -55,5 +55,13 @@ namespace Focus.Files
         {
             return true;
         }
+
+        public void PauseWatching()
+        {
+        }
+
+        public void ResumeWatching()
+        {
+        }
     }
 }

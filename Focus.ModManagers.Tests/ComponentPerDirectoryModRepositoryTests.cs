@@ -36,6 +36,8 @@ namespace Focus.ModManagers.Tests
 
         class TestRepository : ComponentPerDirectoryModRepository<ComponentPerDirectoryConfiguration>
         {
+            public Mock<IWatchable> WatchableIndexMock { get; private set; }
+
             public TestRepository(IFileSystem fs, IIndexedModRepository inner)
                 : base(fs, inner)
             {
@@ -48,6 +50,7 @@ namespace Focus.ModManagers.Tests
                 // We don't care about a thing with regard to what this index actually does; it's just passed through to
                 // the base class. All we need to know is that it was created with the right config.
                 indexMock.Setup(x => x.ToString()).Returns($"Index:{config.RootPath}");
+                WatchableIndexMock = indexMock.As<IWatchable>();
                 return Task.FromResult(indexMock.Object);
             }
 
@@ -61,7 +64,7 @@ namespace Focus.ModManagers.Tests
 
         private readonly MockFileSystem fs;
         private readonly Mock<IIndexedModRepository> indexedMock;
-        private readonly ComponentPerDirectoryModRepository<ComponentPerDirectoryConfiguration> repository;
+        private readonly TestRepository repository;
 
         public ComponentPerDirectoryModRepositoryTests()
         {
@@ -181,6 +184,27 @@ namespace Focus.ModManagers.Tests
 
             Assert.Equal(innerResults, results);
             indexedMock.Verify(x => x.SearchForFiles(relativePath, includeArchives, includeDisabled), Times.Once());
+        }
+
+        [Fact]
+        public async Task WhenWatchingPaused_PausesInternalIndex()
+        {
+            // Need to configure in order to actually have an index
+            await repository.Configure(new ComponentPerDirectoryConfiguration(@"C:\dummypath"));
+            repository.PauseWatching();
+
+            repository.WatchableIndexMock.Verify(x => x.PauseWatching(), Times.Once());
+            repository.WatchableIndexMock.Verify(x => x.ResumeWatching(), Times.Never());
+        }
+
+        [Fact]
+        public async Task WhenWatchingResumed_ResumesInternalIndex()
+        {
+            await repository.Configure(new ComponentPerDirectoryConfiguration(@"C:\dummypath"));
+            repository.PauseWatching();
+            repository.ResumeWatching();
+
+            repository.WatchableIndexMock.Verify(x => x.ResumeWatching(), Times.Once());
         }
     }
 }
