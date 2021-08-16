@@ -49,17 +49,18 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<BuildPipelineConfiguration<BuildReport>>();
             builder
                 .Register(ctx => ctx.Resolve<BuildPipelineConfiguration<BuildReport>>()
-                    .RegisterTask<PatchInitializationTask.Factory>()
-                    .RegisterTask<NpcDefaultsTask.Factory>()
-                    .RegisterTask<NpcFacesTask.Factory>()
-                    .RegisterTask<PatchSaveTask.Factory>()
-                    .RegisterTask<HeadPartResourceCopyTask.Factory>()
-                    .RegisterTask<FaceGenCopyTask.Factory>()
-                    .RegisterTask<DewiggifyRecordsTask.Factory>()
-                    .RegisterTask<TexturePathExtractionTask.Factory>()
-                    .RegisterTask<TextureCopyTask.Factory>()
-                    .RegisterTask<ArchiveCreationTask.Factory>()
-                    .RegisterTask<ReportTask.Factory>()
+                    // TODO: Look for a way to keep task names consistent with actual classes.
+                    .RegisterTask<PatchInitializationTask.Factory>("Initialize Patch")
+                    .RegisterTask<NpcDefaultsTask.Factory>("Import NPC Defaults")
+                    .RegisterTask<NpcFacesTask.Factory>("Apply Face Customizations")
+                    .RegisterTask<PatchSaveTask.Factory>("Save Patch")
+                    .RegisterTask<HeadPartResourceCopyTask.Factory>("Copy Head Part Meshes/Morphs")
+                    .RegisterTask<FaceGenCopyTask.Factory>("Copy FaceGen Data")
+                    .RegisterTask<DewiggifyRecordsTask.Factory>("De-wiggify Records")
+                    .RegisterTask<TexturePathExtractionTask.Factory>("Extract Texture Paths")
+                    .RegisterTask<TextureCopyTask.Factory>("Copy Textures")
+                    .RegisterTask<ArchiveCreationTask.Factory>("Pack BSA Archive")
+                    .RegisterTask<ReportTask.Factory>("Report Results")
                     .CreatePipeline<BuildSettings>())
                 .As <IBuildPipeline<BuildSettings, BuildReport>>();
         }
