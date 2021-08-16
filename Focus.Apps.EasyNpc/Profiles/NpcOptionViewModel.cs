@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Focus.Analysis.Records;
+﻿using Focus.Analysis.Records;
 using System;
 using System.ComponentModel;
 

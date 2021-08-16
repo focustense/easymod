@@ -6,6 +6,11 @@ using System.Linq;
 
 namespace Focus.Analysis.Execution
 {
+    public interface ILoadOrderAnalysisReceiver
+    {
+        void Receive(LoadOrderAnalysis analysis);
+    }
+
     public class LoadOrderAnalysis
     {
         public TimeSpan ElapsedTime { get; init; }

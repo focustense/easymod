@@ -1,8 +1,5 @@
-﻿#nullable enable
-
 ﻿using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
-using Focus.Apps.EasyNpc.Profile;
 using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
@@ -10,7 +7,7 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class NpcModel : INpcBasicInfo // Temporary name until refactoring is done
+    public class Npc : INpcBasicInfo
     {
         public enum ChangeResult { OK, Invalid, Redundant }
 
@@ -36,7 +33,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         private readonly IProfileEventLog profileEventLog;
         private readonly RecordAnalysisChain<NpcAnalysis> records;
 
-        public NpcModel(
+        public Npc(
             RecordAnalysisChain<NpcAnalysis> records, IReadOnlySet<string> baseGamePluginNames,
             IModRepository modRepository, IProfileEventLog profileEventLog, IProfilePolicy policy)
         {
@@ -60,6 +57,17 @@ namespace Focus.Apps.EasyNpc.Profiles
             FaceOption = DefaultOption = Options[Options.Count - 1];
         }
 
+        public void ApplyPolicy(bool resetDefaultPlugin = false, bool resetFacePlugin = false)
+        {
+            if (!resetDefaultPlugin && !resetFacePlugin)
+                return;
+            var setupAttributes = policy.GetSetupRecommendation(this);
+            if (resetDefaultPlugin)
+                SetDefaultOption(setupAttributes.DefaultPluginName);
+            if (resetFacePlugin)
+                SetFaceOption(setupAttributes.FacePluginName);
+        }
+
         public IEnumerable<string> GetFaceModNames()
         {
             if (FaceGenOverride is not null)
@@ -75,15 +83,14 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .Count();
         }
 
-        public void ApplyPolicy(bool resetDefaultPlugin = false, bool resetFacePlugin = false)
+        public bool IsDefaultPlugin(string pluginName)
         {
-            if (!resetDefaultPlugin && !resetFacePlugin)
-                return;
-            var setupAttributes = policy.GetSetupRecommendation(this);
-            if (resetDefaultPlugin)
-                SetDefaultOption(setupAttributes.DefaultPluginName);
-            if (resetFacePlugin)
-                SetFaceOption(setupAttributes.FacePluginName);
+            return DefaultOption.PluginName.Equals(pluginName, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        public bool IsFacePlugin(string pluginName)
+        {
+            return FaceOption.PluginName.Equals(pluginName, StringComparison.CurrentCultureIgnoreCase);
         }
 
         public ChangeResult SetDefaultOption(string pluginName)
@@ -95,7 +102,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 DefaultOption = option;
                 return ChangeResult.OK;
             }
-            else
+            else if (option is null)
                 MissingDefaultPluginName = pluginName;
             return option is null ? ChangeResult.Invalid : ChangeResult.Redundant;
         }
@@ -123,7 +130,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                     SetFaceGenOverride(null);
                 return ChangeResult.OK;
             }
-            else
+            else if (option is null)
                 MissingFacePluginName = pluginName;
             return option is null ? ChangeResult.Invalid : ChangeResult.Redundant;
         }

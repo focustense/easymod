@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Focus.Apps.EasyNpc.Profiles;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build.Checks
@@ -12,7 +13,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.wigResolver = wigResolver;
         }
 
-        public IEnumerable<BuildWarning> Run(Profiles.Profile profile, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
             var wigKeys = profile.Npcs
                 .Select(x => x.FaceOption.Analysis.WigInfo)

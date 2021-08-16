@@ -1,5 +1,4 @@
-﻿using Focus.Apps.EasyNpc.Profile;
-using System;
+﻿using Focus.Apps.EasyNpc.Profiles;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,32 +6,26 @@ namespace Focus.Apps.EasyNpc.Build.Checks
 {
     public class MissingPlugins : IBuildCheck
     {
-        private readonly IGameSettings gameSettings;
-        private readonly IReadOnlyProfileEventLog profileEvents;
-
-        public MissingPlugins(IGameSettings gameSettings, IReadOnlyProfileEventLog profileEvents)
+        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
-            this.gameSettings = gameSettings;
-            this.profileEvents = profileEvents;
-        }
-
-        public IEnumerable<BuildWarning> Run(Profiles.Profile profile, BuildSettings settings)
-        {
-            var npcs = profile.Npcs.ToDictionary(x => new RecordKey(x), RecordKeyComparer.Default);
-            return profileEvents
-                .MostRecentByNpc()
-                .WithMissingPlugins(gameSettings.PluginLoadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase))
-                .Select(x => npcs.TryGetValue(x, out var npc) ?
-                    new
+            return profile.Npcs
+                .Where(x => x.HasMissingPlugins)
+                .SelectMany(x =>
+                    new (NpcProfileField field, string? pluginName)[]
                     {
-                        npc.BasePluginName,
-                        npc.LocalFormIdHex,
-                        npc.EditorId,
-                        npc.Name,
-                        FieldName = x.Field == NpcProfileField.FacePlugin ? "face" : "default",
-                        PluginName = x.NewValue,
-                    } : null)
-                .Where(x => x != null)
+                        (NpcProfileField.DefaultPlugin, x.MissingDefaultPluginName),
+                        (NpcProfileField.FacePlugin, x.MissingFacePluginName)
+                    }
+                    .Where(f => !string.IsNullOrEmpty(f.pluginName))
+                    .Select(f => new
+                    {
+                        x.BasePluginName,
+                        x.LocalFormIdHex,
+                        x.EditorId,
+                        x.Name,
+                        FieldName = f.field == NpcProfileField.FacePlugin ? "face" : "default",
+                        PluginName = f.pluginName!,
+                    }))
                 .Select(x => new BuildWarning(
                     new RecordKey(x.BasePluginName, x.LocalFormIdHex),
                     BuildWarningId.SelectedPluginRemoved,

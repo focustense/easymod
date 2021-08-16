@@ -1,5 +1,4 @@
-﻿using Focus.Apps.EasyNpc.Profile;
-using Focus.ModManagers;
+﻿using Focus.ModManagers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,11 +9,11 @@ namespace Focus.Apps.EasyNpc.Profiles
     public class Profile
     {
         public int Count => npcs.Count;
-        public IEnumerable<NpcModel> Npcs => npcs.Values;
+        public IEnumerable<Npc> Npcs => npcs.Values;
 
-        private readonly Dictionary<RecordKey, NpcModel> npcs = new();
+        private readonly Dictionary<RecordKey, Npc> npcs = new();
 
-        public Profile(IEnumerable<NpcModel> npcs)
+        public Profile(IEnumerable<Npc> npcs)
         {
             this.npcs = npcs.ToDictionary(x => new RecordKey(x));
         }

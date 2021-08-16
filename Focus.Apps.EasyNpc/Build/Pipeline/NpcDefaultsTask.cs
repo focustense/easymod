@@ -13,9 +13,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         public class Result
         {
-            public IReadOnlyList<(NpcModel Model, Npc Record)> Npcs { get; private init; }
+            public IReadOnlyList<(Profiles.Npc Model, global::Mutagen.Bethesda.Skyrim.Npc Record)> Npcs { get; private init; }
 
-            public Result(IReadOnlyList<(NpcModel model, Npc record)> npcs)
+            public Result(IReadOnlyList<(Profiles.Npc model, global::Mutagen.Bethesda.Skyrim.Npc record)> npcs)
             {
                 Npcs = npcs;
             }
@@ -39,7 +39,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             return Task.Run(() =>
             {
                 ItemCount.OnNext(settings.Profile.Count);
-                var npcs = new List<(NpcModel model, Npc record)>();
+                var npcs = new List<(Profiles.Npc model, global::Mutagen.Bethesda.Skyrim.Npc record)>();
                 foreach (var npc in settings.Profile.Npcs)
                 {
                     NextItem(npc.DescriptiveLabel);

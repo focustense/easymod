@@ -1,6 +1,5 @@
-﻿#nullable enable
-
-using Focus.Apps.EasyNpc.GameData.Files;
+﻿using Focus.Apps.EasyNpc.GameData.Files;
+using Focus.Apps.EasyNpc.Messages;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
 using System;
@@ -15,6 +14,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public class ProfileViewModel : INotifyPropertyChanged
     {
+        public delegate ProfileViewModel Factory(Profile profile);
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public NpcFiltersViewModel Filters { get; private init; } = new();
@@ -26,13 +27,16 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         private readonly HashSet<IRecordKey> alwaysVisibleNpcKeys = new(RecordKeyComparer.Default);
         private readonly ILineupBuilder lineupBuilder;
-        private readonly Dictionary<IRecordKey, NpcModel> npcs = new(RecordKeyComparer.Default);
+        private readonly IMessageBus messageBus;
+        private readonly Dictionary<IRecordKey, Npc> npcs = new(RecordKeyComparer.Default);
         private readonly Dictionary<string, int> pluginOrder;
         private readonly Profile profile;
 
-        public ProfileViewModel(Profile profile, ILineupBuilder lineupBuilder, IGameSettings gameSettings)
+        public ProfileViewModel(
+            Profile profile, ILineupBuilder lineupBuilder, IGameSettings gameSettings, IMessageBus messageBus)
         {
             this.lineupBuilder = lineupBuilder;
+            this.messageBus = messageBus;
             this.npcs = profile.Npcs.ToDictionary(x => new RecordKey(x), RecordKeyComparer.Default);
             this.profile = profile;
 
@@ -46,6 +50,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 
             Filters.PropertyChanged += (_, _) => ApplyFilters();
             Search.PropertyChanged += (_, _) => ApplyFilters();
+
+            messageBus.Subscribe<JumpToProfile>(HandleJumpToProfile);
 
             ApplyFilters();
         }
@@ -104,9 +110,9 @@ namespace Focus.Apps.EasyNpc.Profiles
             if (Filters.Wigs)
                 filteredNpcs = filteredNpcs.Where(x => x.FaceOption.HasWig);
             if (!string.IsNullOrEmpty(Filters.DefaultPlugin))
-                filteredNpcs = filteredNpcs.Where(x => x.DefaultOption.PluginEquals(Filters.DefaultPlugin));
+                filteredNpcs = filteredNpcs.Where(x => x.IsDefaultPlugin(Filters.DefaultPlugin));
             if (!string.IsNullOrEmpty(Filters.FacePlugin))
-                filteredNpcs = filteredNpcs.Where(x => x.FaceOption.PluginEquals(Filters.FacePlugin));
+                filteredNpcs = filteredNpcs.Where(x => x.IsFacePlugin(Filters.FacePlugin));
             if (Filters.Conflicts)
                 // Not really a "conflict" anymore, but we'll repurpose the filter.
                 filteredNpcs = filteredNpcs.Where(x => x.FaceGenOverride is not null);
@@ -127,7 +133,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         }
 
         private void ApplySearchParameter(
-            ref IEnumerable<NpcModel> npcs, Func<INpcSearchParameters, string> propertySelector)
+            ref IEnumerable<Npc> npcs, Func<INpcSearchParameters, string> propertySelector)
         {
             var filterText = propertySelector(Search);
             if (string.IsNullOrEmpty(filterText))
@@ -136,25 +142,58 @@ namespace Focus.Apps.EasyNpc.Profiles
                 propertySelector(x)?.Contains(filterText, StringComparison.CurrentCultureIgnoreCase) ?? false);
         }
 
-        private IAsyncEnumerable<MugshotModel> GetMugshots(NpcModel? npc)
+        private IAsyncEnumerable<Mugshot> GetMugshots(Npc? npc)
         {
             if (npc is null)
-                return AsyncEnumerable.Empty<MugshotModel>();
+                return AsyncEnumerable.Empty<Mugshot>();
             var affectingPlugins = npc.Options
                 .Where(x => !string.Equals(x.PluginName, FileStructure.MergeFileName, StringComparison.CurrentCultureIgnoreCase))
                 .Select(x => x.PluginName);
             return lineupBuilder.Build(npc, affectingPlugins);
         }
 
-        private void UpdateSelectedNpc(NpcModel? npc)
+        private void HandleJumpToProfile(JumpToProfile message)
+        {
+            if (message.Filters != null)
+            {
+                Filters.ResetToDefault();
+                if (message.Filters.Conflicts.HasValue)
+                    Filters.Conflicts = message.Filters.Conflicts.Value;
+                if (message.Filters.DefaultPlugin != null)  // Allow "empty" override
+                    Filters.DefaultPlugin = message.Filters.DefaultPlugin;
+                if (message.Filters.FacePlugin != null)
+                    Filters.FacePlugin = message.Filters.FacePlugin;
+                if (message.Filters.Missing.HasValue)
+                    Filters.Missing = message.Filters.Missing.Value;
+                if (message.Filters.NonDlc.HasValue)
+                    Filters.NonDlc = message.Filters.NonDlc.Value;
+                if (message.Filters.Wigs.HasValue)
+                    Filters.Wigs = message.Filters.Wigs.Value;
+                Filters.HasForcedFilter = true;
+                ApplyFilters();
+            }
+
+            messageBus.Send(new NavigateToPage(MainPage.Profile));
+        }
+
+        private void SelectedNpc_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is NpcViewModel vm)
+                messageBus.Send(new NpcConfigurationChanged(new RecordKey(vm)));
+        }
+
+        private void UpdateSelectedNpc(Npc? npc)
         {
             if (npc is null)
             {
+                if (SelectedNpc is not null)
+                    SelectedNpc.PropertyChanged -= SelectedNpc_PropertyChanged;
                 SelectedNpc = null;
                 return;
             }
             var mugshots = GetMugshots(npc);
             SelectedNpc = new NpcViewModel(npc, mugshots);
+            SelectedNpc.PropertyChanged += SelectedNpc_PropertyChanged;
         }
     }
 }

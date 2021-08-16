@@ -2,6 +2,7 @@
   "profiles": {
     "NPC Bundler": {
       "commandName": "Project",
+      "commandLineArgs": "--mo2-exe=\"D:\\Games\\Skyrim SE Tools\\Mod Organizer\\ModOrganizer.exe\"",
       "nativeDebugging": false
     }
   }

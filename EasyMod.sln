@@ -43,9 +43,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Testing.Files", "Focus.Testing.Files\Focus.Testing.Files.csproj", "{4693D2C8-B75A-429B-9A8E-0D6A616E57F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.ModManagers.ModOrganizer.Tests", "Focus.ModManagers.ModOrganizer.Tests\Focus.ModManagers.ModOrganizer.Tests.csproj", "{98B262AF-6F61-4615-BF50-89EA32BA58A3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers.ModOrganizer.Tests", "Focus.ModManagers.ModOrganizer.Tests\Focus.ModManagers.ModOrganizer.Tests.csproj", "{98B262AF-6F61-4615-BF50-89EA32BA58A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Abstractions.Windows", "Focus.Abstractions.Windows\Focus.Abstractions.Windows.csproj", "{889CB0B8-5BB9-4371-8F39-12286645D09A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Abstractions.Windows", "Focus.Abstractions.Windows\Focus.Abstractions.Windows.csproj", "{889CB0B8-5BB9-4371-8F39-12286645D09A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

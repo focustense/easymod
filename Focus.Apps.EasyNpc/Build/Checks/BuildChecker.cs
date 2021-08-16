@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
+using Focus.Apps.EasyNpc.Profiles;
 using Focus.Environment;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
 {
     public interface IBuildChecker
     {
-        PreBuildReport CheckAll(Profiles.Profile profile, BuildSettings buildSettings);
+        PreBuildReport CheckAll(Profile profile, BuildSettings buildSettings);
     }
 
     public class BuildChecker : IBuildChecker
@@ -16,16 +17,19 @@ namespace Focus.Apps.EasyNpc.Build.Checks
         private readonly IAppSettings appSettings;
         private readonly IEnumerable<IBuildCheck> checks;
         private readonly IReadOnlyLoadOrderGraph loadOrderGraph;
+        private readonly IProfilePolicy profilePolicy;
 
         public BuildChecker(
-            IAppSettings appSettings, IReadOnlyLoadOrderGraph loadOrderGraph, IEnumerable<IBuildCheck> checks)
+            IAppSettings appSettings, IReadOnlyLoadOrderGraph loadOrderGraph, IProfilePolicy profilePolicy,
+            IEnumerable<IBuildCheck> checks)
         {
             this.appSettings = appSettings;
             this.checks = checks;
             this.loadOrderGraph = loadOrderGraph;
+            this.profilePolicy = profilePolicy;
         }
 
-        public PreBuildReport CheckAll(Profiles.Profile profile, BuildSettings buildSettings)
+        public PreBuildReport CheckAll(Profile profile, BuildSettings buildSettings)
         {
             var warnings = checks.AsParallel().SelectMany(x => x.Run(profile, buildSettings));
             var suppressions = GetBuildWarningSuppressions();
@@ -43,9 +47,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
                     .Select(p => new PreBuildReport.MasterDependency
                     {
                         PluginName = p,
-                        // TODO: Figure out how to plumb this junk
-                        // IsLikelyOverhaul = profileRuleSet.IsLikelyOverhaul(p),
-                        IsLikelyOverhaul = false,
+                        IsLikelyOverhaul = profilePolicy.IsLikelyOverhaul(p),
                     })
                     .ToList()
                     .AsReadOnly(),

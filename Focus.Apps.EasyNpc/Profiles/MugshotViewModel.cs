@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace Focus.Apps.EasyNpc.Profiles
@@ -18,9 +16,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string ModName => mugshot.ModName;
         public string Path => mugshot.Path;
 
-        private readonly MugshotModel mugshot;
+        private readonly Mugshot mugshot;
 
-        public MugshotViewModel(MugshotModel mugshot, bool isSelectedSource = false)
+        public MugshotViewModel(Mugshot mugshot, bool isSelectedSource = false)
         {
             this.mugshot = mugshot;
             IsSelectedSource = isSelectedSource;

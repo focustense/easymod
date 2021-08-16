@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-namespace Focus.Apps.EasyNpc.Profiles
+﻿namespace Focus.Apps.EasyNpc.Profiles
 {
     public class MugshotFile
     {

@@ -1,5 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
-using Focus.Apps.EasyNpc.Profile;
+using Focus.Apps.EasyNpc.Profiles;
 using PropertyChanged;
 using System;
 using System.Collections.Generic;
@@ -9,9 +9,10 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Maintenance
 {
-    public class MaintenanceViewModel<TKey> : INotifyPropertyChanged
-        where TKey : struct
+    public class MaintenanceViewModel : INotifyPropertyChanged
     {
+        public delegate MaintenanceViewModel Factory(Profile profile);
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public int AutosaveInvalidNpcCount { get; private set; }
@@ -31,18 +32,18 @@ namespace Focus.Apps.EasyNpc.Maintenance
         public bool OnlyResetInvalid { get; set; }
 
         private readonly IReadOnlySet<string> loadedPlugins;
-        private readonly IReadOnlyList<NpcConfiguration<TKey>> npcConfigs;
-        private readonly IReadOnlySet<Tuple<string, string>> npcKeys;
-        private readonly ProfileEventLog profileEventLog;
+        private readonly IReadOnlySet<IRecordKey> npcKeys;
+        private readonly IProfileEventLog profileEventLog;
+        private readonly Profile profile;
 
         public MaintenanceViewModel(
-            IEnumerable<NpcConfiguration<TKey>> npcConfigs, ProfileEventLog profileEventLog,
-            IEnumerable<string> loadedPlugins)
+            Profile profile, IProfileEventLog profileEventLog, IGameSettings gameSettings)
         {
-            this.npcConfigs = npcConfigs.ToList().AsReadOnly();
-            npcKeys = npcConfigs.Select(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex)).ToHashSet();
+            this.profile = profile;
             this.profileEventLog = profileEventLog;
-            this.loadedPlugins = loadedPlugins.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            npcKeys = profile.Npcs.Select(x => new RecordKey(x)).ToHashSet(RecordKeyComparer.Default);
+            loadedPlugins = gameSettings.PluginLoadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
         public void DeleteOldLogFiles()
@@ -83,9 +84,9 @@ namespace Focus.Apps.EasyNpc.Maintenance
                 //
                 // Resetting is distinct from trimming; if someone has made major changes to their load order and wants
                 // to ensure that their profile/autosave is absolutely squeaky clean, they should trim, THEN reset.
-                foreach (var npcConfig in npcConfigs)
-                    if (resetPredicate(npcConfig))
-                        npcConfig.Reset(defaults: true, faces: false);
+                foreach (var npc in profile.Npcs)
+                    if (resetPredicate(npc))
+                        npc.ApplyPolicy(resetDefaultPlugin: true);
             }
             finally
             {
@@ -100,9 +101,9 @@ namespace Focus.Apps.EasyNpc.Maintenance
             {
                 var resetPredicate = GetResetPredicate(NpcProfileField.FacePlugin);
                 // Refer to caveats in ResetNpcDefaults.
-                foreach (var npcConfig in npcConfigs)
-                    if (resetPredicate(npcConfig))
-                        npcConfig.Reset(defaults: false, faces: true);
+                foreach (var npc in profile.Npcs)
+                    if (resetPredicate(npc))
+                        npc.ApplyPolicy(resetFacePlugin: true);
             }
             finally
             {
@@ -116,9 +117,8 @@ namespace Focus.Apps.EasyNpc.Maintenance
             try
             {
                 profileEventLog.Erase();
-                var fieldTypes = Enum.GetValues<NpcProfileField>();
-                foreach (var npcConfig in npcConfigs)
-                    npcConfig.EmitProfileEvents(fieldTypes);
+                foreach (var npc in profile.Npcs)
+                    npc.WriteToEventLog();
                 RefreshProfileStats();
             }
             finally
@@ -127,7 +127,7 @@ namespace Focus.Apps.EasyNpc.Maintenance
             }
         }
 
-        private Predicate<NpcConfiguration<TKey>> GetResetPredicate(NpcProfileField field)
+        private Predicate<Npc> GetResetPredicate(NpcProfileField field)
         {
             if (!OnlyResetInvalid)
                 return npc => true;
@@ -135,9 +135,9 @@ namespace Focus.Apps.EasyNpc.Maintenance
                 .MostRecentByNpc()
                 .Where(e => e.Field == field)
                 .WithMissingPlugins(loadedPlugins)
-                .Select(e => Tuple.Create(e.BasePluginName, e.LocalFormIdHex))
-                .ToHashSet();
-            return npc => filteredNpcs.Contains(Tuple.Create(npc.BasePluginName, npc.LocalFormIdHex));
+                .Select(e => new RecordKey(e))
+                .ToHashSet(RecordKeyComparer.Default);
+            return npc => filteredNpcs.Contains(npc);
         }
 
         private void RefreshLogStats()
@@ -154,9 +154,7 @@ namespace Focus.Apps.EasyNpc.Maintenance
         {
             var profileEvents = ProfileEventLog.ReadEventsFromFile(ProgramData.ProfileLogFileName).ToList();
             AutosaveRecordCount = profileEvents.Count;
-            AutosaveInvalidNpcCount = profileEvents
-                .Where(x => !npcKeys.Contains(Tuple.Create(x.BasePluginName, x.LocalFormIdHex)))
-                .Count();
+            AutosaveInvalidNpcCount = profileEvents.Where(x => !npcKeys.Contains(x)).Count();
             // To detect redundant events, it's more efficient to check what ISN'T redundant and then subtract.
             var profileEventGroups = profileEvents
                 .GroupBy(x => Tuple.Create(x.BasePluginName, x.LocalFormIdHex, x.Field))

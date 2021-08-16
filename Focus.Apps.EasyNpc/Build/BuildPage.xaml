@@ -1,12 +1,13 @@
 ﻿<ui:Page x:Class="Focus.Apps.EasyNpc.Build.BuildPage"
          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:bu="clr-namespace:Focus.Apps.EasyNpc.Build.UI"
          xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
-         xmlns:fa5="http://schemas.fontawesome.com/icons/"
-         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+         xmlns:fa5="http://schemas.fontawesome.com/icons/"
          xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
          xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:ui="http://schemas.modernwpf.com/2019"
          KeepAlive="True"
          mc:Ignorable="d" 
@@ -206,11 +207,9 @@
                                 <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
                             </ui:SimpleStackPanel>
                         </ui:SimpleStackPanel>
-                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
+                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
                             <TextBlock Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
-                            <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8,0,0"/>
-                            <local:ProgressViewer DataContext="{Binding Progress.MergedFolder}" Margin="0,8,0,0"/>
-                            <local:ProgressViewer DataContext="{Binding Progress.Archive}" Margin="0,8,0,0"/>
+                            <bu:BuildProgress DataContext="{Binding Progress}" Margin="0,8,0,0"/>
                         </ui:SimpleStackPanel>
                     </ui:SimpleStackPanel>
                 </GroupBox>

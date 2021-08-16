@@ -2,9 +2,8 @@
 
 namespace Focus.Apps.EasyNpc.Build
 {
-    public interface IBuildContainer<TKey>
-        where TKey : struct
+    public interface IBuildContainer
     {
-        BuildViewModel<TKey> Build { get; }
+        BuildViewModel Build { get; }
     }
 }

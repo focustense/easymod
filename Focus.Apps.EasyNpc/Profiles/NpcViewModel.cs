@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -34,9 +32,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         // Selected option refers to selection in the UI view, and has no effect on the profile itself.
         public NpcOptionViewModel? SelectedOption { get; set; }
 
-        private readonly NpcModel npc;
+        private readonly Npc npc;
 
-        public NpcViewModel(NpcModel npc, IAsyncEnumerable<MugshotModel> mugshots)
+        public NpcViewModel(Npc npc, IAsyncEnumerable<Mugshot> mugshots)
         {
             this.npc = npc;
 
@@ -49,7 +47,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public bool TrySetDefaultPlugin(string pluginName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
         {
-            var success = npc.SetDefaultOption(pluginName) == NpcModel.ChangeResult.OK;
+            var success = npc.SetDefaultOption(pluginName) == Npc.ChangeResult.OK;
             if (success)
                 DefaultOption = option = GetOption(npc.DefaultOption.PluginName);
             else
@@ -59,7 +57,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public bool TrySetFaceMod(string modName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
         {
-            var success = npc.SetFaceMod(modName) == NpcModel.ChangeResult.OK;
+            var success = npc.SetFaceMod(modName) == Npc.ChangeResult.OK;
             if (success)
             {
                 // If the selected mod ends up being an override (no option/plugin), the "option" parameter will be the
@@ -75,7 +73,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public bool TrySetFacePlugin(string pluginName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
         {
-            var success = npc.SetFaceOption(pluginName) == NpcModel.ChangeResult.OK;
+            var success = npc.SetFaceOption(pluginName) == Npc.ChangeResult.OK;
             if (success)
             {
                 FaceOption = option = GetOption(npc.FaceOption.PluginName);

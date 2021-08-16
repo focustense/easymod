@@ -1,4 +1,5 @@
-﻿using Focus.Files;
+﻿using Focus.Apps.EasyNpc.Profiles;
+using Focus.Files;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,7 +14,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.archiveProvider = archiveProvider;
         }
 
-        public IEnumerable<BuildWarning> Run(Profiles.Profile profile, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
             return archiveProvider.GetBadArchivePaths()
                 .Select(p => new BuildWarning(

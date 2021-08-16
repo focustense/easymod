@@ -1,10 +1,7 @@
-﻿using System;
-
-namespace Focus.Apps.EasyNpc.Maintenance
+﻿namespace Focus.Apps.EasyNpc.Maintenance
 {
-    public interface IMaintenanceContainer<TKey>
-        where TKey : struct
+    public interface IMaintenanceContainer
     {
-        MaintenanceViewModel<TKey> Maintenance { get; }
+        MaintenanceViewModel Maintenance { get; }
     }
 }

@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using PropertyChanged;
+﻿using PropertyChanged;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -12,8 +10,8 @@ namespace Focus.Apps.EasyNpc.Profiles
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public NpcGridHeaders Headers { get; private set; }
-        public IEnumerable<NpcModel> Npcs { get; set; } = Enumerable.Empty<NpcModel>();
-        public NpcModel? SelectedNpc { get; set; }
+        public IEnumerable<Npc> Npcs { get; set; } = Enumerable.Empty<Npc>();
+        public Npc? SelectedNpc { get; set; }
 
         public NpcGridViewModel(NpcSearchParameters searchParameters)
         {

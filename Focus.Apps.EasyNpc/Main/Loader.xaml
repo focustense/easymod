@@ -7,7 +7,7 @@
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
              xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
              xmlns:ui="http://schemas.modernwpf.com/2019"
-             d:DataContext="{d:DesignInstance Type=main:LoaderViewModel`1}"
+             d:DataContext="{d:DesignInstance Type=main:LoaderViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>

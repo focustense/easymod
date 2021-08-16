@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
+using Focus.Apps.EasyNpc.Profiles;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 
@@ -15,7 +16,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.fs = fs;
         }
 
-        public IEnumerable<BuildWarning> Run(Profiles.Profile profile, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
             if (string.IsNullOrWhiteSpace(appSettings.ModRootDirectory))
                 yield return new BuildWarning(

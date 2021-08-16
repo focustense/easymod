@@ -1,9 +1,12 @@
-﻿using CommandLine;
+﻿using Autofac;
+using CommandLine;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Main;
+using Focus.Apps.EasyNpc.Modules;
 using Focus.ModManagers;
 using Focus.ModManagers.ModOrganizer;
 using Focus.ModManagers.Vortex;
+using Serilog.Events;
 using System;
 using System.IO;
 using System.Windows;
@@ -38,13 +41,14 @@ namespace Focus.Apps.EasyNpc
                 Current.Shutdown();
                 return;
             }
-            var modResolver = CreateModResolver(startupInfo, options);
+
+            var container = AppContainer.Build(options, startupInfo);
             if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.ModRootDirectory))
-                Settings.Default.ModRootDirectory = modResolver.GetDefaultModRootDirectory();
+                Settings.Default.ModRootDirectory = container.Resolve<IModManagerConfiguration>().ModsDirectory;
             try
             {
-                var mainViewModel =
-                    new MainViewModel(options.GameName, options.GamePath, modResolver, isFirstLaunch, options.DebugMode);
+                var mainViewModelFactory = container.Resolve<MainViewModel.Factory>();
+                var mainViewModel = mainViewModelFactory(isFirstLaunch);
                 var mainWindow = MainWindow = new MainWindow(mainViewModel);
                 mainWindow.Show();
             }

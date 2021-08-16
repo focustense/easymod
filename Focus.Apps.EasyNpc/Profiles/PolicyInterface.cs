@@ -1,18 +1,11 @@
-﻿#nullable enable
-
-using Focus.Analysis.Execution;
-using Focus.Apps.EasyNpc.Profile;
+﻿using Focus.Analysis.Execution;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public interface IProfilePolicyFactory
-    {
-        IProfilePolicy GetPolicy(LoadOrderAnalysis analysis);
-    }
-
     public interface IProfilePolicy
     {
         NpcSetupAttributes GetSetupRecommendation(INpcBasicInfo npc);
+        bool IsLikelyOverhaul(string pluginName);
     }
 
     public class NpcSetupAttributes

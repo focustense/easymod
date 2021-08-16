@@ -15,12 +15,12 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.modRepository = modRepository;
         }
 
-        public IEnumerable<BuildWarning> Run(Profiles.Profile profile, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
             return profile.Npcs.SelectMany(x => CheckForNpc(x));
         }
 
-        private IEnumerable<BuildWarning> CheckForNpc(NpcModel npc)
+        private IEnumerable<BuildWarning> CheckForNpc(Npc npc)
         {
             if (npc.FaceGenOverride is not null)
                 // Eventually, we'll want to open up the override file and actually check the nodes. This check is

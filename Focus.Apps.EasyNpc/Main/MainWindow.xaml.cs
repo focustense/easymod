@@ -3,7 +3,7 @@ using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Messages;
-using Focus.Apps.EasyNpc.Profile;
+using Focus.Apps.EasyNpc.Profiles;
 using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;

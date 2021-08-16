@@ -2,22 +2,24 @@
 using Newtonsoft.Json.Converters;
 using System;
 
-namespace Focus.Apps.EasyNpc.Profile
+namespace Focus.Apps.EasyNpc.Profiles
 {
     public enum NpcProfileField { DefaultPlugin, FaceMod, FacePlugin };
 
     public record ProfileEvent : IRecordKey
     {
-        public static ProfileEvent Deserialize(string serialized)
+        public static ProfileEvent? Deserialize(string serialized)
         {
             return JsonConvert.DeserializeObject<ProfileEvent>(serialized);
         }
 
         [JsonProperty("master")]
-        public string BasePluginName { get; init; }
+        [JsonRequired]
+        public string BasePluginName { get; init; } = string.Empty;
 
         [JsonProperty("id")]
-        public string LocalFormIdHex { get; init; }
+        [JsonRequired]
+        public string LocalFormIdHex { get; init; } = string.Empty;
 
         [JsonProperty("time")]
         public DateTime Timestamp { get; init; }
@@ -27,10 +29,10 @@ namespace Focus.Apps.EasyNpc.Profile
         public NpcProfileField Field { get; init; }
 
         [JsonProperty("oldValue")]
-        public string OldValue { get; init; }
+        public string? OldValue { get; init; }
 
         [JsonProperty("newValue")]
-        public string NewValue { get; init; }
+        public string? NewValue { get; init; }
 
         public string Serialize()
         {

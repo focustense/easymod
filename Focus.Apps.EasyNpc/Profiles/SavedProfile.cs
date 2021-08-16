@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
-namespace Focus.Apps.EasyNpc.Profile
+namespace Focus.Apps.EasyNpc.Profiles
 {
     public class SavedProfile
     {
@@ -16,7 +15,7 @@ namespace Focus.Apps.EasyNpc.Profile
         {
             var npcs = new List<SavedNpcConfiguration>();
             using var reader = new StreamReader(stream);
-            string line;
+            string? line;
             while ((line = reader.ReadLine()) != null)
                 npcs.Add(SavedNpcConfiguration.DeserializeFromString(line));
             return new SavedProfile { Npcs = npcs };
@@ -67,11 +66,11 @@ namespace Focus.Apps.EasyNpc.Profile
             };
         }
 
-        public string BasePluginName { get; init; }
-        public string LocalFormIdHex { get; init; }
-        public string DefaultPluginName { get; init; }
-        public string FaceModName { get; init; }
-        public string FacePluginName { get; init; }
+        public string BasePluginName { get; init; } = string.Empty;
+        public string LocalFormIdHex { get; init; } = string.Empty;
+        public string DefaultPluginName { get; init; } = string.Empty;
+        public string? FaceModName { get; init; }
+        public string FacePluginName { get; init; } = string.Empty;
 
         public string SerializeToString()
         {

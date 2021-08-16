@@ -4,8 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-using TKey = Mutagen.Bethesda.Plugins.FormKey;
-
 namespace Focus.Apps.EasyNpc.Main
 {
     /// <summary>
@@ -18,7 +16,7 @@ namespace Focus.Apps.EasyNpc.Main
             InitializeComponent();
         }
 
-        protected LoaderViewModel<TKey> Model => (LoaderViewModel<TKey>)DataContext;
+        protected LoaderViewModel Model => (LoaderViewModel)DataContext;
 
         private void ConfirmLoad_Click(object sender, RoutedEventArgs e)
         {

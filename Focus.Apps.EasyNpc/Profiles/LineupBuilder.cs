@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Focus.Apps.EasyNpc.Configuration;
+﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Environment;
 using Focus.ModManagers;
@@ -15,7 +13,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public interface ILineupBuilder
     {
-        IAsyncEnumerable<MugshotModel> Build(INpcBasicInfo npc, IEnumerable<string> affectingPlugins);
+        IAsyncEnumerable<Mugshot> Build(INpcBasicInfo npc, IEnumerable<string> affectingPlugins);
     }
 
     public class LineupBuilder : ILineupBuilder, IDisposable
@@ -57,7 +55,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .Subscribe(x => modSynonyms = x.ToLookup(r => r.ModName, r => r.Mugshots));
         }
 
-        public async IAsyncEnumerable<MugshotModel> Build(INpcBasicInfo npc, IEnumerable<string> affectingPlugins)
+        public async IAsyncEnumerable<Mugshot> Build(INpcBasicInfo npc, IEnumerable<string> affectingPlugins)
         {
             var mugshotFiles = (await mugshotRepository.GetMugshotFiles(npc))
                 // We use ToLookup here instead of ToDictionary, because duplicates are actually possible, e.g. the same
@@ -118,11 +116,11 @@ namespace Focus.Apps.EasyNpc.Profiles
             disposed.Dispose();
         }
 
-        private MugshotModel CreateMugshotModel(
+        private Mugshot CreateMugshotModel(
             MugshotFile file, IModLocatorKey? modKey, IEnumerable<string>? plugins = null)
         {
             var mod = ResolveMod(modKey);
-            return new MugshotModel
+            return new Mugshot
             {
                 InstalledMod = mod,
                 InstalledPlugins = (plugins ?? Enumerable.Empty<string>()).ToList().AsReadOnly(),

@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-namespace Focus.Apps.EasyNpc.Messages
+﻿namespace Focus.Apps.EasyNpc.Messages
 {
     public class JumpToProfile
     {

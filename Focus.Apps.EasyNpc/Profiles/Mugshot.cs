@@ -1,11 +1,9 @@
-﻿#nullable enable
-
-using Focus.ModManagers;
+﻿using Focus.ModManagers;
 using System.Collections.Generic;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class MugshotModel // Temporary name until refactoring is done
+    public class Mugshot
     {
         public ModInfo? InstalledMod { get; init; }
         public IReadOnlyList<string> InstalledPlugins { get; init; } = new List<string>().AsReadOnly();

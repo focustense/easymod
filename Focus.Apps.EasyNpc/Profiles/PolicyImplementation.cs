@@ -1,95 +1,18 @@
-﻿#nullable enable
-
-using Focus.Analysis.Execution;
+﻿using Focus.Analysis.Execution;
 using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
-using Focus.Apps.EasyNpc.Profile;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class ProfilePolicyFactory : IProfilePolicyFactory
+    public class ProfilePolicy : IProfilePolicy, ILoadOrderAnalysisReceiver
     {
-        public IProfilePolicy GetPolicy(LoadOrderAnalysis analysis)
-        {
-            var baseNames = analysis.Plugins
-                .Where(x => x.IsBaseGame)
-                .Select(x => x.FileName)
-                .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
-            var overhaulNames = InferOverhaulNames(analysis).ToHashSet(StringComparer.CurrentCultureIgnoreCase);
-            var npcChains = analysis
-                .ExtractChains<NpcAnalysis>(RecordType.Npc)
-                .ToDictionary(x => x.Key, RecordKeyComparer.Default);
-            return new ProfilePolicy(npcChains, baseNames, overhaulNames);
-        }
-
-        private static IEnumerable<string> InferOverhaulNames(LoadOrderAnalysis analysis)
-        {
-            // The rules for distinguishing an overhaul from some other type of mod are currently arbitrary. Too many
-            // false positives, and we'll pick masters too high in the load order and overwrite good edits. False
-            // negatives, and we'll end up with overhauls as masters.
-            //
-            // Operating on the assumption that most NPC overhauls either do not intentionally make questionable edits,
-            // or at least don't do it all over the place, we can come up with a few fuzzy but straightforward rules:
-            //
-            // - Mods where 100% of NPCs include face changes
-            // - Mods where some high % of NPCs include face changes and only a very low % include behavior
-            // ... and perhaps others, but this is as smart as we get for now.
-            //
-            // Looking at other record types in the mod can also be a useful signal, but requires some care in how to
-            // apply it. For example, just because it adds one cell edit doesn't mean it isn't an overhaul, that can be
-            // a wild edit just like NPC behavior edits. For the moment, this is left for future work.
-
-            const double behaviorlessModifierPercentThreshold = 0.85;
-            const double newNpcPercentThreshold = 0.5;
-            var pluginStats = analysis.Plugins
-                .Where(p => !p.IsBaseGame && p.Groups.ContainsKey(RecordType.Npc))
-                .Select(p => new { p.FileName, Npcs = p.Groups[RecordType.Npc].Records.OfType<NpcAnalysis>().ToList() })
-                .Select(p => new
-                {
-                    p.FileName,
-                    TotalNpcCount = p.Npcs.Count,
-                    NewNpcCount = p.Npcs.Count(x => !x.IsOverride),
-                    FaceModifierCount = p.Npcs.Count(x => x.ComparisonToBase?.ModifiesFace ?? false),
-                    BehaviorlessFaceModifierCount = p.Npcs.Count(x =>
-                        (x.ComparisonToBase?.ModifiesFace ?? false) &&
-                        // "Behaviorless" in this context means "inherits behavior from another mod". An NPC overhaul
-                        // may be based on a foundation like USSEP and will therefore have different behavior from the
-                        // vanilla origin (which is also a "master"). However, a truly new behavior mod, or a patch for
-                        // multiple behavior mods, should always have distinct behavior from each dependency.
-                        x.ComparisonToMasters.Any(x => !x.ModifiesBehavior)),
-                });
-            return pluginStats
-                .Where(p => p.FaceModifierCount > 0)
-                // Mods that add several new NPCs are probably expansions or follower mods, not overhauls. They may also
-                // modify a few existing NPCs. This can be a good heuristic as long as the numbers are large enough to
-                // make an informed decision, i.e. not just one or two of each.
-                .Where(p => p.TotalNpcCount < 3 || (double)p.NewNpcCount / p.TotalNpcCount < newNpcPercentThreshold)
-                .Where(p =>
-                    p.FaceModifierCount == p.TotalNpcCount ||
-                    (p.BehaviorlessFaceModifierCount >= p.FaceModifierCount * behaviorlessModifierPercentThreshold))
-                .Select(p => p.FileName);
-        }
-    }
-
-    public class ProfilePolicy : IProfilePolicy
-    {
-        private readonly IReadOnlySet<string> baseNames;
-        private readonly IDictionary<IRecordKey, RecordAnalysisChain<NpcAnalysis>> npcChains;
-        private readonly IReadOnlySet<string> overhaulNames;
-
-        public ProfilePolicy(
-            IDictionary<IRecordKey, RecordAnalysisChain<NpcAnalysis>> npcChains, IReadOnlySet<string> baseNames,
-            IReadOnlySet<string> overhaulNames)
-        {
-            this.baseNames = baseNames;
-            this.npcChains = npcChains;
-            this.overhaulNames = overhaulNames;
-        }
+        private IReadOnlySet<string> baseNames = new HashSet<string>();
+        private IReadOnlyDictionary<IRecordKey, RecordAnalysisChain<NpcAnalysis>> npcChains =
+            new Dictionary<IRecordKey, RecordAnalysisChain<NpcAnalysis>>();
+        private IReadOnlySet<string> overhaulNames = new HashSet<string>();
 
         /*
          * Some rules in plain English:
@@ -156,6 +79,23 @@ namespace Focus.Apps.EasyNpc.Profiles
             return new(resolvedDefaultRecord.PluginName, resolvedFaceRecord.PluginName);
         }
 
+        public bool IsLikelyOverhaul(string pluginName)
+        {
+            return overhaulNames.Contains(pluginName);
+        }
+
+        public void Receive(LoadOrderAnalysis analysis)
+        {
+            baseNames = analysis.Plugins
+                .Where(x => x.IsBaseGame)
+                .Select(x => x.FileName)
+                .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+            overhaulNames = InferOverhaulNames(analysis).ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+            npcChains = analysis
+                .ExtractChains<NpcAnalysis>(RecordType.Npc)
+                .ToDictionary(x => x.Key, RecordKeyComparer.Default);
+        }
+
         private static NpcComparison? FindEarliestComparison(
             NpcAnalysis npc, Predicate<NpcComparison> predicate, bool alwaysCheckPreviousOverride)
         {
@@ -205,6 +145,54 @@ namespace Focus.Apps.EasyNpc.Profiles
                     break;
             }
             return currentRecord;
+        }
+
+        private static IEnumerable<string> InferOverhaulNames(LoadOrderAnalysis analysis)
+        {
+            // The rules for distinguishing an overhaul from some other type of mod are currently arbitrary. Too many
+            // false positives, and we'll pick masters too high in the load order and overwrite good edits. False
+            // negatives, and we'll end up with overhauls as masters.
+            //
+            // Operating on the assumption that most NPC overhauls either do not intentionally make questionable edits,
+            // or at least don't do it all over the place, we can come up with a few fuzzy but straightforward rules:
+            //
+            // - Mods where 100% of NPCs include face changes
+            // - Mods where some high % of NPCs include face changes and only a very low % include behavior
+            // ... and perhaps others, but this is as smart as we get for now.
+            //
+            // Looking at other record types in the mod can also be a useful signal, but requires some care in how to
+            // apply it. For example, just because it adds one cell edit doesn't mean it isn't an overhaul, that can be
+            // a wild edit just like NPC behavior edits. For the moment, this is left for future work.
+
+            const double behaviorlessModifierPercentThreshold = 0.85;
+            const double newNpcPercentThreshold = 0.5;
+            var pluginStats = analysis.Plugins
+                .Where(p => !p.IsBaseGame && p.Groups.ContainsKey(RecordType.Npc))
+                .Select(p => new { p.FileName, Npcs = p.Groups[RecordType.Npc].Records.OfType<NpcAnalysis>().ToList() })
+                .Select(p => new
+                {
+                    p.FileName,
+                    TotalNpcCount = p.Npcs.Count,
+                    NewNpcCount = p.Npcs.Count(x => !x.IsOverride),
+                    FaceModifierCount = p.Npcs.Count(x => x.ComparisonToBase?.ModifiesFace ?? false),
+                    BehaviorlessFaceModifierCount = p.Npcs.Count(x =>
+                        (x.ComparisonToBase?.ModifiesFace ?? false) &&
+                        // "Behaviorless" in this context means "inherits behavior from another mod". An NPC overhaul
+                        // may be based on a foundation like USSEP and will therefore have different behavior from the
+                        // vanilla origin (which is also a "master"). However, a truly new behavior mod, or a patch for
+                        // multiple behavior mods, should always have distinct behavior from each dependency.
+                        x.ComparisonToMasters.Any(x => !x.ModifiesBehavior)),
+                });
+            return pluginStats
+                .Where(p => p.FaceModifierCount > 0)
+                // Mods that add several new NPCs are probably expansions or follower mods, not overhauls. They may also
+                // modify a few existing NPCs. This can be a good heuristic as long as the numbers are large enough to
+                // make an informed decision, i.e. not just one or two of each.
+                .Where(p => p.TotalNpcCount < 3 || (double)p.NewNpcCount / p.TotalNpcCount < newNpcPercentThreshold)
+                .Where(p =>
+                    p.FaceModifierCount == p.TotalNpcCount ||
+                    (p.BehaviorlessFaceModifierCount >= p.FaceModifierCount * behaviorlessModifierPercentThreshold))
+                .Select(p => p.FileName);
         }
     }
 }

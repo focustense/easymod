@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Focus.Apps.EasyNpc.Profile
+namespace Focus.Apps.EasyNpc.Profiles
 {
     public interface IReadOnlyProfileEventLog : IEnumerable<ProfileEvent> { }
 

@@ -1,4 +1,4 @@
-﻿using Focus.Apps.EasyNpc.Profile;
+﻿using Focus.Apps.EasyNpc.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +16,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.profileEvents = profileEvents;
         }
 
-        public IEnumerable<BuildWarning> Run(Profiles.Profile profile, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
             var allPluginsInProfile = profileEvents.Select(x => x.BasePluginName).Distinct().ToList();
             var currentPlugins = gameSettings.PluginLoadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase);

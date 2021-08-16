@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {

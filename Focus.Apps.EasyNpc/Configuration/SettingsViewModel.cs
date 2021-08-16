@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Build;
+using Focus.Apps.EasyNpc.Messages;
 using Focus.ModManagers;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
@@ -9,6 +10,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Configuration
@@ -20,7 +23,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler WelcomeAcked;
 
-        public IEnumerable<string> AvailableModNames { get; private set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> AvailableModNames => modRepository.Select(x => x.Name);
         public IEnumerable<string> AvailableMugshotModNames { get; private set; } = Enumerable.Empty<string>();
         public IEnumerable<string> AvailablePlugins { get; set; } = Enumerable.Empty<string>();
         public ObservableCollection<BuildWarningSuppressionViewModel> BuildWarningWhitelist { get; init; }
@@ -33,15 +36,39 @@ namespace Focus.Apps.EasyNpc.Configuration
         public ObservableCollection<MugshotRedirectViewModel> MugshotRedirects { get; init; }
         public string MugshotsDirectoryPlaceholderText => ProgramData.DefaultMugshotsPath;
 
-        private readonly IModResolver modResolver;
-
-        public SettingsViewModel(IModResolver modResolver)
+        public string ModRootDirectory
         {
-            this.modResolver = modResolver;
+            get => Settings.ModRootDirectory;
+            set
+            {
+                Settings.ModRootDirectory = value;
+                Settings.Save();
+                messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.ModDirectory));
+            }
+        }
+
+        public string MugshotsDirectory
+        {
+            get => Settings.MugshotsDirectory;
+            set
+            {
+                Settings.MugshotsDirectory = value;
+                Settings.Save();
+                messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.MugshotDirectory));
+            }
+        }
+
+        private readonly IMessageBus messageBus;
+        private readonly IModRepository modRepository;
+
+        public SettingsViewModel(IModRepository modRepository, IMessageBus messageBus)
+        {
+            this.messageBus = messageBus;
+            this.modRepository = modRepository;
+
             HasDefaultModRootDirectory = !string.IsNullOrEmpty(ModRootDirectory);
 
             // Since these are pass-through properties, we need to force an initial update.
-            OnModRootDirectoryChanged();
             OnMugshotsDirectoryChanged();
 
             var buildWarningSuppressions = Settings.BuildWarningWhitelist
@@ -53,26 +80,6 @@ namespace Focus.Apps.EasyNpc.Configuration
                 .Select(x => new MugshotRedirectViewModel(x.ModName, x.Mugshots));
             MugshotRedirects = new(mugshotRedirects);
             WatchCollection(MugshotRedirects, SaveMugshotRedirects);
-        }
-
-        public string ModRootDirectory
-        {
-            get => Settings.ModRootDirectory;
-            set
-            {
-                Settings.ModRootDirectory = value;
-                Settings.Save();
-            }
-        }
-
-        public string MugshotsDirectory
-        {
-            get => Settings.MugshotsDirectory;
-            set
-            {
-                Settings.MugshotsDirectory = value;
-                Settings.Save();
-            }
         }
 
         public void AckWelcome()
@@ -117,16 +124,6 @@ namespace Focus.Apps.EasyNpc.Configuration
                 MugshotsDirectory = mugshotsDirectory;
         }
 
-        protected void OnModRootDirectoryChanged()
-        {
-            AvailableModNames = Directory.Exists(ModRootDirectory) ?
-                Directory.GetDirectories(ModRootDirectory)
-                    .Select(f => modResolver.GetModName(f))
-                    .Distinct()
-                    .ToArray() :
-                Enumerable.Empty<string>();
-        }
-
         protected void OnMugshotsDirectoryChanged()
         {
             AvailableMugshotModNames = Directory.Exists(MugshotsDirectory) ?
@@ -142,6 +139,7 @@ namespace Focus.Apps.EasyNpc.Configuration
                 .Select(x => new BuildWarningSuppression(x.PluginName, x.SelectedWarnings))
                 .ToList();
             Settings.Save();
+            messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.BuildWarnings));
         }
 
         private void SaveMugshotRedirects()
@@ -150,6 +148,7 @@ namespace Focus.Apps.EasyNpc.Configuration
                 .Select(x => new MugshotRedirect(x.ModName, x.Mugshots))
                 .ToList();
             Settings.Save();
+            messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.MugshotSynonyms));
         }
 
         private bool SelectDirectory(Window owner, string description, out string selectedPath)

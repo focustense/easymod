@@ -1,4 +1,5 @@
-﻿using Focus.ModManagers;
+﻿using Focus.Apps.EasyNpc.Profiles;
+using Focus.ModManagers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.modRepository = modRepository;
         }
 
-        public IEnumerable<BuildWarning> Run(Profiles.Profile profile, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
             // It is not - necessarily - a major problem for the game itself if multiple mods provide the same BSA.
             // The game, and this program, will simply use whichever version is actually loaded, i.e. from the last mod

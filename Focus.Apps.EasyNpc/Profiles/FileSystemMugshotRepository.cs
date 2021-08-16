@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Focus.Apps.EasyNpc.Configuration;
+﻿using Focus.Apps.EasyNpc.Configuration;
 using Focus.Files;
 using System;
 using System.Collections.Generic;

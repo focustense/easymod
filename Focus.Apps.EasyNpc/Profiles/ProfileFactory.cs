@@ -1,8 +1,5 @@
-﻿#nullable enable
-
-using Focus.Analysis.Execution;
+﻿using Focus.Analysis.Execution;
 using Focus.Analysis.Records;
-using Focus.Apps.EasyNpc.Profile;
 using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
@@ -15,41 +12,38 @@ namespace Focus.Apps.EasyNpc.Profiles
         Profile CreateNew(LoadOrderAnalysis analysis);
         Profile RestoreSaved(
             LoadOrderAnalysis analysis, out IReadOnlyList<NpcRestorationFailure> failures,
-            out IReadOnlyList<NpcModel> newNpcs);
+            out IReadOnlyList<Npc> newNpcs);
     }
 
     public class ProfileFactory : IProfileFactory
     {
         private readonly IModRepository modRepository;
         private readonly ISuspendableProfileEventLog profileEventLog;
-        private readonly IProfilePolicyFactory policyFactory;
+        private readonly IProfilePolicy policy;
 
         public ProfileFactory(
-            IProfilePolicyFactory policyFactory, IModRepository modRepository,
-            ISuspendableProfileEventLog profileEventLog)
+            IProfilePolicy policy, IModRepository modRepository, ISuspendableProfileEventLog profileEventLog)
         {
             this.modRepository = modRepository;
-            this.policyFactory = policyFactory;
+            this.policy = policy;
             this.profileEventLog = profileEventLog;
         }
 
         public Profile CreateNew(LoadOrderAnalysis analysis)
         {
-            var policy = policyFactory.GetPolicy(analysis);
             return Create(analysis, policy, npc => npc.ApplyPolicy(true, true));
         }
 
         public Profile RestoreSaved(
             LoadOrderAnalysis analysis, out IReadOnlyList<NpcRestorationFailure> failures,
-            out IReadOnlyList<NpcModel> newNpcs)
+            out IReadOnlyList<Npc> newNpcs)
         {
             // When restoring a profile, what we want to do is pause logging during the restore phase so that we don't
             // add redundant entries; but with additional actions taken for NPCs that either couldn't be correctly
             // restored (revert to policy defaults, without logging) or who aren't in the profile at all (initialize
             // with policy defaults and log those for next time).
-            var policy = policyFactory.GetPolicy(analysis);
             var failuresList = new List<NpcRestorationFailure>();
-            var newNpcsList = new List<NpcModel>();
+            var newNpcsList = new List<Npc>();
             var newestEvents = profileEventLog
                 .GroupBy(x => (new RecordKey(x), x.Field))
                 .Select(g => (g.Key.Item1, g.Key.Field, g.Last()))
@@ -63,10 +57,10 @@ namespace Focus.Apps.EasyNpc.Profiles
                     var npcKey = new RecordKey(npc);
                     var isDefaultPluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.DefaultPlugin), out var defaultPluginEvent) &&
-                        npc.SetDefaultOption(defaultPluginEvent.NewValue) == NpcModel.ChangeResult.Invalid;
+                        npc.SetDefaultOption(defaultPluginEvent.NewValue) == Npc.ChangeResult.Invalid;
                     var isFacePluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.FacePlugin), out var facePluginEvent) &&
-                        npc.SetFaceOption(facePluginEvent.NewValue) == NpcModel.ChangeResult.Invalid;
+                        npc.SetFaceOption(facePluginEvent.NewValue) == Npc.ChangeResult.Invalid;
                     // Face mods are now "facegen overrides", so we only care about (want to restore) this setting if it
                     // actually looks like an override - i.e. if the chosen mod exists and does not include any of the
                     // plugins in the record chain.
@@ -78,7 +72,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                             faceMod is not null &&
                             !npc.Options.Any(x => modRepository.ContainsFile(faceMod, x.PluginName, false));
                         isFaceModInvalid =
-                            isFaceGenOverride && npc.SetFaceMod(faceModEvent.NewValue) == NpcModel.ChangeResult.Invalid;
+                            isFaceGenOverride && npc.SetFaceMod(faceModEvent.NewValue) == Npc.ChangeResult.Invalid;
                     }
                     var allEvents = new[] { defaultPluginEvent, facePluginEvent, faceModEvent }.NotNull();
                     if (!allEvents.Any())
@@ -115,7 +109,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             return profile;
         }
 
-        private Profile Create(LoadOrderAnalysis analysis, IProfilePolicy policy, Action<NpcModel> defaultAction)
+        private Profile Create(LoadOrderAnalysis analysis, IProfilePolicy policy, Action<Npc> defaultAction)
         {
             var baseGamePluginNames = analysis.Plugins
                 .Where(x => x.IsBaseGame)
@@ -127,7 +121,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .Where(x =>
                     x.Master.CanUseFaceGen && !x.Master.IsChild && x.Count > 1 &&
                     x.Any(r => r.Analysis.ComparisonToBase?.ModifiesFace == true))
-                .Select(x => new NpcModel(x, baseGamePluginNames, modRepository, profileEventLog, policy))
+                .Select(x => new Npc(x, baseGamePluginNames, modRepository, profileEventLog, policy))
                 .Tap(defaultAction);
             return new Profile(npcs);
         }

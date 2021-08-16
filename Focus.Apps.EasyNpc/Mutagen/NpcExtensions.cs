@@ -1,18 +1,9 @@
-﻿#nullable enable
-
-using Focus.Apps.EasyNpc.GameData.Records;
-using Loqui;
-using Mutagen.Bethesda;
+﻿using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Cache;
 using Mutagen.Bethesda.Plugins.Order;
-using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
-using Serilog;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Focus.Apps.EasyNpc.Mutagen
 {

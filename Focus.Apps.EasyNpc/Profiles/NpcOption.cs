@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Focus.Analysis.Plugins;
+﻿using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
 
 namespace Focus.Apps.EasyNpc.Profiles

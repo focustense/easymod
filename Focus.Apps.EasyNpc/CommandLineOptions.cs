@@ -16,6 +16,9 @@ namespace Focus.Apps.EasyNpc
         [Option('p', "game-path")]
         public string GamePath { get; set; } = null;
 
+        [Option("mo2-exe")]
+        public string ModOrganizerExecutablePath { get; set; } = null;
+
         [Option('r', "report-path")]
         public string ReportPath { get; set; }
 
