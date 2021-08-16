@@ -153,6 +153,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             Cleanup();
         }
 
+        // TODO: Need to add logging of started, failed, completed tasks
         private void Continue()
         {
             if (ended)

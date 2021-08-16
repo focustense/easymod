@@ -16,7 +16,7 @@ namespace Focus.Apps.EasyNpc.Main
     {
         public delegate MainViewModel Factory(bool isFirstLaunch);
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public BuildViewModel Build { get; private set; }
         public bool IsFirstLaunch { get; private set; }
@@ -56,9 +56,9 @@ namespace Focus.Apps.EasyNpc.Main
                 IsFirstLaunch = false;
             };
 
-            Loader.Loaded += () =>
+            Loader.Loaded += async () =>
             {
-                var profileModel = Loader.Tasks.Profile.Result;
+                var profileModel = await Loader.Tasks.Profile.ConfigureAwait(false);
                 Profile = profileFactory(profileModel);
                 Build = buildFactory(profileModel);
                 Maintenance = maintenanceFactory(profileModel);

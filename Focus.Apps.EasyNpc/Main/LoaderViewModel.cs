@@ -66,7 +66,8 @@ namespace Focus.Apps.EasyNpc.Main
 
             Status = "Preparing game profile...";
             Tasks = loader.Complete();
-            await Task.WhenAll(new Task[] { Tasks.ModRepository, Tasks.LoadOrderAnalysis, Tasks.Profile });
+            await Task.WhenAll(new Task[] { Tasks.ModRepository, Tasks.LoadOrderAnalysis, Tasks.Profile })
+                .ConfigureAwait(false);
             
             IsSpinnerVisible = false;
             IsLoading = false;

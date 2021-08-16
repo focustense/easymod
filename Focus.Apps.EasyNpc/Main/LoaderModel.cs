@@ -47,6 +47,7 @@ namespace Focus.Apps.EasyNpc.Main
 
         public LoaderTasks Complete()
         {
+            log.Information("Load order confirmed");
             var modRepositoryTask = modRepositoryConfigureTask.ContinueWith(_ => modRepository as IModRepository);
             var loadOrderAnalysisTask = AnalyzeLoadOrder();
             var profileTask = loadOrderAnalysisTask
@@ -63,12 +64,20 @@ namespace Focus.Apps.EasyNpc.Main
         public void Prepare()
         {
             modRepositoryConfigureTask = !string.IsNullOrEmpty(settings.ModRootDirectory) ?
-                modRepository.Configure(new(settings.ModRootDirectory)) : Task.CompletedTask;
+                Task.Run(async () =>
+                {
+                    log.Information("Beginning mod indexing");
+                    await modRepository.Configure(new(settings.ModRootDirectory));
+                    log.Information("Finished mod indexing");
+                }) :
+                Task.CompletedTask;
         }
 
         private async Task<LoadOrderAnalysis> AnalyzeLoadOrder()
         {
-            var analyzer = await Task.Run(() => this.analyzer.Value);
+            log.Information("Creating load order analyzer");
+            var analyzer = await Task.Run(() => this.analyzer.Value).ConfigureAwait(false);
+            log.Information("Beginning load order analysis");
             var availablePluginNames = setup.AvailablePlugins.Select(p => p.FileName);
             var result = analyzer.Analyze(availablePluginNames, setup.LoadOrderGraph, true);
             log.Information(

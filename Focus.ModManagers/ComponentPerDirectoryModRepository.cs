@@ -25,8 +25,8 @@ namespace Focus.ModManagers
         public async Task Configure(TConfig config)
         {
             var resolver = GetComponentResolver(config);
-            index = await BuildIndexAsync(config);
-            await inner.ConfigureIndex(index, config.RootPath, resolver);
+            index = await BuildIndexAsync(config).ConfigureAwait(false);
+            await inner.ConfigureIndex(index, config.RootPath, resolver).ConfigureAwait(false);
         }
 
         public bool ContainsFile(string relativePath, bool includeArchives, bool includeDisabled = false)
