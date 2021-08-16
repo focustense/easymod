@@ -15,17 +15,18 @@ namespace Focus.Apps.EasyNpc.Main
         public event Action Loaded;
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public TaskViewModel AnalysisTask { get; private init; } = new("Analysis");
         public bool CanLoad { get; private set; }
         public bool HasEnabledUnloadablePlugins { get; private set; }
-        public bool IsLoading { get; private set; } = true;
+        public bool IsLoading { get; private set; }
         public bool IsLogVisible { get; private set; }
         public bool IsPluginListVisible { get; private set; }
-        public bool IsSpinnerVisible { get; private set; }
         [DependsOn("HasEnabledUnloadablePlugins", "IsPluginListVisible")]
         public bool IsUnloadablePluginWarningVisible => HasEnabledUnloadablePlugins && IsPluginListVisible;
         public LogViewModel Log { get; private init; }
+        public TaskViewModel ModIndexTask { get; private init; } = new("Mod Scan");
         public IReadOnlyList<PluginSetting> Plugins { get; private set; }
-        public string Status { get; private set; }
+        public TaskViewModel ProfileTask { get; private init; } = new("Profile");
         public LoaderTasks Tasks { get; private set; }
 
         private readonly LoaderModel loader;
@@ -38,8 +39,6 @@ namespace Focus.Apps.EasyNpc.Main
 
             Log = logViewModel;
 
-            Status = "Starting up...";
-            IsSpinnerVisible = true;
             CanLoad = false;
             loader.Prepare();
 
@@ -50,8 +49,6 @@ namespace Focus.Apps.EasyNpc.Main
             UpdatePluginStates();
             foreach (var plugin in Plugins)
                 plugin.Toggled += Plugin_Toggled;
-            Status = "Confirm plugin selection and load order.";
-            IsSpinnerVisible = false;
             IsPluginListVisible = true;
             CanLoad = true;
         }
@@ -59,17 +56,17 @@ namespace Focus.Apps.EasyNpc.Main
         public async void ConfirmPlugins()
         {
             CanLoad = false;
-            Status = "Loading selected plugins...";
-            IsSpinnerVisible = true;
+            IsLoading = true;
             IsPluginListVisible = false;
             IsLogVisible = true;
 
-            Status = "Preparing game profile...";
             Tasks = loader.Complete();
+            AnalysisTask.SetTask(Tasks.LoadOrderAnalysis);
+            ModIndexTask.SetTask(Tasks.ModRepository);
+            ProfileTask.SetTask(Tasks.Profile);
             await Task.WhenAll(new Task[] { Tasks.ModRepository, Tasks.LoadOrderAnalysis, Tasks.Profile })
                 .ConfigureAwait(false);
             
-            IsSpinnerVisible = false;
             IsLoading = false;
             Loaded?.Invoke();
         }

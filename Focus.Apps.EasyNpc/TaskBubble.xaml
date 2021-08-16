@@ -1,0 +1,44 @@
+﻿<UserControl x:Class="Focus.Apps.EasyNpc.TaskBubble"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+             xmlns:t="clr-namespace:System.Threading.Tasks;assembly=System.Runtime"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=local:TaskViewModel}"
+             d:DesignHeight="48" d:DesignWidth="200">
+    <Border Grid.Column="2" CornerRadius="8" Padding="8" MinHeight="32">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource TaskProgressCancelledBackgroundBrush}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Status}" Value="{x:Static t:TaskStatus.Faulted}">
+                        <Setter Property="Background" Value="{StaticResource TaskProgressFailedBackgroundBrush}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Status}" Value="{x:Static t:TaskStatus.RanToCompletion}">
+                        <Setter Property="Background" Value="{StaticResource TaskProgressCompletedBackgroundBrush}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsEnded}" Value="False">
+                        <DataTrigger.EnterActions>
+                            <BeginStoryboard Name="BackgroundAnimation">
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetProperty="Background.Color"
+                                                                    From="Transparent"
+                                                                    To="{StaticResource TaskProgressCancelledBackgroundColor}"
+                                                                    AutoReverse="True"
+                                                                    Duration="0:0:1"
+                                                                    RepeatBehavior="0:0:9"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </DataTrigger.EnterActions>
+                        <DataTrigger.ExitActions>
+                            <RemoveStoryboard BeginStoryboardName="BackgroundAnimation"/>
+                        </DataTrigger.ExitActions>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Name}" d:Text="Task Name"/>
+    </Border>
+</UserControl>

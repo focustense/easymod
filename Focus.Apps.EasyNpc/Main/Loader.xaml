@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:debug="clr-namespace:Focus.Apps.EasyNpc.Debug"
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              d:DataContext="{d:DesignInstance Type=main:LoaderViewModel}"
@@ -12,10 +13,23 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <DockPanel>
-            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Height="24" Margin="8" DockPanel.Dock="Top">
-                <fa5:SvgAwesome Name="SpinnerImage" Icon="Solid_Cog" Spin="True" Height="20" Width="20" Margin="0,0,12,0" Visibility="{Binding Path=IsSpinnerVisible, Converter={StaticResource BoolToVisibility}}"/>
-                <TextBlock Text="{Binding Path=Status}" VerticalAlignment="Center" />
-            </ui:SimpleStackPanel>
+            <Grid DockPanel.Dock="Top" Margin="8" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ui:ProgressRing Grid.Column="0" Width="32" Height="32" Margin="0,0,16,0" IsActive="True"/>
+                <TextBlock Grid.Column="1" FontSize="16" VerticalAlignment="Center">Getting things ready</TextBlock>
+                <local:TaskBubble Grid.Column="2" Margin="4" DataContext="{Binding ModIndexTask}"/>
+                <local:TaskBubble Grid.Column="3" Margin="4" DataContext="{Binding AnalysisTask}"/>
+                <local:TaskBubble Grid.Column="4" Margin="4" DataContext="{Binding ProfileTask}"/>
+            </Grid>
+            <TextBlock DockPanel.Dock="Top" Margin="8" Visibility="{Binding IsLoading, Converter={StaticResource InvBoolToVisibility}}">
+                Confirm plugin selection and load order.
+            </TextBlock>
             <Grid DockPanel.Dock="Bottom">
                 <ui:SimpleStackPanel Margin="8" Orientation="Horizontal" Visibility="{Binding IsUnloadablePluginWarningVisible, Converter={StaticResource BoolToVisibility}}">
                     <fa5:SvgAwesome Foreground="{StaticResource DangerForegroundBrush}" Icon="Solid_ExclamationTriangle" Height="20" VerticalAlignment="Center"/>
@@ -28,7 +42,13 @@
                 </ui:SimpleStackPanel>
             </Grid>
             <Grid>
-                <DataGrid Name="LoadOrderGrid" AutoGenerateColumns="False" ItemsSource="{Binding Path=Plugins}" Margin="8,0,8,0" Visibility="{Binding Path=IsPluginListVisible, Converter={StaticResource BoolToVisibility}}" KeyDown="LoadOrderGrid_KeyDown">
+                <DataGrid x:Name="LoadOrderGrid"
+                          AutoGenerateColumns="False"
+                          ItemsSource="{Binding Path=Plugins}"
+                          Margin="8,0,8,0"
+                          Visibility="{Binding Path=IsPluginListVisible, Converter={StaticResource BoolToVisibility}}"
+                          d:Visibility="Collapsed"
+                          KeyDown="LoadOrderGrid_KeyDown">
                     <DataGrid.Resources>
                         <Style x:Key="LoadOrderCell" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
                             <Style.Triggers>
@@ -87,7 +107,10 @@
                         <DataGridTextColumn Header="File Name" Width="*" Binding="{Binding FileName}" IsReadOnly="True" CellStyle="{StaticResource LoadOrderCell}"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <debug:ScrollingTextBox Margin="8,0,8,0" Visibility="{Binding Path=IsLogVisible, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed" IsReadOnly="True" Text="{Binding Path=Log.Text, Mode=OneWay}"></debug:ScrollingTextBox>
+                <debug:ScrollingTextBox IsReadOnly="True"
+                                        Margin="8,0,8,0"
+                                        Text="{Binding Path=Log.Text, Mode=OneWay}"
+                                        Visibility="{Binding Path=IsLogVisible, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </DockPanel>
     </Grid>
