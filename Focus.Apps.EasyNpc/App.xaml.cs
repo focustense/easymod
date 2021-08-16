@@ -2,11 +2,7 @@
 using CommandLine;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Main;
-using Focus.Apps.EasyNpc.Modules;
 using Focus.ModManagers;
-using Focus.ModManagers.ModOrganizer;
-using Focus.ModManagers.Vortex;
-using Serilog.Events;
 using System;
 using System.IO;
 using System.Windows;
@@ -61,22 +57,6 @@ namespace Focus.Apps.EasyNpc
             {
                 Warn(StartupWarnings.UnsupportedGame(ex.GameId, ex.GameName), true);
                 Current.Shutdown();
-            }
-        }
-
-        private static IModResolver CreateModResolver(StartupInfo startupInfo, CommandLineOptions options)
-        {
-            var defaultModResolver = new PassthroughModResolver();
-            // Vortex manifest is a command-line option, so it automatically overrides detection-based mechanisms.
-            if (!string.IsNullOrEmpty(options.VortexManifest))
-                return new VortexModResolver(defaultModResolver, options.VortexManifest);
-            switch (startupInfo.Launcher)
-            {
-                case ModManager.ModOrganizer:
-                    var config = IniConfiguration.AutoDetect(startupInfo.ParentProcessPath);
-                    return new ModOrganizerModResolver(config);
-                default:
-                    return defaultModResolver;
             }
         }
 
