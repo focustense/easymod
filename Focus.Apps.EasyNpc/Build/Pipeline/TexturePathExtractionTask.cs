@@ -21,7 +21,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         }
 
         public delegate TexturePathExtractionTask Factory(
-            PatchSaveTask.Result patch, HeadPartResourceCopyTask.Result headParts, FaceGenCopyTask.Result faceGen);
+            PatchSaveTask.Result patch, SharedResourceCopyTask.Result headParts, FaceGenCopyTask.Result faceGen);
 
         private static readonly Regex TexturePathExpression = new(
             @"[\w\s\p{P}]+\.dds",
@@ -29,11 +29,11 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         private readonly FaceGenCopyTask.Result faceGen;
         private readonly IFileSystem fs;
-        private readonly HeadPartResourceCopyTask.Result headParts;
+        private readonly SharedResourceCopyTask.Result headParts;
         private readonly PatchSaveTask.Result patch;
 
         public TexturePathExtractionTask(
-            IFileSystem fs, PatchSaveTask.Result patch, HeadPartResourceCopyTask.Result headParts,
+            IFileSystem fs, PatchSaveTask.Result patch, SharedResourceCopyTask.Result headParts,
             FaceGenCopyTask.Result faceGen)
         {
             this.faceGen = faceGen;

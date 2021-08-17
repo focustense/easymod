@@ -78,6 +78,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     record.HairColor.SetTo(patch.Importer.Import(faceNpcRecord.HairColor, x => x.Colors));
                     log.Debug("Importing face texture", model.FaceOption.PluginName);
                     record.HeadTexture.SetTo(patch.Importer.Import(faceNpcRecord.HeadTexture, x => x.TextureSets));
+                    log.Debug("Importing worn armor", model.FaceOption.PluginName);
+                    record.WornArmor.SetTo(patch.Importer.Import(faceNpcRecord.WornArmor, x => x.Armors));
                 }
                 return new Result();
             });

@@ -12,7 +12,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public class Result { }
 
         public delegate ArchiveCreationTask Factory(
-            PatchSaveTask.Result patch, FaceGenCopyTask.Result faceGens, HeadPartResourceCopyTask.Result headParts,
+            PatchSaveTask.Result patch, FaceGenCopyTask.Result faceGens, SharedResourceCopyTask.Result headParts,
             TextureCopyTask.Result textures);
 
         private const long GB = 1024 * 1024 * 1024;
@@ -20,13 +20,13 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private readonly IDummyPluginBuilder dummyPluginBuilder;
         private readonly FaceGenCopyTask.Result faceGens;
         private readonly IFileSystem fs;
-        private readonly HeadPartResourceCopyTask.Result headParts;
+        private readonly SharedResourceCopyTask.Result headParts;
         private readonly PatchSaveTask.Result patch;
         private readonly TextureCopyTask.Result textures;
 
         public ArchiveCreationTask(
             IFileSystem fs, IDummyPluginBuilder dummyPluginBuilder, PatchSaveTask.Result patch,
-            FaceGenCopyTask.Result faceGens, HeadPartResourceCopyTask.Result headParts, TextureCopyTask.Result textures)
+            FaceGenCopyTask.Result faceGens, SharedResourceCopyTask.Result headParts, TextureCopyTask.Result textures)
         {
             this.dummyPluginBuilder = dummyPluginBuilder;
             this.faceGens = faceGens;

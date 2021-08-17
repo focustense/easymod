@@ -37,7 +37,7 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<ArchiveCreationTask>();
             builder.RegisterType<DewiggifyRecordsTask>();
             builder.RegisterType<FaceGenCopyTask>();
-            builder.RegisterType<HeadPartResourceCopyTask>();
+            builder.RegisterType<SharedResourceCopyTask>();
             builder.RegisterType<NpcDefaultsTask>();
             builder.RegisterType<NpcFacesTask>();
             builder.RegisterType<PatchInitializationTask>();
@@ -53,7 +53,7 @@ namespace Focus.Apps.EasyNpc.Modules
                     .RegisterTask<NpcDefaultsTask.Factory>("Import NPC Defaults")
                     .RegisterTask<NpcFacesTask.Factory>("Apply Face Customizations")
                     .RegisterTask<PatchSaveTask.Factory>("Save Patch")
-                    .RegisterTask<HeadPartResourceCopyTask.Factory>("Copy Head Part Meshes/Morphs")
+                    .RegisterTask<SharedResourceCopyTask.Factory>("Copy Shared Resources")
                     .RegisterTask<FaceGenCopyTask.Factory>("Copy FaceGen Data")
                     .RegisterTask<DewiggifyRecordsTask.Factory>("De-wiggify Records")
                     .RegisterTask<TexturePathExtractionTask.Factory>("Extract Texture Paths")

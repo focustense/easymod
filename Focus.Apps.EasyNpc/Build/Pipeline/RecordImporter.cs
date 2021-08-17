@@ -3,6 +3,7 @@ using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
+using Noggog;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private readonly ISkyrimMod mergedMod;
         // We need to keep track of these ourselves, because merged records won't appear in the original LinkCache.
         private readonly Dictionary<FormKey, IMajorRecord> mergedRecords = new();
+        private readonly Lazy<IReadOnlyList<FormKey>> playableRaceKeys;
 
         public RecordImporter(
             IMutableGameEnvironment<ISkyrimMod, ISkyrimModGetter> environment, ISkyrimMod mergedMod, ILogger log)
@@ -28,6 +30,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             this.environment = environment;
             this.log = log;
             this.mergedMod = mergedMod;
+
+            playableRaceKeys = new(() => GetPlayableRaceKeys().ToList(), true);
         }
 
         public void AddMaster(string pluginName)
@@ -43,6 +47,12 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             // There's probably a switch expression that's better for this, but Mutagen doesn't make it obvious.
             if (typeof(IHeadPartGetter).IsAssignableFrom(link.Type))
                 setup = x => ImportHeadPartDependencies((HeadPart)(SkyrimMajorRecord)x);
+            else if (typeof(IArmorGetter).IsAssignableFrom(link.Type))
+                setup = x => ImportWornArmorDependencies((Armor)(SkyrimMajorRecord)x);
+            else if (typeof(IArmorAddonGetter).IsAssignableFrom(link.Type))
+                setup = x => ImportWornArmorAddonDependencies((ArmorAddon)(SkyrimMajorRecord)x);
+            else if (typeof(IArtObjectGetter).IsAssignableFrom(link.Type))
+                setup = x => ImportArtObjectDependencies((ArtObject)(SkyrimMajorRecord)x);
             return Import(link, groupSelector(mergedMod), setup);
         }
 
@@ -65,12 +75,19 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             return mergedRecords.TryGetValue(key, out var merged) ? (T)merged : default;
         }
 
+        private IEnumerable<FormKey> GetPlayableRaceKeys()
+        {
+            foreach (var race in environment.LoadOrder.PriorityOrder.Race().WinningOverrides())
+                if (masters.Contains(race.FormKey.ModKey) && IsValidArmorRace(race))
+                    yield return race.FormKey;
+        }
+
         private FormKey? Import<T, TGetter>(
-            IFormLinkGetter<TGetter> link, IGroup<T> group, Action<T>? setup = null)
+            IFormLinkGetter<TGetter>? link, IGroup<T> group, Action<T>? setup = null)
             where T : SkyrimMajorRecord, TGetter
             where TGetter : class, ISkyrimMajorRecordGetter
         {
-            if (link.FormKeyNullable == null)
+            if (link is null || link.FormKeyNullable == null)
                 return null;
 
             log.Debug("Clone requested for {Type} ({FormKey})", link.Type.Name, link.FormKey);
@@ -105,6 +122,15 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             }
         }
 
+        private void ImportArtObjectDependencies(ArtObject art)
+        {
+            log.Debug("Processing art object {FormKey} '{EditorId}' for cloning", art.FormKey, art.EditorID);
+
+            ReplaceAlternateTextures(art.Model?.AlternateTextures);
+
+            log.Information("Finished processing cloned art object {FormKey} '{EditorId}'", art.EditorID, art.FormKey);
+        }
+
         private void ImportHeadPartDependencies(HeadPart headPart)
         {
             log.Debug(
@@ -112,20 +138,160 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 headPart.FormKey, headPart.EditorID);
             headPart.Color.SetTo(Import(headPart.Color, mergedMod.Colors));
             headPart.TextureSet.SetTo(Import(headPart.TextureSet, mergedMod.TextureSets));
-            if (headPart.Model != null && headPart.Model.AlternateTextures != null)
-            {
-                foreach (var altTexture in headPart.Model.AlternateTextures)
-                    altTexture.NewTexture.SetTo(Import(altTexture.NewTexture, mergedMod.TextureSets));
-            }
-            var mergedExtraParts = headPart.ExtraParts
-                .Select(x => Import(x, mergedMod.HeadParts, hp => ImportHeadPartDependencies(hp)))
-                .NotNull()
-                .ToList();
-            headPart.ExtraParts.Clear();
-            headPart.ExtraParts.AddRange(mergedExtraParts);
+            ReplaceAlternateTextures(headPart.Model?.AlternateTextures);
+            ReplaceList(headPart.ExtraParts, mergedMod.HeadParts, ImportHeadPartDependencies);
             log.Information(
                 "Finished processing cloned head part {FormKey} '{EditorId}'",
                 headPart.EditorID, headPart.FormKey);
+        }
+
+        private void ImportTextureSetList(FormList list)
+        {
+            var textureSetLinks = list.Items.Where(x => x.Type == typeof(ITextureSetGetter)).ToList();
+            list.Items.Clear();
+            foreach (var textureSetLink in textureSetLinks)
+            {
+                var mergedTextureSetKey = Import(textureSetLink, mergedMod.TextureSets);
+                if (mergedTextureSetKey != null)
+                    list.Items.Add(mergedTextureSetKey.Value.AsLinkGetter<ITextureSetGetter>());
+            }
+        }
+
+        private void ImportWornArmorAddonDependencies(ArmorAddon addon)
+        {
+            log.Debug("Processing armor addon {FormKey} '{EditorId}' for cloning", addon.FormKey, addon.EditorID);
+
+            // NPCs aren't going to inherit any custom races unless they're in the masters already, so it should be safe
+            // to remove those from addons. Other races can stay.
+            addon.AdditionalRaces.RemoveAll(x => x.IsNull || !masters.Contains(x.FormKey.ModKey));
+
+            // Footstep sets have a not-very-shallow tree to import. Use a similar strategy as the race: if not included
+            // in the existing masters, remove it (i.e. replace with the default).
+            if (!addon.FootstepSound.IsNull && !masters.Contains(addon.FootstepSound.FormKey.ModKey))
+            {
+                if (addon.BodyTemplate?.FirstPersonFlags.HasFlag(BipedObjectFlag.Feet) == true)
+                    addon.FootstepSound.SetTo(
+                        environment.LinkCache.Resolve<IFootstepSetGetter>("FSTBarefootFootstepSet"));
+                else
+                    // If it's not even a feet addon, it shouldn't have footsteps.
+                    addon.FootstepSound.Clear();
+            }
+
+            // Allow any playable race to use the addon. We don't know which NPCs will try.
+            addon.Race.SetTo(environment.LinkCache.Resolve<IRaceGetter>("DefaultRace"));
+            addon.AdditionalRaces.Clear();
+            foreach (var race in playableRaceKeys.Value)
+                addon.AdditionalRaces.Add(race);
+
+            addon.ArtObject.SetTo(Import(addon.ArtObject, mergedMod.ArtObjects, ImportArtObjectDependencies));
+            ReplaceAlternateTextures(addon.FirstPersonModel?.Female?.AlternateTextures);
+            ReplaceAlternateTextures(addon.FirstPersonModel?.Male?.AlternateTextures);
+            if (addon.SkinTexture is not null)
+            {
+                var maleSkinTexture = Import(addon.SkinTexture?.Male, mergedMod.TextureSets) ?? FormKey.Null;
+                var femaleSkinTexture = Import(addon.SkinTexture?.Female, mergedMod.TextureSets) ?? FormKey.Null;
+                addon.SkinTexture = new GenderedItem<IFormLinkNullableGetter<ITextureSetGetter>>(
+                    maleSkinTexture.AsLinkGetter<ITextureSetGetter>().AsNullable(),
+                    femaleSkinTexture.AsLinkGetter<ITextureSetGetter>().AsNullable());
+            }
+            // Form lists (skin texture swap list) can be pretty brutal to merge as a form list can technically contain
+            // anything at all. However, we can reduce the complexity without breaking anything important (hopefully) by
+            // only copying the TXST references inside - since this is supposed to be a list of textures.
+            if (addon.TextureSwapList is not null)
+            {
+                var maleSwapList =
+                    Import(addon.TextureSwapList?.Male, mergedMod.FormLists, ImportTextureSetList) ?? FormKey.Null;
+                var femaleSwapList =
+                    Import(addon.TextureSwapList?.Female, mergedMod.FormLists, ImportTextureSetList) ?? FormKey.Null;
+                addon.TextureSwapList = new GenderedItem<IFormLinkNullableGetter<IFormListGetter>>(
+                    maleSwapList.AsLinkGetter<IFormListGetter>().AsNullable(),
+                    femaleSwapList.AsLinkGetter<IFormListGetter>().AsNullable());
+            }
+            ReplaceAlternateTextures(addon.WorldModel?.Female?.AlternateTextures);
+            ReplaceAlternateTextures(addon.WorldModel?.Male?.AlternateTextures);
+
+            log.Information(
+                "Finished processing cloned armor addon {FormKey} '{EditorId}'", addon.EditorID, addon.FormKey);
+        }
+
+        private void ImportWornArmorDependencies(Armor armor)
+        {
+            log.Debug("Processing armor {FormKey} '{EditorId}' for cloning", armor.FormKey, armor.EditorID);
+
+            // We only care about the visuals. "Worn Armors" shouldn't have any of these fields.
+            armor.AlternateBlockMaterial.Clear();
+            armor.BashImpactDataSet.Clear();
+            armor.EquipmentType.Clear();
+            armor.ObjectEffect.Clear();
+            armor.PickUpSound.Clear();
+            armor.PutDownSound.Clear();
+            armor.VirtualMachineAdapter = null;
+
+            // There's probably a mod out there somewhere that tries to attach a Destructible to a Worn Armor, but if
+            // so, then it's an extreme edge case and the effects of removing it will rarely be encountered.
+            armor.Destructible = null;
+
+            // Setting to default race should allow all races to "equip" the armor, meaning it should be compatible with
+            // whatever race an NPC happens to be inheriting from the default (not face) plugin.
+            armor.Race.SetTo(environment.LinkCache.Resolve<IRaceGetter>("DefaultRace"));
+
+            ReplaceList(armor.Armature, mergedMod.ArmorAddons, ImportWornArmorAddonDependencies);
+            ReplaceList(armor.Keywords, mergedMod.Keywords);
+            armor.TemplateArmor.SetTo(Import(armor.TemplateArmor, mergedMod.Armors, ImportWornArmorDependencies));
+            ReplaceAlternateTextures(armor.WorldModel?.Female?.Model?.AlternateTextures);
+            ReplaceAlternateTextures(armor.WorldModel?.Male?.Model?.AlternateTextures);
+
+            log.Information("Finished processing cloned armor {FormKey} '{EditorId}'", armor.EditorID, armor.FormKey);
+        }
+
+        private bool IsValidArmorRace(IRaceGetter race, HashSet<FormKey>? visitedKeys = null)
+        {
+            if (race.Flags.HasFlag(Race.Flag.Playable))
+                return true;
+            if (visitedKeys is null)
+                visitedKeys = new();
+            else if (visitedKeys.Contains(race.FormKey))
+                // Don't allow any cycles (infinite loops) here.
+                return false;
+            visitedKeys.Add(race.FormKey);
+            if (!race.ArmorRace.IsNull)
+            {
+                var armorRace = race.ArmorRace.TryResolve(environment.LinkCache);
+                if (armorRace is not null && IsValidArmorRace(armorRace, visitedKeys))
+                    return true;
+            }
+            // Walking the morph race doesn't really seem accurate, but it's the only way that the vampire races seem to
+            // link to their baseline races, and in the vanilla records, vampire records are also valid armor races.
+            if (!race.MorphRace.IsNull)
+            {
+                var morphRace = race.MorphRace.TryResolve(environment.LinkCache);
+                if (morphRace is not null && IsValidArmorRace(morphRace, visitedKeys))
+                    return true;
+            }
+            return false;
+        }
+
+        private void ReplaceAlternateTextures(IEnumerable<AlternateTexture>? altTextures)
+        {
+            if (altTextures is null)
+                return;
+            foreach (var altTexture in altTextures)
+                altTexture.NewTexture.SetTo(Import(altTexture.NewTexture, mergedMod.TextureSets));
+        }
+
+        private void ReplaceList<T, TGetter>(
+            ExtendedList<IFormLinkGetter<TGetter>>? list, IGroup<T> group, Action<T>? setup = null)
+            where T : SkyrimMajorRecord, TGetter
+            where TGetter : class, ISkyrimMajorRecordGetter
+        {
+            if (list is null)
+                return;
+            var mergedItems = list
+                .Select(x => Import(x, group, setup))
+                .NotNull()
+                .ToList();
+            list.Clear();
+            list.AddRange(mergedItems);
         }
     }
 }
