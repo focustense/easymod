@@ -73,6 +73,12 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     .NotNull()
                     .ToList();
                 ItemCount.OnNext(found.Count);
+                var outputDirectories = found
+                    .Select(x => fs.Path.Combine(settings.OutputDirectory, x.RelativePath))
+                    .Select(p => fs.Path.GetDirectoryName(p))
+                    .Distinct();
+                foreach (var outputDirectory in outputDirectories)
+                    fs.Directory.CreateDirectory(outputDirectory);
                 Parallel.ForEach(found, new ParallelOptions { MaxDegreeOfParallelism = 4 }, x =>
                 {
                     CancellationToken.ThrowIfCancellationRequested();
