@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 
 namespace Focus
 {
@@ -9,5 +7,7 @@ namespace Focus
         IEnumerable<string> ArchiveOrder { get; }
         string DataDirectory { get; }
         IEnumerable<string> PluginLoadOrder { get; }
+
+        bool IsBaseGameArchive(string archiveName);
     }
 }

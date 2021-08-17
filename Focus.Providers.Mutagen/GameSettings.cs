@@ -21,6 +21,7 @@ namespace Focus.Providers.Mutagen
         private readonly IArchiveStatics archive;
         private readonly IReadOnlyGameEnvironment<TModGetter> env;
         private readonly GameSelection game;
+        private readonly HashSet<FileName> iniListings;
         private readonly IReadOnlyList<FileName> order;
 
         public GameSettings(IReadOnlyGameEnvironment<TModGetter> env, IArchiveStatics archive, GameSelection game)
@@ -28,7 +29,9 @@ namespace Focus.Providers.Mutagen
             this.archive = archive;
             this.env = env;
             this.game = game;
-            order = archive.GetIniListings(game.GameRelease)
+            var iniListings = archive.GetIniListings(game.GameRelease).ToList();
+            this.iniListings = iniListings.ToHashSet();
+            order = iniListings
                 .Concat(env.LoadOrder.ListedOrder.SelectMany(x => new[] {
                     // Not all of these will exist, but it doesn't matter, as these are only used for sorting and won't
                     // affect the actual set of paths returned.
@@ -43,5 +46,10 @@ namespace Focus.Providers.Mutagen
             .Select(x => x.Name.String);
         public string DataDirectory => env.GetRealDataDirectory();
         public IEnumerable<string> PluginLoadOrder => env.LoadOrder.ListedOrder.Select(x => x.ModKey.FileName.String);
+
+        public bool IsBaseGameArchive(string archiveName)
+        {
+            return iniListings.Contains(archiveName);
+        }
     }
 }

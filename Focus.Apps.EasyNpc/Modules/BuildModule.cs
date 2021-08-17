@@ -33,6 +33,7 @@ namespace Focus.Apps.EasyNpc.Modules
 
             builder.RegisterType<FileCopier>().As<IFileCopier>();
             builder.RegisterType<RecordImporter>();
+            builder.RegisterType<VanillaTextureOverrideExclusion>().As<ITexturePathFilter>();
 
             builder.RegisterType<ArchiveCreationTask>();
             builder.RegisterType<DewiggifyRecordsTask>();

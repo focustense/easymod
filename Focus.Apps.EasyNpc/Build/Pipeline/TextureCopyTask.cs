@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.GameData.Files;
+using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,11 +22,17 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         private readonly IFileCopier copier;
         private readonly TexturePathExtractionTask.Result extracted;
+        private readonly IEnumerable<ITexturePathFilter> filters;
+        private readonly ILogger log;
 
-        public TextureCopyTask(IFileCopier copier, TexturePathExtractionTask.Result extracted)
+        public TextureCopyTask(
+            IFileCopier copier, IEnumerable<ITexturePathFilter> filters, ILogger log,
+            TexturePathExtractionTask.Result extracted)
         {
             this.copier = copier;
             this.extracted = extracted;
+            this.filters = filters;
+            this.log = log;
         }
 
         protected override Task<Result> Run(BuildSettings settings)
@@ -34,6 +41,18 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             {
                 var texturePaths = extracted.TexturePaths
                     .Where(p => !FileStructure.IsFaceGen(p))
+                    .Where(p =>
+                    {
+                        var firstExcludingFilter = filters.FirstOrDefault(f => !f.ShouldImport(p));
+                        if (firstExcludingFilter is not null)
+                        {
+                            log.Debug(
+                                "Texture '{texturePath}' is excluded by filter {filterType}",
+                                p, firstExcludingFilter.GetType().Name);
+                            return false;
+                        }
+                        return true;
+                    })
                     .ToHashSet();
                 ItemCount.OnNext(texturePaths.Count);
                 copier.CopyAll(texturePaths, settings.OutputDirectory, NextItemSync, CancellationToken);

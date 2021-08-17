@@ -17,5 +17,10 @@ namespace Focus
             PluginLoadOrder = pluginLoadOrder ?? Enumerable.Empty<string>();
             ArchiveOrder = archiveOrder ?? Enumerable.Empty<string>();
         }
+
+        public bool IsBaseGameArchive(string archiveName)
+        {
+            return false;
+        }
     }
 }
