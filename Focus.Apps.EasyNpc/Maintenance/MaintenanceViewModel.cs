@@ -13,7 +13,7 @@ namespace Focus.Apps.EasyNpc.Maintenance
     {
         public delegate MaintenanceViewModel Factory(Profile profile);
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public int AutosaveInvalidNpcCount { get; private set; }
         public int AutosaveRecordCount { get; private set; }
@@ -31,19 +31,16 @@ namespace Focus.Apps.EasyNpc.Maintenance
         public decimal LogFileSizeMb { get; private set; }
         public bool OnlyResetInvalid { get; set; }
 
-        private readonly IReadOnlySet<string> loadedPlugins;
         private readonly IReadOnlySet<IRecordKey> npcKeys;
         private readonly IProfileEventLog profileEventLog;
         private readonly Profile profile;
 
-        public MaintenanceViewModel(
-            Profile profile, IProfileEventLog profileEventLog, IGameSettings gameSettings)
+        public MaintenanceViewModel(Profile profile, IProfileEventLog profileEventLog)
         {
             this.profile = profile;
             this.profileEventLog = profileEventLog;
 
             npcKeys = profile.Npcs.Select(x => new RecordKey(x)).ToHashSet(RecordKeyComparer.Default);
-            loadedPlugins = gameSettings.PluginLoadOrder.ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
         public void DeleteOldLogFiles()
@@ -131,13 +128,12 @@ namespace Focus.Apps.EasyNpc.Maintenance
         {
             if (!OnlyResetInvalid)
                 return npc => true;
-            var filteredNpcs = profileEventLog
-                .MostRecentByNpc()
-                .Where(e => e.Field == field)
-                .WithMissingPlugins(loadedPlugins)
-                .Select(e => new RecordKey(e))
-                .ToHashSet(RecordKeyComparer.Default);
-            return npc => filteredNpcs.Contains(npc);
+            return field switch
+            {
+                NpcProfileField.DefaultPlugin => npc => !string.IsNullOrEmpty(npc.MissingDefaultPluginName),
+                NpcProfileField.FacePlugin => npc => !string.IsNullOrEmpty(npc.MissingFacePluginName),
+                _ => npc => true
+            };
         }
 
         private void RefreshLogStats()
