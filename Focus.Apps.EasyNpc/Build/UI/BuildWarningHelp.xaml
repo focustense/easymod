@@ -136,30 +136,6 @@
                 </TextBlock>
             </ui:SimpleStackPanel>
         </DataTemplate>
-        <DataTemplate x:Key="FaceModChangesRace">
-            <ui:SimpleStackPanel>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run FontWeight="Medium">What this means:</Run>
-                    <Run>The face plugin you have selected uses a different race for this NPC when compared to the default plugin.</Run>
-                </TextBlock>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run FontWeight="Medium">Why this matters:</Run>
-                    <Run>
-                        Race records may be providing some of the default face geometry (i.e. head parts) for this NPC. If the race doesn't match, this NPC is likely to end up with blackface.
-                    </Run>
-                </TextBlock>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run Text="{StaticResource AppName}"/> <Run>doesn't currently allow a face plugin to override the race, because it may cause problems with quests or scripts, revert bug fixes made by
-                        the default plugin or one of its dependencies, or cause various other issues in game that are potentially worse than blackface.
-                    </Run>
-                </TextBlock>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run FontWeight="Medium">Recommendation:</Run>
-                    <Run>Choose a different face mod/plugin. Or, you can ignore this error and manually patch this NPC's race in</Run> <Run Text="{StaticResource AppName}"/><Run>'s generated mod, </Run>
-                    <Run>if you are confident that changing (or reverting) the race won't cause other problems.</Run>
-                </TextBlock>
-            </ui:SimpleStackPanel>
-        </DataTemplate>
         <DataTemplate x:Key="MasterPluginRemoved">
             <ui:SimpleStackPanel>
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
@@ -241,9 +217,6 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Id}" Value="MultipleFaceGen">
                             <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource MultipleFaceGen}"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Id}" Value="FaceModChangesRace">
-                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource FaceModChangesRace}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Id}" Value="MasterPluginRemoved">
                             <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource MasterPluginRemoved}"/>

@@ -16,7 +16,6 @@ namespace Focus.Apps.EasyNpc.Build
         SelectedPluginRemoved,
         MissingFaceGen,
         MultipleFaceGen,
-        FaceModChangesRace,
         FaceModWigNotMatched,
         FaceModWigNotMatchedBald,
         FaceModWigConversionDisabled,
@@ -92,14 +91,6 @@ namespace Focus.Apps.EasyNpc.Build
             return
                 $"{NpcLabel(editorId, name)} is configured to use mod '{modName}' as a FaceGen override, which " +
                 $"bypasses FaceGen consistency checks.";
-        }
-
-        public static string FaceModChangesRace(
-            string editorId, string name, string pluginName, string defaultPluginName)
-        {
-            return
-                $"Plugin {pluginName} changes the race of NPC {NpcLabel(editorId, name)} that is set by the default " +
-                $"plugin {defaultPluginName}.";
         }
 
         public static string FaceModWigConversionDisabled(string editorId, string name, string pluginName, bool isBald)
