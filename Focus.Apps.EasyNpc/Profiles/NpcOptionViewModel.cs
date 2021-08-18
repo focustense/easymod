@@ -9,10 +9,10 @@ namespace Focus.Apps.EasyNpc.Profiles
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public bool HasBehaviorOverride => ComparisonToBase?.ModifiesBehavior ?? true;
-        public bool HasBodyOverride => ComparisonToBase?.ModifiesBody ?? true;
         public bool HasFaceOverride => ComparisonToBase?.ModifiesFace ?? true;
         public bool HasFaceGenOverride => ComparisonToBase?.ModifiesHeadParts ?? true;
         public bool HasOutfitOverride => ComparisonToBase?.ModifiesOutfits ?? true;
+        public bool HasSkinOverride => ComparisonToBase?.ModifiesSkin ?? true;
         public bool HasWig => option.Analysis.WigInfo != null;
         public bool IsDefaultSource { get; set; }
         public bool IsFaceSource { get; set; }

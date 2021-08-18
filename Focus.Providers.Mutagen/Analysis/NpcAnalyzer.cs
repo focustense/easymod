@@ -135,6 +135,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                 MainHeadParts = GetMainHeadParts(npc).Select(x => x.FormKey).ToRecordKeys(),
                 Name = npc.Name?.String ?? string.Empty,
+                SkinKey = GetSkin(npc).FormKeyNullable?.ToSystemNullable()?.ToRecordKey(),
                 UsedMeshes = Empty.ReadOnlyList<string>(),
                 UsedTextures = Empty.ReadOnlyList<string>(),
                 WigInfo = GetWigInfo(npc),
@@ -149,7 +150,7 @@ namespace Focus.Providers.Mutagen.Analysis
             return new NpcComparison
             {
                 ModifiesBehavior = !BehaviorsEqual(current, previous),
-                ModifiesBody = !BodiesEqual(current, previous),
+                ModifiesSkin = !SkinsEqual(current, previous),
                 ModifiesFace = !FacesEqual(current, previous),
                 ModifiesHair = !HairsEqual(current, previous),
                 ModifiesHeadParts = !HeadPartsEqual(current, previous),
@@ -199,11 +200,6 @@ namespace Focus.Providers.Mutagen.Analysis
                 // do exist, they probably conflict with USSEP etc.
                 (current.Configuration.Flags & ~NpcConfiguration.Flag.OppositeGenderAnims) ==
                     (previous.Configuration.Flags & ~NpcConfiguration.Flag.OppositeGenderAnims);
-        }
-
-        private static bool BodiesEqual(INpcGetter x, INpcGetter y)
-        {
-            return x.WornArmor.FormKey == y.WornArmor.FormKey;
         }
 
         private bool FacesEqual(INpcGetter x, INpcGetter y)
@@ -260,6 +256,21 @@ namespace Focus.Providers.Mutagen.Analysis
                 .Where(x => !x.Flags.HasFlag(HeadPart.Flag.IsExtraPart))
                 .GroupBy(x => x.Type)
                 .Select(g => g.Last());
+        }
+
+        private IFormLinkGetter<IArmorGetter> GetSkin(INpcGetter npc)
+        {
+            if (!npc.WornArmor.IsNull)
+                return npc.WornArmor;
+            // We could use WinnerFrom instead of MasterFrom here, but the latter gives us a better picture of
+            // "originally intended skin" for use in comparisons. Skins are not like head parts, it's not big news if a
+            // mod changes the default skin of a race, because the new skin should be broadly compatible with the old
+            // skin if the mod author knew what he was doing. This is more useful for telling us, for example, that an
+            // "ElderRace" NPC without a custom skin should normally end up with the same skin as a "Nord" NPC without
+            // a custom skin, so if a mod changes the race from Elder to Nord, the body textures should be compatible,
+            // even if some other mod decided to tweak one or both of them.
+            var race = !npc.Race.IsNull ? npc.Race.MasterFrom(groups) : null;
+            return race?.Skin ?? FormLinkGetter<IArmorGetter>.Null;
         }
 
         private NpcWigInfo? GetWigInfo(INpcGetter npc)
@@ -427,6 +438,11 @@ namespace Focus.Providers.Mutagen.Analysis
                 x.Name == y.Name &&
                 x.Flags == y.Flags &&
                 x.Properties.SetEqualsSafeBy(y.Properties, p => p.Name);
+        }
+
+        private bool SkinsEqual(INpcGetter x, INpcGetter y)
+        {
+            return GetSkin(x).FormKey == GetSkin(y).FormKey;
         }
 
         private static bool TintLayersEqual(IReadOnlyList<ITintLayerGetter> a, IReadOnlyList<ITintLayerGetter> b)

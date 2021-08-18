@@ -97,6 +97,11 @@ namespace Focus.Providers.Mutagen
             return formLinks.Select(x => x.FormKeyNullable).NotNull().Select(x => x.ToRecordKey()).ToList().AsReadOnly();
         }
 
+        public static FormKey? ToSystemNullable(this FormKey key)
+        {
+            return key.IsNull ? null : key;
+        }
+
         public static TModGetter? TryGetMod<TModSetter, TModGetter>(
             this GameEnvironmentState<TModSetter, TModGetter> env, string pluginName, ILogger log)
             where TModSetter : class, IContextMod<TModSetter, TModGetter>, TModGetter

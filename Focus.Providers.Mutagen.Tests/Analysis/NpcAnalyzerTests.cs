@@ -365,7 +365,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.True(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -388,7 +388,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.True(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -411,7 +411,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.True(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -443,7 +443,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -474,7 +474,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.True(comparison.ModifiesFace);
                 Assert.True(comparison.ModifiesHair);
                 Assert.True(comparison.ModifiesHeadParts);
@@ -504,7 +504,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.True(comparison.ModifiesFace);
                 Assert.True(comparison.ModifiesHair);
                 Assert.True(comparison.ModifiesHeadParts);
@@ -533,7 +533,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -564,7 +564,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.True(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.True(comparison.ModifiesHeadParts);
@@ -590,7 +590,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.True(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.True(comparison.ModifiesHeadParts);
@@ -613,7 +613,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -657,7 +657,6 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
-                Assert.False(comparison.ModifiesBody);
                 Assert.True(comparison.ModifiesFace);
                 Assert.True(comparison.ModifiesHair);
                 Assert.True(comparison.ModifiesHeadParts);
@@ -700,7 +699,6 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
-                Assert.False(comparison.ModifiesBody);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -740,7 +738,6 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
-                Assert.False(comparison.ModifiesBody);
                 Assert.True(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.True(comparison.ModifiesHeadParts);
@@ -793,7 +790,6 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 // Skip the behavior assertion, whether or not a race edit qualifies is not important to this test.
-                Assert.False(comparison.ModifiesBody);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -816,7 +812,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -824,6 +820,86 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 Assert.False(comparison.ModifiesRace);
                 Assert.True(comparison.ModifiesScales);
             });
+        }
+
+        public enum SkinTestChange { OriginalNpcSkin, ModdedNpcRace, ModdedNpcRaceSkin, ModdedNpcSkin };
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(false, SkinTestChange.OriginalNpcSkin, SkinTestChange.ModdedNpcSkin)]
+        [InlineData(false, SkinTestChange.ModdedNpcRace /* race with default skin */)]
+        [InlineData(false, SkinTestChange.OriginalNpcSkin, SkinTestChange.ModdedNpcRace, SkinTestChange.ModdedNpcRaceSkin)]
+        [InlineData(false, SkinTestChange.OriginalNpcSkin, SkinTestChange.ModdedNpcRace, SkinTestChange.ModdedNpcSkin)]
+        [InlineData(true, SkinTestChange.OriginalNpcSkin)]
+        [InlineData(true, SkinTestChange.ModdedNpcSkin)]
+        [InlineData(true, SkinTestChange.ModdedNpcRace, SkinTestChange.ModdedNpcSkin)]
+        [InlineData(true, SkinTestChange.ModdedNpcRace, SkinTestChange.ModdedNpcRaceSkin)]
+        public void WhenEffectiveSkinsSame_SkinComparisons_AreEqual(
+            bool expectedResult, params SkinTestChange[] changes)
+        {
+            var customSkinKey = AddEmptyRecords<Armor>("dummy.esp", "NewSkin").Single();
+            var npcKeys = Groups.AddRecords<Npc>(
+                "master.esp", x => SetupNpcForComparison(x, npc =>
+                {
+                    if (changes.Contains(SkinTestChange.OriginalNpcSkin))
+                        npc.WornArmor.SetTo(customSkinKey);
+                }));
+            Groups.AddRecords<Npc>(
+                "override.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+                {
+                    if (changes.Contains(SkinTestChange.OriginalNpcSkin))
+                        npc.WornArmor.SetTo(customSkinKey);
+                }));
+            Groups.AddRecords<Npc>("plugin.esp", "master.esp", x => SetupNpcForComparison(x, npc =>
+            {
+                if (changes.Contains(SkinTestChange.ModdedNpcRace))
+                {
+                    var newRaceKeys = Groups.AddRecords<Race>("plugin.esp", r =>
+                        r.Skin.SetTo(changes.Contains(
+                            SkinTestChange.ModdedNpcRaceSkin) ? customSkinKey : comparisonDependencies.RaceSkinKey));
+                    npc.Race.SetTo(newRaceKeys[0].ToFormKey());
+                }
+                if (changes.Contains(SkinTestChange.ModdedNpcSkin))
+                    npc.WornArmor.SetTo(customSkinKey);
+            }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            AssertComparisons(analysis, "master.esp", "override.esp", comparison =>
+            {
+                Assert.Equal(expectedResult, comparison.ModifiesSkin);
+            });
+        }
+
+        [Fact]
+        public void WhenCustomSkinNotSpecified_ProvidesDefaultRaceSkin()
+        {
+            var skinKey = FormKey.Factory("123456:plugin.esp");
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", npc =>
+            {
+                var raceKeys = Groups.AddRecords<Race>(
+                    "plugin.esp", race => race.Skin.SetTo(skinKey));
+                npc.Race.SetTo(raceKeys[0].ToFormKey());
+            });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.Equal(skinKey.ToRecordKey(), analysis.SkinKey);
+        }
+
+        [Fact]
+        public void WhenCustomSkinSpecified_OverridesDefaultRaceSkin()
+        {
+            var raceSkinKey = FormKey.Factory("123456:plugin.esp");
+            var npcSkinKey = FormKey.Factory("223344:plugin.esp");
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", npc =>
+            {
+                var raceKeys = Groups.AddRecords<Race>(
+                    "plugin.esp", race => race.Skin.SetTo(raceSkinKey));
+                npc.Race.SetTo(raceKeys[0].ToFormKey());
+                npc.WornArmor.SetTo(npcSkinKey);
+            });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.Equal(npcSkinKey.ToRecordKey(), analysis.SkinKey);
         }
 
         [Theory]
@@ -839,7 +915,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.False(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -861,7 +937,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             {
                 Assert.True(comparison.IsIdentical);
                 Assert.False(comparison.ModifiesBehavior);
-                Assert.False(comparison.ModifiesBody);
+                Assert.False(comparison.ModifiesSkin);
                 Assert.False(comparison.ModifiesFace);
                 Assert.False(comparison.ModifiesHair);
                 Assert.False(comparison.ModifiesHeadParts);
@@ -1008,6 +1084,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             if (comparisonDependencies != null)
                 return;
             const string pluginName = "vanilla.esp";
+            var raceSkinKey = AddEmptyRecords<Armor>(pluginName, "SkinNaked").Single();
             comparisonDependencies = new()
             {
                 ClassKey = AddEmptyRecords<Class>(pluginName, "Citizen").Single(),
@@ -1062,8 +1139,9 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                                 x => { x.EditorID = "HairFemaleNord1"; x.Type = HeadPart.TypeEnum.Hair; },
                                 x => { x.EditorID = "BrowsFemaleHuman1"; x.Type = HeadPart.TypeEnum.Eyebrows; })
                             .ToFormKeys()));
-                        r.Skin.SetTo(AddEmptyRecords<Armor>(pluginName, "SkinNaked").Single());
+                        r.Skin.SetTo(raceSkinKey);
                     }).Single().ToFormKey(),
+                RaceSkinKey = raceSkinKey,
                 VoiceKey = AddEmptyRecords<VoiceType>(pluginName, "FemaleSultry").Single(),
             };
         }
@@ -1340,6 +1418,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             public IReadOnlyList<PerkPlacement> PerkPlacements { get; init; }
             public FormKey SleepOutfitKey { get; init; }
             public FormKey RaceKey { get; init; }
+            public FormKey RaceSkinKey { get; init; }
             public FormKey VoiceKey { get; init; }
         }
 
