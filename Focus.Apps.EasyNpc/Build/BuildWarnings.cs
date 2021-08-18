@@ -15,13 +15,7 @@ namespace Focus.Apps.EasyNpc.Build
         SelectedPluginRemoved,
         MissingFaceGen,
         MultipleFaceGen,
-        FaceModNotSpecified,
-        FaceModNotInstalled,
-        FaceModPluginMismatch,
         FaceModChangesRace,
-        FaceModMissingFaceGen,
-        FaceModExtraFaceGen,
-        FaceModMultipleFaceGen,
         FaceModWigNotMatched,
         FaceModWigNotMatchedBald,
         FaceModWigConversionDisabled,
@@ -105,43 +99,6 @@ namespace Focus.Apps.EasyNpc.Build
             return
                 $"Plugin {pluginName} changes the race of NPC {NpcLabel(editorId, name)} that is set by the default " +
                 $"plugin {defaultPluginName}.";
-        }
-
-        public static string FaceModExtraFaceGen(string editorId, string name, string modName)
-        {
-            return
-                $"{NpcLabel(editorId, name)} does not override vanilla face attributes, but mod ({modName}) " +
-                $"contains facegen data.";
-        }
-
-        public static string FaceModMissingFaceGen(string editorId, string name, string modName)
-        {
-            return $"No FaceGen mesh found for {NpcLabel(editorId, name)} in mod ({modName}).";
-        }
-
-        public static string FaceModMultipleFaceGen(string editorId, string name, string modName)
-        {
-            return
-                $"Mod ({modName}) provides a FaceGen mesh for {NpcLabel(editorId, name)} both as a loose file " +
-                $"AND in an archive. The loose file will take priority.";
-        }
-
-        public static string FaceModNotInstalled(string editorId, string name, string modName)
-        {
-            return $"{NpcLabel(editorId, name)} uses a face mod ({modName}) that is not installed or not detected.";
-        }
-
-        public static string FaceModNotSpecified(string editorId, string name)
-        {
-            return
-                $"{NpcLabel(editorId, name)} uses a plugin with face overrides but doesn't have any face mod " +
-                $"selected.";
-        }
-
-        public static string FaceModPluginMismatch(string editorId, string name, string modName, string pluginName)
-        {
-            return
-                $"{NpcLabel(editorId, name)} has mismatched face mod ({modName}) and face plugin ({pluginName}).";
         }
 
         public static string FaceModWigConversionDisabled(string editorId, string name, string pluginName, bool isBald)

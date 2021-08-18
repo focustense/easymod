@@ -112,7 +112,7 @@
                                         </ui:SimpleStackPanel>
                                     </GroupBox.Header>
                                     <ui:ScrollViewerEx>
-                                        <build:BuildWarningHelp DataContext="{Binding SelectedWarning}"/>
+                                        <bu:BuildWarningHelp DataContext="{Binding SelectedWarning}"/>
                                     </ui:ScrollViewerEx>
                                 </GroupBox>
                             </Border>

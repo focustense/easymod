@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Controls;
 
-namespace Focus.Apps.EasyNpc.Build
+namespace Focus.Apps.EasyNpc.Build.UI
 {
     /// <summary>
     /// Interaction logic for BuildWarningHelp.xaml
