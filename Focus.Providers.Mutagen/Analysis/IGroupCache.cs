@@ -58,6 +58,12 @@ namespace Focus.Providers.Mutagen.Analysis
             };
         }
 
+        public static T? MasterFrom<T>(this IFormLinkGetter<T> link, IGroupCache cache)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            return cache.GetAll(link).Select(x => x.Value).LastOrDefault();
+        }
+
         public static T? WinnerFrom<T>(this IFormLinkGetter<T> link, IGroupCache cache)
             where T : class, ISkyrimMajorRecordGetter
         {

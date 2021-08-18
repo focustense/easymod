@@ -1,10 +1,12 @@
 ﻿using Focus.Analysis;
 using Focus.Analysis.Records;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -15,6 +17,53 @@ namespace Focus.Providers.Mutagen.Analysis
 {
     public class NpcAnalyzer : IRecordAnalyzer<NpcAnalysis>
     {
+        public interface IArmorAddonHelper
+        {
+            bool IsDefaultSkin(IArmorAddonGetter addon, IFormLinkGetter<IRaceGetter> race);
+            bool ReplacesHair(IArmorAddonGetter addon);
+            bool SupportsRace(IArmorAddonGetter addon, IFormLinkGetter<IRaceGetter> race);
+        }
+
+        public class ArmorAddonHelper : IArmorAddonHelper
+        {
+            private readonly ConcurrentDictionary<FormKey, HashSet<FormKey>> defaultRaceArmorAddons = new();
+            private readonly IGroupCache groups;
+
+            public ArmorAddonHelper(IGroupCache groups)
+            {
+                this.groups = groups;
+            }
+
+            public bool IsDefaultSkin(IArmorAddonGetter addon, IFormLinkGetter<IRaceGetter> race)
+            {
+                return GetDefaultRaceArmorAddons(race).Contains(addon.FormKey);
+
+            }
+
+            public bool ReplacesHair(IArmorAddonGetter addon)
+            {
+                return
+                    addon.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.Hair ||
+                    addon.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.LongHair ||
+                    addon.BodyTemplate?.FirstPersonFlags == (BipedObjectFlag.Hair | BipedObjectFlag.LongHair);
+            }
+
+            public bool SupportsRace(IArmorAddonGetter addon, IFormLinkGetter<IRaceGetter> race)
+            {
+                return addon.Race.FormKey == race.FormKey || addon.AdditionalRaces.Contains(race.FormKey);
+            }
+
+            private HashSet<FormKey> GetDefaultRaceArmorAddons(IFormLinkGetter<IRaceGetter> raceLink)
+            {
+                return defaultRaceArmorAddons.GetOrAdd(raceLink.FormKey, _ =>
+                {
+                    var race = raceLink.MasterFrom(groups);
+                    var skin = race?.Skin.MasterFrom(groups);
+                    return skin?.Armature?.Select(x => x.FormKey)?.ToHashSet() ?? new();
+                });
+            }
+        }
+
         public RecordType RecordType => RecordType.Npc;
 
         private static readonly Func<INpcFaceMorphGetter, float>[] faceMorphValueSelectors =
@@ -40,11 +89,16 @@ namespace Focus.Providers.Mutagen.Analysis
             x => x.NoseUpVsDown,
         };
 
+        private readonly IArmorAddonHelper armorAddonHelper;
         private readonly IGroupCache groups;
         private readonly ILogger log;
 
         public NpcAnalyzer(IGroupCache groups, ILogger log)
+            : this(groups, new ArmorAddonHelper(groups), log) { }
+
+        public NpcAnalyzer(IGroupCache groups, IArmorAddonHelper armorAddonHelper, ILogger log)
         {
+            this.armorAddonHelper = armorAddonHelper;
             this.groups = groups;
             this.log = log;
         }
@@ -218,20 +272,27 @@ namespace Focus.Providers.Mutagen.Analysis
             var wornArmor = npc.WornArmor.WinnerFrom(groups);
             if (wornArmor is null)
                 return null;
-            var isFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female);
-            return wornArmor.Armature
+            // Some mods make a real mess of this. We need to know if a Worn Armor is ONLY intended to modify the hair.
+            // However, certain authors have chosen to jam in all sorts of unnecessary parts for other races, "just in
+            // case", usually referencing vanilla addons. Our goal is to gracefully ignore those without missing too
+            // many legitimate wigs.
+            var allAddons = wornArmor.Armature
                 .Select(fk => fk.WinnerFrom(groups))
                 .NotNull()
-                .Where(x =>
-                    // Search for ONLY hair, because some sadistic mod authors add hair flags to other parts.
-                    x.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.Hair ||
-                    x.BodyTemplate?.FirstPersonFlags == BipedObjectFlag.LongHair ||
-                    x.BodyTemplate?.FirstPersonFlags == (BipedObjectFlag.Hair | BipedObjectFlag.LongHair))
+                .Where(x => armorAddonHelper.SupportsRace(x, npc.Race) && !armorAddonHelper.IsDefaultSkin(x, npc.Race))
+                .ToList();
+            if (allAddons.Any(x => !armorAddonHelper.ReplacesHair(x)))
+                return null;
+            var wigAddons = allAddons.Where(x => armorAddonHelper.ReplacesHair(x)).ToList();
+            if (wigAddons.Count != 1)
+                return null;
+            var isFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female);
+            return wigAddons
                 .Select(x => {
                     var modelFileName = x.WorldModel?.PickGender(isFemale)?.File;
                     var modelName = !string.IsNullOrEmpty(modelFileName) ?
                         Path.GetFileNameWithoutExtension(modelFileName) : null;
-                    return new NpcWigInfo(x.FormKey.ToRecordKey(), modelName, isBald);
+                    return new NpcWigInfo(x.FormKey.ToRecordKey(), x.EditorID, modelName, isBald);
                 })
                 .FirstOrDefault();
         }

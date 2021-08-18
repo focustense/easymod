@@ -19,5 +19,5 @@ namespace Focus.Analysis.Records
         public NpcWigInfo? WigInfo { get; init; }
     }
 
-    public record NpcWigInfo(RecordKey Key, string? ModelName, bool IsBald);
+    public record NpcWigInfo(RecordKey Key, string? EditorId, string? ModelName, bool IsBald);
 }

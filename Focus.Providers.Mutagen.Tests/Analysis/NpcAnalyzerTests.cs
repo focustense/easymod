@@ -16,11 +16,13 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
 {
     public class NpcAnalyzerTests : CommonAnalyzerFacts<NpcAnalyzer, Npc, NpcAnalysis>
     {
+        private readonly Mock<NpcAnalyzer.IArmorAddonHelper> armorAddonHelperMock = new();
+
         private NpcComparisonDependencies comparisonDependencies;
 
         public NpcAnalyzerTests()
         {
-            Analyzer = new NpcAnalyzer(Groups, Logger);
+            Analyzer = new NpcAnalyzer(Groups, armorAddonHelperMock.Object, Logger);
         }
 
         [Fact]
@@ -188,63 +190,84 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         [Fact]
-        public void WhenWornArmorHasNoHairExclusiveAddons_WigInfo_IsNull()
+        public void WhenWornArmorHasNoHairAddons_WigInfo_IsNull()
         {
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Body },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hands },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hair | BipedObjectFlag.Ears });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
-            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => x.WornArmor.SetTo(armorKeys[0].ToFormKey()));
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => SetupWigScenario(x,
+                new() { EditorId = "TestBody", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestHands", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestFeet", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true }));
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
             Assert.Null(analysis.WigInfo);
         }
 
         [Fact]
-        public void WhenWornArmorHasHairAddon_WigInfo_ReferencesMatchingAddon()
+        public void WhenWornArmorHasUnsupportedHairAddon_WigInfo_IsNull()
         {
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Body },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hands },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hair });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
-            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => x.WornArmor.SetTo(armorKeys[0].ToFormKey()));
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => SetupWigScenario(x,
+                new() { EditorId = "TestBody", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestHair", ReplacesHair = true, SupportsRace = false, IsDefaultSkin = false },
+                new() { EditorId = "TestHands", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestFeet", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true }));
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
-            Assert.Equal(armatureKeys[2], analysis.WigInfo.Key);
+            Assert.Null(analysis.WigInfo);
         }
 
         [Fact]
-        public void WhenWornArmorHasLongHairAddon_WigInfo_ReferencesMatchingAddon()
+        public void WhenWornArmorHasDefaultHairAddon_WigInfo_IsNull()
         {
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Body },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.LongHair },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hands });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
-            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => x.WornArmor.SetTo(armorKeys[0].ToFormKey()));
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => SetupWigScenario(x,
+                new() { EditorId = "TestBody", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestHair", ReplacesHair = true, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestHands", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestFeet", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true }));
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
-            Assert.Equal(armatureKeys[1], analysis.WigInfo.Key);
+            Assert.Null(analysis.WigInfo);
         }
 
         [Fact]
-        public void WhenWornArmorHasHairAndLongHairAddon_WigInfo_ReferencesMatchingAddon()
+        public void WhenWornArmorHasSingleSupportedNonDefaultHairAddon_WigInfo_DescribesMatchingAddon()
         {
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Body },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hair | BipedObjectFlag.LongHair },
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hands });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
-            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => x.WornArmor.SetTo(armorKeys[0].ToFormKey()));
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => SetupWigScenario(x,
+                new() { EditorId = "TestBody", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestHair", ReplacesHair = true, SupportsRace = true, IsDefaultSkin = false },
+                new() { EditorId = "TestHands", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestFeet", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "UnusedHair", ReplacesHair = true, SupportsRace = false, IsDefaultSkin = false },
+                new() { EditorId = "UnusedFeet", ReplacesHair = false, SupportsRace = false, IsDefaultSkin = false }));
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
-            Assert.Equal(armatureKeys[1], analysis.WigInfo.Key);
+            Assert.NotNull(analysis.WigInfo);
+            Assert.Equal("TestHair", analysis.WigInfo.EditorId);
+        }
+
+        [Fact]
+        public void WhenWornArmorHasMultipleSupportedNonDefaultHairAddons_WigInfo_IsNull()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => SetupWigScenario(x,
+                new() { EditorId = "TestBody", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestHair", ReplacesHair = true, SupportsRace = true, IsDefaultSkin = false },
+                new() { EditorId = "TestHair2", ReplacesHair = true, SupportsRace = true, IsDefaultSkin = false },
+                new() { EditorId = "TestHands", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestFeet", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.Null(analysis.WigInfo);
+        }
+
+        [Fact]
+        public void WhenWornArmorIncludesSupportedNonDefaultNonHairAddons_WigInfo_IsNull()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => SetupWigScenario(x,
+                new() { EditorId = "TestBody", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = false },
+                new() { EditorId = "TestHair", ReplacesHair = true, SupportsRace = true, IsDefaultSkin = false },
+                new() { EditorId = "TestHands", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true },
+                new() { EditorId = "TestFeet", ReplacesHair = false, SupportsRace = true, IsDefaultSkin = true }));
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.Null(analysis.WigInfo);
         }
 
         [Fact]
@@ -254,14 +277,10 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 "plugin.esp",
                 x => { x.Type = HeadPart.TypeEnum.Face; x.Model = new() { File = "face.nif" }; },
                 x => { x.Type = HeadPart.TypeEnum.Eyes; x.Model = new() { File = "eyes.nif" }; });
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hair });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
             var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x =>
             {
                 x.HeadParts.AddRange(headPartKeys.ToFormKeys());
-                x.WornArmor.SetTo(armorKeys[0].ToFormKey());
+                SetupPositiveWigScenario(x, "DummyHair");
             });
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
@@ -277,15 +296,11 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 x => { x.Type = HeadPart.TypeEnum.Hair; x.Model = new(); });
             var raceKeys = Groups.AddRecords<Race>(
                 "plugin.esp", x => x.HeadData = CreateHeadData(headPartKeys.Take(1).ToFormKeys(), false));
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hair });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
             var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x =>
             {
                 x.Race.SetTo(raceKeys[0].ToFormKey());
                 x.HeadParts.Add(headPartKeys[1].ToFormKey());
-                x.WornArmor.SetTo(armorKeys[0].ToFormKey());
+                SetupPositiveWigScenario(x, raceKeys[0].ToFormKey(), "DummyHair");
             });
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
@@ -300,14 +315,10 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 x => { x.Type = HeadPart.TypeEnum.Hair; x.Model = new() { File = "hair.nif" }; });
             var raceKeys = Groups.AddRecords<Race>(
                 "plugin.esp", x => x.HeadData = CreateHeadData(headPartKeys.ToFormKeys(), false));
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x => x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hair });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
             var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x =>
             {
                 x.Race.SetTo(raceKeys[0].ToFormKey());
-                x.WornArmor.SetTo(armorKeys[0].ToFormKey());
+                SetupPositiveWigScenario(x, raceKeys[0].ToFormKey(), "DummyHair");
             });
             var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
 
@@ -317,20 +328,24 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         [Fact]
         public void WhenNpcHasWig_AndWigHasWorldModel_WigInfo_IncludesGenderedModelName()
         {
-            var armatureKeys = Groups.AddRecords<ArmorAddon>(
-                "plugin.esp",
-                x =>
-                {
-                    x.BodyTemplate = new() { FirstPersonFlags = BipedObjectFlag.Hair };
-                    x.WorldModel = new GenderedItem<Model>(
-                        new() { File = @"foo/bar/baz/wigmodelmale.nif" },
-                        new() { File = @"foo/bar/baz/wigmodelfemale.nif" });
-                });
-            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(armatureKeys.ToFormKeys()));
+            Npc maleNpc = null;
             var npcKeys = Groups.AddRecords<Npc>(
                 "plugin.esp",
-                x => x.WornArmor.SetTo(armorKeys[0].ToFormKey()),
-                x => { x.Configuration.Flags |= NpcConfiguration.Flag.Female; x.WornArmor.SetTo(armorKeys[0].ToFormKey()); });
+                npc =>
+                {
+                    SetupPositiveWigScenario(npc, "Dummy", x =>
+                    {
+                        x.WorldModel = new GenderedItem<Model>(
+                            new() { File = @"foo/bar/baz/wigmodelmale.nif" },
+                            new() { File = @"foo/bar/baz/wigmodelfemale.nif" });
+                    });
+                    maleNpc = npc;
+                },
+                x =>
+                {
+                    x.DeepCopyIn(maleNpc);
+                    x.Configuration.Flags |= NpcConfiguration.Flag.Female;
+                });
             var maleAnalysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
             var femaleAnalysis = Analyzer.Analyze("plugin.esp", npcKeys[1]);
 
@@ -1247,6 +1262,68 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             mutation?.Invoke(npc);
         }
 
+        private void SetupPositiveWigScenario(Npc npc, string editorId, Action<ArmorAddon> additionalSetup = null)
+        {
+            SetupPositiveWigScenario(npc, null, editorId, additionalSetup);
+        }
+
+        private void SetupPositiveWigScenario(
+            Npc npc, FormKey? raceKey, string editorId, Action<ArmorAddon> additionalSetup = null)
+        {
+            SetupWigScenario(raceKey, npc, new WigSetting
+            {
+                AdditionalSetup = additionalSetup,
+                EditorId = editorId,
+                ReplacesHair = true,
+                SupportsRace = true,
+                IsDefaultSkin = false
+            });
+        }
+
+        private void SetupWigScenario(Npc npc, params WigSetting[] addonConfigs)
+        {
+            SetupWigScenario(null, npc, addonConfigs);
+        }
+
+        private void SetupWigScenario(FormKey? raceKey, Npc npc, params WigSetting[] addonConfigs)
+        {
+            if (raceKey == null)
+            {
+                raceKey = Groups.AddRecords<Race>("plugin.esp", _ => { })[0].ToFormKey();
+                npc.Race.SetTo(raceKey);
+            }
+            var addonKeys = CreateAddons().ToList();
+            var armorKeys = Groups.AddRecords<Armor>("plugin.esp", x => x.Armature.AddRange(addonKeys));
+            npc.WornArmor.SetTo(armorKeys[0].ToFormKey());
+
+            IEnumerable<FormKey> CreateAddons()
+            {
+                foreach (var cfg in addonConfigs)
+                {
+                    var addonKeys = Groups.AddRecords<ArmorAddon>("plugin.esp", x =>
+                    {
+                        x.EditorID = cfg.EditorId;
+                        cfg.AdditionalSetup?.Invoke(x);
+                    });
+                    var key = addonKeys[0].ToFormKey();
+                    armorAddonHelperMock
+                        .Setup(x => x.ReplacesHair(It.Is<IArmorAddonGetter>(x => x.FormKey == key)))
+                        .Returns(cfg.ReplacesHair);
+                    armorAddonHelperMock
+                        .Setup(x => x.SupportsRace(
+                            It.Is<IArmorAddonGetter>(x => x.FormKey == key),
+                            It.Is<IFormLinkGetter<IRaceGetter>>(x => x.FormKey == raceKey)))
+                        .Returns(cfg.SupportsRace);
+                    armorAddonHelperMock
+                        .Setup(x => x.IsDefaultSkin(
+                            It.Is<IArmorAddonGetter>(x => x.FormKey == key),
+                            It.Is<IFormLinkGetter<IRaceGetter>>(x => x.FormKey == raceKey)))
+                        .Returns(cfg.IsDefaultSkin);
+                    yield return key;
+                }
+            }
+        }
+
         class NpcComparisonDependencies
         {
             public FormKey ClassKey { get; init; }
@@ -1264,6 +1341,15 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             public FormKey SleepOutfitKey { get; init; }
             public FormKey RaceKey { get; init; }
             public FormKey VoiceKey { get; init; }
+        }
+
+        class WigSetting
+        {
+            public Action<ArmorAddon> AdditionalSetup { get; init; }
+            public string EditorId { get; init; }
+            public bool IsDefaultSkin { get; init; }
+            public bool ReplacesHair { get; init; }
+            public bool SupportsRace { get; init; }
         }
     }
 }

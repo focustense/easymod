@@ -90,6 +90,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                             .ToList()
                             .AsReadOnly(),
                     });
+                    record.WornArmor.Clear();
                 }
                 return new Result(wigConversions);
             });
