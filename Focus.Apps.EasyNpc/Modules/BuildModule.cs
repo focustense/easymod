@@ -31,9 +31,11 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<BuildProgressViewModel<BuildReport>>();
             builder.RegisterType<BuildViewModel>();
 
-            builder.RegisterType<FileCopier>().As<IFileCopier>();
-            builder.RegisterType<RecordImporter>();
-            builder.RegisterType<VanillaTextureOverrideExclusion>().As<ITexturePathFilter>();
+            // Intra-pipeline dependencies
+            builder.RegisterType<BuildReporter>().As<IBuildReporter>().InstancePerLifetimeScope();
+            builder.RegisterType<FileCopier>().As<IFileCopier>().InstancePerLifetimeScope();
+            builder.RegisterType<RecordImporter>().InstancePerLifetimeScope();
+            builder.RegisterType<VanillaTextureOverrideExclusion>().As<ITexturePathFilter>().InstancePerLifetimeScope();
 
             builder.RegisterType<ArchiveCreationTask>();
             builder.RegisterType<DewiggifyFaceGensTask>();

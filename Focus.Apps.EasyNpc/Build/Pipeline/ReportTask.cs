@@ -6,14 +6,22 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         public delegate ReportTask Factory(PatchSaveTask.Result patch, ArchiveCreationTask.Result archive);
 
-        public ReportTask(PatchSaveTask.Result patch, ArchiveCreationTask.Result archive)
+        private readonly IBuildReporter reporter;
+
+        public ReportTask(IBuildReporter reporter, PatchSaveTask.Result patch, ArchiveCreationTask.Result archive)
         {
             RunsAfter(patch, archive);
+            this.reporter = reporter;
         }
 
         protected override Task<BuildReport> Run(BuildSettings settings)
         {
-            return Task.FromResult(new BuildReport { ModName = settings.OutputModName });
+            return Task.Run(() =>
+            {
+                var report = new BuildReport { ModName = settings.OutputModName };
+                reporter.Save(report);
+                return report;
+            });
         }
     }
 }

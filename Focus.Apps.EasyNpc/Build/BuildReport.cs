@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using System;
 using System.IO;
 
 namespace Focus.Apps.EasyNpc.Build
@@ -16,12 +15,17 @@ namespace Focus.Apps.EasyNpc.Build
             Formatting = Formatting.Indented,
         };
 
-        public string ModName { get; init; }
+        public string ModName { get; init; } = string.Empty;
 
         public void SaveToFile(string fileName)
         {
             using var fs = File.Create(fileName);
-            using var streamWriter = new StreamWriter(fs);
+            SaveToStream(fs);
+        }
+
+        public void SaveToStream(Stream stream)
+        {
+            using var streamWriter = new StreamWriter(stream);
             Serializer.Serialize(streamWriter, this);
         }
     }
