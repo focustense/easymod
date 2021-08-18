@@ -79,7 +79,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     log.Debug("Importing face texture", model.FaceOption.PluginName);
                     record.HeadTexture.SetTo(patch.Importer.Import(faceNpcRecord.HeadTexture, x => x.TextureSets));
                     log.Debug("Importing worn armor", model.FaceOption.PluginName);
-                    record.WornArmor.SetTo(patch.Importer.Import(faceNpcRecord.WornArmor, x => x.Armors));
+                    // Like head parts, we want to use the "effective" skin here, in case it was changed by a race edit.
+                    var skinKey = model.FaceOption.Analysis.SkinKey?.ToFormKey() ?? FormKey.Null;
+                    record.WornArmor.SetTo(patch.Importer.Import(skinKey.AsLinkGetter<IArmorGetter>(), x => x.Armors));
                 }
                 return new Result();
             });
