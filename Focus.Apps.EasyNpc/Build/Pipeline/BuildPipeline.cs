@@ -178,8 +178,11 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private void Complete()
         {
             log.Information("All tasks completed");
-            var result = availableResults[typeof(TResult)];
-            outcomeSource.SetResult((TResult)result);
+            lock (availableResults)
+            {
+                var result = availableResults[typeof(TResult)];
+                outcomeSource.SetResult((TResult)result);
+            }
             Cleanup();
         }
 
@@ -253,14 +256,24 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             if (startMethod is null)
                 throw new BuildException(
                     $"Unable to find a Start method on build task '{buildTask.Name}' ({buildTask.GetType().FullName})");
-            var runtimeTask = startMethod.Invoke(buildTask, new object?[] { settings }) as Task;
-            if (runtimeTask is not Task)
+            var runtimeTask = Task.Run(async () =>
             {
-                log.Warning("Task '{taskName}' started, but didn't return a valid Task instance", buildTask.Name);
-                runtimeTask = Task.CompletedTask;
-            }
-            else
-                log.Information("Task '{taskName}' successfully started", buildTask.Name);
+                var invokedTask = startMethod.Invoke(buildTask, new object?[] { settings }) as Task;
+                if (invokedTask is not Task)
+                {
+                    log.Warning("Task '{taskName}' started, but didn't return a valid Task instance", buildTask.Name);
+                    invokedTask = Task.CompletedTask;
+                }
+                else
+                    log.Information("Task '{taskName}' successfully started", buildTask.Name);
+                await invokedTask;
+                var result = TryGetResult(invokedTask);
+                if (result is null)
+                    throw new BuildException(
+                        $"Task for '{buildTask.Name}' ({buildTask.GetType().FullName}) did not return a " +
+                        $"non-null result.");
+                return result;
+            });
             remainingTasks.Add((buildTask, runtimeTask));
             runtimeTask.ContinueWith(t =>
             {
@@ -276,18 +289,14 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                         Fail(buildTask, t.Exception);
                         break;
                     case TaskStatus.RanToCompletion:
-                        var result = TryGetResult(t);
-                        if (result is null)
-                            throw new BuildException(
-                                $"Task for '{buildTask.Name}' ({buildTask.GetType().FullName}) did not return a " +
-                                $"non-null result.");
-                        availableResults.Add(result.GetType(), result);
+                        lock (availableResults)
+                            availableResults.Add(t.Result.GetType(), t.Result);
                         Continue();
                         break;
                     default:
                         throw new BuildException($"Unexpected task status on continuation: {t.Status}");
                 }
-            });
+            }, TaskScheduler.FromCurrentSynchronizationContext());
             return runtimeTask;
         }
 
@@ -299,8 +308,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         private object? TryResolve(Type argumentType)
         {
-            if (availableResults.TryGetValue(argumentType, out var result))
-                return result;
+            lock (availableResults)
+                if (availableResults.TryGetValue(argumentType, out var result))
+                    return result;
             return container.ResolveOptional(argumentType);
         }
     }
