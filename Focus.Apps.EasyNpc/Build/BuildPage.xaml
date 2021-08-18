@@ -5,7 +5,6 @@
          xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
          xmlns:fa5="http://schemas.fontawesome.com/icons/"
-         xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
          xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -129,9 +128,9 @@
                 </GroupBox>
             </Border>
             <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Visible">
-                <GroupBox x:Name="BuildConfirmationGroup" Header="Ready to build">
-                    <ui:SimpleStackPanel>
-                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
+                <GroupBox x:Name="BuildConfirmationGroup" Header="Ready to build" Padding="0">
+                    <Grid>
+                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
                             <TextBlock Style="{StaticResource FirstParagraphStyle}">All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
                             <TextBlock Text="Mod Name" Style="{StaticResource LoweredFormLabelStyle}"/>
                             <TextBox Text="{Binding OutputModName, UpdateSourceTrigger=PropertyChanged}"/>
@@ -207,11 +206,13 @@
                                 <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
                             </ui:SimpleStackPanel>
                         </ui:SimpleStackPanel>
-                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
-                            <TextBlock Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
+                        <DockPanel Height="{Binding ElementName=BuildConfirmationGroup, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter=x-50}"
+                                   Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}"
+                                   d:Visibility="Visible">
+                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
                             <bu:BuildProgress DataContext="{Binding Progress}" Margin="0,8,0,0"/>
-                        </ui:SimpleStackPanel>
-                    </ui:SimpleStackPanel>
+                        </DockPanel>
+                    </Grid>
                 </GroupBox>
             </Border>
             <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
