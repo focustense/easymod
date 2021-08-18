@@ -94,7 +94,12 @@ namespace Focus.Apps.EasyNpc.Configuration
             // with default values and missing settings. It's more tedious, but better to just deserialize an entirely
             // new settings object and copy the fields directly.
             var settings = Serializer.Deserialize<Settings>(jsonReader);
-            CopyFrom(settings);
+            if (settings is not null)
+            {
+                foreach (var entry in settings.BuildWarningWhitelist)
+                    entry.IgnoredWarnings.RemoveAll(x => x == BuildWarningId.Unknown);
+                CopyFrom(settings);
+            }
             return true;
         }
 
@@ -165,7 +170,9 @@ namespace Focus.Apps.EasyNpc.Configuration
     public class BuildWarningSuppression
     {
         public string PluginName { get; set; }
-        [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
+        [JsonProperty(
+            ItemConverterType = typeof(SafeStringEnumConverter),
+            ItemConverterParameters = new object[] { BuildWarningId.Unknown })]
         public List<BuildWarningId> IgnoredWarnings { get; set; } = new();
 
         public BuildWarningSuppression()

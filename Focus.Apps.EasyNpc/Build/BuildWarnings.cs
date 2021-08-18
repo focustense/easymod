@@ -8,6 +8,7 @@ namespace Focus.Apps.EasyNpc.Build
 {
     public enum BuildWarningId
     {
+        Unknown = 0,
         ModDirectoryNotSpecified = 1,
         ModDirectoryNotFound,
         BadArchive,

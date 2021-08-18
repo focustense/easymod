@@ -20,12 +20,12 @@ namespace Focus.Apps.EasyNpc.Configuration
     {
         private static readonly Settings Settings = Settings.Default;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler WelcomeAcked;
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public event EventHandler? WelcomeAcked;
 
         public IEnumerable<string> AvailableModNames => modRepository.Select(x => x.Name);
         public IEnumerable<string> AvailableMugshotModNames { get; private set; } = Enumerable.Empty<string>();
-        public IEnumerable<string> AvailablePlugins { get; set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> AvailablePlugins => gameSettings.PluginLoadOrder.OrderBy(p => p);
         public ObservableCollection<BuildWarningSuppressionViewModel> BuildWarningWhitelist { get; init; }
         public bool HasDefaultModRootDirectory { get; private init; }
         [DependsOn("ModRootDirectory")]
@@ -58,11 +58,13 @@ namespace Focus.Apps.EasyNpc.Configuration
             }
         }
 
+        private readonly IGameSettings gameSettings;
         private readonly IMessageBus messageBus;
         private readonly IModRepository modRepository;
 
-        public SettingsViewModel(IModRepository modRepository, IMessageBus messageBus)
+        public SettingsViewModel(IModRepository modRepository, IGameSettings gameSettings, IMessageBus messageBus)
         {
+            this.gameSettings = gameSettings;
             this.messageBus = messageBus;
             this.modRepository = modRepository;
 
@@ -219,6 +221,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         {
             PluginName = pluginName;
             WarningSelections = Enum.GetValues<BuildWarningId>()
+                .Where(x => x != BuildWarningId.Unknown)
                 .Select(id => new BuildWarningSelection(id, warnings?.Contains(id) ?? false))
                 .ToList()
                 .AsReadOnly();
