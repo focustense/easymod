@@ -1,6 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Storage.Archives;
-using System;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,8 +11,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public class Result { }
 
         public delegate ArchiveCreationTask Factory(
-            PatchSaveTask.Result patch, FaceGenCopyTask.Result faceGens, SharedResourceCopyTask.Result headParts,
-            TextureCopyTask.Result textures);
+            PatchSaveTask.Result patch, FaceGenCopyTask.Result faceGens, DewiggifyFaceGensTask.Result faceGenDewiggify,
+            SharedResourceCopyTask.Result headParts, TextureCopyTask.Result textures);
 
         private const long GB = 1024 * 1024 * 1024;
 
@@ -26,8 +25,10 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public ArchiveCreationTask(
             IFileSystem fs, IDummyPluginBuilder dummyPluginBuilder, PatchSaveTask.Result patch,
-            FaceGenCopyTask.Result faceGens, SharedResourceCopyTask.Result headParts, TextureCopyTask.Result textures)
+            FaceGenCopyTask.Result faceGens, DewiggifyFaceGensTask.Result faceGenDewiggify,
+            SharedResourceCopyTask.Result headParts, TextureCopyTask.Result textures)
         {
+            RunsAfter(faceGenDewiggify);
             this.dummyPluginBuilder = dummyPluginBuilder;
             this.faceGens = faceGens;
             this.fs = fs;

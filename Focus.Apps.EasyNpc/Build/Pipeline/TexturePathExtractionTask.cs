@@ -28,15 +28,17 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
         private readonly FaceGenCopyTask.Result faceGen;
+        private readonly IFileSync fileSync;
         private readonly IFileSystem fs;
         private readonly SharedResourceCopyTask.Result headParts;
         private readonly PatchSaveTask.Result patch;
 
         public TexturePathExtractionTask(
-            IFileSystem fs, PatchSaveTask.Result patch, SharedResourceCopyTask.Result headParts,
+            IFileSystem fs, IFileSync fileSync, PatchSaveTask.Result patch, SharedResourceCopyTask.Result headParts,
             FaceGenCopyTask.Result faceGen)
         {
             this.faceGen = faceGen;
+            this.fileSync = fileSync;
             this.fs = fs;
             this.headParts = headParts;
             this.patch = patch;
@@ -93,6 +95,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             var texturePaths = new List<string>();
             if (!fs.File.Exists(nifFileName))
                 return texturePaths;
+            using var _ = fileSync.Lock(nifFileName);
             var fileText = await fs.File.ReadAllTextAsync(nifFileName).ConfigureAwait(false);
             var match = TexturePathExpression.Match(fileText);
             while (match.Success)

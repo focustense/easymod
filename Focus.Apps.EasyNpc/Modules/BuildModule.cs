@@ -36,6 +36,7 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<VanillaTextureOverrideExclusion>().As<ITexturePathFilter>();
 
             builder.RegisterType<ArchiveCreationTask>();
+            builder.RegisterType<DewiggifyFaceGensTask>();
             builder.RegisterType<DewiggifyRecordsTask>();
             builder.RegisterType<FaceGenCopyTask>();
             builder.RegisterType<SharedResourceCopyTask>();
@@ -57,6 +58,7 @@ namespace Focus.Apps.EasyNpc.Modules
                     .RegisterTask<SharedResourceCopyTask.Factory>("Copy Shared Resources")
                     .RegisterTask<FaceGenCopyTask.Factory>("Copy FaceGen Data")
                     .RegisterTask<DewiggifyRecordsTask.Factory>("De-wiggify Records")
+                    .RegisterTask<DewiggifyFaceGensTask.Factory>("De-wiggify FaceGens")
                     .RegisterTask<TexturePathExtractionTask.Factory>("Extract Texture Paths")
                     .RegisterTask<TextureCopyTask.Factory>("Copy Textures")
                     .RegisterTask<ArchiveCreationTask.Factory>("Pack BSA Archive")
