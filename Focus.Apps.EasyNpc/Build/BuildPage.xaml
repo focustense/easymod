@@ -245,7 +245,7 @@
                                     Import the mod. After closing <Run Text="{StaticResource AppName}"/>, click the Refresh button in Mod Organizer, or press F5 to refresh your mods.
                                     The new mod should appear at the bottom of the list.
                                 </TextBlock>
-                                <TextBlock TextWrapping="Wrap" Visibility="{Binding Source={StaticResource LaunchedByModOrganizer}, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
+                                <TextBlock TextWrapping="Wrap" Visibility="{Binding Source={StaticResource LaunchedByVortex}, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
                                     Import the mod. After closing <Run Text="{StaticResource AppName}"/>, it should automatically appear in your mod list. If it does not, you may need
                                     to restart Vortex and acknowledge a warning about the mod staging folder being modified.
                                 </TextBlock>
