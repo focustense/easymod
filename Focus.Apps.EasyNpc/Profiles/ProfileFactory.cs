@@ -103,7 +103,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 profileEventLog.Resume();
             }
             foreach (var newNpc in newNpcsList)
-                newNpc.ApplyPolicy(true, true);
+                newNpc.ApplyPolicy(true, true, true);
             failures = failuresList.AsReadOnly();
             newNpcs = newNpcsList.AsReadOnly();
             return profile;

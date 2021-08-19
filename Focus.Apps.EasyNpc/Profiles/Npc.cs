@@ -58,15 +58,19 @@ namespace Focus.Apps.EasyNpc.Profiles
             FaceOption = DefaultOption = Options[Options.Count - 1];
         }
 
-        public void ApplyPolicy(bool resetDefaultPlugin = false, bool resetFacePlugin = false)
+        public void ApplyPolicy(bool resetDefaultPlugin = false, bool resetFacePlugin = false, bool alwaysLog = false)
         {
             if (!resetDefaultPlugin && !resetFacePlugin)
                 return;
+            var previousDefaultPlugin = DefaultOption.PluginName;
+            var previousFacePlugin = FaceOption.PluginName;
             var setupAttributes = policy.GetSetupRecommendation(this);
             if (resetDefaultPlugin)
-                SetDefaultOption(setupAttributes.DefaultPluginName);
+                if (SetDefaultOption(setupAttributes.DefaultPluginName) == ChangeResult.Redundant && alwaysLog)
+                    LogProfileEvent(NpcProfileField.DefaultPlugin, previousDefaultPlugin, DefaultOption.PluginName);
             if (resetFacePlugin)
-                SetFaceOption(setupAttributes.FacePluginName);
+                if (SetFaceOption(setupAttributes.FacePluginName) == ChangeResult.Redundant && alwaysLog)
+                    LogProfileEvent(NpcProfileField.FacePlugin, previousFacePlugin, FaceOption.PluginName);
         }
 
         public IEnumerable<string> GetFaceModNames()
