@@ -137,6 +137,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 Name = npc.Name?.String ?? string.Empty,
                 SkinKey = GetSkin(npc).FormKeyNullable?.ToSystemNullable()?.ToRecordKey(),
                 UsedMeshes = Empty.ReadOnlyList<string>(),
+                TemplateInfo = GetTemplateInfo(npc),
                 UsedTextures = Empty.ReadOnlyList<string>(),
                 WigInfo = GetWigInfo(npc),
             };
@@ -271,6 +272,19 @@ namespace Focus.Providers.Mutagen.Analysis
             // even if some other mod decided to tweak one or both of them.
             var race = !npc.Race.IsNull ? npc.Race.MasterFrom(groups) : null;
             return race?.Skin ?? FormLinkGetter<IArmorGetter>.Null;
+        }
+
+        private NpcTemplateInfo? GetTemplateInfo(INpcGetter npc)
+        {
+            if (npc.Template.IsNull)
+                return null;
+            var targetType = NpcTemplateTargetType.Invalid;
+            if (npc.Template.FormKey.AsLink<INpcGetter>().WinnerFrom(groups) is not null)
+                targetType = NpcTemplateTargetType.Npc;
+            else if (npc.Template.FormKey.AsLink<ILeveledNpcGetter>().WinnerFrom(groups) is not null)
+                targetType = NpcTemplateTargetType.LeveledNpc;
+            var inheritsTraits = npc.Configuration.TemplateFlags.HasFlag(NpcConfiguration.TemplateFlag.Traits);
+            return new NpcTemplateInfo(npc.Template.FormKey.ToRecordKey(), targetType, inheritsTraits);
         }
 
         private NpcWigInfo? GetWigInfo(INpcGetter npc)

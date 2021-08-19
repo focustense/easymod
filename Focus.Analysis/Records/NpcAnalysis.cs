@@ -15,10 +15,15 @@ namespace Focus.Analysis.Records
         public bool IsFemale { get; init; }
         public string Name { get; init; } = string.Empty;
         public RecordKey? SkinKey { get; init; }
+        public NpcTemplateInfo? TemplateInfo { get; init; }
         public IReadOnlyList<string> UsedMeshes { get; init; } = Empty.ReadOnlyList<string>();
         public IReadOnlyList<string> UsedTextures { get; init; } = Empty.ReadOnlyList<string>();
         public NpcWigInfo? WigInfo { get; init; }
     }
+
+    public enum NpcTemplateTargetType { Invalid, Npc, LeveledNpc }
+
+    public record NpcTemplateInfo(RecordKey Key, NpcTemplateTargetType TargetType, bool InheritsTraits);
 
     public record NpcWigInfo(RecordKey Key, string? EditorId, string? ModelName, bool IsBald);
 }

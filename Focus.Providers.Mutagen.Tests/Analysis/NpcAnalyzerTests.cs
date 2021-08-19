@@ -902,6 +902,81 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             Assert.Equal(npcSkinKey.ToRecordKey(), analysis.SkinKey);
         }
 
+        [Fact]
+        public void WhenTemplateNotUsed_TemplateInfoIsNull()
+        {
+            var npcKeys = AddEmptyRecords<Npc>("plugin.esp", "DummyNpc");
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0].ToRecordKey());
+
+            Assert.Null(analysis.TemplateInfo);
+        }
+
+        [Fact]
+        public void WhenTemplateIsMissing_TemplateInfoIsInvalidType()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", npc =>
+            {
+                npc.Template.SetTo(FormKey.Factory("123456:plugin.esp"));
+            });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.Equal("123456:plugin.esp", analysis.TemplateInfo.Key.ToString());
+            Assert.Equal(NpcTemplateTargetType.Invalid, analysis.TemplateInfo.TargetType);
+        }
+
+        [Fact]
+        public void WhenTemplateIsLeveledNpc_TemplateInfoIsLeveledNpcType()
+        {
+            var leveledNpcKeys = Groups.AddRecords<LeveledNpc>("plugin.esp", _ => { });
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", npc =>
+            {
+                npc.Template.SetTo(leveledNpcKeys[0].ToFormKey());
+            });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.Equal(leveledNpcKeys[0], analysis.TemplateInfo.Key);
+            Assert.Equal(NpcTemplateTargetType.LeveledNpc, analysis.TemplateInfo.TargetType);
+        }
+
+        [Fact]
+        public void WhenTemplateIsNpc_TemplateInfoIsNpcType()
+        {
+            var targetNpcKeys = Groups.AddRecords<Npc>("plugin.esp", _ => { });
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", npc =>
+            {
+                npc.Template.SetTo(targetNpcKeys[0].ToFormKey());
+            });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.Equal(targetNpcKeys[0], analysis.TemplateInfo.Key);
+            Assert.Equal(NpcTemplateTargetType.Npc, analysis.TemplateInfo.TargetType);
+        }
+
+        [Fact]
+        public void WhenTemplateExcludesTraitFlag_TemplateInfoDoesNotInheritTraits()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", npc =>
+            {
+                npc.Template.SetTo(FormKey.Factory("123456:plugin.esp"));
+            });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.False(analysis.TemplateInfo.InheritsTraits);
+        }
+
+        [Fact]
+        public void WhenTemplateIncludesTraitFlag_TemplateInfoInheritsTraits()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", npc =>
+            {
+                npc.Configuration.TemplateFlags |= NpcConfiguration.TemplateFlag.Traits;
+                npc.Template.SetTo(FormKey.Factory("123456:plugin.esp"));
+            });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.True(analysis.TemplateInfo.InheritsTraits);
+        }
+
         [Theory]
         [MemberData(nameof(NpcMutations.Ignored), MemberType = typeof(NpcMutations))]
         public void WhenIgnoredAttributesModified_AllComparisonsExceptIdentical_AreEqual(Action<Npc> mutation)
