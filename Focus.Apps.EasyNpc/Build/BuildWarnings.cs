@@ -16,9 +16,7 @@ namespace Focus.Apps.EasyNpc.Build
         SelectedPluginRemoved,
         MissingFaceGen,
         MultipleFaceGen,
-        FaceModWigNotMatched,
-        FaceModWigNotMatchedBald,
-        FaceModWigConversionDisabled,
+        WigNotMatched,
         MultipleArchiveSources,
         FaceGenOverride,
     }
@@ -93,28 +91,6 @@ namespace Focus.Apps.EasyNpc.Build
                 $"bypasses FaceGen consistency checks.";
         }
 
-        public static string FaceModWigConversionDisabled(string editorId, string name, string pluginName, bool isBald)
-        {
-            var outcomeText = isBald ? "be bald" : "revert to their default hair";
-            return
-                $"{NpcLabel(editorId, name)} in face plugin {pluginName} uses a wig, and you have de-wiggification " +
-                $"disabled. This character will {outcomeText}.";
-        }
-
-        public static string FaceModWigNotMatched(string editorId, string name, string pluginName, string modelName)
-        {
-            return
-                $"{NpcLabel(editorId, name)} in face plugin {pluginName} uses a wig with model name '{modelName}', " +
-                $"which could not be matched to any known hair type. This NPC will revert to their default hair.";
-        }
-
-        public static string FaceModWigNotMatchedBald(string editorId, string name, string pluginName, string modelName)
-        {
-            return
-                $"{NpcLabel(editorId, name)} in face plugin {pluginName} has no hair and uses a wig with model name " +
-                $"'{modelName}', which could not be matched to any known hair type. This NPC will be bald.";
-        }
-
         public static string MasterPluginRemoved(string pluginName)
         {
             return $"NPC master plugin {pluginName} is no longer installed.";
@@ -155,6 +131,12 @@ namespace Focus.Apps.EasyNpc.Build
             return
                 $"{NpcLabel(editorId, name)} references missing or disabled {pluginName} for its {fieldName} plugin " +
                 $"selection.";
+        }
+
+        public static string WigNotMatched(string editorId, string name, string pluginName, string modelName)
+        {
+            return
+                $"No matching hair for wig model '{modelName}' used by {NpcLabel(editorId, name)} in {pluginName}.";
         }
 
         private static string NpcLabel(string editorId, string name)
