@@ -84,6 +84,15 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .Count();
         }
 
+        public bool HasUnmodifiedFaceTemplate()
+        {
+            return Options
+                .Select(x => x.Analysis.TemplateInfo?.InheritsTraits == true ? x.Analysis.TemplateInfo.Key : null)
+                .NotNull()
+                .Distinct(RecordKeyComparer.Default)
+                .Count() == 1;
+        }
+
         public bool IsDefaultPlugin(string pluginName)
         {
             return DefaultOption.PluginName.Equals(pluginName, StringComparison.CurrentCultureIgnoreCase);

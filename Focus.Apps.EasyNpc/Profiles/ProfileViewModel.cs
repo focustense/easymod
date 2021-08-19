@@ -126,6 +126,9 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .OrderBy(x => pluginOrder.GetOrDefault(x.BasePluginName))
                 .ThenBy(x => uint.TryParse(x.LocalFormIdHex, NumberStyles.HexNumber, null, out var formId) ?
                     formId : uint.MaxValue);
+            // Permanent filter - never show NPCs whose overrides all inherit traits from the same template, as there
+            // are no meaningful visual customization choices to be made.
+            filteredNpcs = filteredNpcs.Where(x => !x.HasUnmodifiedFaceTemplate());
             Grid.Npcs = alwaysVisibleNpcKeys
                 .Select(x => npcs.GetOrDefault(x))
                 .NotNull()

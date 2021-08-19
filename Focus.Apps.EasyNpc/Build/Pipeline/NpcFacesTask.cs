@@ -35,13 +35,26 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             return Task.Run(() =>
             {
                 ItemCount.OnNext(defaults.Npcs.Count);
-                foreach (var (model, record) in defaults.Npcs)
+                foreach (var (unresolvedModel, record) in defaults.Npcs)
                 {
-                    NextItem(model.DescriptiveLabel);
+                    log.Debug("Applying visual attributes for {npcLabel}", unresolvedModel.DescriptiveLabel);
+                    NextItem(unresolvedModel.DescriptiveLabel);
+                    if (!settings.Profile.TryResolveTemplate(unresolvedModel, out var model))
+                    {
+                        log.Warning(
+                            "Unable to find the template {targetKey} for NPC {npcLabel} in the current profile. " +
+                            "Traits cannot be copied and this character may be bugged in game.",
+                            unresolvedModel.DefaultOption.Analysis.TemplateInfo?.Key, unresolvedModel.DescriptiveLabel);
+                        continue;
+                    }
+                    if (model != unresolvedModel)
+                        log.Information(
+                            "Redirected NPC {npcLabel} to template {templateNpcLabel}",
+                            unresolvedModel.DescriptiveLabel, model.DescriptiveLabel);
                     var faceModKey = ModKey.FromNameAndExtension(model.FaceOption.PluginName);
                     var faceMod = env.LoadOrder.GetIfEnabled(faceModKey).Mod;
-                    var faceNpcRecord = env.GetModNpc(faceModKey, record.FormKey);
-                    log.Debug("Importing shallow overrides", model.FaceOption.PluginName);
+                    var faceNpcRecord = env.GetModNpc(faceModKey, model.ToFormKey());
+                    log.Debug("Importing shallow overrides from {pluginName}", model.FaceOption.PluginName);
                     // "Deep copy" doesn't copy dependencies, so we only do this for non-referential attributes.
                     record.DeepCopyIn(faceNpcRecord, new Npc.TranslationMask(defaultOn: false)
                     {
@@ -63,7 +76,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                         record.Configuration.Flags |= NpcConfiguration.Flag.OppositeGenderAnims;
                     else
                         record.Configuration.Flags &= ~NpcConfiguration.Flag.OppositeGenderAnims;
-                    log.Debug("Importing head parts", model.FaceOption.PluginName);
+                    log.Debug("Importing head parts from {pluginName}", model.FaceOption.PluginName);
                     record.HeadParts.Clear();
                     // We don't use head parts from the record anymore; instead, use the "full list" provided by the
                     // analysis engine at startup. This ensures that the facegen can't be broken by race edits, etc.
@@ -74,11 +87,11 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                         if (mergedHeadPart.HasValue)
                             record.HeadParts.Add(mergedHeadPart.Value);
                     }
-                    log.Debug("Importing hair color", model.FaceOption.PluginName);
+                    log.Debug("Importing hair color from {pluginName}", model.FaceOption.PluginName);
                     record.HairColor.SetTo(patch.Importer.Import(faceNpcRecord.HairColor, x => x.Colors));
-                    log.Debug("Importing face texture", model.FaceOption.PluginName);
+                    log.Debug("Importing face texture from {pluginName}", model.FaceOption.PluginName);
                     record.HeadTexture.SetTo(patch.Importer.Import(faceNpcRecord.HeadTexture, x => x.TextureSets));
-                    log.Debug("Importing worn armor", model.FaceOption.PluginName);
+                    log.Debug("Importing worn armor from {pluginName}", model.FaceOption.PluginName);
                     // Like head parts, we want to use the "effective" skin here, in case it was changed by a race edit.
                     var skinKey = model.FaceOption.Analysis.SkinKey?.ToFormKey() ?? FormKey.Null;
                     record.WornArmor.SetTo(patch.Importer.Import(skinKey.AsLinkGetter<IArmorGetter>(), x => x.Armors));

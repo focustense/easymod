@@ -1,5 +1,6 @@
 ﻿using Focus.ModManagers;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,11 +12,11 @@ namespace Focus.Apps.EasyNpc.Profiles
         public int Count => npcs.Count;
         public IEnumerable<Npc> Npcs => npcs.Values;
 
-        private readonly Dictionary<RecordKey, Npc> npcs = new();
+        private readonly Dictionary<IRecordKey, Npc> npcs = new();
 
         public Profile(IEnumerable<Npc> npcs)
         {
-            this.npcs = npcs.ToDictionary(x => new RecordKey(x));
+            this.npcs = npcs.ToDictionary(x => new RecordKey(x), RecordKeyComparer.Default);
         }
 
         public void Load(Stream stream)
@@ -39,6 +40,12 @@ namespace Focus.Apps.EasyNpc.Profiles
             Load(fs);
         }
 
+        public bool TryResolveTemplate(Npc npc, [MaybeNullWhen(false)] out Npc targetNpc)
+        {
+            var visitedKeys = new HashSet<IRecordKey>(RecordKeyComparer.Default);
+            return TryResolveTemplate(npc, out targetNpc, visitedKeys);
+        }
+
         public void Save(Stream stream)
         {
             var savedNpcs = Npcs.Select(x => new SavedNpcConfiguration
@@ -56,6 +63,28 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             using var fs = File.Create(path);
             Save(fs);
+        }
+
+        public bool TryGetNpc(IRecordKey key, [MaybeNullWhen(false)] out Npc npc)
+        {
+            return npcs.TryGetValue(key, out npc);
+        }
+
+        private bool TryResolveTemplate(
+            Npc npc, [MaybeNullWhen(false)] out Npc recursiveTargetNpc, HashSet<IRecordKey> visitedKeys)
+        {
+            recursiveTargetNpc = null;
+            if (npc.DefaultOption.Analysis.TemplateInfo?.InheritsTraits != true)
+            {
+                recursiveTargetNpc = npc;
+                return true;
+            }
+            if (visitedKeys.Contains(npc))
+                return false;
+            visitedKeys.Add(npc);
+            if (TryGetNpc(npc.DefaultOption.Analysis.TemplateInfo.Key, out var targetNpc))
+                return TryResolveTemplate(targetNpc, out recursiveTargetNpc);
+            return false;
         }
     }
 }
