@@ -42,7 +42,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 {
                     NextItem(npc.DescriptiveLabel);
                     var defaultModKey = ModKey.FromNameAndExtension(npc.DefaultOption.PluginName);
-                    var defaultNpc = env.LoadOrder.GetModNpc(defaultModKey, npc.ToFormKey());
+                    var defaultNpc = env.GetModNpc(defaultModKey, npc.ToFormKey());
                     var mergedNpcRecord = patch.Mod.Npcs.GetOrAddAsOverride(defaultNpc);
                     npcs.Add((npc, mergedNpcRecord));
                     patch.Importer.AddMaster(npc.DefaultOption.PluginName);

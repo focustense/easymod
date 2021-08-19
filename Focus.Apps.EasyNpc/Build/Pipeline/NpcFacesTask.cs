@@ -40,7 +40,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     NextItem(model.DescriptiveLabel);
                     var faceModKey = ModKey.FromNameAndExtension(model.FaceOption.PluginName);
                     var faceMod = env.LoadOrder.GetIfEnabled(faceModKey).Mod;
-                    var faceNpcRecord = env.LoadOrder.GetModNpc(faceModKey, record.FormKey);
+                    var faceNpcRecord = env.GetModNpc(faceModKey, record.FormKey);
                     log.Debug("Importing shallow overrides", model.FaceOption.PluginName);
                     // "Deep copy" doesn't copy dependencies, so we only do this for non-referential attributes.
                     record.DeepCopyIn(faceNpcRecord, new Npc.TranslationMask(defaultOn: false)

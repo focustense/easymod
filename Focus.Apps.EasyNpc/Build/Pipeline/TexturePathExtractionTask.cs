@@ -66,8 +66,11 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 .Select(path =>
                 {
                     CancellationToken.ThrowIfCancellationRequested();
-                    NextItemSync(path);
-                    return GetReferencedTexturePaths(fs.Path.Combine(settings.OutputDirectory, path));
+                    return Task.Run(() =>
+                    {
+                        NextItemSync(path);
+                        return GetReferencedTexturePaths(fs.Path.Combine(settings.OutputDirectory, path));
+                    });
                 })
                 .ToList();
             var pathsFromMeshes = await Task
