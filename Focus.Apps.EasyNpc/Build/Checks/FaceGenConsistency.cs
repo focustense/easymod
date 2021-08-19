@@ -17,7 +17,9 @@ namespace Focus.Apps.EasyNpc.Build.Checks
 
         public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
-            return profile.Npcs.SelectMany(x => CheckForNpc(x));
+            return profile.Npcs
+                .Where(x => x.CanCustomizeFace)
+                .SelectMany(x => CheckForNpc(x));
         }
 
         private IEnumerable<BuildWarning> CheckForNpc(Npc npc)

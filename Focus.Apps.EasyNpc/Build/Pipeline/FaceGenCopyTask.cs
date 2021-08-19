@@ -45,6 +45,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 var tintPaths = new List<string>();
                 var found = settings.Profile.Npcs
                     .AsParallel()
+                    // NPCs using template traits don't need, and generally shouldn't have a facegen. The "chargen data"
+                    // (i.e. facegen files) are to be taken from the template.
+                    .Where(x => x.DefaultOption.Analysis.TemplateInfo?.InheritsTraits != true)
                     .Where(x =>
                         x.FaceGenOverride is not null ||
                         (!x.FaceOption.IsBaseGame && x.FaceOption.PluginName != x.DefaultOption.PluginName))

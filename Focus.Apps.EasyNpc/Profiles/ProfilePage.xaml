@@ -66,19 +66,25 @@
                         </Border.ToolTip>
                         <fa5:SvgAwesome Foreground="Blue" Icon="Regular_IdCard" Height="16" Width="16" />
                     </Border>
-                    <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=IsFaceSource, Converter={StaticResource BoolToVisibility}}">
-                        <Border.ToolTip>
-                            <TextBlock>
-                            <Bold>Face Source</Bold> - where the character's face will be taken from, overwriting face data in the <Italic>Default Source</Italic>.
-                            </TextBlock>
-                        </Border.ToolTip>
-                        <fa5:SvgAwesome Foreground="Green" Icon="Solid_Crown" Height="16" Width="16" />
-                    </Border>
+                    <ContentControl Visibility="{Binding DataContext.SelectedNpc.CanCustomizeFace, RelativeSource={RelativeSource AncestorType=ui:ListView}, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="Transparent" Style="{StaticResource PluginIconBorderStyle}" Visibility="{Binding Path=IsFaceSource, Converter={StaticResource BoolToVisibility}}">
+                            <Border.ToolTip>
+                                <TextBlock>
+                                <Bold>Face Source</Bold> - where the character's face will be taken from, overwriting face data in the <Italic>Default Source</Italic>.
+                                </TextBlock>
+                            </Border.ToolTip>
+                            <fa5:SvgAwesome Foreground="Green" Icon="Solid_Crown" Height="16" Width="16" />
+                        </Border>
+                    </ContentControl>
                     <!-- TODO: Plugins can have multiple masters, try to show WHICH one a non-face mod is inheriting from. -->
                 </ui:SimpleStackPanel>
                 <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibility}}">
                     <Button x:Name="SetDefaultOverrideButton" Content="Set as default" Tag="{Binding}" Click="SetDefaultOverrideButton_Click"/>
-                    <Button x:Name="SetFaceOverrideButton" Margin="8,0" Content="Set as face" Tag="{Binding}" Click="SetFaceOverrideButton_Click"/>
+                    <Button x:Name="SetFaceOverrideButton"
+                            IsEnabled="{Binding DataContext.SelectedNpc.CanCustomizeFace, RelativeSource={RelativeSource AncestorType=ui:ListView}}"
+                            Margin="8,0" Content="Set as face"
+                            Tag="{Binding}"
+                            Click="SetFaceOverrideButton_Click"/>
                 </ui:SimpleStackPanel>
             </ui:SimpleStackPanel>
         </DataTemplate>
@@ -131,35 +137,62 @@
             </ui:ScrollViewerEx>
         </GroupBox>
         <GridSplitter HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5" Margin="0,4" Grid.ColumnSpan="3" Grid.Row="2"></GridSplitter>
-        <ui:ListView Name="MugshotListView"
-                     ItemsSource="{Binding Path=SelectedNpc.Mugshots}"
-                     SelectionMode="Single"
-                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                     Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}"
-                     Grid.ColumnSpan="3"
-                     Grid.Row="3"
-                     SelectedItem="{Binding SelectedNpc.SelectedMugshot}">
-            <ui:ListView.ItemContainerStyle>
-                <Style TargetType="ui:ListViewItem">
-                    <EventSetter Event="MouseDoubleClick" Handler="MugshotListViewItem_MouseDoubleClick"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
-                            <Setter Property="Background" Value="LightGoldenrodYellow"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ui:ListView.ItemContainerStyle>
-            <ui:ListView.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </ui:ListView.ItemsPanel>
-            <ui:ListView.ItemTemplate>
-                <DataTemplate>
-                    <profile:MugshotViewer/>
-                </DataTemplate>
-            </ui:ListView.ItemTemplate>
-        </ui:ListView>
+        <Grid Grid.ColumnSpan="3"
+              Grid.Row="3"
+              Visibility="{Binding Path=HasSelectedNpc, Converter={StaticResource BoolToVisibility}}">
+            <Border Background="{StaticResource SystemControlBackgroundAltHighBrush}"
+                    BorderBrush="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    Padding="16"
+                    Panel.ZIndex="1"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding SelectedNpc.CanCustomizeFace, Converter={StaticResource InvBoolToVisibility}}">
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}">
+                    Template NPCs do not allow face customization.
+                </TextBlock>
+            </Border>
+            <ui:ListView Name="MugshotListView"
+                         IsEnabled="{Binding SelectedNpc.CanCustomizeFace}"
+                         ItemsSource="{Binding Path=SelectedNpc.Mugshots}"
+                         SelectionMode="Single"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         SelectedItem="{Binding SelectedNpc.SelectedMugshot}">
+                <ui:ListView.Style>
+                    <Style TargetType="ui:ListView">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedNpc.CanCustomizeFace}" Value="False">
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <BlurEffect Radius="40" KernelType="Gaussian"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ui:ListView.Style>
+                <ui:ListView.ItemContainerStyle>
+                    <Style TargetType="ui:ListViewItem">
+                        <EventSetter Event="MouseDoubleClick" Handler="MugshotListViewItem_MouseDoubleClick"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                <Setter Property="Background" Value="LightGoldenrodYellow"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ui:ListView.ItemContainerStyle>
+                <ui:ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ui:ListView.ItemsPanel>
+                <ui:ListView.ItemTemplate>
+                    <DataTemplate>
+                        <profile:MugshotViewer/>
+                    </DataTemplate>
+                </ui:ListView.ItemTemplate>
+            </ui:ListView>
+        </Grid>
     </Grid>
 </ui:Page>

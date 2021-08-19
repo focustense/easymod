@@ -120,6 +120,12 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .AsParallel()
                 .Where(x =>
                     x.Master.CanUseFaceGen && !x.Master.IsChild && x.Count > 1 &&
+                    // Template NPCs that are based on another NPC should be included but treated as "read only".
+                    // If ALL POSSIBILITIES point only to Leveled NPC or unknown/invalid (not standard NPC) targets,
+                    // then there is effectively nothing useful we can do with it and it should be excluded entirely.
+                    x.Any(r =>
+                        r.Analysis.TemplateInfo is null ||
+                        r.Analysis.TemplateInfo.TargetType == NpcTemplateTargetType.Npc) &&
                     x.Any(r => r.Analysis.ComparisonToBase?.ModifiesFace == true))
                 .Select(x => new Npc(x, baseGamePluginNames, modRepository, profileEventLog, policy))
                 .Tap(defaultAction);

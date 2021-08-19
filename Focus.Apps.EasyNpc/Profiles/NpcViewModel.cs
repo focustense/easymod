@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PropertyChanged;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -11,6 +12,8 @@ namespace Focus.Apps.EasyNpc.Profiles
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public string BasePluginName => npc.BasePluginName;
+        [DependsOn(nameof(DefaultOption))]
+        public bool CanCustomizeFace => npc.CanCustomizeFace;
         public NpcOptionViewModel DefaultOption { get; private set; }
         public string DescriptiveLabel => $"'{Name}' ({BasePluginName} - {EditorId})";
         public string EditorId => npc.EditorId;

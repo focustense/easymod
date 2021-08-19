@@ -18,6 +18,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string Name => records.Master.Name;
         public bool SupportsFaceGen => records.Master.CanUseFaceGen;
 
+        public bool CanCustomizeFace => FaceOption.Analysis.TemplateInfo?.InheritsTraits != true;
         public NpcOption DefaultOption { get; private set; }
         public ModInfo? FaceGenOverride { get; private set; }
         public NpcOption FaceOption { get; private set; }
