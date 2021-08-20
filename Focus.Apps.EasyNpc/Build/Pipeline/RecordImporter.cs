@@ -96,7 +96,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             where T : SkyrimMajorRecord, TGetter
             where TGetter : class, ISkyrimMajorRecordGetter
         {
-            if (link is null || link.FormKeyNullable == null)
+            if (link is null || link.IsNull)
                 return null;
 
             log.Debug("Clone requested for {Type} ({FormKey})", link.Type.Name, link.FormKey);
