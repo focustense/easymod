@@ -22,7 +22,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private readonly ISkyrimMod mergedMod;
         // We need to keep track of these ourselves, because merged records won't appear in the original LinkCache.
         private readonly Dictionary<FormKey, IMajorRecord> mergedRecords = new();
-        private readonly Lazy<IReadOnlyList<FormKey>> playableRaceKeys;
 
         public RecordImporter(
             IMutableGameEnvironment<ISkyrimMod, ISkyrimModGetter> environment, ISkyrimMod mergedMod, ILogger log)
@@ -30,8 +29,25 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             this.environment = environment;
             this.log = log;
             this.mergedMod = mergedMod;
+        }
 
-            playableRaceKeys = new(() => GetPlayableRaceKeys().ToList(), true);
+        public void AddArmorRace(
+            IFormLinkGetter<IArmorGetter> armorLink, IFormLinkGetter<IRaceGetter> originalRace,
+            IFormLinkGetter<IRaceGetter> actualRace)
+        {
+            var armorKey = armorLink.FormKey;
+            if (armorKey.IsNull || armorKey.ModKey != mergedMod.ModKey || originalRace.FormKey == actualRace.FormKey)
+                return;
+            var armor = GetIfMerged<Armor>(armorKey);
+            if (armor is null)
+                return;
+            var affectedAddons = armor.Armature
+                .Select(x => GetIfMerged<ArmorAddon>(x.FormKey))
+                .NotNull()
+                .Where(x => x.Race.FormKey == originalRace.FormKey || x.AdditionalRaces.Contains(originalRace.FormKey));
+            foreach (var addon in affectedAddons)
+                if (addon.Race.FormKey != actualRace.FormKey && !addon.AdditionalRaces.Contains(actualRace.FormKey))
+                    addon.AdditionalRaces.Add(actualRace.FormKey);
         }
 
         public void AddMaster(string pluginName)
@@ -73,13 +89,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private T? GetIfMerged<T>(FormKey key) where T : IMajorRecordGetter
         {
             return mergedRecords.TryGetValue(key, out var merged) ? (T)merged : default;
-        }
-
-        private IEnumerable<FormKey> GetPlayableRaceKeys()
-        {
-            foreach (var race in environment.LoadOrder.PriorityOrder.Race().WinningOverrides())
-                if (masters.Contains(race.FormKey.ModKey) && IsValidArmorRace(race))
-                    yield return race.FormKey;
         }
 
         private FormKey? Import<T, TGetter>(
@@ -178,9 +187,16 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             }
 
             // Allow any playable race to use the addon. We don't know which NPCs will try.
-            addon.Race.SetTo(environment.LinkCache.Resolve<IRaceGetter>("DefaultRace"));
+            var defaultRace = environment.LinkCache.Resolve<IRaceGetter>("DefaultRace");
+            var racesToKeep = addon.AdditionalRaces.Prepend(addon.Race)
+                .NotNull()
+                .Select(x => x.FormKey)
+                .Where(x => !x.IsNull && x != defaultRace.FormKey && masters.Contains(x.ModKey))
+                .Distinct()
+                .ToList();
+            addon.Race.SetTo(defaultRace);
             addon.AdditionalRaces.Clear();
-            foreach (var race in playableRaceKeys.Value)
+            foreach (var race in racesToKeep)
                 addon.AdditionalRaces.Add(race);
 
             addon.ArtObject.SetTo(Import(addon.ArtObject, mergedMod.ArtObjects, ImportArtObjectDependencies));
@@ -242,33 +258,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             ReplaceAlternateTextures(armor.WorldModel?.Male?.Model?.AlternateTextures);
 
             log.Information("Finished processing cloned armor {FormKey} '{EditorId}'", armor.EditorID, armor.FormKey);
-        }
-
-        private bool IsValidArmorRace(IRaceGetter race, HashSet<FormKey>? visitedKeys = null)
-        {
-            if (race.Flags.HasFlag(Race.Flag.Playable))
-                return true;
-            if (visitedKeys is null)
-                visitedKeys = new();
-            else if (visitedKeys.Contains(race.FormKey))
-                // Don't allow any cycles (infinite loops) here.
-                return false;
-            visitedKeys.Add(race.FormKey);
-            if (!race.ArmorRace.IsNull)
-            {
-                var armorRace = race.ArmorRace.TryResolve(environment.LinkCache);
-                if (armorRace is not null && IsValidArmorRace(armorRace, visitedKeys))
-                    return true;
-            }
-            // Walking the morph race doesn't really seem accurate, but it's the only way that the vampire races seem to
-            // link to their baseline races, and in the vanilla records, vampire records are also valid armor races.
-            if (!race.MorphRace.IsNull)
-            {
-                var morphRace = race.MorphRace.TryResolve(environment.LinkCache);
-                if (morphRace is not null && IsValidArmorRace(morphRace, visitedKeys))
-                    return true;
-            }
-            return false;
         }
 
         private void ReplaceAlternateTextures(IEnumerable<AlternateTexture>? altTextures)
