@@ -24,7 +24,7 @@ namespace Focus.Apps.EasyNpc.Modules
         {
             if (string.IsNullOrEmpty(GameId))
                 throw new InvalidOperationException($"{nameof(GameId)} must be configured.");
-            builder.Register(_ => GameInstance.FromGameId(GameId))
+            builder.Register(_ => GameInstance.FromGameId(GameId, DataDirectory))
                 .AsSelf()
                 .As<GameSelection>();
             builder.RegisterType<ArchiveStatics>().As<IArchiveStatics>().SingleInstance();
