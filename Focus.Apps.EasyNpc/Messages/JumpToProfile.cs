@@ -13,7 +13,6 @@
         {
             public bool? Conflicts { get; set; }
             public string? DefaultPlugin { get; set; }
-            public bool? FaceChanges { get; set; }
             public string? FacePlugin { get; set; }
             public bool? Missing { get; set; }
             public bool? MultipleChoices { get; set; }

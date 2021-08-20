@@ -103,9 +103,5 @@
                               IsChecked="{Binding MultipleChoices, Converter={StaticResource InverseBoolean}}"
                               Margin="16,0,0,0"
                               ToolTip="List NPCs who only have a single face customization option available within all active mods."/>
-        <CheckBox Content="Only Face Overrides"
-                              IsChecked="{Binding FaceChanges}"
-                              Margin="16,0,0,0"
-                              ToolTip="Hide NPCs with no face customizations available, i.e. who only have changes being made to items, AI behavior, etc."/>
     </ui:SimpleStackPanel>
 </UserControl>
