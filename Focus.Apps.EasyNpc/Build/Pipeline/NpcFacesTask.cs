@@ -95,6 +95,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     // Like head parts, we want to use the "effective" skin here, in case it was changed by a race edit.
                     var skinKey = model.FaceOption.Analysis.SkinKey?.ToFormKey() ?? FormKey.Null;
                     record.WornArmor.SetTo(patch.Importer.Import(skinKey.AsLinkGetter<IArmorGetter>(), x => x.Armors));
+                    patch.Importer.AddArmorRace(record.WornArmor, faceNpcRecord.Race, record.Race);
                 }
                 return new Result();
             });

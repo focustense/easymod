@@ -49,7 +49,7 @@ namespace Focus.Files
             new(StringComparer.CurrentCultureIgnoreCase);
         private readonly IFileSystem fs;
         private readonly IDirectoryInfo rootDirectory;
-        private readonly IFileSystemWatcher watcher;
+        private readonly IFileSystemWatcher? watcher;
 
         private bool isDisposed;
 
@@ -81,20 +81,25 @@ namespace Focus.Files
                     .Select(x => fs.Path.GetRelativePath(rootDirectory.FullName, x.FullName)) :
                 Enumerable.Empty<string>();
 
-            var watcher = fs.FileSystemWatcher.CreateNew(rootDirectory.FullName);
-            foreach (var ext in extensionsSet ?? Enumerable.Empty<string>())
-                watcher.Filters.Add("*" + ext);
-            watcher.NotifyFilter = NotifyFilters.FileName;
-            watcher.IncludeSubdirectories = true;
+            IFileSystemWatcher? watcher = null;
+            if (rootDirectory.Exists)
+            {
+                watcher = fs.FileSystemWatcher.CreateNew(rootDirectory.FullName);
+                foreach (var ext in extensionsSet ?? Enumerable.Empty<string>())
+                    watcher.Filters.Add("*" + ext);
+                watcher.NotifyFilter = NotifyFilters.FileName;
+                watcher.IncludeSubdirectories = true;
+            }
 
             var index = new FileSystemIndex(fs, rootDirectory, bucketize, initialFiles, watcher);
-            watcher.EnableRaisingEvents = true;
+            if (watcher is not null)
+                watcher.EnableRaisingEvents = true;
             return index;
         }
 
         private FileSystemIndex(
             IFileSystem fs, IDirectoryInfo rootDirectory, Bucketizer bucketize, IEnumerable<string> initialFiles,
-            IFileSystemWatcher watcher)
+            IFileSystemWatcher? watcher)
         {
             this.bucketize = bucketize;
             this.fs = fs;
@@ -119,9 +124,12 @@ namespace Focus.Files
                 })
                 .ToDictionary(x => x.FilePath, x => x.BucketNames, PathComparer.Default);
 
-            watcher.Created += Watcher_Created;
-            watcher.Deleted += Watcher_Deleted;
-            watcher.Renamed += Watcher_Renamed;
+            if (watcher is not null)
+            {
+                watcher.Created += Watcher_Created;
+                watcher.Deleted += Watcher_Deleted;
+                watcher.Renamed += Watcher_Renamed;
+            }
         }
 
         public bool Contains(string relativePath)
@@ -179,12 +187,14 @@ namespace Focus.Files
 
         public void PauseWatching()
         {
-            watcher.EnableRaisingEvents = false;
+            if (watcher is not null)
+                watcher.EnableRaisingEvents = false;
         }
 
         public void ResumeWatching()
         {
-            watcher.EnableRaisingEvents = true;
+            if (watcher is not null)
+                watcher.EnableRaisingEvents = true;
         }
 
         private void Dispose(bool disposing)
@@ -193,7 +203,7 @@ namespace Focus.Files
                 return;
             if (disposing)
             {
-                watcher.Dispose();
+                watcher?.Dispose();
                 allPaths.Clear();
                 buckets.Clear();
                 inverseBuckets.Clear();

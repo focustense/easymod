@@ -73,6 +73,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         private void RebuildIndex(string path)
         {
+            if (string.IsNullOrEmpty(path))
+                path = ProgramData.DefaultMugshotsPath;
             currentDirectoryPath = path;
             DisposeIndex();
             indexTask = Task.Run<IBucketedFileIndex>(() =>

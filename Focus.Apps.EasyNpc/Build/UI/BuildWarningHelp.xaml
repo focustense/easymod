@@ -136,6 +136,24 @@
                 </TextBlock>
             </ui:SimpleStackPanel>
         </DataTemplate>
+        <DataTemplate x:Key="WigNotMatched">
+            <ui:SimpleStackPanel>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">What this means:</Run>
+                    <Run>
+                        De-wiggifier cannot determine the original hair for this wig, either because it is a unique hairstyle, or the model name has changed from the original, or because you don't have the
+                        original hair resource mod (such as Apachii or KS Hairdos) installed.
+                    </Run>
+                </TextBlock>
+                <TextBlock Style="{StaticResource HelpTextParagraph}">
+                    <Run FontWeight="Medium">Why this matters:</Run>
+                    <Run>
+                        This is an informational message and no further action is required.
+                        This NPC should retain the intended appearance, but will need to keep using their wig (Worn Armor), which will not be converted to hair.
+                    </Run>
+                </TextBlock>
+            </ui:SimpleStackPanel>
+        </DataTemplate>
         <DataTemplate x:Key="MasterPluginRemoved">
             <ui:SimpleStackPanel>
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
@@ -196,7 +214,7 @@
             <Run FontWeight="SemiBold">Message: </Run>
             <Run Text="{Binding Message}" d:Text="Some error message"/>
         </TextBlock>
-        <ContentControl d:ContentTemplate="{StaticResource ModDirectoryNotFound}">
+        <ContentControl d:ContentTemplate="{StaticResource WigNotMatched}">
             <ContentControl.Style>
                 <Style>
                     <Style.Triggers>
@@ -223,6 +241,9 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Id}" Value="SelectedPluginRemoved">
                             <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource SelectedPluginRemoved}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Id}" Value="WigNotMatched">
+                            <Setter Property="ContentControl.ContentTemplate" Value="{StaticResource WigNotMatched}"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

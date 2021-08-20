@@ -7,9 +7,6 @@ namespace Focus.Apps.EasyNpc.Configuration
 
     static class ProgramData
     {
-        public static string ConfiguredMugshotsPath => !string.IsNullOrEmpty(Settings.Default.MugshotsDirectory) ?
-            Settings.Default.MugshotsDirectory : DefaultMugshotsPath;
-
         public static readonly string AssetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets");
         public static readonly string DefaultMugshotsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mugshots");
         public static readonly string DirectoryPath = Path.Combine(
