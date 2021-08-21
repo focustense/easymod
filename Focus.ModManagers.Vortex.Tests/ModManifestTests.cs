@@ -20,13 +20,17 @@ namespace Focus.ModManagers.Vortex.Tests
             {
                 ""files"": {
                     ""first folder"": {
-                        ""modId"": 123
+                        ""isEnabled"": true,
+                        ""modId"": 123,
                     },
                     ""second folder"": {
+                        ""id"": 777,
                         ""modId"": 456
                     },
                     ""third folder"": {
-                        ""modId"": ""123""
+                        ""id"": 888,
+                        ""modId"": ""123"",
+                        ""isEnabled"": false,
                     }
                 },
                 ""mods"": {
@@ -50,17 +54,23 @@ namespace Focus.ModManagers.Vortex.Tests
                 x =>
                 {
                     Assert.Equal("first folder", x.Key);
+                    Assert.Null(x.Value.Id);
                     Assert.Equal("123", x.Value.ModId);
+                    Assert.True(x.Value.IsEnabled);
                 },
                 x =>
                 {
                     Assert.Equal("second folder", x.Key);
+                    Assert.Equal("777", x.Value.Id);
                     Assert.Equal("456", x.Value.ModId);
+                    Assert.Null(x.Value.IsEnabled);
                 },
                 x =>
                 {
                     Assert.Equal("third folder", x.Key);
+                    Assert.Equal("888", x.Value.Id);
                     Assert.Equal("123", x.Value.ModId);
+                    Assert.False(x.Value.IsEnabled);
                 });
             Assert.Collection(
                 manifest.Mods,

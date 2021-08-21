@@ -42,6 +42,8 @@ namespace Focus.ModManagers.Vortex
 
     public class FileInfo
     {
+        public string? Id { get; set; }
+        public bool? IsEnabled { get; set; }
         public string? ModId { get; set; }
     }
 

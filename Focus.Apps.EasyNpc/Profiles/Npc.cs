@@ -80,12 +80,9 @@ namespace Focus.Apps.EasyNpc.Profiles
             return modRepository.SearchForFiles(FaceOption.PluginName, false).Select(x => x.ModKey.Name);
         }
 
-        public int GetOverrideCount(bool includeBaseGame, bool includeNonFaces)
+        public int GetOverrideCount(bool includeBaseGame)
         {
-            return Options
-                .Where(x => includeBaseGame || !x.IsBaseGame)
-                .Where(x => includeNonFaces || x.Analysis.ComparisonToBase?.ModifiesFace != false)
-                .Count();
+            return Options.Where(x => includeBaseGame || !x.IsBaseGame).Count();
         }
 
         public bool HasUnmodifiedFaceTemplate()

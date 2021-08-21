@@ -11,7 +11,6 @@ namespace Focus.Apps.EasyNpc.Profiles
         public IReadOnlyList<string> AvailablePlugins { get; set; } = new List<string>().AsReadOnly();
         public bool Conflicts { get; set; }
         public string? DefaultPlugin { get; set; }
-        public bool FaceChanges { get; set; }
         public string? FacePlugin { get; set; }
         public bool HasForcedFilter { get; set; }
         public bool Missing { get; set; }
@@ -38,7 +37,6 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             Conflicts = false;
             DefaultPlugin = null;
-            FaceChanges = false;
             FacePlugin = null;
             Missing = false;
             MultipleChoices = false;

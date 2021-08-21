@@ -1,3 +1,5 @@
+[![Discord](https://discordapp.com/api/guilds/866079527256195112/widget.png)](https://discord.gg/E4a6XfRvHe)
+
 # EasyNPC
 
 Painlessly mix, merge, and resolve conflicts and compatibility issues for all of your NPC overhauls.

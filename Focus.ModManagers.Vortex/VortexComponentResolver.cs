@@ -22,12 +22,13 @@ namespace Focus.ModManagers.Vortex
             var modId = file?.ModId ?? string.Empty;
             var modName = !string.IsNullOrEmpty(mod?.Name) ? mod.Name : componentName;
             var key = new ModLocatorKey(modId, modName);
-            // TODO: Include the file ID (always exists) in the Vortex manifest and read that instead. Not critical
-            // right now as we don't really use ComponentId.
-            var componentId = componentName;
+            var componentId = !string.IsNullOrEmpty(file?.Id) ? file.Id : componentName;
             var componentPath = Path.Combine(rootPath, componentName);
-            // TODO: Include the enabled state from Vortex.
-            return Task.FromResult(new ModComponentInfo(key, componentId, componentName, componentPath, true));
+            // In an ideal world, the default for an unknown state would be disabled, not enabled. However, since the
+            // old version of the extension didn't produce this flag, we have to assume the opposite, otherwise all
+            // components will end up disabled.
+            var isEnabled = file?.IsEnabled ?? true;
+            return Task.FromResult(new ModComponentInfo(key, componentId, componentName, componentPath, isEnabled));
         }
     }
 }

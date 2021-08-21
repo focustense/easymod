@@ -44,11 +44,11 @@ namespace Focus.ModManagers.Vortex.Tests
         [Fact]
         public async Task WhenFileInManifest_WithoutModId_ResolvesDummyComponent()
         {
-            manifest.Files.Add("emptyfile", new FileInfo());
+            manifest.Files.Add("emptyfile", new() { Id = "12345" });
             var component = await resolver.ResolveComponentInfo("emptyfile");
 
             Assert.Equal(new ModLocatorKey(string.Empty, "emptyfile"), component.ModKey);
-            Assert.Equal("emptyfile", component.Id);
+            Assert.Equal("12345", component.Id);
             Assert.Equal("emptyfile", component.Name);
             Assert.Equal(@"C:\Vortex\Staging\emptyfile", component.Path);
             Assert.True(component.IsEnabled);
@@ -70,12 +70,12 @@ namespace Focus.ModManagers.Vortex.Tests
         [Fact]
         public async Task WhenFileInManifest_WithMatchingUnnamedMod_ResolvesWithModId()
         {
-            manifest.Files.Add("unnamedmodfile", new() { ModId = "testmod" });
+            manifest.Files.Add("unnamedmodfile", new() { Id = "12345", ModId = "testmod" });
             manifest.Mods.Add("testmod", new());
             var component = await resolver.ResolveComponentInfo("unnamedmodfile");
 
             Assert.Equal(new ModLocatorKey("testmod", "unnamedmodfile"), component.ModKey);
-            Assert.Equal("unnamedmodfile", component.Id);
+            Assert.Equal("12345", component.Id);
             Assert.Equal("unnamedmodfile", component.Name);
             Assert.Equal(@"C:\Vortex\Staging\unnamedmodfile", component.Path);
             Assert.True(component.IsEnabled);
@@ -93,6 +93,15 @@ namespace Focus.ModManagers.Vortex.Tests
             Assert.Equal("namedmodfile", component.Name);
             Assert.Equal(@"C:\Vortex\Staging\namedmodfile", component.Path);
             Assert.True(component.IsEnabled);
+        }
+
+        [Fact]
+        public async Task WhenFileExplicitlyDisabled_ResolvesComponentAsDisabled()
+        {
+            manifest.Files.Add("disabledfile", new() { IsEnabled = false });
+            var component = await resolver.ResolveComponentInfo("disabledfile");
+
+            Assert.False(component.IsEnabled);
         }
     }
 }
