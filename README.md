@@ -1,3 +1,5 @@
+[![Discord](https://discordapp.com/api/guilds/866079527256195112/widget.png)](https://discord.gg/5QHR3jKCHa)
+
 # EasyMod
 
 Top-level repository for various Bethesda modding tools.
