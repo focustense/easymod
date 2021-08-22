@@ -1,94 +1,60 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
-
-//---------------------------------------------------------------------------
-//
-// Description: LocBaml command line tool. 
-//
-//---------------------------------------------------------------------------
-
-using System;
-using System.Windows;
+﻿using System;
 using System.Collections.Generic;
+using System.Windows;
 
-namespace BamlLocalization
+namespace Focus.Localization
 {
-    /// <summary>
-    /// Defines all the static localizability attributes
-    /// </summary>
     internal static class DefaultAttributes
     {
+        private static readonly Dictionary<object, LocalizabilityAttribute> DefinedAttributes;
+
         static DefaultAttributes()
         {
-            // predefined localizability attributes
             DefinedAttributes = new Dictionary<object, LocalizabilityAttribute>(32);
 
-            // nonlocalizable attribute
-            LocalizabilityAttribute notReadable = new LocalizabilityAttribute(LocalizationCategory.None);
-            notReadable.Readability = Readability.Unreadable;
+            var notReadable = new LocalizabilityAttribute(LocalizationCategory.None) { Readability = Readability.Unreadable };
+            var notModifiable = new LocalizabilityAttribute(LocalizationCategory.None) { Modifiability = Modifiability.Unmodifiable };
 
-            LocalizabilityAttribute notModifiable = new LocalizabilityAttribute(LocalizationCategory.None);
-            notModifiable.Modifiability = Modifiability.Unmodifiable;
-
-            // not localizable CLR types
-            DefinedAttributes.Add(typeof(Boolean), notReadable);
-            DefinedAttributes.Add(typeof(Byte), notReadable);
-            DefinedAttributes.Add(typeof(SByte), notReadable);
-            DefinedAttributes.Add(typeof(Char), notReadable);
-            DefinedAttributes.Add(typeof(Decimal), notReadable);
-            DefinedAttributes.Add(typeof(Double), notReadable);
-            DefinedAttributes.Add(typeof(Single), notReadable);
-            DefinedAttributes.Add(typeof(Int32), notReadable);
-            DefinedAttributes.Add(typeof(UInt32), notReadable);
-            DefinedAttributes.Add(typeof(Int64), notReadable);
-            DefinedAttributes.Add(typeof(UInt64), notReadable);
-            DefinedAttributes.Add(typeof(Int16), notReadable);
-            DefinedAttributes.Add(typeof(UInt16), notReadable);
+            DefinedAttributes.Add(typeof(bool), notReadable);
+            DefinedAttributes.Add(typeof(byte), notReadable);
+            DefinedAttributes.Add(typeof(sbyte), notReadable);
+            DefinedAttributes.Add(typeof(char), notReadable);
+            DefinedAttributes.Add(typeof(decimal), notReadable);
+            DefinedAttributes.Add(typeof(double), notReadable);
+            DefinedAttributes.Add(typeof(float), notReadable);
+            DefinedAttributes.Add(typeof(int), notReadable);
+            DefinedAttributes.Add(typeof(uint), notReadable);
+            DefinedAttributes.Add(typeof(long), notReadable);
+            DefinedAttributes.Add(typeof(ulong), notReadable);
+            DefinedAttributes.Add(typeof(short), notReadable);
+            DefinedAttributes.Add(typeof(ushort), notReadable);
             DefinedAttributes.Add(typeof(Uri), notModifiable);
         }
 
-        /// <summary>
-        /// Get the localizability attribute for a type
-        /// </summary>
-        internal static LocalizabilityAttribute GetDefaultAttribute(object type)
+        public static LocalizabilityAttribute GetDefaultAttribute(object type)
         {
-            if (DefinedAttributes.ContainsKey(type))
-            {
-                LocalizabilityAttribute predefinedAttribute = DefinedAttributes[type];
+            if (DefinedAttributes.TryGetValue(type, out var predefinedAttribute))
+                return new LocalizabilityAttribute(predefinedAttribute.Category)
+                {
+                    Readability = predefinedAttribute.Readability,
+                    Modifiability = predefinedAttribute.Modifiability
+                };
 
-                // create a copy of the predefined attribute and return the copy
-                LocalizabilityAttribute result = new LocalizabilityAttribute(predefinedAttribute.Category);
-                result.Readability = predefinedAttribute.Readability;
-                result.Modifiability = predefinedAttribute.Modifiability;
-                return result;
-            }
-            else
+            if (type is Type targetType && targetType.IsValueType)
             {
-                Type targetType = type as Type;
-                if (targetType != null && targetType.IsValueType)
+                // Assume that enums and other value types can't be localized.
+                return new LocalizabilityAttribute(LocalizationCategory.Inherit)
                 {
-                    // It is looking for the default value of a value type (i.e. struct and enum)
-                    // we use this default.
-                    LocalizabilityAttribute attribute = new LocalizabilityAttribute(LocalizationCategory.Inherit);
-                    attribute.Modifiability = Modifiability.Unmodifiable;
-                    return attribute;
-                }
-                else
-                {
-                    return DefaultAttribute;
-                }
+                    Modifiability = Modifiability.Unmodifiable
+                };
             }
+            
+            return GetDefaultAttribute();
         }
 
-        internal static LocalizabilityAttribute DefaultAttribute
+        private static LocalizabilityAttribute GetDefaultAttribute()
         {
-            get
-            {
-                return new LocalizabilityAttribute(LocalizationCategory.Inherit);
-            }
+            return new LocalizabilityAttribute(LocalizationCategory.Inherit);
         }
-
-        private static Dictionary<object, LocalizabilityAttribute> DefinedAttributes;     // stores pre-defined attribute for types
     }
 }
