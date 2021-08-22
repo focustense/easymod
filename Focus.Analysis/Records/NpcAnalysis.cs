@@ -11,6 +11,7 @@ namespace Focus.Analysis.Records
         public IReadOnlyList<NpcComparison> ComparisonToMasters { get; init; } = Empty.ReadOnlyList<NpcComparison>();
         public NpcComparison? ComparisonToPreviousOverride { get; init; }
         public IReadOnlyList<RecordKey> MainHeadParts { get; init; } = Empty.ReadOnlyList<RecordKey>();
+        public bool IsAudioTemplate { get; init; }
         public bool IsChild { get; init; }
         public bool IsFemale { get; init; }
         public string Name { get; init; } = string.Empty;

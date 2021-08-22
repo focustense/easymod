@@ -131,6 +131,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 ComparisonToBase = comparisonToBase,
                 ComparisonToMasters = comparisonToMasters,
                 ComparisonToPreviousOverride = comparisonToPrevious,
+                IsAudioTemplate = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.UseTemplate),
                 IsChild = race?.Flags.HasFlag(Race.Flag.Child) ?? false,
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                 MainHeadParts = GetMainHeadParts(npc).Select(x => x.FormKey).ToRecordKeys(),
