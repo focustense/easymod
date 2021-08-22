@@ -76,10 +76,10 @@ namespace Focus.ModManagers.ModOrganizer
                 catch (Exception) { }
             }
 
-            // We need to have _some_ kind of identifier on the mod itself. If it doesn't have an ID, and we were unable
-            // to determine the name (not unlikely when there is no ID), then the best choice is usually the same name
-            // as the folder, which is Mod Organizer's informal "mod name".
-            if (string.IsNullOrEmpty(modId) && string.IsNullOrEmpty(modName))
+            // For Mod Organizer specifically, if we can't determine the Nexus name, then the next-best choice is the
+            // component name (i.e. folder name) which is usually the same, or at least _was_ the same at some point.
+            // Returning a key with no mod name is generally bad and causes various problems down the road.
+            if (string.IsNullOrEmpty(modName))
                 modName = componentName;
 
             var key = new ModLocatorKey(modId != NullModId ? modId : string.Empty, modName);

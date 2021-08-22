@@ -123,6 +123,25 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         [Fact]
+        public void WhenConfigExcludesUseTemplateFlag_IsAudioTemplate_IsTrue()
+        {
+            var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => { });
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.False(analysis.IsAudioTemplate);
+        }
+
+        [Fact]
+        public void WhenConfigIncludesUseTemplateFlag_IsAudioTemplate_IsTrue()
+        {
+            var npcKeys = Groups.AddRecords<Npc>(
+                "plugin.esp", x => x.Configuration.Flags |= NpcConfiguration.Flag.UseTemplate);
+            var analysis = Analyzer.Analyze("plugin.esp", npcKeys[0]);
+
+            Assert.True(analysis.IsAudioTemplate);
+        }
+
+        [Fact]
         public void WhenRaceInvalid_CanUseFaceGen_IsFalse()
         {
             var npcKeys = Groups.AddRecords<Npc>("plugin.esp", x => x.Race.SetTo(FormKey.Factory("123456:plugin.esp")));
