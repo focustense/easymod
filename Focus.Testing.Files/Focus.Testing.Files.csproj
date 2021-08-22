@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
+    <ProjectReference Include="..\Focus.Files\Focus.Files.csproj" />
+  </ItemGroup>
+
+</Project>

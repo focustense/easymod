@@ -1,14 +1,13 @@
-﻿using Focus.Apps.EasyNpc.GameData.Files;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Build
 {
     public interface IFaceGenEditor
     {
-        void ReplaceHeadParts(
+        Task<bool> ReplaceHeadParts(
             string faceGenPath, IEnumerable<HeadPartInfo> removedParts, IEnumerable<HeadPartInfo> addedParts,
-            Color? hairColor, IArchiveProvider archiveProvider);
+            Color? hairColor);
     }
 }

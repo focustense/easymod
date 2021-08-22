@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows10.0.19041</TargetFramework>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <AssemblyTitle>Service implementations based on the Mutagen library</AssemblyTitle>
+    <Product>EasyMod</Product>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.30.4" />
+    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.30.4" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Focus.Analysis\Focus.Analysis.csproj" />
+    <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
+    <ProjectReference Include="..\Focus.Files\Focus.Files.csproj" />
+  </ItemGroup>
+
+</Project>

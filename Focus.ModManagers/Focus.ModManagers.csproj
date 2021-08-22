@@ -2,6 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <AssemblyTitle>Abstract types for mod manager integration</AssemblyTitle>
+    <Product>EasyMod</Product>
+    <Version>0.1.0</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
+    <ProjectReference Include="..\Focus.Files\Focus.Files.csproj" />
+  </ItemGroup>
 
 </Project>

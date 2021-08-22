@@ -3,23 +3,35 @@ using System.Collections.Concurrent;
 
 namespace Focus.Apps.EasyNpc.Messages
 {
-    public static class MessageBus
+    public class MessageBus : IMessageBus
     {
-        private static readonly ConcurrentDictionary<Type, ConcurrentBag<Action<object>>> subscriptions = new();
+        public static readonly IMessageBus Instance = new MessageBus();
 
         public static void Send<T>(T message)
+        {
+            Instance.Send(message);
+        }
+
+        public static void Subscribe<T>(Action<T> handler)
+        {
+            Instance.Subscribe(handler);
+        }
+
+        private readonly ConcurrentDictionary<Type, ConcurrentBag<Action<object>>> subscriptions = new();
+
+        void IMessageBus.Send<T>(T message)
         {
             foreach (var action in GetSubscriptions(typeof(T)))
                 action(message);
         }
 
-        public static void Subscribe<T>(Action<T> handler)
+        void IMessageBus.Subscribe<T>(Action<T> handler)
         {
             var subscriptions = GetSubscriptions(typeof(T));
             subscriptions.Add(msg => handler((T)msg));
         }
 
-        private static ConcurrentBag<Action<object>> GetSubscriptions(Type messageType)
+        private ConcurrentBag<Action<object>> GetSubscriptions(Type messageType)
         {
             return subscriptions.GetOrAdd(messageType, _ => new());
         }

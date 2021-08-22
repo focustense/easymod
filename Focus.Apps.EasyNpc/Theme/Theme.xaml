@@ -5,13 +5,16 @@
 
     <SolidColorBrush x:Key="DangerBackgroundBrush" Color="{StaticResource DangerColor}"/>
     <SolidColorBrush x:Key="DangerForegroundBrush" Color="{StaticResource DangerColor}"/>
+    <SolidColorBrush x:Key="ErrorForegroundBrush" Color="{StaticResource ErrorForegroundColor}"/>
     <SolidColorBrush x:Key="ExpandoBackgroundBrush" Color="{StaticResource ExpandoBackgroundColor}"/>
     <SolidColorBrush x:Key="GroupBorderBrush" Color="{StaticResource GroupBorderColor}"/>
     <SolidColorBrush x:Key="HelpIconForegroundBrush" Color="{StaticResource HelpIconColor}"/>
     <SolidColorBrush x:Key="HelpPanelBackgroundBrush" Color="{StaticResource HelpPanelBackgroundColor}"/>
     <SolidColorBrush x:Key="HighlightBackgroundBrush" Color="{StaticResource ContentHighlightColor}"/>
     <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="SuccessForegroundBrush" Color="{StaticResource SuccessForegroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressBackgroundBrush" Color="{StaticResource TaskProgressBackgroundColor}"/>
+    <SolidColorBrush x:Key="TaskProgressCancelledBackgroundBrush" Color="{StaticResource TaskProgressCancelledBackgroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressCompletedBackgroundBrush" Color="{StaticResource TaskProgressCompletedBackgroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressFailedBackgroundBrush" Color="{StaticResource TaskProgressFailedBackgroundColor}"/>
     <SolidColorBrush x:Key="WarningForegroundBrush" Color="{StaticResource WarningForegroundColor}"/>

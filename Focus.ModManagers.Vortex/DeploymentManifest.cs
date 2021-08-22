@@ -22,25 +22,25 @@ namespace Focus.ModManagers.Vortex
     public class DeploymentManifest : IReadOnlyDeploymentManifest
     {
         [Key("deploymentMethod")]
-        public string DeploymentMethod { get; set; }
+        public string DeploymentMethod { get; set; } = string.Empty;
 
         [Key("deploymentTime")]
         public ulong? DeploymentTimeMs { get; set; }
 
         [Key("files")]
-        public List<DeployedFile> Files { get; set; }
+        public List<DeployedFile> Files { get; set; } = new();
 
         [Key("gameId")]
-        public string GameId { get; set; }
+        public string GameId { get; set; } = string.Empty;
 
         [Key("instance")]
-        public string Instance { get; set; }
+        public string Instance { get; set; } = string.Empty;
 
         [Key("stagingPath")]
-        public string StagingPath { get; set; }
+        public string StagingPath { get; set; } = string.Empty;
 
         [Key("targetPath")]
-        public string TargetPath { get; set; }
+        public string TargetPath { get; set; } = string.Empty;
 
         [Key("version")]
         public uint Version { get; set; }

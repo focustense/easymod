@@ -1,7 +1,5 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
-using TKey = Mutagen.Bethesda.Plugins.FormKey;
 
 namespace Focus.Apps.EasyNpc.Build
 {
@@ -10,7 +8,7 @@ namespace Focus.Apps.EasyNpc.Build
     /// </summary>
     public partial class BuildPage : ModernWpf.Controls.Page
     {
-        protected BuildViewModel<TKey> Model => ((IBuildContainer<TKey>)DataContext)?.Build;
+        protected BuildViewModel Model => ((IBuildContainer)DataContext)?.Build;
 
         public BuildPage()
         {

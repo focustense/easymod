@@ -10,6 +10,15 @@ namespace Focus.Apps.EasyNpc
         [Option('i', "force-intro")]
         public bool ForceIntro { get; set; }
 
+        [Option('g', "game")]
+        public string GameName { get; set; } = "SkyrimSE";
+
+        [Option('p', "game-path")]
+        public string GamePath { get; set; } = null;
+
+        [Option("mo2-exe")]
+        public string ModOrganizerExecutablePath { get; set; } = null;
+
         [Option('r', "report-path")]
         public string ReportPath { get; set; }
 

@@ -6,6 +6,7 @@
              xmlns:fa="http://schemas.fontawesome.com/icons/"
              xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
+             xmlns:math="http://hexinnovation.com/math"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              ShutdownMode="OnExplicitShutdown"
@@ -43,6 +44,8 @@
 
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+            <local:InverseBooleanConverter x:Key="InverseBoolean"/>
+            <math:MathConverter x:Key="Math" />
             <build:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>
 
             <Style TargetType="Button" x:Key="DangerButtonStyle" BasedOn="{StaticResource DefaultButtonStyle}">
@@ -53,6 +56,10 @@
             <Style TargetType="DataGrid" BasedOn="{StaticResource DefaultDataGridStyle}">
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="LightGray"/>
+            </Style>
+            <Style TargetType="DataGridRow" x:Key="DataGridRowStyle" BasedOn="{StaticResource DefaultDataGridRowStyle}"/>
+            <Style TargetType="DataGridCell" x:Key="DataGridCellTrimmed" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+                <Setter Property="TextBlock.TextTrimming" Value="WordEllipsis"/>
             </Style>
 
             <Style TargetType="TextBlock" x:Key="FormLabelStyle" BasedOn="{StaticResource BodyTextBlockStyle}">

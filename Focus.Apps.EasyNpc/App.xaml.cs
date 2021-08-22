@@ -1,9 +1,8 @@
-﻿using CommandLine;
+﻿using Autofac;
+using CommandLine;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Main;
 using Focus.ModManagers;
-using Focus.ModManagers.ModOrganizer;
-using Focus.ModManagers.Vortex;
 using System;
 using System.IO;
 using System.Windows;
@@ -38,34 +37,26 @@ namespace Focus.Apps.EasyNpc
                 Current.Shutdown();
                 return;
             }
-            var modResolver = CreateModResolver(startupInfo, options);
+
+            var container = AppContainer.Build(options, startupInfo);
             if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.ModRootDirectory))
-                Settings.Default.ModRootDirectory = modResolver.GetDefaultModRootDirectory();
+                Settings.Default.ModRootDirectory = container.Resolve<IModManagerConfiguration>().ModsDirectory;
             try
             {
-                var mainViewModel = new MainViewModel(modResolver, isFirstLaunch, options.DebugMode);
+                var mainViewModelFactory = container.Resolve<MainViewModel.Factory>();
+                var mainViewModel = mainViewModelFactory(isFirstLaunch);
                 var mainWindow = MainWindow = new MainWindow(mainViewModel);
                 mainWindow.Show();
             }
-            catch (MissingGameException ex)
+            catch (MissingGameDataException ex)
+            {
+                Warn(StartupWarnings.MissingGameData(ex.GameId, ex.GameName), true);
+                Current.Shutdown();
+            }
+            catch (UnsupportedGameException ex)
             {
                 Warn(StartupWarnings.UnsupportedGame(ex.GameId, ex.GameName), true);
                 Current.Shutdown();
-            }
-        }
-
-        private static IModResolver CreateModResolver(StartupInfo startupInfo, CommandLineOptions options)
-        {
-            var defaultModResolver = new PassthroughModResolver();
-            // Vortex manifest is a command-line option, so it automatically overrides detection-based mechanisms.
-            if (!string.IsNullOrEmpty(options.VortexManifest))
-                return new VortexModResolver(defaultModResolver, options.VortexManifest);
-            switch (startupInfo.Launcher)
-            {
-                case ModManager.ModOrganizer:
-                    return new ModOrganizerModResolver(startupInfo.ParentProcessPath);
-                default:
-                    return defaultModResolver;
             }
         }
 

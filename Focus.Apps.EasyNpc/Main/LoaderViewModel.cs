@@ -1,69 +1,54 @@
 ﻿using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.GameData.Files;
-using Focus.Apps.EasyNpc.GameData.Plugins;
-using Focus.Apps.EasyNpc.GameData.Records;
+using Focus.Environment;
 using PropertyChanged;
-using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Main
 {
-    public class LoaderViewModel<TKey> : INotifyPropertyChanged
-        where TKey : struct
+    public class LoaderViewModel : INotifyPropertyChanged
     {
         public event Action Loaded;
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public TaskViewModel AnalysisTask { get; private init; } = new("Analysis");
         public bool CanLoad { get; private set; }
-        public IReadOnlyList<Hair<TKey>> Hairs { get; private set; }
         public bool HasEnabledUnloadablePlugins { get; private set; }
-        public bool IsLoading { get; private set; } = true;
+        public bool IsLoading { get; private set; }
         public bool IsLogVisible { get; private set; }
         public bool IsPluginListVisible { get; private set; }
-        public bool IsSpinnerVisible { get; private set; }
         [DependsOn("HasEnabledUnloadablePlugins", "IsPluginListVisible")]
         public bool IsUnloadablePluginWarningVisible => HasEnabledUnloadablePlugins && IsPluginListVisible;
-        public IReadOnlyList<string> LoadedMasterNames { get; private set; }
-        public IReadOnlyList<string> LoadedPluginNames { get; private set; }
-        public IReadOnlyLoadOrderGraph Graph => graph;
         public LogViewModel Log { get; private init; }
-        public IModPluginMapFactory ModPluginMapFactory => editor.ModPluginMapFactory;
-        public IReadOnlyList<INpc<TKey>> Npcs { get; private set; }
+        public TaskViewModel ModIndexTask { get; private init; } = new("Mod Scan");
         public IReadOnlyList<PluginSetting> Plugins { get; private set; }
-        public string Status { get; private set; }
+        public TaskViewModel ProfileTask { get; private init; } = new("Profile");
+        public LoaderTasks Tasks { get; private set; }
 
-        private readonly IGameDataEditor<TKey> editor;
-        private readonly ILogger logger;
-        private readonly LoadOrderGraph graph;
+        private readonly LoaderModel loader;
+        private readonly IGameSetup setup;
 
-        public LoaderViewModel(IGameDataEditor<TKey> editor, LogViewModel logViewModel, ILogger logger)
+        public LoaderViewModel(LogViewModel logViewModel, IGameSetup setup, LoaderModel loader)
         {
-            this.editor = editor;
+            this.loader = loader;
+            this.setup = setup;
+
             Log = logViewModel;
-            this.logger = logger;
 
-            Status = "Starting up...";
-            IsSpinnerVisible = true;
             CanLoad = false;
+            loader.Prepare();
 
-            var sourcePlugins = editor.GetAvailablePlugins().ToList();
-            var blacklist = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { FileStructure.MergeFileName };
-            graph = new(sourcePlugins, blacklist);
-            Plugins = editor.GetAvailablePlugins()
+            Plugins = setup.AvailablePlugins
                 .Select((x, i) => new PluginSetting(x.FileName, i + 1, x.IsReadable, x.IsEnabled))
                 .ToList()
                 .AsReadOnly();
             UpdatePluginStates();
             foreach (var plugin in Plugins)
                 plugin.Toggled += Plugin_Toggled;
-            Status = "Confirm plugin selection and load order.";
-            IsSpinnerVisible = false;
             IsPluginListVisible = true;
             CanLoad = true;
         }
@@ -71,32 +56,17 @@ namespace Focus.Apps.EasyNpc.Main
         public async void ConfirmPlugins()
         {
             CanLoad = false;
-            Status = "Loading selected plugins...";
-            IsSpinnerVisible = true;
+            IsLoading = true;
             IsPluginListVisible = false;
             IsLogVisible = true;
 
-            var loadOrder = Plugins.Where(x => x.CanLoad && x.ShouldLoad).Select(x => x.FileName);
-            await editor.Load(loadOrder).ConfigureAwait(true);
-
-            LoadedPluginNames = editor.GetLoadedPlugins().ToList().AsReadOnly();
-            LoadedMasterNames = LoadedPluginNames
-                .Where(pluginName => editor.IsMaster(pluginName))
-                .ToList()
-                .AsReadOnly();
-            Status = "Done loading plugins. Collecting head part info...";
-            Hairs = LoadedPluginNames
-                .SelectMany(pluginName => editor.ReadHairRecords(pluginName))
-                .Where(x => !string.IsNullOrEmpty(x.ModelFileName))
-                .ToList()
-                .AsReadOnly();
-            Status = "Done loading head parts. Building NPC index...";
-            var loadedNpcs = await Task.Run(GetNpcs).ConfigureAwait(true);
-            Npcs = new List<INpc<TKey>>(loadedNpcs);
-            logger.Information("All NPCs loaded.");
-
-            Status = "Preparing game profile...";
-            IsSpinnerVisible = false;
+            Tasks = loader.Complete();
+            AnalysisTask.SetTask(Tasks.LoadOrderAnalysis);
+            ModIndexTask.SetTask(Tasks.ModRepository);
+            ProfileTask.SetTask(Tasks.Profile);
+            await Task.WhenAll(new Task[] { Tasks.ModRepository, Tasks.LoadOrderAnalysis, Tasks.Profile })
+                .ConfigureAwait(false);
+            
             IsLoading = false;
             Loaded?.Invoke();
         }
@@ -106,39 +76,20 @@ namespace Focus.Apps.EasyNpc.Main
             var materializedPlugins = plugins.ToList();
             if (materializedPlugins.Count == 0)
                 return;
-            var shouldLoad = materializedPlugins.Any(x => !x.ShouldLoad);
+            var shouldLoad = materializedPlugins.Any(x => !x.ShouldLoad && x.CanLoad);
+            // If enabling plugins, iteration should be sensitive to side effects - i.e. "CanLoad" may be false due to
+            // disabled master, but if the master is also being enabled, then "CanLoad" may change to true during
+            // iteration. When disabling plugins, however, we want the exact opposite of this - all of the plugins that
+            // were selected should each be disabled, regardless of whether it becomes unloadable during iteration.
             foreach (var plugin in materializedPlugins)
-                if (plugin.CanLoad) // Row shouldn't be editable otherwise
+                if (plugin.CanLoad || !shouldLoad) // Row shouldn't be editable otherwise
                     plugin.ShouldLoad = shouldLoad;
-        }
-
-        private IEnumerable<INpc<TKey>> GetNpcs()
-        {
-            var npcs = new Dictionary<TKey, IMutableNpc<TKey>>();
-            foreach (var pluginName in LoadedPluginNames)
-            {
-                logger.Information($"Reading NPC records from {pluginName}...");
-                editor.ReadNpcRecords(pluginName, npcs);
-            }
-
-            var loadOrderIndices = npcs.Values
-                .Select(x => x.BasePluginName)
-                .Distinct()
-                .Select(pluginName => new
-                {
-                    PluginName = pluginName,
-                    LoadOrderIndex = editor.GetLoadOrderIndex(pluginName)
-                })
-                .ToDictionary(x => x.PluginName, x => x.LoadOrderIndex);
-            return npcs.Values
-                .OrderBy(x => loadOrderIndices[x.BasePluginName])
-                .ThenBy(x => Convert.ToInt32(x.LocalFormIdHex, 16));
         }
 
         private void Plugin_Toggled(object sender, EventArgs e)
         {
             var pluginSetting = (PluginSetting)sender;
-            graph.SetEnabled(pluginSetting.FileName, pluginSetting.ShouldLoad);
+            setup.LoadOrderGraph.SetEnabled(pluginSetting.FileName, pluginSetting.ShouldLoad);
             UpdatePluginStates();
         }
 
@@ -147,9 +98,10 @@ namespace Focus.Apps.EasyNpc.Main
             HasEnabledUnloadablePlugins = false;
             foreach (var plugin in Plugins)
             {
-                plugin.CanLoad = graph.CanLoad(plugin.FileName);
+                plugin.CanLoad = setup.LoadOrderGraph.CanLoad(plugin.FileName);
                 plugin.MissingMasters = !plugin.CanLoad ?
-                    graph.GetMissingMasters(plugin.FileName).ToList().AsReadOnly() : Enumerable.Empty<string>();
+                    setup.LoadOrderGraph.GetMissingMasters(plugin.FileName).ToList().AsReadOnly() :
+                    Enumerable.Empty<string>();
                 if (plugin.ShouldLoad && !plugin.CanLoad)
                     HasEnabledUnloadablePlugins = true;
             }
@@ -183,27 +135,6 @@ namespace Focus.Apps.EasyNpc.Main
         protected void OnShouldLoadChanged()
         {
             Toggled?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    class NpcInfo<TKey> : IMutableNpc<TKey>
-        where TKey : struct
-    {
-        public string BasePluginName { get; set; }
-        public RecordKey DefaultRace { get; set; }
-        public string EditorId { get; set; }
-        public TKey Key { get; set; }
-        public bool IsFemale { get; set; }
-        public bool IsSupported { get; set; }
-        public string LocalFormIdHex { get; set; }
-        public string Name { get; set; }
-        public List<NpcOverride<TKey>> Overrides { get; set; } = new List<NpcOverride<TKey>>();
-
-        IReadOnlyList<NpcOverride<TKey>> INpc<TKey>.Overrides => Overrides.AsReadOnly();
-
-        public void AddOverride(NpcOverride<TKey> overrideInfo)
-        {
-            Overrides.Add(overrideInfo);
         }
     }
 }

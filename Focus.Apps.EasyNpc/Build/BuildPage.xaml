@@ -1,12 +1,12 @@
 ﻿<ui:Page x:Class="Focus.Apps.EasyNpc.Build.BuildPage"
          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:bu="clr-namespace:Focus.Apps.EasyNpc.Build.UI"
          xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
-         xmlns:fa5="http://schemas.fontawesome.com/icons/"
-         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-         xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+         xmlns:fa5="http://schemas.fontawesome.com/icons/"
          xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:ui="http://schemas.modernwpf.com/2019"
          KeepAlive="True"
          mc:Ignorable="d" 
@@ -112,7 +112,7 @@
                                         </ui:SimpleStackPanel>
                                     </GroupBox.Header>
                                     <ui:ScrollViewerEx>
-                                        <build:BuildWarningHelp DataContext="{Binding SelectedWarning}"/>
+                                        <bu:BuildWarningHelp DataContext="{Binding SelectedWarning}"/>
                                     </ui:ScrollViewerEx>
                                 </GroupBox>
                             </Border>
@@ -128,9 +128,9 @@
                 </GroupBox>
             </Border>
             <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Visible">
-                <GroupBox Header="Ready to build">
-                    <ui:SimpleStackPanel>
-                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}">
+                <GroupBox x:Name="BuildConfirmationGroup" Header="Ready to build" Padding="0">
+                    <Grid>
+                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
                             <TextBlock Style="{StaticResource FirstParagraphStyle}">All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
                             <TextBlock Text="Mod Name" Style="{StaticResource LoweredFormLabelStyle}"/>
                             <TextBox Text="{Binding OutputModName, UpdateSourceTrigger=PropertyChanged}"/>
@@ -148,7 +148,9 @@
                             </TextBlock>
                             <TextBlock Text="Master Dependencies" Style="{StaticResource LoweredFormLabelStyle}"/>
                             <ListBox x:Name="MasterDependenciesListBox"
+                                     MaxHeight="{Binding ElementName=BuildConfirmationGroup, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter=x-365}"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                                      ItemsSource="{Binding PreBuildReport.Masters}"
                                      MouseDoubleClick="MasterDependenciesListBox_MouseDoubleClick">
                                 <ListBox.Resources>
@@ -204,13 +206,13 @@
                                 <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
                             </ui:SimpleStackPanel>
                         </ui:SimpleStackPanel>
-                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
-                            <TextBlock Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
-                            <local:ProgressViewer DataContext="{Binding Progress.MergedPlugin}" Margin="0,8,0,0"/>
-                            <local:ProgressViewer DataContext="{Binding Progress.MergedFolder}" Margin="0,8,0,0"/>
-                            <local:ProgressViewer DataContext="{Binding Progress.Archive}" Margin="0,8,0,0"/>
-                        </ui:SimpleStackPanel>
-                    </ui:SimpleStackPanel>
+                        <DockPanel Height="{Binding ElementName=BuildConfirmationGroup, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter=x-50}"
+                                   Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}"
+                                   d:Visibility="Visible">
+                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
+                            <bu:BuildProgress DataContext="{Binding Progress}" Margin="0,8,0,0"/>
+                        </DockPanel>
+                    </Grid>
                 </GroupBox>
             </Border>
             <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
@@ -243,7 +245,7 @@
                                     Import the mod. After closing <Run Text="{StaticResource AppName}"/>, click the Refresh button in Mod Organizer, or press F5 to refresh your mods.
                                     The new mod should appear at the bottom of the list.
                                 </TextBlock>
-                                <TextBlock TextWrapping="Wrap" Visibility="{Binding Source={StaticResource LaunchedByModOrganizer}, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
+                                <TextBlock TextWrapping="Wrap" Visibility="{Binding Source={StaticResource LaunchedByVortex}, Converter={StaticResource BoolToVisibility}}" d:Visibility="Visible">
                                     Import the mod. After closing <Run Text="{StaticResource AppName}"/>, it should automatically appear in your mod list. If it does not, you may need
                                     to restart Vortex and acknowledge a warning about the mod staging folder being modified.
                                 </TextBlock>

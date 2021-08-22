@@ -8,7 +8,7 @@ namespace Focus.Apps.EasyNpc
 {
     static class UIExtensions
     {
-        public static T FindVisualChildByName<T>(this DependencyObject parent, string name)
+        public static T? FindVisualChildByName<T>(this DependencyObject parent, string name)
             where T : DependencyObject
         {
             return FindVisualChildrenByName<T>(parent, name).FirstOrDefault();
@@ -26,6 +26,23 @@ namespace Focus.Apps.EasyNpc
                 else
                 {
                     foreach (var innerChild in FindVisualChildrenByName<T>(child, name))
+                        yield return innerChild;
+                }
+            }
+        }
+
+        public static IEnumerable<T> FindVisualChildrenByType<T>(this DependencyObject parent)
+            where T : DependencyObject
+        {
+            var childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (var i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T match)
+                    yield return match;
+                else
+                {
+                    foreach (var innerChild in FindVisualChildrenByType<T>(child))
                         yield return innerChild;
                 }
             }

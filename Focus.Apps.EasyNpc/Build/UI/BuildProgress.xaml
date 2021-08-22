@@ -1,0 +1,124 @@
+﻿<UserControl x:Class="Focus.Apps.EasyNpc.Build.UI.BuildProgress"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:bp="clr-namespace:Focus.Apps.EasyNpc.Build.Pipeline"
+             xmlns:bu="clr-namespace:Focus.Apps.EasyNpc.Build.UI"
+             xmlns:fa="http://schemas.fontawesome.com/icons/"
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=bu:BuildProgressViewModel`1}"
+             d:DesignHeight="450" d:DesignWidth="800" Loaded="UserControl_Loaded">
+    <ui:ScrollViewerEx>
+        <ui:SimpleStackPanel>
+            <Border Margin="0,0,-16,0">
+                <DataGrid x:Name="TaskGrid"
+                          AutoGenerateColumns="False"
+                          BorderBrush="Transparent"
+                          BorderThickness="0"
+                          HeadersVisibility="None"
+                          IsReadOnly="True"
+                          ItemsSource="{Binding Tasks}"
+                          local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
+                          PreviewMouseWheel="TaskGrid_PreviewMouseWheel"
+                          d:ItemsSource="{d:DesignInstance bu:BuildProgressSampleData, IsDesignTimeCreatable=True}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Cancelled}">
+                                    <Setter Property="Background" Value="{StaticResource TaskProgressCancelledBackgroundBrush}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Completed}">
+                                    <Setter Property="Background" Value="{StaticResource TaskProgressCompletedBackgroundBrush}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Failed}">
+                                    <Setter Property="Background" Value="{StaticResource TaskProgressFailedBackgroundBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Status" Width="32">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <fa:SvgAwesome Height="20" Width="20">
+                                        <fa:SvgAwesome.Style>
+                                            <Style TargetType="fa:SvgAwesome">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Cancelled}">
+                                                        <Setter Property="Icon" Value="Regular_StopCircle"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Completed}">
+                                                        <Setter Property="Icon" Value="Regular_CheckCircle"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Failed}">
+                                                        <Setter Property="Icon" Value="Regular_TimesCircle"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.NotStarted}">
+                                                        <Setter Property="Icon" Value="Regular_Clock"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Paused}">
+                                                        <Setter Property="Icon" Value="Regular_PauseCircle"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static bp:BuildTaskState.Running}">
+                                                        <Setter Property="Icon" Value="Regular_PlayCircle"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </fa:SvgAwesome.Style>
+                                    </fa:SvgAwesome>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Task" CellStyle="{StaticResource DataGridCellTrimmed}" Binding="{Binding Name}" Width="200"/>
+                        <DataGridTextColumn Header="Item" Binding="{Binding ItemName}" Width="*"/>
+                        <DataGridTemplateColumn Header="Progress" Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:ProgressBar IsIndeterminate="{Binding IsIndeterminate, Mode=OneWay}"
+                                                    Margin="0,0,8,0"
+                                                    Minimum="{Binding MinProgress, Mode=OneWay}"
+                                                    Maximum="{Binding MaxProgress, Mode=OneWay}"
+                                                    Value="{Binding CurrentProgress, Mode=OneWay}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+            <ui:SimpleStackPanel x:Name="WaitingPanel" Margin="8" Visibility="{Binding HasRemainingTasks, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Style="{StaticResource SmallHeaderStyle}" FontSize="14">Still waiting on:</TextBlock>
+                <ItemsControl ItemsSource="{Binding RemainingTaskNames}">
+                    <d:ItemsControl.ItemsSource>
+                        <x:Array Type="{x:Type sys:String}">
+                            <sys:String>Task 1</sys:String>
+                            <sys:String>Task 2</sys:String>
+                            <sys:String>Task 3</sys:String>
+                        </x:Array>
+                    </d:ItemsControl.ItemsSource>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.Template>
+                        <ControlTemplate TargetType="ItemsControl">
+                            <ItemsPresenter/>
+                        </ControlTemplate>
+                    </ItemsControl.Template>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,4,8,0">
+                                <fa:SvgAwesome Icon="Regular_Clock" Height="14"/>
+                                <TextBlock Text="{Binding}" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                            </ui:SimpleStackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ui:SimpleStackPanel>
+        </ui:SimpleStackPanel>
+    </ui:ScrollViewerEx>
+</UserControl>
