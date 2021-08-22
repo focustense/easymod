@@ -15,26 +15,38 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
         <DataTemplate x:Key="ModDirectoryNotFound">
-            <ui:SimpleStackPanel>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run FontWeight="Medium">What this means:</Run>
-                    <Run>You haven't specified a mod directory in your settings, or the directory you've specified doesn't exist.</Run>
+            <ui:SimpleStackPanel x:Uid="ModDirectoryNotFound.Layout">
+                <TextBlock x:Uid="ModDirectoryNotFound.Description" Style="{StaticResource HelpTextParagraph}">
+                    <Run x:Uid="ModDirectoryNotFound.Description.Heading" FontWeight="Medium">What this means:</Run>
+                    <Run x:Uid="ModDirectoryNotFound.Description.1">You haven't specified a mod directory in your settings, or the directory you've specified doesn't exist.</Run>
                 </TextBlock>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run FontWeight="Medium">Why this matters:</Run>
-                    <Run>Almost all NPC appearance mods have two parts to them: the plugin (.esm/.esp) and the generated face meshes, AKA facegen data. If you're using a mod manager with mod isolation, such as</Run>
-                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://www.modorganizer.org/">Mod Organizer</Hyperlink>
-                    <Run>(recommended), then we need to know where your installed mods are located, so we can keep the plugins and facegens in sync. If you</Run>
-                    <Run FontStyle="Italic">don't</Run>
-                    <Run>use one of these, then you are probably letting different mods irrecoverably overwrite each other's facegen data, which is extremely fragile and almost always causes in-game bugs.</Run>
+                <TextBlock x:Uid="ModDirectoryNotFound.Relevance" Style="{StaticResource HelpTextParagraph}">
+                    <Run x:Uid="ModDirectoryNotFound.Relevance.Heading" FontWeight="Medium">Why this matters:</Run>
+                    <Run x:Uid="ModDirectoryNotFound.Relevance.1">
+                        Almost all NPC appearance mods have two parts to them: the plugin (.esm/.esp) and the generated face meshes, AKA facegen data.
+                        If you're using a mod manager with mod isolation, such as
+                    </Run>
+                    <Hyperlink x:Uid="ModDirectoryNotFound.Relevance.2" local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://www.modorganizer.org/">Mod Organizer</Hyperlink>
+                    <Run x:Uid="ModDirectoryNotFound.Relevance.3">
+                        (recommended), then we need to know where your installed mods are located, so we can keep the plugins and facegens in sync. If you
+                    </Run>
+                    <Run x:Uid="ModDirectoryNotFound.Relevance.4" FontStyle="Italic">don't</Run>
+                    <Run x:Uid="ModDirectoryNotFound.Relevance.5">
+                        use one of these, then you are probably letting different mods irrecoverably overwrite each other's facegen data, which is extremely fragile and almost always
+                        causes in-game bugs.
+                    </Run>
                 </TextBlock>
-                <TextBlock Style="{StaticResource HelpTextParagraph}">
-                    <Run FontWeight="Medium">How to fix it:</Run>
-                    <Run>Click on the</Run>
-                    <Viewbox MaxHeight="12" MaxWidth="12"><ui:SymbolIcon Foreground="{StaticResource HelpIconForegroundBrush}" Symbol="Setting"/></Viewbox><Run>Settings button</Run>
-                    <Run>in the top navigation bar and choose a valid</Run>
-                    <Run FontStyle="Italic">Mod Root Directory</Run>.
-                    <Run>If you aren't using a supported mod manager: create a new folder anywhere on disk, and manually extract your mods into it, giving each mod its own subdirectory.</Run>
+                <TextBlock x:Uid="ModDirectoryNotFound.Resolution" Style="{StaticResource HelpTextParagraph}">
+                    <Run x:Uid="ModDirectoryNotFound.Resolution.Heading" FontWeight="Medium">How to fix it:</Run>
+                    <Run x:Uid="ModDirectoryNotFound.Resolution.1">Click on the</Run>
+                    <Viewbox x:Uid="ModDirectoryNotFound.Resolution.2" MaxHeight="12" MaxWidth="12">
+                        <ui:SymbolIcon Foreground="{StaticResource HelpIconForegroundBrush}" Symbol="Setting"/>
+                    </Viewbox><Run x:Uid="ModDirectoryNotFound.Resolution.3">Settings button</Run>
+                    <Run x:Uid="ModDirectoryNotFound.Resolution.4">in the top navigation bar and choose a valid</Run>
+                    <Run x:Uid="ModDirectoryNotFound.Resolution.5" FontStyle="Italic">Mod Root Directory</Run>.
+                    <Run x:Uid="ModDirectoryNotFound.Resolution.6">
+                        If you aren't using a supported mod manager: create a new folder anywhere on disk, and manually extract your mods into it, giving each mod its own subdirectory.
+                    </Run>
                 </TextBlock>
             </ui:SimpleStackPanel>
         </DataTemplate>
