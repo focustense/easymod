@@ -65,9 +65,11 @@ namespace Focus.Apps.EasyNpc.Profiles
                     // actually looks like an override - i.e. if the chosen mod exists and does not include any of the
                     // plugins in the record chain.
                     var isFaceModInvalid = false;
-                    if (newestEvents.TryGetValue((npcKey, NpcProfileField.FaceMod), out var faceModEvent))
+                    if (newestEvents.TryGetValue((npcKey, NpcProfileField.FaceMod), out var faceModEvent) &&
+                        !string.IsNullOrEmpty(faceModEvent.NewValue))
                     {
-                        var faceMod = modRepository.GetByName(faceModEvent.NewValue);
+                        var faceMod = ModLocatorKey.TryParse(faceModEvent.NewValue, out var key) ?
+                            modRepository.FindByKey(key) : modRepository.GetByName(faceModEvent.NewValue);
                         var isFaceGenOverride =
                             faceMod is not null &&
                             !npc.Options.Any(x => modRepository.ContainsFile(faceMod, x.PluginName, false));

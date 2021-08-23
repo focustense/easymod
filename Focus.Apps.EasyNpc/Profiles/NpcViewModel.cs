@@ -35,6 +35,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         // Selected option refers to selection in the UI view, and has no effect on the profile itself.
         public NpcOptionViewModel? SelectedOption { get; set; }
 
+        private readonly bool isInitialized;
         private readonly Npc npc;
 
         public NpcViewModel(Npc npc, IAsyncEnumerable<Mugshot> mugshots)
@@ -44,8 +45,9 @@ namespace Focus.Apps.EasyNpc.Profiles
             Options = npc.Options.Select(x => CreateOption(x)).ToList().AsReadOnly();
             DefaultOption = GetOption(npc.DefaultOption.PluginName);
             FaceOption = GetOption(npc.FaceOption.PluginName);
-            Mugshots = mugshots.Select(x => new MugshotViewModel(x, FaceOptionIsAny(x.InstalledPlugins)))
+            Mugshots = mugshots.Select(x => new MugshotViewModel(x, IsSelectedMugshot(x.ModName, x.InstalledPlugins)))
                 .ToObservableCollection();
+            isInitialized = true;
         }
 
         public bool TrySetDefaultPlugin(string pluginName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
@@ -66,7 +68,12 @@ namespace Focus.Apps.EasyNpc.Profiles
                 // If the selected mod ends up being an override (no option/plugin), the "option" parameter will be the
                 // previously-selected option, and the FaceOption won't change. This is the expected behavior. There is
                 // no guarantee that the output option always corresponds to the mod name.
-                FaceOption = option = GetOption(npc.FaceOption.PluginName);
+                option = GetOption(npc.FaceOption.PluginName);
+                if (FaceOption != option)
+                    FaceOption = option;
+                else
+                    // Change handler won't run if they're the same, need to explicitly update mugshot states.
+                    UpdateMugshotAssignments();
                 FaceModNames = npc.GetFaceModNames().ToHashSet(StringComparer.CurrentCultureIgnoreCase);
             }
             else
@@ -106,6 +113,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         protected void OnSelectedMugshotChanged()
         {
+            if (!isInitialized)
+                return;
             foreach (var mugshot in Mugshots)
                 mugshot.IsHighlighted = false;
             UpdateHighlights(SelectedMugshot?.InstalledPlugins ?? Enumerable.Empty<string>());
@@ -113,6 +122,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         protected void OnSelectedOptionChanged(object before, object after)
         {
+            if (!isInitialized)
+                return;
             foreach (var option in Options)
                 option.IsHighlighted = false;
             if (before is NpcOptionViewModel previousOption)
@@ -129,13 +140,6 @@ namespace Focus.Apps.EasyNpc.Profiles
             return optionViewModel;
         }
 
-        private bool FaceOptionIsAny(IEnumerable<string> pluginNames)
-        {
-            return
-                FaceOption is not null &&
-                pluginNames.Contains(FaceOption.PluginName, StringComparer.CurrentCultureIgnoreCase);
-        }
-
         private NpcOptionViewModel GetOption(string pluginName)
         {
             // The way in which this method is used should always succeed - i.e. we get the plugin name from the model
@@ -143,9 +147,18 @@ namespace Focus.Apps.EasyNpc.Profiles
             return Options.Single(x => x.PluginName == pluginName);
         }
 
+        private bool IsSelectedMugshot(string modName, IEnumerable<string> installedPlugins)
+        {
+            if (npc.FaceGenOverride is not null)
+                return npc.FaceGenOverride.IncludesName(modName);
+            return
+                FaceOption is not null &&
+                installedPlugins.Contains(FaceOption.PluginName, StringComparer.CurrentCultureIgnoreCase);
+        }
+
         private void Option_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (sender is not NpcOptionViewModel option)
+            if (!isInitialized || sender is not NpcOptionViewModel option)
                 return;
             switch (e.PropertyName)
             {
@@ -182,7 +195,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         private void UpdateMugshotAssignments()
         {
             foreach (var mugshot in Mugshots)
-                mugshot.IsSelectedSource = FaceOptionIsAny(mugshot.InstalledPlugins);
+                mugshot.IsSelectedSource = IsSelectedMugshot(mugshot.ModName, mugshot.InstalledPlugins);
         }
     }
 }

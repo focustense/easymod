@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Focus.ModManagers
@@ -6,6 +7,8 @@ namespace Focus.ModManagers
     public class ModInfo : IModLocatorKey
     {
         public static readonly IEqualityComparer<ModInfo> KeyComparer = new ModInfoByKeyComparer();
+
+        public IEnumerable<string> AllNames => Components.Select(x => x.Name).Prepend(Name);
 
         public IReadOnlyList<ModComponentInfo> Components { get; init; }
         public string Id { get; init; }
@@ -16,6 +19,11 @@ namespace Focus.ModManagers
             Id = id;
             Name = name;
             Components = (components ?? Enumerable.Empty<ModComponentInfo>()).ToList().AsReadOnly();
+        }
+
+        public bool IncludesName(string name)
+        {
+            return AllNames.Any(x => x.Equals(name, StringComparison.CurrentCultureIgnoreCase));
         }
     }
 
