@@ -104,13 +104,18 @@ namespace Focus.Apps.EasyNpc.Profiles
             return FaceOption.PluginName.Equals(pluginName, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        public ChangeResult SetDefaultOption(string pluginName)
+        public ChangeResult SetDefaultOption(string pluginName, bool asFallback = false)
         {
             var option = FindOption(pluginName);
-            if (option is not null && option != DefaultOption)
+            if (option is not null && (option != DefaultOption || !string.IsNullOrEmpty(MissingDefaultPluginName)))
             {
-                LogProfileEvent(NpcProfileField.DefaultPlugin, DefaultOption.PluginName, option.PluginName);
+                var oldPluginName = !string.IsNullOrEmpty(MissingDefaultPluginName) ?
+                    MissingDefaultPluginName : DefaultOption.PluginName;
+                if (!asFallback)
+                    LogProfileEvent(NpcProfileField.DefaultPlugin, oldPluginName, option.PluginName);
                 DefaultOption = option;
+                if (!asFallback)
+                    MissingDefaultPluginName = null;
                 return ChangeResult.OK;
             }
             else if (option is null)
@@ -130,13 +135,18 @@ namespace Focus.Apps.EasyNpc.Profiles
             return bestOption is not null ? SetFaceOption(bestOption.PluginName) : SetFaceGenOverride(mod);
         }
 
-        public ChangeResult SetFaceOption(string pluginName, bool keepFaceGenMod = false)
+        public ChangeResult SetFaceOption(string pluginName, bool keepFaceGenMod = false, bool asFallback = false)
         {
             var option = FindOption(pluginName);
-            if (option is not null && option != FaceOption)
+            if (option is not null && (option != FaceOption || !string.IsNullOrEmpty(MissingFacePluginName)))
             {
-                LogProfileEvent(NpcProfileField.FacePlugin, FaceOption.PluginName, option.PluginName);
+                var oldPluginName = !string.IsNullOrEmpty(MissingFacePluginName) ?
+                    MissingFacePluginName : DefaultOption.PluginName;
+                if (!asFallback)
+                    LogProfileEvent(NpcProfileField.FacePlugin, oldPluginName, option.PluginName);
                 FaceOption = option;
+                if (!asFallback)
+                    MissingFacePluginName = null;
                 if (!keepFaceGenMod)
                     SetFaceGenOverride(null);
                 return ChangeResult.OK;

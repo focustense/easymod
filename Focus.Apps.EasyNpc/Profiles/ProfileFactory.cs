@@ -90,9 +90,9 @@ namespace Focus.Apps.EasyNpc.Profiles
                 {
                     var setupAttributes = policy.GetSetupRecommendation(failure.Npc);
                     if (failure.IsDefaultPluginInvalid)
-                        failure.Npc.SetDefaultOption(setupAttributes.DefaultPluginName);
+                        failure.Npc.SetDefaultOption(setupAttributes.DefaultPluginName, asFallback: true);
                     if (failure.IsFacePluginInvalid)
-                        failure.Npc.SetFaceOption(setupAttributes.FacePluginName);
+                        failure.Npc.SetFaceOption(setupAttributes.FacePluginName, asFallback: true);
                     // Invalid face mod can be effectively ignored. If face plugin was invalid, then face mod got reset
                     // along with it, and if face plugin was NOT invalid, then doing nothing means reverting to default
                     // mod matching based on the plugin and not applying any facegen override.
