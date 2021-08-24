@@ -204,7 +204,7 @@ namespace Focus.ModManagers
                     x.ArchiveName,
                     Component = x.BucketName is not null ? bucketNamesToComponents.GetOrDefault(x.BucketName) : null,
                 })
-                .Select(x => x.Component is not null ?
+                .Select(x => x.Component is not null && (includeDisabled || x.Component.IsEnabled) ?
                     new ModSearchResult(x.Component, relativePath, x.ArchiveName) : null)
                 .NotNull();
             return mainResults.Concat(archiveResults);
