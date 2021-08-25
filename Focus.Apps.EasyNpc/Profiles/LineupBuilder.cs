@@ -18,7 +18,9 @@ namespace Focus.Apps.EasyNpc.Profiles
 
     public class LineupBuilder : ILineupBuilder, IDisposable
     {
-        // Placeholder mod for tracking base game plugins.
+        // Placeholders for tracking base game content.
+        private static readonly ModComponentInfo BaseGameComponent = new(
+            new ModLocatorKey(string.Empty, "Vanilla"), string.Empty, "Vanilla", string.Empty);
         private static readonly ModInfo BaseGameMod = new(string.Empty, "Vanilla");
 
         private readonly Subject<bool> disposed = new();
@@ -66,10 +68,15 @@ namespace Focus.Apps.EasyNpc.Profiles
             var modNamesFromPlugins = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
             var pluginGroups = affectingPlugins
                 .SelectMany(p => loadOrderGraph.IsImplicit(p) ?
-                    new[] { new { Plugin = p, ModKey = BaseGameMod as IModLocatorKey } } :
-                    modRepository.SearchForFiles(p, false).Select(x => new { Plugin = p, x.ModKey }))
-                .GroupBy(x => x.ModKey, x => x.Plugin, ModLocatorKeyComparer.Default)
-                .Select(g => new { ModKey = g.Key, Plugins = g });
+                    new[] { new { Plugin = p, ModComponent = BaseGameComponent, ModKey = BaseGameMod as IModLocatorKey } } :
+                    modRepository.SearchForFiles(p, false).Select(x => new { Plugin = p, x.ModComponent, x.ModKey }))
+                .GroupBy(x => x.ModKey, ModLocatorKeyComparer.Default)
+                .Select(g => new
+                {
+                    ModKey = g.Key,
+                    Plugins = g.Select(x => x.Plugin),
+                    Components = g.Select(x => x.ModComponent)
+                });
             foreach (var pluginGroup in pluginGroups)
             {
                 var mugshotFile = GetMugshotFile(mugshotFiles, pluginGroup.ModKey, npc.IsFemale, modSynonyms);
@@ -77,22 +84,23 @@ namespace Focus.Apps.EasyNpc.Profiles
                     includedMugshotModNames.Add(mugshotFile.TargetModName);
                 if (!pluginGroup.ModKey.IsEmpty() && pluginGroup.ModKey != BaseGameMod)
                     modNamesFromPlugins.Add(pluginGroup.ModKey.Name);
-                yield return CreateMugshotModel(mugshotFile, pluginGroup.ModKey, pluginGroup.Plugins);
+                yield return CreateMugshotModel(
+                    mugshotFile, pluginGroup.ModKey, pluginGroup.Components, pluginGroup.Plugins);
             }
 
             var faceGenPath = FileStructure.GetFaceMeshFileName(npc.BasePluginName, npc.LocalFormIdHex);
-            var facegenMods = modRepository.SearchForFiles(faceGenPath, false)
-                .Select(x => x.ModKey)
+            var facegenGroups = modRepository.SearchForFiles(faceGenPath, true)
+                .GroupBy(x => x.ModKey, x => x.ModComponent)
                 // We shouldn't need to check for synonyms or do anything with IDs here, because the included mugshot
                 // mod names originally come from the mod repo, and so do the facegen mods here. Their names can't be
                 // different unless the repo itself is broken, or incorrectly mocked in a test.
-                .Where(x => !modNamesFromPlugins.Contains(x.Name));
-            foreach (var facegenMod in facegenMods)
+                .Where(x => !modNamesFromPlugins.Contains(x.Key.Name));
+            foreach (var facegenGroup in facegenGroups)
             {
-                var mugshotFile = GetMugshotFile(mugshotFiles, facegenMod, npc.IsFemale, modSynonyms);
+                var mugshotFile = GetMugshotFile(mugshotFiles, facegenGroup.Key, npc.IsFemale, modSynonyms);
                 if (!string.IsNullOrEmpty(mugshotFile.TargetModName))
                     includedMugshotModNames.Add(mugshotFile.TargetModName);
-                yield return CreateMugshotModel(mugshotFile, facegenMod);
+                yield return CreateMugshotModel(mugshotFile, facegenGroup.Key, facegenGroup);
             }
 
             var extraMugshotFiles = mugshotFiles
@@ -117,11 +125,13 @@ namespace Focus.Apps.EasyNpc.Profiles
         }
 
         private Mugshot CreateMugshotModel(
-            MugshotFile file, IModLocatorKey? modKey, IEnumerable<string>? plugins = null)
+            MugshotFile file, IModLocatorKey? modKey, IEnumerable<ModComponentInfo>? components = null,
+            IEnumerable<string>? plugins = null)
         {
             var mod = ResolveMod(modKey);
             return new Mugshot
             {
+                InstalledComponents = (components ?? Enumerable.Empty<ModComponentInfo>()).ToList().AsReadOnly(),
                 InstalledMod = mod,
                 InstalledPlugins = (plugins ?? Enumerable.Empty<string>()).ToList().AsReadOnly(),
                 IsPlaceholder = file.IsPlaceholder,

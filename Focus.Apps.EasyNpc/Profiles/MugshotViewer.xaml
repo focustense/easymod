@@ -14,6 +14,7 @@
                                 <Run FontWeight="SemiBold" Text="{Binding Path=ModName, Mode=OneWay}"/>
             </TextBlock>
             <TextBlock Foreground="Red" Text="Mod not installed" Visibility="{Binding IsModInstalled, Converter={StaticResource InvBoolToVisibility}}"/>
+            <TextBlock Foreground="Red" Text="Mod disabled" Visibility="{Binding IsModDisabled, Converter={StaticResource BoolToVisibility}}"/>
             <ItemsControl ItemsSource="{Binding Path=InstalledPlugins}" Visibility="{Binding IsPluginLoaded, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>

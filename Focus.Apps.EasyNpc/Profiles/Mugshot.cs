@@ -5,6 +5,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public class Mugshot
     {
+        public IReadOnlyList<ModComponentInfo> InstalledComponents { get; init; } =
+            new List<ModComponentInfo>().AsReadOnly();
         public ModInfo? InstalledMod { get; init; }
         public IReadOnlyList<string> InstalledPlugins { get; init; } = new List<string>().AsReadOnly();
         public bool IsPlaceholder { get; init; }

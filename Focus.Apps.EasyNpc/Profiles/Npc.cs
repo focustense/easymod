@@ -15,6 +15,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string BasePluginName => records.Key.BasePluginName;
         public string DescriptiveLabel => $"{EditorId} '{Name}' ({LocalFormIdHex}:{BasePluginName})";
         public string EditorId => records.Master.EditorId;
+        public bool HasAvailableFaceCustomizations =>
+            Options.Any(x => x.Analysis.ComparisonToBase?.ModifiesFace == true) || HasAvailableModdedFaceGens;
+        public bool HasAvailableModdedFaceGens => hasAvailableModdedFaceGens.Value;
         public string LocalFormIdHex => records.Key.LocalFormIdHex;
         public string Name => records.Master.Name;
         public bool SupportsFaceGen => records.Master.CanUseFaceGen;
@@ -30,6 +33,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string? MissingFacePluginName { get; private set; }
         public IReadOnlyList<NpcOption> Options { get; private init; }
 
+        private readonly Lazy<bool> hasAvailableModdedFaceGens;
         private readonly IModRepository modRepository;
         private readonly IProfilePolicy policy;
         private readonly IProfileEventLog profileEventLog;
@@ -43,6 +47,18 @@ namespace Focus.Apps.EasyNpc.Profiles
             this.policy = policy;
             this.profileEventLog = profileEventLog;
             this.records = records;
+
+            hasAvailableModdedFaceGens = new(() =>
+            {
+                var masterComponentNames = modRepository.SearchForFiles(records.Master.BasePluginName, false)
+                    .Select(x => x.ModComponent.Name)
+                    .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+                var faceGenPath = FileStructure.GetFaceMeshFileName(this);
+                // Vanilla BSAs aren't in the mod directory, so all results below are actually modded.
+                return modRepository.SearchForFiles(faceGenPath, true)
+                    .Where(x => !masterComponentNames.Contains(x.ModComponent.Name))
+                    .Any();
+            }, true);
 
             Options = records
                 .Select(x => new NpcOption(x, baseGamePluginNames.Contains(x.PluginName)))
