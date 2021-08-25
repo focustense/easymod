@@ -120,7 +120,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 // TODO: Also check for invalid facegen override plugin?
                 filteredNpcs = filteredNpcs.Where(x => x.HasMissingPlugins);
             filteredNpcs = filteredNpcs
-                .Where(x => x.GetOverrideCount(!Filters.NonDlc) >= minOverrideCount);
+                .Where(x => x.GetOverrideCount(!Filters.NonDlc) >= minOverrideCount || x.HasAvailableModdedFaceGens);
             filteredNpcs = filteredNpcs
                 // This is only the default ordering; grid ordering is independent.
                 .OrderBy(x => pluginOrder.GetOrDefault(x.BasePluginName))

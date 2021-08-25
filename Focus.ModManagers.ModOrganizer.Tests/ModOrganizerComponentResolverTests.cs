@@ -66,7 +66,7 @@ namespace Focus.ModManagers.ModOrganizer.Tests
 
             Assert.Equal("12345", component.Id);
             Assert.Equal("foo", component.Name);
-            Assert.Equal(new ModLocatorKey("318", ""), component.ModKey);
+            Assert.Equal(new ModLocatorKey("318", "foo"), component.ModKey);
             Assert.Equal(@$"{RootPath}\foo", component.Path);
             Assert.True(component.IsEnabled);
         }
