@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
@@ -10,6 +11,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public IReadOnlyList<string> InstalledPlugins => mugshot.InstalledPlugins;
         public bool IsFocused { get; set; }
         public bool IsHighlighted { get; set; }
+        public bool IsModDisabled => IsModInstalled && !mugshot.InstalledComponents.Any(x => x.IsEnabled);
         public bool IsModInstalled => mugshot.InstalledMod is not null;
         public bool IsPluginLoaded => mugshot.InstalledPlugins.Count > 0;
         public bool IsSelectedSource { get; set; }

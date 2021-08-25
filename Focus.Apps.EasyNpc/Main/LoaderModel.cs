@@ -50,8 +50,8 @@ namespace Focus.Apps.EasyNpc.Main
             log.Information("Load order confirmed");
             var modRepositoryTask = modRepositoryConfigureTask.ContinueWith(_ => modRepository as IModRepository);
             var loadOrderAnalysisTask = AnalyzeLoadOrder();
-            var profileTask = loadOrderAnalysisTask
-                .ContinueWith(t => profileFactory.RestoreSaved(t.Result, out _, out _));
+            var profileTask = Task.WhenAll(loadOrderAnalysisTask, modRepositoryTask)
+                .ContinueWith(t => profileFactory.RestoreSaved(loadOrderAnalysisTask.Result, out _, out _));
 
             return new LoaderTasks
             {

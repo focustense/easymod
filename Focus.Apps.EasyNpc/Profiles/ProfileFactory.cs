@@ -1,5 +1,7 @@
 ﻿using Focus.Analysis.Execution;
+using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
+using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
@@ -65,9 +67,11 @@ namespace Focus.Apps.EasyNpc.Profiles
                     // actually looks like an override - i.e. if the chosen mod exists and does not include any of the
                     // plugins in the record chain.
                     var isFaceModInvalid = false;
-                    if (newestEvents.TryGetValue((npcKey, NpcProfileField.FaceMod), out var faceModEvent))
+                    if (newestEvents.TryGetValue((npcKey, NpcProfileField.FaceMod), out var faceModEvent) &&
+                        !string.IsNullOrEmpty(faceModEvent.NewValue))
                     {
-                        var faceMod = modRepository.GetByName(faceModEvent.NewValue);
+                        var faceMod = ModLocatorKey.TryParse(faceModEvent.NewValue, out var key) ?
+                            modRepository.FindByKey(key) : modRepository.GetByName(faceModEvent.NewValue);
                         var isFaceGenOverride =
                             faceMod is not null &&
                             !npc.Options.Any(x => modRepository.ContainsFile(faceMod, x.PluginName, false));
@@ -90,9 +94,9 @@ namespace Focus.Apps.EasyNpc.Profiles
                 {
                     var setupAttributes = policy.GetSetupRecommendation(failure.Npc);
                     if (failure.IsDefaultPluginInvalid)
-                        failure.Npc.SetDefaultOption(setupAttributes.DefaultPluginName);
+                        failure.Npc.SetDefaultOption(setupAttributes.DefaultPluginName, asFallback: true);
                     if (failure.IsFacePluginInvalid)
-                        failure.Npc.SetFaceOption(setupAttributes.FacePluginName);
+                        failure.Npc.SetFaceOption(setupAttributes.FacePluginName, asFallback: true);
                     // Invalid face mod can be effectively ignored. If face plugin was invalid, then face mod got reset
                     // along with it, and if face plugin was NOT invalid, then doing nothing means reverting to default
                     // mod matching based on the plugin and not applying any facegen override.
@@ -119,15 +123,15 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .ExtractChains<NpcAnalysis>(RecordType.Npc)
                 .AsParallel()
                 .Where(x =>
-                    x.Master.CanUseFaceGen && !x.Master.IsChild && !x.Master.IsAudioTemplate && x.Count > 1 &&
+                    x.Master.CanUseFaceGen && !x.Master.IsChild && !x.Master.IsAudioTemplate &&
                     // Template NPCs that are based on another NPC should be included but treated as "read only".
                     // If ALL POSSIBILITIES point only to Leveled NPC or unknown/invalid (not standard NPC) targets,
                     // then there is effectively nothing useful we can do with it and it should be excluded entirely.
                     x.Any(r =>
                         r.Analysis.TemplateInfo is null ||
-                        r.Analysis.TemplateInfo.TargetType == NpcTemplateTargetType.Npc) &&
-                    x.Any(r => r.Analysis.ComparisonToBase?.ModifiesFace == true))
+                        r.Analysis.TemplateInfo.TargetType == NpcTemplateTargetType.Npc))
                 .Select(x => new Npc(x, baseGamePluginNames, modRepository, profileEventLog, policy))
+                .Where(x => x.HasAvailableFaceCustomizations)
                 .Tap(defaultAction);
             return new Profile(npcs);
         }

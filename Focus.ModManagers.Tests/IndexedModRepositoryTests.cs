@@ -25,11 +25,12 @@ namespace Focus.ModManagers.Tests
             modIndex.AddFiles("01_foo", "common/c1", "foo1", "foo2");
             modIndex.AddFiles("01_bar", "bar1", "bar2", "bar.bsa");
             modIndex.AddFiles("02_baz", "common/c1", "baz1", "baz2");
-            modIndex.AddFiles("02_quux_disabled", "common/c1", "quux1", "quux2");
+            modIndex.AddFiles("02_quux_disabled", "common/c1", "quux1", "quux2", "quux_archive.bsa");
             modIndex.AddFiles("03_dupe", "stuff1");
             modIndex.AddFiles("standalone", "foo2", "bar2");
             archiveProvider = new FakeArchiveProvider();
             archiveProvider.AddFiles(@$"{RootPath}\01_bar\bar.bsa", "bar3", "common/c1");
+            archiveProvider.AddFiles(@$"{RootPath}\02_quux_disabled\quux_archive.bsa", "quux3");
             componentResolverMock = new Mock<IComponentResolver>();
             componentResolverMock.Setup(x => x.ResolveComponentInfo(It.IsAny<string>()))
                 .Returns((string componentName) => Task.FromResult(new ModComponentInfo(
@@ -269,6 +270,13 @@ namespace Focus.ModManagers.Tests
         }
 
         [Fact]
+        public void SearchForFiles_WhenArchivesRequested_IgnoresArchivesInDisabledComponents()
+        {
+            Assert.Empty(modRepository.SearchForFiles("quux3", true, false));
+            Assert.Empty(modRepository.SearchForFiles(GetComponents("quux_disabled"), "quux3", true, false));
+        }
+
+        [Fact]
         public void SearchForFiles_WhenDisabledRequested_YieldsMatchesInDisabledComponents()
         {
             Assert.Collection(
@@ -283,6 +291,17 @@ namespace Focus.ModManagers.Tests
                 modRepository.SearchForFiles(GetComponents("foo", "quux_disabled"), "common/c1", false, true),
                 x => AssertSearchResult(x, "modname1", "foo"),
                 x => AssertSearchResult(x, "modname2", "quux_disabled"));
+        }
+
+        [Fact]
+        public void SearchForFiles_WhenDisabledAndArchivesRequested_YieldsMatchesInDisabledComponentArchives()
+        {
+            Assert.Collection(
+                modRepository.SearchForFiles("quux3", true, true),
+                x => AssertSearchResult(x, "modname2", "quux_disabled", "quux_archive.bsa"));
+            Assert.Collection(
+                modRepository.SearchForFiles(GetComponents("quux_disabled"), "quux3", true, true),
+                x => AssertSearchResult(x, "modname2", "quux_disabled", "quux_archive.bsa"));
         }
 
         [Fact]

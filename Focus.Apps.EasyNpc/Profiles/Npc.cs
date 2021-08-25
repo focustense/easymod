@@ -1,5 +1,6 @@
 ﻿using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
+using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string BasePluginName => records.Key.BasePluginName;
         public string DescriptiveLabel => $"{EditorId} '{Name}' ({LocalFormIdHex}:{BasePluginName})";
         public string EditorId => records.Master.EditorId;
+        public bool HasAvailableFaceCustomizations =>
+            Options.Any(x => x.Analysis.ComparisonToBase?.ModifiesFace == true) || HasAvailableModdedFaceGens;
+        public bool HasAvailableModdedFaceGens => hasAvailableModdedFaceGens.Value;
         public string LocalFormIdHex => records.Key.LocalFormIdHex;
         public string Name => records.Master.Name;
         public bool SupportsFaceGen => records.Master.CanUseFaceGen;
@@ -29,6 +33,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string? MissingFacePluginName { get; private set; }
         public IReadOnlyList<NpcOption> Options { get; private init; }
 
+        private readonly Lazy<bool> hasAvailableModdedFaceGens;
         private readonly IModRepository modRepository;
         private readonly IProfilePolicy policy;
         private readonly IProfileEventLog profileEventLog;
@@ -42,6 +47,18 @@ namespace Focus.Apps.EasyNpc.Profiles
             this.policy = policy;
             this.profileEventLog = profileEventLog;
             this.records = records;
+
+            hasAvailableModdedFaceGens = new(() =>
+            {
+                var masterComponentNames = modRepository.SearchForFiles(records.Master.BasePluginName, false)
+                    .Select(x => x.ModComponent.Name)
+                    .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+                var faceGenPath = FileStructure.GetFaceMeshFileName(this);
+                // Vanilla BSAs aren't in the mod directory, so all results below are actually modded.
+                return modRepository.SearchForFiles(faceGenPath, true)
+                    .Where(x => !masterComponentNames.Contains(x.ModComponent.Name))
+                    .Any();
+            }, true);
 
             Options = records
                 .Select(x => new NpcOption(x, baseGamePluginNames.Contains(x.PluginName)))
@@ -104,13 +121,18 @@ namespace Focus.Apps.EasyNpc.Profiles
             return FaceOption.PluginName.Equals(pluginName, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        public ChangeResult SetDefaultOption(string pluginName)
+        public ChangeResult SetDefaultOption(string pluginName, bool asFallback = false)
         {
             var option = FindOption(pluginName);
-            if (option is not null && option != DefaultOption)
+            if (option is not null && (option != DefaultOption || !string.IsNullOrEmpty(MissingDefaultPluginName)))
             {
-                LogProfileEvent(NpcProfileField.DefaultPlugin, DefaultOption.PluginName, option.PluginName);
+                var oldPluginName = !string.IsNullOrEmpty(MissingDefaultPluginName) ?
+                    MissingDefaultPluginName : DefaultOption.PluginName;
+                if (!asFallback)
+                    LogProfileEvent(NpcProfileField.DefaultPlugin, oldPluginName, option.PluginName);
                 DefaultOption = option;
+                if (!asFallback)
+                    MissingDefaultPluginName = null;
                 return ChangeResult.OK;
             }
             else if (option is null)
@@ -122,21 +144,28 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             var mod = ModLocatorKey.TryParse(modName, out var key) ?
                 modRepository.FindByKey(key) : modRepository.GetByName(modName);
-            if (mod is null)
+            if (mod is null || !modRepository.ContainsFile(mod, FileStructure.GetFaceMeshFileName(this), true))
                 return ChangeResult.Invalid;
-            if (modRepository.ContainsFile(mod, FaceOption.PluginName, false))
+            if ((FaceGenOverride is not null && FaceGenOverride.IncludesName(modName)) ||
+                modRepository.ContainsFile(mod, FaceOption.PluginName, false))
                 return ChangeResult.Redundant;
             var bestOption = Options.LastOrDefault(x => modRepository.ContainsFile(mod, x.PluginName, false));
             return bestOption is not null ? SetFaceOption(bestOption.PluginName) : SetFaceGenOverride(mod);
         }
 
-        public ChangeResult SetFaceOption(string pluginName, bool keepFaceGenMod = false)
+        public ChangeResult SetFaceOption(string pluginName, bool keepFaceGenMod = false, bool asFallback = false)
         {
             var option = FindOption(pluginName);
-            if (option is not null && option != FaceOption)
+            if (option is not null &&
+                (option != FaceOption || FaceGenOverride is not null || !string.IsNullOrEmpty(MissingFacePluginName)))
             {
-                LogProfileEvent(NpcProfileField.FacePlugin, FaceOption.PluginName, option.PluginName);
+                var oldPluginName = !string.IsNullOrEmpty(MissingFacePluginName) ?
+                    MissingFacePluginName : DefaultOption.PluginName;
+                if (!asFallback)
+                    LogProfileEvent(NpcProfileField.FacePlugin, oldPluginName, option.PluginName);
                 FaceOption = option;
+                if (!asFallback)
+                    MissingFacePluginName = null;
                 if (!keepFaceGenMod)
                     SetFaceGenOverride(null);
                 return ChangeResult.OK;
