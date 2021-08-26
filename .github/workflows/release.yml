@@ -25,7 +25,7 @@ jobs:
 
     - name: Update Version
       id: version
-      run: .\update-version -projectpath Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj -version ${{ github.event.inputs.version }}
+      run: .\update-version -projectpath Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj -version "${{ github.event.inputs.version }}"
       shell: pwsh
 
     - name: Setup .NET

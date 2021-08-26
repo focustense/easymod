@@ -7,7 +7,7 @@ $csproj.Load($absolutePath)
 
 $versionElement = $csproj.SelectSingleNode("/Project/PropertyGroup/Version")
 $newVersion = $version
-if ($newVersion -eq $null) {
+if ([string]::IsNullOrEmpty($newVersion)) {
 	$parts = $versionElement.InnerText.split(".")
 	$release = [int]$parts[2]
 	$parts[2] = [string]($release + 1)
