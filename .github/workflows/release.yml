@@ -36,7 +36,7 @@ jobs:
     - name: Restore packages
       run: dotnet restore
 
-    - name: Restore packages
+    - name: Restore tools
       run: dotnet tool restore
 
     - name: Transform templates
@@ -60,6 +60,7 @@ jobs:
         "C:\Program Files\7-Zip\7z.exe" a -t7z -mx=9
         ../out/EasyNPC-${{ steps.version.outputs.version }}.7z
         ../out/EasyNPC-${{ steps.version.outputs.version }}
+      shell: cmd
 
     - name: Create release
       uses: softprops/action-gh-release@v1
