@@ -36,6 +36,9 @@ jobs:
     - name: Restore packages
       run: dotnet restore
 
+    - name: Restore packages
+      run: dotnet tool restore
+
     - name: Transform templates
       run: dotnet t4 Focus.Apps.EasyNpc\Configuration\BuildDate.tt
 
