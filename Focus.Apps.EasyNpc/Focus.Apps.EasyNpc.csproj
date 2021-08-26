@@ -36,7 +36,6 @@
   <ItemGroup>
     <PackageReference Include="Autofac" Version="6.2.0" />
     <PackageReference Include="AutofacSerilogIntegration" Version="5.0.0" />
-    <PackageReference Include="Bindables.Fody" Version="6.3.0" />
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Fody" Version="6.5.1">
       <PrivateAssets>all</PrivateAssets>
