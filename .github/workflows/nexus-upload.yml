@@ -32,7 +32,8 @@ jobs:
         $release = Invoke-WebRequest -uri "https://api.github.com/repos/focustense/easymod/releases/tags/${tag}" | ConvertFrom-Json
         $asset = $release.assets[0] # Only expect one asset for this project
         Invoke-WebRequest $asset.browser_download_url -OutFile $asset.name
-        echo "::set-output name=filename::${asset.name}"
+        $filename = $asset.name
+        echo "::set-output name=filename::${filename}"
         echo "::set-output name=version::${version}"
       shell: pwsh
 
