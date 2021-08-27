@@ -7,6 +7,12 @@
       "commands": [
         "t4"
       ]
+    },
+    "nexusuploader": {
+      "version": "0.0.7",
+      "commands": [
+        "unex"
+      ]
     }
   }
 }

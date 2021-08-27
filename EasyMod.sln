@@ -56,6 +56,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Main", "Main", "{344D7631-3
 		update-version.ps1 = update-version.ps1
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{8DE32EE3-68FF-4968-AFED-97C4627A6C22}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{2EB2EC2D-8597-4C1B-9B1F-2A1007F13A8A}"
+	ProjectSection(SolutionItems) = preProject
+		nexus-upload.yml = nexus-upload.yml
+		.github\workflows\release.yml = .github\workflows\release.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -344,6 +352,7 @@ Global
 		{4693D2C8-B75A-429B-9A8E-0D6A616E57F9} = {DF4E8E41-91CA-4ECB-8BD6-6620FEE7CA85}
 		{98B262AF-6F61-4615-BF50-89EA32BA58A3} = {DF4E8E41-91CA-4ECB-8BD6-6620FEE7CA85}
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E} = {DF4E8E41-91CA-4ECB-8BD6-6620FEE7CA85}
+		{2EB2EC2D-8597-4C1B-9B1F-2A1007F13A8A} = {8DE32EE3-68FF-4968-AFED-97C4627A6C22}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C2E2C6EB-242E-4378-9D57-8173E5AF2551}
