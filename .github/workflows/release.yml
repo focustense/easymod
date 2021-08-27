@@ -11,10 +11,6 @@ jobs:
 
   build:
 
-    strategy:
-      matrix:
-        configuration: [Debug, Release]
-
     runs-on: windows-latest
 
     steps:
@@ -23,10 +19,21 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Update Version
+    - name: Update version
       id: version
       run: .\update-version -projectpath Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj -version "${{ github.event.inputs.version }}"
       shell: pwsh
+
+    - name: Roll changelog
+      run: .\roll-changelog -path Focus.Apps.EasyNpc\CHANGELOG.md -version "${{ steps.version.outputs.version }}"
+      shell: pwsh
+
+    - name: Read changelog
+      id: changelog
+      uses: mindsers/changelog-reader-action@v2
+      with:
+        path: .\Focus.Apps.EasyNpc\CHANGELOG.md
+        version: ${{ steps.version.outputs.version }}
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
@@ -50,10 +57,10 @@ jobs:
 
     - name: Publish to folder
       run: >
-        dotnet publish Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj --no-restore -c $env:Configuration -r win-x64
+        dotnet publish Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj --no-restore -c Release -r win-x64
         -o ../out/EasyNPC-${{ steps.version.outputs.version }} -p:PublishSingleFile=true -p:UseAppHost=true --self-contained true
       env:
-        Configuration: ${{ matrix.configuration }}
+        Configuration: Release
 
     - name: Package
       run: >
@@ -69,7 +76,15 @@ jobs:
       with:
         tag_name: v${{ steps.version.outputs.version }}
         name: Release ${{ steps.version.outputs.version }}
-        draft: true
+        body: ${{ steps.changelog.outputs.changes }}
         prerelease: true
         files: |
           ../out/EasyNPC-${{ steps.version.outputs.version }}.7z
+
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Automated version bump
+        commit_options: '--no-verify'
+        status_options: '--untracked-files=no'
+        skip_dirty_check: true
+        skip_fetch: true
