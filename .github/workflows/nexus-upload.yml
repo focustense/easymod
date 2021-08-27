@@ -32,8 +32,8 @@ jobs:
         dotnet pack
       working-directory: ./nexus-uploader/src
 
-    - name: Restore tools
-      run: dotnet tool restore
+    - name: Add uploader as tool
+      run: dotnet tool install --add-source ./nexus-uploader/nupkg unex
 
     - name: Download release asset
       id: download
