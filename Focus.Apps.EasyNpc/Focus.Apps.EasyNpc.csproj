@@ -10,7 +10,7 @@
     <AssemblyName>EasyNPC</AssemblyName>
     <AssemblyTitle>Easy NPC</AssemblyTitle>
     <Product>EasyMod</Product>
-    <Version>0.9.1</Version>
+    <Version>0.9.2</Version>
     <ApplicationIcon>EasyNPC.ico</ApplicationIcon>
   </PropertyGroup>
 
