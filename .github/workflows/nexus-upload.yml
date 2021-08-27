@@ -15,11 +15,22 @@ jobs:
     runs-on: windows-latest
     steps:
 
-    # Checkout is just for the dotnet tool restore below. Is there a more efficient way?
     - name: Checkout
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+        submodules: true
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Build custom uploader
+      run: |
+        dotnet restore
+        dotnet pack
+      working-directory: ./nexus-uploader/src
 
     - name: Restore tools
       run: dotnet tool restore
@@ -38,7 +49,7 @@ jobs:
       shell: pwsh
 
     - name: Upload
-      run: dotnet unex upload 52313 ${{ steps.download.outputs.filename }} --set-main-vortex=false
+      run: dotnet unex upload 52313 ${{ steps.download.outputs.filename }} --set-main-vortex=false --remove-download-with-manager=true
       env:
         unex_apikey: ${{ secrets.NEXUS_API_KEY }}
         unex_cookies: ${{ secrets.NEXUS_SID }}
