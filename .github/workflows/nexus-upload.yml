@@ -55,7 +55,9 @@ jobs:
       shell: pwsh
 
     - name: Upload
-      run: dotnet unex upload 52313 ${{ steps.download.outputs.filename }} --set-main-vortex=false --remove-download-with-manager=true
+      run: >
+        dotnet unex upload 52313 ${{ steps.download.outputs.filename }} -v ${{ steps.download.outputs.version }}
+        --set-main-vortex=false --remove-download-with-manager=true
       env:
         unex_apikey: ${{ secrets.NEXUS_API_KEY }}
         unex_cookies: ${{ secrets.NEXUS_SID }}
@@ -64,4 +66,3 @@ jobs:
         unex_filedescription: The main app.
         unex_game: skyrimspecialedition
         unex_previousfile: auto
-        unex_version: ${{ steps.download.outputs.version }}
