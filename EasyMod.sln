@@ -60,7 +60,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{8DE32E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{2EB2EC2D-8597-4C1B-9B1F-2A1007F13A8A}"
 	ProjectSection(SolutionItems) = preProject
-		nexus-upload.yml = nexus-upload.yml
+		.github\workflows\nexus-upload.yml = .github\workflows\nexus-upload.yml
 		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
