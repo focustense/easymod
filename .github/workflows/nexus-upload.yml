@@ -42,6 +42,7 @@ jobs:
       env:
         unex_apikey: ${{ secrets.NEXUS_API_KEY }}
         unex_cookies: ${{ secrets.NEXUS_SID }}
+        unex_debug: true,
         unex_filename: EasyNPC
         unex_filedescription: The main app.
         unex_game: skyrimspecialedition
