@@ -10,11 +10,14 @@ enum GameId {
 }
 
 interface IModAttributes {
+  fileId: string;
   modId: string;
   modName: string;
 }
 
 interface IFileInfo {
+  id: string;
+  isEnabled: boolean;
   modId: string;
 }
 
@@ -92,6 +95,7 @@ const init = (context: IExtensionContext) => {
 
   function createLookupFile(reportPath: string): string {
     const state = context.api.getState();
+    const profile = state.persistent.profiles[state.settings.profiles.activeProfileId];
     const mods = state.persistent.mods[GameId.SSE] || {};
     const data: IBootstrapFile = {
       files: {},
@@ -100,11 +104,15 @@ const init = (context: IExtensionContext) => {
       stagingDir: state.settings.mods.installPath[GameId.SSE],
     };
     for (const mod of Object.values(mods)) {
-      const attributes = mod.attributes as IModAttributes;
-      if (!attributes || !attributes.modId)
-        continue;
-      data.files[mod.id] = { modId: attributes.modId };
-      data.mods[attributes.modId] = { name: attributes.modName };
+      const attributes = (mod.attributes || {}) as IModAttributes;
+      data.files[mod.id] = {
+        id: attributes.fileId,
+        isEnabled: profile?.modState[mod.id]?.enabled ?? false,
+        modId: attributes.modId,
+      };
+      if (attributes.modId) {
+        data.mods[attributes.modId] = { name: attributes.modName };
+      }
     }
     const lookupPath = join(tmpdir(), 'easynpc-vortex-bootstrap.json');
     writeFileSync(lookupPath, JSON.stringify(data));

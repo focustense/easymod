@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version override - leave blank to increment'
+        required: false
+
+jobs:
+
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Update version
+      id: version
+      run: .\update-version -projectpath Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj -version "${{ github.event.inputs.version }}"
+      shell: pwsh
+
+    - name: Roll changelog
+      run: .\roll-changelog -path Focus.Apps.EasyNpc\CHANGELOG.md -version "${{ steps.version.outputs.version }}"
+      shell: pwsh
+
+    - name: Read changelog
+      id: changelog
+      uses: mindsers/changelog-reader-action@v2
+      with:
+        path: .\Focus.Apps.EasyNpc\CHANGELOG.md
+        version: ${{ steps.version.outputs.version }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Restore packages
+      run: dotnet restore
+
+    - name: Restore tools
+      run: dotnet tool restore
+
+    - name: Transform templates
+      run: dotnet t4 Focus.Apps.EasyNpc\Configuration\BuildDate.tt
+
+    - name: Build
+      run: dotnet build --no-restore
+    
+    - name: Test
+      run: dotnet test --no-build --no-restore
+
+    - name: Publish to folder
+      run: >
+        dotnet publish Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj --no-restore -c Release -r win-x64
+        -o ../out/EasyNPC-${{ steps.version.outputs.version }} -p:PublishSingleFile=true -p:UseAppHost=true --self-contained true
+      env:
+        Configuration: Release
+
+    - name: Package
+      run: >
+        "C:\Program Files\7-Zip\7z.exe" a -t7z -mx=9
+        ../out/EasyNPC-${{ steps.version.outputs.version }}.7z
+        ../out/EasyNPC-${{ steps.version.outputs.version }}
+      shell: cmd
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided by GitHub Actions
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release ${{ steps.version.outputs.version }}
+        body: ${{ steps.changelog.outputs.changes }}
+        prerelease: true
+        files: |
+          ../out/EasyNPC-${{ steps.version.outputs.version }}.7z
+
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Automated version bump
+        commit_options: '--no-verify'
+        status_options: '--untracked-files=no'
+        skip_dirty_check: true
+        skip_fetch: true

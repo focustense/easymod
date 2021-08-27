@@ -47,7 +47,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers.ModOrgani
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.Abstractions.Windows", "Focus.Abstractions.Windows\Focus.Abstractions.Windows.csproj", "{889CB0B8-5BB9-4371-8F39-12286645D09A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.ModManagers.Vortex.Tests", "Focus.ModManagers.Vortex.Tests\Focus.ModManagers.Vortex.Tests.csproj", "{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Focus.ModManagers.Vortex.Tests", "Focus.ModManagers.Vortex.Tests\Focus.ModManagers.Vortex.Tests.csproj", "{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Main", "Main", "{344D7631-38FB-41FB-A279-BE708E94BCBE}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		roll-changelog.ps1 = roll-changelog.ps1
+		update-version.ps1 = update-version.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
