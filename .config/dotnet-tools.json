@@ -8,8 +8,8 @@
         "t4"
       ]
     },
-    "nexusuploader": {
-      "version": "0.0.7",
+    "unex": {
+      "version": "1.0.0",
       "commands": [
         "unex"
       ]
