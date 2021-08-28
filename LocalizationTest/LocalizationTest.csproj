@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Focus.Apps.EasyNpc\Focus.Apps.EasyNpc.csproj" />
     <ProjectReference Include="..\Focus.Localization\Focus.Localization.csproj" />
   </ItemGroup>

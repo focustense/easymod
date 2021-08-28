@@ -7,6 +7,7 @@
     <RootNamespace>Focus.Apps.EasyNpc</RootNamespace>
     <UseWPF>true</UseWPF>
     <UICulture>en-US</UICulture>
+    <LocalizationDirectivesToLocFile>CommentsOnly</LocalizationDirectivesToLocFile>
     <Nullable>enable</Nullable>
     <AssemblyName>EasyNPC</AssemblyName>
     <AssemblyTitle>Easy NPC</AssemblyTitle>

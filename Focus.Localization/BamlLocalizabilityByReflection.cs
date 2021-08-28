@@ -53,10 +53,11 @@ namespace Focus.Localization
             if (type == null)
                 return null;
 
-            return
+            var result =
                 GetLocalizabilityForClrProperty(property, type, out var attribute, out var clrPropertyType) ||
                 GetLocalizabilityForAttachedProperty(property, type, out attribute, out var attachedPropertyType) ?
                 attribute : GetLocalizabilityFromType(clrPropertyType ?? attachedPropertyType);
+            return result;
         }
 
         public override string ResolveFormattingTagToClass(string formattingTag)

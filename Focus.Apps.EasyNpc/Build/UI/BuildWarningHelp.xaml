@@ -39,7 +39,8 @@
                 <TextBlock x:Uid="ModDirectoryNotFound.Resolution" Style="{StaticResource HelpTextParagraph}">
                     <Run x:Uid="ModDirectoryNotFound.Resolution.Heading" FontWeight="Medium">How to fix it:</Run>
                     <Run x:Uid="ModDirectoryNotFound.Resolution.1">Click on the</Run>
-                    <Viewbox x:Uid="ModDirectoryNotFound.Resolution.2" MaxHeight="12" MaxWidth="12">
+                    <Viewbox x:Uid="ModDirectoryNotFound.Resolution.2" MaxHeight="12" MaxWidth="12"
+                             Localization.Comments="$Content (PH=SETTINGS_ICON)">
                         <ui:SymbolIcon Foreground="{StaticResource HelpIconForegroundBrush}" Symbol="Setting"/>
                     </Viewbox><Run x:Uid="ModDirectoryNotFound.Resolution.3">Settings button</Run>
                     <Run x:Uid="ModDirectoryNotFound.Resolution.4">in the top navigation bar and choose a valid</Run>

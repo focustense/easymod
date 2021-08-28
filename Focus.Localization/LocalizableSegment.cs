@@ -6,7 +6,8 @@ namespace Focus.Localization
     {
         public string Id { get; set; }
         public string Description { get; set; }
+        public string SourceFormat { get; set; }
+        public string TranslatedFormat { get; set; }
         public List<LocalizableMessage> Messages { get; set; }
-        public List<uint> TranslatedOrder { get; set; }
     }
 }
