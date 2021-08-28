@@ -1,6 +1,9 @@
-﻿using Mutagen.Bethesda.Skyrim;
+﻿using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Binary.Parameters;
+using Mutagen.Bethesda.Skyrim;
 using System;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Build.Pipeline
@@ -23,14 +26,16 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             PatchInitializationTask.Result patch, NpcFacesTask.Result faces, DewiggifyRecordsTask.Result wigs);
 
         private readonly IFileSystem fs;
+        private readonly IGameSettings gameSettings;
         private readonly PatchInitializationTask.Result patch;
 
         public PatchSaveTask(
-            IFileSystem fs, PatchInitializationTask.Result patch, NpcFacesTask.Result faces,
+            IFileSystem fs, IGameSettings gameSettings, PatchInitializationTask.Result patch, NpcFacesTask.Result faces,
             DewiggifyRecordsTask.Result wigs)
         {
             RunsAfter(faces, wigs);
             this.fs = fs;
+            this.gameSettings = gameSettings;
             this.patch = patch;
         }
 
@@ -57,8 +62,12 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         private void SaveMod(SkyrimMod mod, string outputPath)
         {
+            var loadOrder = gameSettings.PluginLoadOrder.Select(x => ModKey.FromNameAndExtension(x));
             using var stream = fs.File.Create(outputPath);
-            mod.WriteToBinaryParallel(stream);
+            mod.WriteToBinaryParallel(stream, new BinaryWriteParameters
+            {
+                MastersListOrdering = new MastersListOrderingByLoadOrder(loadOrder)
+            });
         }
     }
 }
