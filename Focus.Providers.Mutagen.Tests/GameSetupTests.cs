@@ -2,7 +2,7 @@
 using Moq;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
-using Mutagen.Bethesda.Plugins.Binary;
+using Mutagen.Bethesda.Plugins.Binary.Parameters;
 using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
@@ -227,7 +227,7 @@ namespace Focus.Providers.Mutagen.Tests
             using var stream = fs.File.Create(fs.Path.Combine(DataDirectory, name));
             mod.WriteToBinary(stream, new BinaryWriteParameters
             {
-                MastersListContent = BinaryWriteParameters.MastersListContentOption.NoCheck
+                MastersListContent = MastersListContentOption.NoCheck
             });
         }
     }

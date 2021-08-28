@@ -1,5 +1,6 @@
 ﻿using Focus.Environment;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
@@ -37,7 +38,7 @@ namespace Focus.Providers.Mutagen
             var creationClubFile =
                 CreationClubListings.GetListingsPath(game.GameRelease.ToCategory(), setup.DataDirectory);
             return new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
-                setup.DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
+                game.GameRelease, setup.DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
         }
     }
 }

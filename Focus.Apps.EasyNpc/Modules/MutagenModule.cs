@@ -8,6 +8,7 @@ using Focus.Files;
 using Focus.Providers.Mutagen;
 using Focus.Providers.Mutagen.Analysis;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Skyrim;
 using System;
 using System.Collections.Generic;
@@ -40,6 +41,7 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<EnvironmentFactory>().As<IEnvironmentFactory>();
             builder.Register(ctx => ctx.Resolve<IEnvironmentFactory>().CreateEnvironment())
                 .As<GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>()
+                .As<IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>()
                 .SingleInstance();
             // Autofac doesn't know how to narrow open generics. Boo.
             builder.RegisterType<GameEnvironmentWrapper<ISkyrimMod, ISkyrimModGetter>>()

@@ -10,7 +10,7 @@ namespace Focus.Providers.Mutagen
     {
         DirectoryPath DataFolderPath { get; }
         FilePath LoadOrderFilePath { get; }
-        FilePath? CreationKitLoadOrderFilePath { get; }
+        FilePath? CreationClubListingsFilePath { get; }
         public ILoadOrder<IModListing<TModGetter>> LoadOrder { get; }
         public ILinkCache LinkCache { get; }
     }

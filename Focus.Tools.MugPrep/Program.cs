@@ -2,6 +2,7 @@
 using Focus.Files;
 using Focus.Providers.Mutagen;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using nifly;
@@ -116,7 +117,7 @@ namespace Focus.Tools.MugPrep
     {
         private static readonly string DefaultEyeCubeMapPath = @"textures\cubemaps\eyecubemap.dds";
 
-        private readonly GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env;
+        private readonly IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env;
         private IReadOnlySet<string> eyeNodeNames;
         private readonly string faceGenDirectory;
         private readonly IFileProvider fileProvider;
@@ -127,7 +128,7 @@ namespace Focus.Tools.MugPrep
         private readonly TempFileCache tempFileCache;
 
         public FaceGenProcessor(
-            GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env, IFileSystem fs, string faceGenDirectory,
+            IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env, IFileSystem fs, string faceGenDirectory,
             TempFileCache tempFileCache, FaceGenProcessingOptions options, ILogger log)
         {
             this.env = env;
