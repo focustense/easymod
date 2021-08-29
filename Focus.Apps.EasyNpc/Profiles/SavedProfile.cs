@@ -45,7 +45,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         }
     }
 
-    public class SavedNpcConfiguration
+    public class SavedNpcConfiguration : IRecordKey
     {
         public static SavedNpcConfiguration DeserializeFromString(string serialized)
         {

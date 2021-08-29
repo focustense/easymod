@@ -34,6 +34,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public string FileName { get; private init; }
 
+        private readonly object writerSync = new();
+
         private bool isDisposed;
         private bool isSuspended;
         private StreamWriter writer;
@@ -48,9 +50,12 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             if (isSuspended)
                 return;
-            writer.WriteLine(e.Serialize());
-            // Auto-flush since this is used to recover from crashes
-            writer.Flush();
+            lock (writerSync)
+            {
+                writer.WriteLine(e.Serialize());
+                // Auto-flush since this is used to recover from crashes
+                writer.Flush();
+            }
         }
 
         public void Dispose()
@@ -61,10 +66,13 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public void Erase()
         {
-            writer.Dispose();
-            var backupName = Path.ChangeExtension(FileName, $".{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.bak");
-            File.Move(FileName, backupName);
-            OpenLogFile();
+            lock (writerSync)
+            {
+                writer.Dispose();
+                var backupName = Path.ChangeExtension(FileName, $".{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.bak");
+                File.Move(FileName, backupName);
+                OpenLogFile();
+            }
         }
 
         public IEnumerator<ProfileEvent> GetEnumerator()
