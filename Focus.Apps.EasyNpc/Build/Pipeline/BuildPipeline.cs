@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -102,6 +103,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private readonly Dictionary<Type, object> availableResults = new();
         private readonly List<IDisposable> completionDisposables = new();
         private readonly ILifetimeScope container;
+        private readonly Subject<bool> endedSubject = new();
         private readonly ILogger log;
         private readonly TaskCompletionSource<TResult> outcomeSource = new();
         private readonly List<TaskRegistration> remainingRegistrations;
@@ -144,6 +146,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             if (ended)
                 return;
             ended = true;
+            endedSubject.OnNext(true);
+            endedSubject.OnCompleted();
             foreach (var (buildTask, _) in remainingTasks)
             {
                 log.Debug("Attempting cancellation of task '{taskName}'", buildTask.Name);
@@ -212,6 +216,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                                 $"Task factory {reg.Factory.GetType().FullName} did not return a valid build task.");
                         if (task is INameable nameable)
                             nameable.Name = reg.Name;
+                        task.ItemName.TakeUntil(endedSubject)
+                            .Subscribe(itemName => log.Debug("{taskName} -> {itemName}", task.Name, itemName));
                         log.Information("Created task '{taskName}'", task.Name);
                         ready.Add((reg, task));
                     }

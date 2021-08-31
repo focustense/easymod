@@ -25,8 +25,12 @@ namespace Focus.Apps.EasyNpc.Modules
                     .MinimumLevel.ControlledBy(loggingLevelSwitch)
                     .WriteTo.File(LogFileName,
                         buffered: true,
-                        flushToDiskInterval: TimeSpan.FromMilliseconds(500))
+                        flushToDiskInterval: TimeSpan.FromMilliseconds(500),
+                        outputTemplate:
+                            "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{ThreadId:D2}] [{Level:u3}] " +
+                            "{Message:lj}{NewLine}{Exception}")
                     .WriteTo.Sink(logViewModelSink)
+                    .Enrich.WithThreadId()
                     .CreateLogger();
             log.Information(
                 "Initialized: {appName:l} version {version:l}, built on {buildDate}",
