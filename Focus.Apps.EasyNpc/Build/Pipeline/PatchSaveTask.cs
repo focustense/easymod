@@ -43,8 +43,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         {
             return Task.Run(() =>
             {
-                var outputPath =
-                fs.Path.Combine(settings.OutputDirectory, patch.Mod.ModKey.FileName);
+                fs.Directory.CreateDirectory(settings.OutputDirectory);
+                var outputPath = fs.Path.Combine(settings.OutputDirectory, patch.Mod.ModKey.FileName);
                 BackupPreviousMerge(outputPath);
                 SaveMod(patch.Mod, outputPath);
                 return new Result(patch.Mod, outputPath);
