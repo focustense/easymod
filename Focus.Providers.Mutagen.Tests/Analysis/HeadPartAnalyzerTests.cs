@@ -30,7 +30,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
 
         public HeadPartAnalyzerTests()
         {
-            Analyzer = new HeadPartAnalyzer(Groups);
+            Analyzer = new HeadPartAnalyzer(Groups, ReferenceChecker.Of<IHeadPartGetter>());
         }
 
         [Theory]

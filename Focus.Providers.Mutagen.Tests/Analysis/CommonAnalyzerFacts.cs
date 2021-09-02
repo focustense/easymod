@@ -1,6 +1,7 @@
 ﻿using Focus.Analysis.Records;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Focus.Providers.Mutagen.Tests.Analysis
@@ -10,9 +11,26 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         where TAnalysis : RecordAnalysis
         where TMajorRecord : class, ISkyrimMajorRecord
     {
+        private static readonly IEnumerable<ReferencePath> DummyInvalidPaths = new[]
+        {
+            new ReferencePath(new[]
+            {
+                new ReferenceInfo(new RecordKey("dummy.esp", "123456"), RecordType.Armor),
+                new ReferenceInfo(new RecordKey("dummy.esp", "123457"), RecordType.ArmorAddon),
+                new ReferenceInfo(new RecordKey("dummy.esp", "123458"), RecordType.TextureSet),
+            }),
+            new ReferencePath(new[]
+            {
+                new ReferenceInfo(new RecordKey("dummy.esp", "123456"), RecordType.Armor),
+                new ReferenceInfo(new RecordKey("dummy.esp", "123457"), RecordType.ArmorAddon),
+                new ReferenceInfo(new RecordKey("dummy.esp", "123459"), RecordType.TextureSet),
+            })
+        };
+
         protected TAnalyzer Analyzer { get; set; }
-        private protected FakeGroupCache Groups { get; set; }
+        private protected FakeGroupCache Groups { get; private set; }
         protected ILogger Logger { get; private set; }
+        private protected FakeReferenceChecker ReferenceChecker { get; private set; }
 
         public CommonAnalyzerFacts()
         {
@@ -23,6 +41,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 .WriteTo.Debug()
                 .CreateLogger();
             Groups = new FakeGroupCache();
+            ReferenceChecker = new FakeReferenceChecker { InvalidPaths = DummyInvalidPaths };
         }
 
         [Fact]
@@ -37,6 +56,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             Assert.Equal(string.Empty, analysis.EditorId);
             Assert.False(analysis.IsInjectedOrInvalid);
             Assert.False(analysis.IsOverride);
+            Assert.Empty(analysis.InvalidPaths);
         }
 
         [Fact]
@@ -56,6 +76,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             Assert.Equal(string.Empty, analysis.EditorId);
             Assert.False(analysis.IsInjectedOrInvalid);
             Assert.False(analysis.IsOverride);
+            Assert.Empty(analysis.InvalidPaths);
         }
 
         [Fact]
@@ -74,6 +95,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             Assert.Equal("record2", analysis.EditorId);
             Assert.False(analysis.IsInjectedOrInvalid);
             Assert.False(analysis.IsOverride);
+            Assert.Equal(DummyInvalidPaths, analysis.InvalidPaths);
         }
 
         [Fact]

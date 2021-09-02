@@ -9,12 +9,33 @@ using System.Linq;
 
 namespace Focus.Providers.Mutagen.Analysis
 {
-    public interface IReferenceChecker<T>
+    public interface IReferenceChecker
+    {
+        IEnumerable<ReferencePath> GetInvalidPaths(ISkyrimMajorRecordGetter record);
+    }
+
+    public interface IReferenceChecker<in T>
     {
         IEnumerable<ReferencePath> GetInvalidPaths(T record);
     }
 
-    public class ReferenceChecker<T> : IReferenceChecker<T>
+    public static class ReferenceCheckerExtensions
+    {
+        public static IReadOnlyList<ReferencePath> SafeCheck(
+            this IReferenceChecker? checker, ISkyrimMajorRecordGetter? record)
+        {
+            var invalidPaths = record is not null ? checker?.GetInvalidPaths(record) : null;
+            return (invalidPaths ?? Enumerable.Empty<ReferencePath>()).ToList().AsReadOnly();
+        }
+
+        public static IReadOnlyList<ReferencePath> SafeCheck<T>(this IReferenceChecker<T>? checker, T? record)
+        {
+            var invalidPaths = record is not null ? checker?.GetInvalidPaths(record) : null;
+            return (invalidPaths ?? Enumerable.Empty<ReferencePath>()).ToList().AsReadOnly();
+        }
+    }
+
+    public class ReferenceChecker<T> : IReferenceChecker, IReferenceChecker<T>
         where T : class, ISkyrimMajorRecordGetter
     {
         private readonly ConcurrentDictionary<FormKey, ReferenceInfo> cache = new();
@@ -50,6 +71,7 @@ namespace Focus.Providers.Mutagen.Analysis
         public ReferenceChecker<T> Follow<G, U>(
             Func<T, IGenderedItemGetter<G>?> itemSelector, Func<G, IFormLinkGetter<U>?> linkSelector,
             Action<ReferenceChecker<U>>? configure = null)
+            where G : class
             where U : class, ISkyrimMajorRecordGetter
         {
             return Follow(itemSelector, g => new[] { linkSelector(g) }, configure);
@@ -58,6 +80,7 @@ namespace Focus.Providers.Mutagen.Analysis
         public ReferenceChecker<T> Follow<G, U>(
             Func<T, IGenderedItemGetter<G>?> itemSelector, Func<G, IEnumerable<IFormLinkGetter<U>?>?> linksSelector,
             Action<ReferenceChecker<U>>? configure = null)
+            where G : class
             where U : class, ISkyrimMajorRecordGetter
         {
             return Follow(r =>
@@ -65,8 +88,8 @@ namespace Focus.Providers.Mutagen.Analysis
                 var item = itemSelector(r);
                 if (item is null)
                     return Enumerable.Empty<IFormLinkGetter<U>>();
-                return (linksSelector(item.Male) ?? Enumerable.Empty<IFormLinkGetter<U>?>())
-                    .Concat(linksSelector(item.Female) ?? Enumerable.Empty<IFormLinkGetter<U>?>());
+                var subItems = new[] { item.Male, item.Female }.NotNull();
+                return subItems.SelectMany(x => linksSelector(x) ?? Enumerable.Empty<IFormLinkGetter<U>>());
             }, configure);
         }
 
@@ -77,6 +100,12 @@ namespace Focus.Providers.Mutagen.Analysis
             var subrecordChecker = new ReferenceChecker<U>(groupCache);
             configure?.Invoke(subrecordChecker);
             invalidPathSelectors.Add(r => CheckLinks(r, linksSelector, subrecordChecker));
+            return this;
+        }
+
+        public ReferenceChecker<T> FollowSelf(Func<T, IFormLinkGetter<T>?> linkSelector)
+        {
+            invalidPathSelectors.Add(r => CheckLinks(r, r => new[] { linkSelector(r) }, this));
             return this;
         }
 
@@ -92,6 +121,14 @@ namespace Focus.Providers.Mutagen.Analysis
                 .Select(ps => ps(record))
                 .SelectMany(refLists => refLists)
                 .Select(refs => new ReferencePath(refs));
+        }
+
+        public IEnumerable<ReferencePath> GetInvalidPaths(ISkyrimMajorRecordGetter record)
+        {
+            if (record is not T typedRecord)
+                throw new ArgumentException(
+                    $"Expected a record of type {typeof(T).Name}, but got {record.GetType().Name}", nameof(record));
+            return GetInvalidPaths(typedRecord);
         }
 
         private IEnumerable<IEnumerable<ReferenceInfo>> CheckLinks<U>(

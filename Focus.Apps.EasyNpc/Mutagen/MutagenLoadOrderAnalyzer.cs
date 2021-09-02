@@ -1,7 +1,9 @@
 ﻿using Focus.Analysis.Execution;
 using Focus.Analysis.Records;
 using Focus.Providers.Mutagen.Analysis;
+using Mutagen.Bethesda.Skyrim;
 using Serilog;
+using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Mutagen
 {
@@ -23,7 +25,30 @@ namespace Focus.Apps.EasyNpc.Mutagen
         protected override void Configure(AnalysisRunner runner)
         {
             runner
-                .Configure(RecordType.Npc, new NpcAnalyzer(groupCache, Log))
+                .Configure(RecordType.Npc, new NpcAnalyzer(groupCache, new ReferenceChecker<INpcGetter>(groupCache)
+                    .Follow(x => x.HairColor)
+                    .Follow(x => x.HeadParts, headPart => headPart
+                        .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture))
+                        .Follow(x => x.Color)
+                        .FollowSelf(x => x.ExtraParts)
+                        .Follow(x => x.TextureSet))
+                    .Follow(x => x.HeadTexture)
+                    .Follow(x => x.WornArmor, armor => armor
+                        .Follow(x => x.Armature, addon => addon
+                            .Follow(x => x.AdditionalRaces)
+                            .Follow(x => x.ArtObject, artObject => artObject
+                                .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture)))
+                            .Follow(x => x.FirstPersonModel, g => g.AlternateTextures?.Select(x => x.NewTexture))
+                            .Follow(x => x.Race)
+                            .Follow(x => x.SkinTexture)
+                            .Follow(x => x.TextureSwapList, swapList => swapList
+                                .Follow(x => x.Items
+                                    .Where(x => x.Type == typeof(ITextureSetGetter))
+                                    .Select(x => x.FormKey.AsLinkGetter<ITextureSetGetter>())))
+                            .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(x => x.NewTexture)))
+                        .Follow(x => x.Keywords)
+                        .FollowSelf(x => x.TemplateArmor)
+                        .Follow(x => x.WorldModel, g => g.Model?.AlternateTextures?.Select(t => t.NewTexture)))))
                 .Configure(RecordType.HeadPart, new HeadPartAnalyzer(groupCache));
         }
 

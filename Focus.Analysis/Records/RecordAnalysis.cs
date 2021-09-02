@@ -39,7 +39,7 @@ namespace Focus.Analysis.Records
 
         public override string ToString()
         {
-            return $"{Key.LocalFormIdHex}:{Key.BasePluginName} '{EditorId}'";
+            return $"{Type} <{Key.LocalFormIdHex}:{Key.BasePluginName}> '{EditorId}'";
         }
     }
 

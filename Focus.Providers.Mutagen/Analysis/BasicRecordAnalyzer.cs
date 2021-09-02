@@ -1,4 +1,6 @@
-﻿using Focus.Analysis.Records;
+﻿using Focus.Analysis;
+using Focus.Analysis.Records;
+using System.Linq;
 using RecordType = Focus.Analysis.Records.RecordType;
 
 namespace Focus.Providers.Mutagen.Analysis
@@ -9,11 +11,14 @@ namespace Focus.Providers.Mutagen.Analysis
 
         private readonly IGroupCache groups;
         private readonly RecordType recordType;
+        private readonly IReferenceChecker? referenceChecker;
 
-        public BasicRecordAnalyzer(IGroupCache groups, RecordType recordType)
+        public BasicRecordAnalyzer(
+            IGroupCache groups, RecordType recordType, IReferenceChecker? referenceChecker = null)
         {
             this.groups = groups;
             this.recordType = recordType;
+            this.referenceChecker = referenceChecker;
         }
 
         public BasicRecordAnalysis Analyze(string pluginName, IRecordKey key)
@@ -28,6 +33,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 LocalFormIdHex = key.LocalFormIdHex,
                 EditorId = record?.EditorID ?? string.Empty,
                 Exists = record != null,
+                InvalidPaths = referenceChecker.SafeCheck(record),
                 IsInjectedOrInvalid = isOverride && !groups.MasterExists(formKey, recordType),
                 IsOverride = isOverride,
             };

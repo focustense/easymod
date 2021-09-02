@@ -91,16 +91,18 @@ namespace Focus.Providers.Mutagen.Analysis
 
         private readonly IArmorAddonHelper armorAddonHelper;
         private readonly IGroupCache groups;
-        private readonly ILogger log;
+        private readonly IReferenceChecker<INpcGetter>? referenceChecker;
 
-        public NpcAnalyzer(IGroupCache groups, ILogger log)
-            : this(groups, new ArmorAddonHelper(groups), log) { }
+        public NpcAnalyzer(IGroupCache groups, IReferenceChecker<INpcGetter>? referenceChecker = null)
+            : this(groups, new ArmorAddonHelper(groups), referenceChecker) { }
 
-        public NpcAnalyzer(IGroupCache groups, IArmorAddonHelper armorAddonHelper, ILogger log)
+        public NpcAnalyzer(
+            IGroupCache groups, IArmorAddonHelper armorAddonHelper,
+            IReferenceChecker<INpcGetter>? referenceChecker = null)
         {
             this.armorAddonHelper = armorAddonHelper;
             this.groups = groups;
-            this.log = log;
+            this.referenceChecker = referenceChecker;
         }
 
         public NpcAnalysis Analyze(string pluginName, IRecordKey key)
@@ -125,6 +127,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 LocalFormIdHex = key.LocalFormIdHex,
                 EditorId = npc.EditorID ?? string.Empty,
                 Exists = true,
+                InvalidPaths = referenceChecker.SafeCheck(npc),
                 IsInjectedOrInvalid = isOverride && !groups.MasterExists(key.ToFormKey(), RecordType),
                 IsOverride = isOverride,
                 CanUseFaceGen = race?.Flags.HasFlag(Race.Flag.FaceGenHead) ?? false,
