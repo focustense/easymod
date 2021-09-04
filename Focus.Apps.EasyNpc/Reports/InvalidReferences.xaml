@@ -55,7 +55,7 @@
                                     <StackPanel>
                                         <GridViewRowPresenter x:Name="ContentPresenter"
                                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                              Margin="0,4"
+                                                              Margin="0,8"
                                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                               SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                                         <ItemsControl ItemsSource="{Binding Paths}" Margin="24,0,0,4"

@@ -16,12 +16,14 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <ui:SimpleStackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
-            <fa:SvgAwesome Foreground="{StaticResource WarningForegroundBrush}"
+            <fa:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
                            Height="48"
                            Icon="Solid_ExclamationTriangle"
                            Margin="0,0,16,0"
                            VerticalAlignment="Center"/>
-            <TextBlock Style="{StaticResource SubheaderTextBlockStyle}" VerticalAlignment="Center">
+            <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                       Style="{StaticResource SubheaderTextBlockStyle}"
+                       VerticalAlignment="Center">
                 Problems detected while loading
             </TextBlock>
         </ui:SimpleStackPanel>
