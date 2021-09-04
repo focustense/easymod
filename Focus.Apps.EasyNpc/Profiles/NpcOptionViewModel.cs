@@ -9,6 +9,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public bool HasBehaviorOverride => ComparisonToBase?.ModifiesBehavior ?? true;
+        public bool HasErrors => option.HasErrors;
         public bool HasFaceOverride => ComparisonToBase?.ModifiesFace ?? true;
         public bool HasFaceGenOverride => ComparisonToBase?.ModifiesHeadParts ?? true;
         public bool HasOutfitOverride => ComparisonToBase?.ModifiesOutfits ?? true;

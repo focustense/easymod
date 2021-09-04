@@ -4,8 +4,8 @@
         xmlns:config="clr-namespace:Focus.Apps.EasyNpc.Configuration"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
         xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
+        xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
@@ -40,6 +40,18 @@
                     <ui:Frame DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
                               Padding="12,0,12,24"
                               SourcePageType="{x:Type config:SettingsPage}"/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type rpt:StartupReportViewModel}">
+                    <DockPanel Margin="8">
+                        <Border DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                            <ui:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button x:Name="ContinueButton"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Click="ContinueButton_Click">Continue to Profile</Button>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                        <rpt:StartupReport/>
+                    </DockPanel>
                 </DataTemplate>
             </ContentControl.Resources>
         </ContentControl>

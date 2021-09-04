@@ -36,6 +36,11 @@ namespace Focus.Apps.EasyNpc.Main
             DataContext = this.model = model;
         }
 
+        private void ContinueButton_Click(object sender, RoutedEventArgs e)
+        {
+            model.DismissStartupErrors();
+        }
+
         // Ugly code-behind hack for ModernWpf not allowing us to supply our own Settings item.
         private void MainNavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {

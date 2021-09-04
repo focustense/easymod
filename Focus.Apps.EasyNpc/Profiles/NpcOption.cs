@@ -9,6 +9,8 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string LocalFormIdHex => record.Analysis.LocalFormIdHex;
 
         public NpcAnalysis Analysis => record.Analysis;
+        public bool HasErrors => HasInvalidPaths;
+        public bool HasInvalidPaths => record.Analysis.InvalidPaths.Count > 0;
         public bool HasWig => Analysis.WigInfo != null;
         public bool IsBaseGame { get; private init; }
         public string PluginName => record.PluginName;

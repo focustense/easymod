@@ -46,7 +46,7 @@
                         </TextBlock>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
                             If you haven't already, you should also browse the
-                            <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://github.com/focustense/easymod/blob/master/Focus.Apps.EasyNpc/Docs/getting-started.md">Getting Started</Hyperlink>
+                            <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding Source='getting-started', Converter={StaticResource DocUrl}}">Getting Started</Hyperlink>
                             section of the how-to guide for how to set up your load order for first-time use. In general: Put your NPC overhauls last, order them from least to most favorite, and disable any compatibility
                             patches or AIOs for them. For more details, see the guide.
                         </TextBlock>

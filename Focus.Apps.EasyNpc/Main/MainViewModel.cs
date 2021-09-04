@@ -4,6 +4,7 @@ using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profiles;
+using Focus.Apps.EasyNpc.Reports;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -49,6 +50,7 @@ namespace Focus.Apps.EasyNpc.Main
         public ProfileViewModel Profile { get; private set; }
         public NavigationMenuItem SelectedNavigationMenuItem { get; set; }
         public SettingsViewModel Settings { get; private init; }
+        public StartupReportViewModel StartupReport { get; private set; }
 
         public bool IsSettingsNavigationItemSelected
         {
@@ -62,6 +64,7 @@ namespace Focus.Apps.EasyNpc.Main
             LoaderViewModel loader,
             LogViewModel log,
             SettingsViewModel settings,
+            StartupReportViewModel.Factory startupReportFactory,
             ProfileViewModel.Factory profileFactory,
             BuildViewModel.Factory buildFactory,
             MaintenanceViewModel.Factory maintenanceFactory,
@@ -88,6 +91,7 @@ namespace Focus.Apps.EasyNpc.Main
             {
                 var profileModel = await Loader.Tasks.Profile.ConfigureAwait(false);
                 Profile = profileFactory(profileModel);
+                StartupReport = startupReportFactory(profileModel);
                 Build = buildFactory(profileModel);
                 Maintenance = maintenanceFactory(profileModel);
 
@@ -100,7 +104,7 @@ namespace Focus.Apps.EasyNpc.Main
                 }.AsReadOnly();
                 SelectedNavigationMenuItem = NavigationMenuItems[0];
 
-                Content = this;
+                Content = StartupReport.HasErrors ? StartupReport : this;
             };
 
             messageBus.Subscribe<JumpToNpc>(message =>
@@ -109,6 +113,11 @@ namespace Focus.Apps.EasyNpc.Main
                 if (found)
                     messageBus.Send(new NavigateToPage(MainPage.Profile));
             });
+        }
+
+        public void DismissStartupErrors()
+        {
+            Content = this;
         }
     }
 }

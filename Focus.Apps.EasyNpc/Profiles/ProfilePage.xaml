@@ -81,10 +81,16 @@
                 <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibility}}">
                     <Button x:Name="SetDefaultOverrideButton" Content="Set as default" Tag="{Binding}" Click="SetDefaultOverrideButton_Click"/>
                     <Button x:Name="SetFaceOverrideButton"
-                            IsEnabled="{Binding DataContext.SelectedNpc.CanCustomizeFace, RelativeSource={RelativeSource AncestorType=ui:ListView}}"
                             Margin="8,0" Content="Set as face"
                             Tag="{Binding}"
-                            Click="SetFaceOverrideButton_Click"/>
+                            Click="SetFaceOverrideButton_Click">
+                        <Button.IsEnabled>
+                            <MultiBinding Converter="{StaticResource BooleanAnd}">
+                                <Binding Path="DataContext.SelectedNpc.CanCustomizeFace" RelativeSource="{RelativeSource AncestorType=ui:ListView}"/>
+                                <Binding Path="HasErrors" Converter="{StaticResource InverseBoolean}"/>
+                            </MultiBinding>
+                        </Button.IsEnabled>
+                    </Button>
                 </ui:SimpleStackPanel>
             </ui:SimpleStackPanel>
         </DataTemplate>
@@ -176,6 +182,9 @@
                     <Style TargetType="ui:ListViewItem">
                         <EventSetter Event="MouseDoubleClick" Handler="MugshotListViewItem_MouseDoubleClick"/>
                         <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDisabledByErrors}" Value="True">
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
                                 <Setter Property="Background" Value="LightGoldenrodYellow"/>
                             </DataTrigger>

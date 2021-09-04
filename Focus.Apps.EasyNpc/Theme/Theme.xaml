@@ -3,6 +3,7 @@
     xmlns:fa="http://schemas.fontawesome.com/icons/"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <SolidColorBrush x:Key="ChipBackgroundBrush" Color="{StaticResource ChipBackgroundColor}"/>
     <SolidColorBrush x:Key="DangerBackgroundBrush" Color="{StaticResource DangerColor}"/>
     <SolidColorBrush x:Key="DangerForegroundBrush" Color="{StaticResource DangerColor}"/>
     <SolidColorBrush x:Key="ErrorForegroundBrush" Color="{StaticResource ErrorForegroundColor}"/>

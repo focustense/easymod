@@ -13,8 +13,9 @@
             <TextBlock ToolTip="{Binding Path=ModName, Mode=OneTime}" TextTrimming="CharacterEllipsis">
                                 <Run FontWeight="SemiBold" Text="{Binding Path=ModName, Mode=OneWay}"/>
             </TextBlock>
-            <TextBlock Foreground="Red" Text="Mod not installed" Visibility="{Binding IsModInstalled, Converter={StaticResource InvBoolToVisibility}}"/>
-            <TextBlock Foreground="Red" Text="Mod disabled" Visibility="{Binding IsModDisabled, Converter={StaticResource BoolToVisibility}}"/>
+            <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Text="Mod not installed" Visibility="{Binding IsModInstalled, Converter={StaticResource InvBoolToVisibility}}"/>
+            <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Text="Mod disabled" Visibility="{Binding IsModDisabled, Converter={StaticResource BoolToVisibility}}"/>
+            <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Text="Disabled due to errors" Visibility="{Binding IsDisabledByErrors, Converter={StaticResource BoolToVisibility}}"/>
             <ItemsControl ItemsSource="{Binding Path=InstalledPlugins}" Visibility="{Binding IsPluginLoaded, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -22,7 +23,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock Foreground="Red" Text="Plugin not loaded" Visibility="{Binding IsPluginLoaded, Converter={StaticResource InvBoolToVisibility}}"/>
+            <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Text="Plugin not loaded" Visibility="{Binding IsPluginLoaded, Converter={StaticResource InvBoolToVisibility}}"/>
         </StackPanel>
         <Grid>
             <Image x:Name="MugshotImage" Source="{Binding Path=Path}" Stretch="Uniform" StretchDirection="DownOnly"/>
