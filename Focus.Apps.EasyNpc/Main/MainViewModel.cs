@@ -4,8 +4,9 @@ using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profiles;
-using PropertyChanged;
 using Serilog;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace Focus.Apps.EasyNpc.Main
@@ -14,24 +15,48 @@ namespace Focus.Apps.EasyNpc.Main
         IProfileContainer, IBuildContainer, IMaintenanceContainer, ISettingsContainer, ILogContainer,
         INotifyPropertyChanged
     {
+        public class NavigationMenuItem
+        {
+            public string Name { get; private init; }
+            // Stupid hack for https://github.com/Kinnara/ModernWpf/issues/389
+            // Only workaround seems to be to use a two-way binding, but changing the type isn't actually supported.
+            public Type PageType { get => pageType; set { } }
+            public object ViewModel { get; private init; }
+
+            private readonly Type pageType;
+
+            public NavigationMenuItem(string name, object viewModel, Type pageType)
+            {
+                this.pageType = pageType;
+
+                Name = name;
+                ViewModel = viewModel;
+            }
+        }
+
         public delegate MainViewModel Factory(bool isFirstLaunch);
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public BuildViewModel Build { get; private set; }
-        public bool IsFirstLaunch { get; private set; }
-        public bool IsLoaded { get; private set; }
-        [DependsOn("IsFirstLaunch")]
-        public bool IsNavigationVisible => !IsFirstLaunch;
-        [DependsOn("IsFirstLaunch", "IsLoaded")]
-        public bool IsReady => IsLoaded || IsFirstLaunch;
+        public object Content { get; private set; }
         public LoaderViewModel Loader { get; private init; }
         public LogViewModel Log { get; private init; }
         public ILogger Logger { get; private init; }
         public MaintenanceViewModel Maintenance { get; private set; }
+        public IReadOnlyList<NavigationMenuItem> NavigationMenuItems { get; private set; } =
+            new List<NavigationMenuItem>().AsReadOnly();
         public ProfileViewModel Profile { get; private set; }
-        public string PageTitle { get; set; }
+        public NavigationMenuItem SelectedNavigationMenuItem { get; set; }
         public SettingsViewModel Settings { get; private init; }
+
+        public bool IsSettingsNavigationItemSelected
+        {
+            get { return SelectedNavigationMenuItem == settingsNavigationMenuItem; }
+            set { SelectedNavigationMenuItem = settingsNavigationMenuItem; }
+        }
+
+        private readonly NavigationMenuItem settingsNavigationMenuItem;
 
         public MainViewModel(
             LoaderViewModel loader,
@@ -44,7 +69,6 @@ namespace Focus.Apps.EasyNpc.Main
             ILogger logger,
             bool isFirstLaunch)
         {
-            IsFirstLaunch = isFirstLaunch;
             Loader = loader;
             Log = log;
             Logger = logger;
@@ -53,8 +77,12 @@ namespace Focus.Apps.EasyNpc.Main
             Settings.IsWelcomeScreen = isFirstLaunch;
             Settings.WelcomeAcked += (sender, e) =>
             {
-                IsFirstLaunch = false;
+                Content = Loader;
             };
+
+            settingsNavigationMenuItem = new("", Settings, typeof(SettingsPage));
+
+            Content = isFirstLaunch ? Settings : Loader;
 
             Loader.Loaded += async () =>
             {
@@ -63,7 +91,16 @@ namespace Focus.Apps.EasyNpc.Main
                 Build = buildFactory(profileModel);
                 Maintenance = maintenanceFactory(profileModel);
 
-                IsLoaded = true;
+                NavigationMenuItems = new List<NavigationMenuItem>
+                {
+                    new NavigationMenuItem("Profile", Profile, typeof(ProfilePage)),
+                    new NavigationMenuItem("Build", Build, typeof(BuildPage)),
+                    new NavigationMenuItem("Maintenance", Maintenance, typeof(MaintenancePage)),
+                    new NavigationMenuItem("Log", Log, typeof(LogPage)),
+                }.AsReadOnly();
+                SelectedNavigationMenuItem = NavigationMenuItems[0];
+
+                Content = this;
             };
 
             messageBus.Subscribe<JumpToNpc>(message =>

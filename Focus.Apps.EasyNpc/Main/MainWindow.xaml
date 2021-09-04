@@ -1,6 +1,7 @@
 ﻿<Window x:Class="Focus.Apps.EasyNpc.Main.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:config="clr-namespace:Focus.Apps.EasyNpc.Configuration"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
@@ -11,40 +12,36 @@
         ui:WindowHelper.UseModernWindowStyle="True"
         Title="{StaticResource AppTitle}" Height="720" Width="1200" WindowStartupLocation="CenterScreen"
         Closed="Window_Closed">
-    <Window.Resources>
-        <DataTemplate x:Key="LoaderTemplate" DataType="main:MainViewModel">
-            <main:Loader DataContext="{Binding Loader}"/>
-        </DataTemplate>
-        <DataTemplate x:Key="EmptyTemplate"></DataTemplate>
-    </Window.Resources>
     <Grid>
-        <ContentControl Content="{Binding}">
-            <ContentControl.Style>
-                <Style TargetType="ContentControl">
-                    <Setter Property="ContentTemplate" Value="{StaticResource EmptyTemplate}"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsReady}" Value="False">
-                            <Setter Property="ContentTemplate" Value="{StaticResource LoaderTemplate}"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ContentControl.Style>
+        <ContentControl x:Name="ContentControl" Content="{Binding Content}">
+            <ContentControl.Resources>
+                <DataTemplate DataType="{x:Type main:LoaderViewModel}">
+                    <main:Loader/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type main:MainViewModel}">
+                    <ui:NavigationView Header="{Binding SelectedNavigationMenuItem.Name}"
+                                       IsBackButtonVisible="Collapsed"
+                                       MenuItemsSource="{Binding NavigationMenuItems}"
+                                       PaneDisplayMode="Top"
+                                       SelectedItem="{Binding SelectedNavigationMenuItem, Mode=OneWay}"
+                                       SelectionChanged="MainNavigationView_SelectionChanged">
+                        <ui:NavigationView.MenuItemTemplate>
+                            <DataTemplate>
+                                <ui:NavigationViewItem Content="{Binding Name}"/>
+                            </DataTemplate>
+                        </ui:NavigationView.MenuItemTemplate>
+                        <ui:Frame IsTabStop="True"
+                                  NavigationUIVisibility="Hidden"
+                                  Padding="12,0,12,24"
+                                  SourcePageType="{Binding SelectedNavigationMenuItem.PageType, Mode=TwoWay}"/>
+                    </ui:NavigationView>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type config:SettingsViewModel}">
+                    <ui:Frame DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
+                              Padding="12,0,12,24"
+                              SourcePageType="{x:Type config:SettingsPage}"/>
+                </DataTemplate>
+            </ContentControl.Resources>
         </ContentControl>
-        <ui:NavigationView x:Name="MainNavigationView"
-                           Header="{Binding Path=PageTitle}"
-                           Visibility="{Binding Path=IsReady, Converter={StaticResource BoolToVisibility}}"
-                           PaneDisplayMode="Top"
-                           IsBackButtonVisible="Collapsed"
-                           AlwaysShowHeader="{Binding IsNavigationVisible}"
-                           IsPaneVisible="{Binding IsNavigationVisible}"
-                           SelectionChanged="NavigationView_SelectionChanged">
-            <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Tag="profile" Content="Profile" IsSelected="True"></ui:NavigationViewItem>
-                <ui:NavigationViewItem Tag="build" Content="Build"></ui:NavigationViewItem>
-                <ui:NavigationViewItem Tag="maintenance" Content="Maintenance"></ui:NavigationViewItem>
-                <ui:NavigationViewItem Tag="log" Content="Log"></ui:NavigationViewItem>
-            </ui:NavigationView.MenuItems>
-            <ui:Frame x:Name="PageFrame" Padding="12,0,12,24" IsTabStop="True" NavigationUIVisibility="Hidden"/>
-        </ui:NavigationView>
     </Grid>
 </Window>

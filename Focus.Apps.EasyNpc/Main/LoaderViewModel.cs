@@ -67,8 +67,8 @@ namespace Focus.Apps.EasyNpc.Main
             await Task.WhenAll(new Task[] { Tasks.ModRepository, Tasks.LoadOrderAnalysis, Tasks.Profile })
                 .ConfigureAwait(false);
             
-            IsLoading = false;
             Loaded?.Invoke();
+            IsLoading = false;
         }
 
         public void TogglePlugins(IEnumerable<PluginSetting> plugins)
