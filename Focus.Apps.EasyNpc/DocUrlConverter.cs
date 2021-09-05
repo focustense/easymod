@@ -10,12 +10,12 @@ namespace Focus.Apps.EasyNpc
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is string pageName ? BaseUrl + pageName : string.Empty;
+            return value is string pageName ? $"{BaseUrl}{pageName}.md" : string.Empty;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is string url ? url[(url.LastIndexOf('/') + 1)..] : string.Empty;
+            return value is string url ? url[(url.LastIndexOf('/') + 1)..^3] : string.Empty;
         }
     }
 }
