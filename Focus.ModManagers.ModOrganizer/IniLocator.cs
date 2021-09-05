@@ -1,26 +1,30 @@
 ﻿using Focus.Abstractions.Windows;
 using Microsoft.Win32;
 using System;
-using System.IO;
+using System.IO.Abstractions;
 
 namespace Focus.ModManagers.ModOrganizer
 {
     public class IniLocator
     {
-        public static readonly IniLocator Default = new(EnvironmentStatics.Default, RegistryKeyStatics.Default);
+        public static readonly IniLocator Default =
+            new(EnvironmentStatics.Default, RegistryKeyStatics.Default, new FileSystem());
 
         private readonly IEnvironmentStatics environment;
+        private readonly IFileSystem fs;
         private readonly IRegistryKeyStatics registry;
 
-        public IniLocator(IEnvironmentStatics environment, IRegistryKeyStatics registry)
+        public IniLocator(IEnvironmentStatics environment, IRegistryKeyStatics registry, IFileSystem fs)
         {
             this.environment = environment;
+            this.fs = fs;
             this.registry = registry;
         }
 
         public string DetectIniPath(string exePath)
         {
-            var instanceName = GetCurrentInstanceName();
+            var portableOverridePath = fs.Path.Combine(fs.Path.GetDirectoryName(exePath), "portable.txt");
+            var instanceName = !fs.File.Exists(portableOverridePath) ? GetCurrentInstanceName() : null;
             return !string.IsNullOrEmpty(instanceName) ? GetInstanceIniPath(instanceName) : GetPortableIniPath(exePath);
         }
 
@@ -41,14 +45,14 @@ namespace Focus.ModManagers.ModOrganizer
         private string GetInstanceIniPath(string instanceName)
         {
             var localAppDataPath = environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            return Path.Combine(localAppDataPath, "ModOrganizer", instanceName, "ModOrganizer.ini");
+            return fs.Path.Combine(localAppDataPath, "ModOrganizer", instanceName, "ModOrganizer.ini");
         }
 
-        private static string GetPortableIniPath(string exePath)
+        private string GetPortableIniPath(string exePath)
         {
-            var directoryPath = Path.GetDirectoryName(exePath);
+            var directoryPath = fs.Path.GetDirectoryName(exePath);
             return !string.IsNullOrEmpty(directoryPath) ?
-                Path.Combine(directoryPath, "ModOrganizer.ini") : string.Empty;
+                fs.Path.Combine(directoryPath, "ModOrganizer.ini") : string.Empty;
         }
     }
 }
