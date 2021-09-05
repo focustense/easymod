@@ -10,6 +10,7 @@ namespace Focus.Apps.EasyNpc.Modules
         {
             builder.RegisterType<LoaderModel>();
             builder.RegisterType<LoaderViewModel>();
+            builder.RegisterType<InvalidReferencesViewModel>();
             builder.RegisterType<StartupReportViewModel>();
             builder.RegisterType<MainViewModel>();
         }

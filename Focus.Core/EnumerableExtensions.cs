@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Focus
@@ -19,6 +20,19 @@ namespace Focus
         public static IEnumerable<string> NotNullOrEmpty(this IEnumerable<string?> sequence)
         {
             return sequence.Where(x => !string.IsNullOrEmpty(x))!;
+        }
+
+        public static IEnumerable<T> OrderByLoadOrder<T>(
+            this IEnumerable<T> sequence, Func<T, IRecordKey> keySelector, IEnumerable<string> loadOrder)
+        {
+            var loadOrderIndices = loadOrder
+                .Select((plugin, index) => (plugin, index))
+                .ToDictionary(x => x.plugin, x => x.index, StringComparer.CurrentCultureIgnoreCase);
+            return sequence
+                .Select(item => (item, key: keySelector(item)))
+                .OrderBy(x => loadOrderIndices.TryGetValue(x.key.BasePluginName, out var index) ? index : -1)
+                .ThenBy(x => int.TryParse(x.key.LocalFormIdHex, NumberStyles.HexNumber, null, out var id) ? id : -1)
+                .Select(x => x.item);
         }
 
         public static IEnumerable<T>? OrderBySafe<T, TKey>(this IEnumerable<T>? sequence, Func<T, TKey> keySelector)

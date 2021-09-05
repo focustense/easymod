@@ -11,9 +11,10 @@ namespace Focus.Apps.EasyNpc.Reports
 
         public InvalidReferencesViewModel InvalidReferences { get; private init; }
 
-        public StartupReportViewModel(Profile profile)
+        public StartupReportViewModel(
+            InvalidReferencesViewModel.Factory invalidReferencesFactory, Profile profile)
         {
-            InvalidReferences = new(profile);
+            InvalidReferences = invalidReferencesFactory(profile);
         }
     }
 }

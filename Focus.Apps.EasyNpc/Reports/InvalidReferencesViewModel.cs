@@ -27,16 +27,18 @@ namespace Focus.Apps.EasyNpc.Reports
 
     public class InvalidReferencesViewModel
     {
+        public delegate InvalidReferencesViewModel Factory(Profile profile);
+
         public IReadOnlyList<InvalidReferenceViewModel> Items { get; private init; }
 
-        public InvalidReferencesViewModel(Profile profile)
+        public InvalidReferencesViewModel(IGameSettings gameSettings, Profile profile)
         {
             Items = profile.Npcs
                 .AsParallel()
-                .AsOrdered()
                 .SelectMany(npc => npc.Options.Select(option => (npc, option)))
                 .Where(x => x.option.HasInvalidPaths)
                 .Select(x => new InvalidReferenceViewModel(x.npc, x.option))
+                .OrderByLoadOrder(x => x.Key, gameSettings.PluginLoadOrder)
                 .ToList()
                 .AsReadOnly();
         }
