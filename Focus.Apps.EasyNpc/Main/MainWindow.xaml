@@ -23,7 +23,7 @@
                                        IsBackButtonVisible="Collapsed"
                                        MenuItemsSource="{Binding NavigationMenuItems}"
                                        PaneDisplayMode="Top"
-                                       SelectedItem="{Binding SelectedNavigationMenuItem, Mode=OneWay}"
+                                       SelectedItem="{Binding SelectedNavigationMenuItem, Mode=TwoWay}"
                                        SelectionChanged="MainNavigationView_SelectionChanged">
                         <ui:NavigationView.MenuItemTemplate>
                             <DataTemplate>

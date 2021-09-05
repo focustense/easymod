@@ -9,6 +9,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Main
 {
@@ -83,7 +84,7 @@ namespace Focus.Apps.EasyNpc.Main
                 Content = Loader;
             };
 
-            settingsNavigationMenuItem = new("", Settings, typeof(SettingsPage));
+            settingsNavigationMenuItem = new("Settings", Settings, typeof(SettingsPage));
 
             Content = isFirstLaunch ? Settings : Loader;
 
@@ -107,6 +108,18 @@ namespace Focus.Apps.EasyNpc.Main
                 Content = StartupReport.HasErrors ? StartupReport : this;
             };
 
+            messageBus.Subscribe<NavigateToPage>(message =>
+            {
+                if (message.Page == MainPage.Settings)
+                    IsSettingsNavigationItemSelected = true;
+                else
+                {
+                    var item = GetPageNavigationItem(message.Page);
+                    if (item is not null)
+                        SelectedNavigationMenuItem = item;
+                }
+            });
+
             messageBus.Subscribe<JumpToNpc>(message =>
             {
                 var found = Profile.SelectNpc(message.Key);
@@ -119,5 +132,20 @@ namespace Focus.Apps.EasyNpc.Main
         {
             Content = this;
         }
+
+        private NavigationMenuItem? GetPageNavigationItem(MainPage page)
+        {
+            var viewModel = GetPageViewModel(page);
+            return viewModel is not null ? NavigationMenuItems.SingleOrDefault(x => x.ViewModel == viewModel) : null;
+        }
+
+        private object? GetPageViewModel(MainPage page) => page switch
+        {
+            MainPage.Profile => Profile,
+            MainPage.Build => Build,
+            MainPage.Maintenance => Maintenance,
+            MainPage.Log => Log,
+            _ => null
+        };
     }
 }
