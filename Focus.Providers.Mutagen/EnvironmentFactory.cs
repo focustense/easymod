@@ -4,6 +4,7 @@ using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
+using System;
 using System.Linq;
 
 namespace Focus.Providers.Mutagen
@@ -28,6 +29,9 @@ namespace Focus.Providers.Mutagen
 
         public GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> CreateEnvironment()
         {
+            if (!setup.IsConfirmed)
+                throw new InvalidOperationException(
+                    "Attempted to create the game environment before settings were confirmed.");
             var loadOrderKeys = setup.AvailablePlugins
                 .Where(p => setup.LoadOrderGraph.IsEnabled(p.FileName) && setup.LoadOrderGraph.CanLoad(p.FileName))
                 .Select(p => ModKey.FromNameAndExtension(p.FileName));

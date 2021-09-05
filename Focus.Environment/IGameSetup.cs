@@ -7,7 +7,10 @@ namespace Focus.Environment
     {
         IReadOnlyList<PluginInfo> AvailablePlugins { get; }
         string DataDirectory { get; }
+        bool IsConfirmed { get; }
         ILoadOrderGraph LoadOrderGraph { get; }
+
+        void Confirm();
     }
 
     public static class GameSetupExtensions

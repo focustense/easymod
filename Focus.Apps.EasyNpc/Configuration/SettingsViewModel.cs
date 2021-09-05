@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Messages;
+using Focus.Environment;
 using Focus.ModManagers;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
@@ -22,7 +23,7 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         public IEnumerable<string> AvailableModNames => modRepository.Select(x => x.Name);
         public IEnumerable<string> AvailableMugshotModNames { get; private set; } = Enumerable.Empty<string>();
-        public IEnumerable<string> AvailablePlugins => gameSettings.PluginLoadOrder.OrderBy(p => p);
+        public IEnumerable<string> AvailablePlugins { get; private set; } = Enumerable.Empty<string>();
         public ObservableCollection<BuildWarningSuppressionViewModel> BuildWarningWhitelist { get; init; }
         public bool HasDefaultModRootDirectory { get; private init; }
         [DependsOn(nameof(UseModManagerForModDirectory))]
@@ -69,7 +70,6 @@ namespace Focus.Apps.EasyNpc.Configuration
             }
         }
 
-        private readonly IGameSettings gameSettings;
         private readonly IMessageBus messageBus;
         private readonly IModManagerConfiguration modManagerConfig;
         private readonly IModRepository modRepository;
@@ -77,9 +77,8 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         public SettingsViewModel(
             IMutableAppSettings settings, IModManagerConfiguration modManagerConfig, IModRepository modRepository,
-            IGameSettings gameSettings, IMessageBus messageBus)
+            IAfterGameSetup<IGameSettings> gameSettingsFuture, IMessageBus messageBus)
         {
-            this.gameSettings = gameSettings;
             this.messageBus = messageBus;
             this.modManagerConfig = modManagerConfig;
             this.modRepository = modRepository;
@@ -99,6 +98,11 @@ namespace Focus.Apps.EasyNpc.Configuration
                 .Select(x => new MugshotRedirectViewModel(x.ModName, x.Mugshots));
             MugshotRedirects = new(mugshotRedirects);
             WatchCollection(MugshotRedirects, SaveMugshotRedirects);
+
+            gameSettingsFuture.OnValue(gameSettings =>
+            {
+                AvailablePlugins = gameSettings.PluginLoadOrder.OrderBy(p => p).ToList().AsReadOnly();
+            });
         }
 
         public void AckWelcome()

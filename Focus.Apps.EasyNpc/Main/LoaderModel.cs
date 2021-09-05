@@ -50,6 +50,7 @@ namespace Focus.Apps.EasyNpc.Main
             log.Information("Load order confirmed");
             if (modRepositoryConfigureTask is null)
                 throw new InvalidOperationException("Mod repository has not been configured");
+            setup.Confirm();
             var modRepositoryTask = modRepositoryConfigureTask.ContinueWith(_ => modRepository as IModRepository);
             var loadOrderAnalysisTask = AnalyzeLoadOrder();
             var profileTask = Task.WhenAll(loadOrderAnalysisTask, modRepositoryTask)

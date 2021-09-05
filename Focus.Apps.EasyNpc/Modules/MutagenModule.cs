@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Autofac.Core;
 using Focus.Analysis.Execution;
 using Focus.Analysis.Records;
 using Focus.Apps.EasyNpc.Build.Pipeline;
@@ -12,6 +13,7 @@ using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Skyrim;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Modules
 {
@@ -42,19 +44,50 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.Register(ctx => ctx.Resolve<IEnvironmentFactory>().CreateEnvironment())
                 .As<GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>()
                 .As<IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>()
+                .OnActivated(NotifyAfterGameSetup)
                 .SingleInstance();
             // Autofac doesn't know how to narrow open generics. Boo.
             builder.RegisterType<GameEnvironmentWrapper<ISkyrimMod, ISkyrimModGetter>>()
                 .As<IMutableGameEnvironment<ISkyrimMod, ISkyrimModGetter>>()
                 .As<IReadOnlyGameEnvironment<ISkyrimModGetter>>()
+                .OnActivated(NotifyAfterGameSetup)
                 .SingleInstance();
-            builder.RegisterType<GameSettings<ISkyrimModGetter>>().As<IGameSettings>().SingleInstance();
+            builder.RegisterType<GameSettings<ISkyrimModGetter>>()
+                .As<IGameSettings>()
+                .OnActivated(NotifyAfterGameSetup)
+                .SingleInstance();
             builder.RegisterType<DummyPluginBuilder>().As<IDummyPluginBuilder>();
+
+            // Futures
+            RegisterAfterGameSetup<GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>(builder);
+            RegisterAfterGameSetup<IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>(builder);
+            RegisterAfterGameSetup<IMutableGameEnvironment<ISkyrimMod, ISkyrimModGetter>>(builder);
+            RegisterAfterGameSetup<IReadOnlyGameEnvironment<ISkyrimModGetter>>(builder);
+            RegisterAfterGameSetup<IGameSettings>(builder);
 
             // Analysis types
             builder.RegisterType<GroupCache>().As<IGroupCache>();
             builder.RegisterType<RecordScanner>().As<IRecordScanner>();
             builder.RegisterType<MutagenLoadOrderAnalyzer>().As<ILoadOrderAnalyzer>();
+        }
+
+        private static void NotifyAfterGameSetup<T>(IActivatedEventArgs<T> args)
+        {
+            var notifyTypes = typeof(T).GetInterfaces()
+                .Prepend(typeof(T))
+                .Distinct()
+                .Select(t => typeof(AfterGameSetup<>).MakeGenericType(t));
+            foreach (var notifyType in notifyTypes)
+                if (args.Context.TryResolve(notifyType, out var notifier))
+                    ((IAfterGameSetupNotifier)notifier).NotifyValue();
+        }
+
+        private static void RegisterAfterGameSetup<T>(ContainerBuilder builder)
+        {
+            builder.RegisterType<AfterGameSetup<T>>()
+                .AsSelf() // Needed for notifications
+                .As<IAfterGameSetup<T>>()
+                .SingleInstance();
         }
     }
 }

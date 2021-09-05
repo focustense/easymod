@@ -13,6 +13,7 @@ namespace Focus.Providers.Mutagen
     {
         public IReadOnlyList<PluginInfo> AvailablePlugins { get; private set; } = new List<PluginInfo>().AsReadOnly();
         public string DataDirectory => game.DataDirectory;
+        public bool IsConfirmed { get; private set; }
         public ILoadOrderGraph LoadOrderGraph { get; private set; } = new NullLoadOrderGraph();
 
         private readonly IFileSystem fs;
@@ -26,6 +27,11 @@ namespace Focus.Providers.Mutagen
             this.game = game;
             this.log = log;
             this.setupStatics = setupStatics;
+        }
+
+        public void Confirm()
+        {
+            IsConfirmed = true;
         }
 
         public void Detect(IReadOnlySet<string> blacklistedPluginNames)
