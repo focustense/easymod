@@ -34,7 +34,7 @@ namespace Focus.Apps.EasyNpc.Main
             instance = new StartupInfo
             {
                 Launcher = DetectProcessModManager(parentProcess),
-                ModDirectoryOwner = DetectModDirectoryModManager(Settings.Default.ModRootDirectory),
+                ModDirectoryOwner = DetectModDirectoryModManager(Settings.Default.DefaultModRootDirectory),
                 ParentProcessPath = parentProcess?.MainModule?.FileName,
             };
             return instance;

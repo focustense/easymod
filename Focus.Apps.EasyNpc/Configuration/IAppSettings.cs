@@ -7,17 +7,30 @@ namespace Focus.Apps.EasyNpc.Configuration
     {
         string BuildReportPath { get; }
         IEnumerable<BuildWarningSuppression> BuildWarningWhitelist { get; }
-        string ModRootDirectory { get; }
+        string DefaultModRootDirectory { get; }
         IEnumerable<MugshotRedirect> MugshotRedirects { get; }
         string MugshotsDirectory { get; }
         string StaticAssetsPath { get; }
+        bool UseModManagerForModDirectory { get; }
+    }
+
+    public interface IMutableAppSettings
+    {
+        IReadOnlyList<BuildWarningSuppression> BuildWarningWhitelist { get; set; }
+        string DefaultModRootDirectory { get; set; }
+        IReadOnlyList<MugshotRedirect> MugshotRedirects { get; set; }
+        string MugshotsDirectory { get; set; }
+        bool UseModManagerForModDirectory { get; set; }
+
+        void Save();
     }
 
     public interface IObservableAppSettings : IAppSettings
     {
         IObservable<IReadOnlyList<BuildWarningSuppression>> BuildWarningWhitelistObservable { get; }
-        IObservable<string> ModRootDirectoryObservable { get; }
+        IObservable<string> DefaultModRootDirectoryObservable { get; }
         IObservable<IReadOnlyList<MugshotRedirect>> MugshotRedirectsObservable { get; }
         IObservable<string> MugshotsDirectoryObservable { get; }
+        IObservable<bool> UseModManagerForModDirectoryObservable { get; }
     }
 }

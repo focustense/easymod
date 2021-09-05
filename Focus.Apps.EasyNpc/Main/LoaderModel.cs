@@ -25,14 +25,14 @@ namespace Focus.Apps.EasyNpc.Main
         private readonly Lazy<ILoadOrderAnalyzer> analyzer;
         private readonly IConfigurableModRepository<ComponentPerDirectoryConfiguration> modRepository;
         private readonly ILogger log;
+        private readonly IModSettings modSettings;
         private readonly IProfileFactory profileFactory;
-        private readonly IAppSettings settings;
         private readonly IGameSetup setup;
 
         private Task? modRepositoryConfigureTask;
 
         public LoaderModel(
-            IAppSettings settings, IGameSetup setup, Lazy<ILoadOrderAnalyzer> analyzer, IProfileFactory profileFactory,
+            IModSettings modSettings, IGameSetup setup, Lazy<ILoadOrderAnalyzer> analyzer, IProfileFactory profileFactory,
             IConfigurableModRepository<ComponentPerDirectoryConfiguration> modRepository,
             IEnumerable<ILoadOrderAnalysisReceiver> analysisReceivers, ILogger logger)
         {
@@ -40,8 +40,8 @@ namespace Focus.Apps.EasyNpc.Main
             this.analyzer = analyzer;
             this.log = logger;
             this.modRepository = modRepository;
+            this.modSettings = modSettings;
             this.profileFactory = profileFactory;
-            this.settings = settings;
             this.setup = setup;
         }
 
@@ -65,11 +65,11 @@ namespace Focus.Apps.EasyNpc.Main
 
         public void Prepare()
         {
-            modRepositoryConfigureTask = !string.IsNullOrEmpty(settings.ModRootDirectory) ?
+            modRepositoryConfigureTask = !string.IsNullOrEmpty(modSettings.RootDirectory) ?
                 Task.Run(async () =>
                 {
-                    log.Information("Beginning mod indexing");
-                    await modRepository.Configure(new(settings.ModRootDirectory));
+                    log.Information("Beginning mod indexing in {modRootDirectory}", modSettings.RootDirectory);
+                    await modRepository.Configure(new(modSettings.RootDirectory));
                     log.Information("Finished mod indexing");
                 }) :
                 Task.CompletedTask;
