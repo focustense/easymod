@@ -74,5 +74,23 @@ namespace Focus.ModManagers.ModOrganizer.Tests
 
             Assert.Equal("My Profile", config.SelectedProfileName);
         }
+
+        [Fact]
+        public void WhenGamePathIsByteArrayWrapped_ReadsGamePath()
+        {
+            iniData.AddSection("General", new() { { "gamePath", @"@ByteArray(C:\\Games\\Wabbajack\\Serenity 2\\Stock Game)" } });
+            var config = new IniConfiguration(iniData, DefaultBaseDirectory);
+
+            Assert.Equal(@"C:\Games\Wabbajack\Serenity 2\Stock Game\data", config.GameDataPath);
+        }
+
+        [Fact]
+        public void WhenGamePathIsPlainText_ReadsGamePath()
+        {
+            iniData.AddSection("General", new() { { "gamePath", @"C:\Games\Steam\steamapps\common\Skyrim Special Edition" } });
+            var config = new IniConfiguration(iniData, DefaultBaseDirectory);
+
+            Assert.Equal(@"C:\Games\Steam\steamapps\common\Skyrim Special Edition\data", config.GameDataPath);
+        }
     }
 }

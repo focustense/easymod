@@ -36,6 +36,7 @@ namespace Focus.Providers.Mutagen
 
         public void Detect(IReadOnlySet<string> blacklistedPluginNames)
         {
+            log.Information("Using game data directory: {dataDirectory}", DataDirectory);
             var implicits = setupStatics.GetBaseMasters(game.GameRelease)
                 .Select(x => x.FileName.String)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);

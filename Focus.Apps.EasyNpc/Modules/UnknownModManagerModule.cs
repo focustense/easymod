@@ -7,7 +7,7 @@ namespace Focus.Apps.EasyNpc.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterInstance(new ManualModManagerConfiguration(string.Empty))
+            builder.RegisterInstance(new ManualModManagerConfiguration(string.Empty, string.Empty))
                 .As<IModManagerConfiguration>()
                 .SingleInstance();
             builder.RegisterType<IndexedModRepository>().As<IIndexedModRepository>().SingleInstance();
