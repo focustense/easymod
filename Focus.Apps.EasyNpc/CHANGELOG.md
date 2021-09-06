@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- #107: Essential NPC references are now checked on startup, and errors reported. Prevents late-manifesting crashes during build due to being unable to import some dependencies.
+
+### Changed
+- #102: Don't check for named instances of Mod Organizer when started under a "locked portable" instance (e.g. Wabbajack builds).
+- #114: Obtain game path from Mod Organizer configuration. Makes EasyNPC compatible with Serenity 2 and any other instances with a "stock game" copy. Frequently eliminates the need to configure a `-p`/`--game-path` option.
+- Prioritize the mod manager's mod directory by default, only using the manually-configured directory as a fallback. Can be disabled in the app settings to restore old behavior of always using the same mod directory.
+- Build pipeline now logs every item per task in debug mode, to help with identifying obscure mod-specific errors.
+
+### Fixed
+- #100: Updated icon and highlight colors under Windows dark theme to improve visibility/legibility.
+- #103: Synchronize profile writes to prevent corruption when importing a saved profile.
+- #105: Ensure output directory exists when saving patch, in case it wasn't created by previous steps.
+- #113: Fix plugin customizations being ignored due to premature activation of Mutagen environment.
+- Sort master references when saving merge plugin. Fixes the semi-infamous "Finding Helgi" infinite-load bug.
 
 ## [0.9.2] - 2021-08-27
 ### Added
