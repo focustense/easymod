@@ -1,13 +1,13 @@
-﻿using System;
+﻿using PropertyChanged;
+using System;
 using System.ComponentModel;
 
 namespace Focus.Apps.EasyNpc
 {
-    public class DataGridColumn : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class DataGridColumn
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public string FilterText { get; set; }
+        public string FilterText { get; set; } = string.Empty;
         public string HeaderText { get; private init; }
 
         public DataGridColumn(string headerText)

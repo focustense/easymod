@@ -7,7 +7,7 @@ namespace Focus.Apps.EasyNpc.Debug
     /// </summary>
     public partial class LogPage : Page
     {
-        protected LogViewModel Model => ((ILogContainer)DataContext)?.Log;
+        protected LogViewModel Model => ((ILogContainer)DataContext)!.Log;
 
         public LogPage()
         {

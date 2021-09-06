@@ -9,7 +9,9 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public class NpcViewModel : INotifyPropertyChanged, INpcBasicInfo
     {
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
         public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public string BasePluginName => npc.BasePluginName;
         [DependsOn(nameof(DefaultOption))]

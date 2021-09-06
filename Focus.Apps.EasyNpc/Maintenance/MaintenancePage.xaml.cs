@@ -11,7 +11,7 @@ namespace Focus.Apps.EasyNpc.Maintenance
     /// </summary>
     public partial class MaintenancePage : ModernWpf.Controls.Page
     {
-        protected MaintenanceViewModel Model => ((IMaintenanceContainer)DataContext)?.Maintenance;
+        protected MaintenanceViewModel Model => ((IMaintenanceContainer)DataContext)!.Maintenance;
 
         public MaintenancePage()
         {

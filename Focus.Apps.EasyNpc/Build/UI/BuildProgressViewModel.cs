@@ -2,7 +2,6 @@
 using PropertyChanged;
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
@@ -10,10 +9,9 @@ using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Build.UI
 {
-    public class BuildProgressViewModel<TResult> : INotifyPropertyChanged, IDisposable
+    [AddINotifyPropertyChangedInterface]
+    public class BuildProgressViewModel<TResult> : IDisposable
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public delegate BuildProgressViewModel<TResult> Factory(IBuildProgress<TResult> model);
 
         [DependsOn(nameof(RemainingTaskNames))]

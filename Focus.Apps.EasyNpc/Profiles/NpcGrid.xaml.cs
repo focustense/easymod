@@ -26,7 +26,8 @@ namespace Focus.Apps.EasyNpc.Profiles
             var columnHeaderContentPresenters = NpcDataGrid
                 ?.FindVisualChildrenByName<Grid>("ColumnHeaderRoot")
                 ?.Select(x => x.GetFirstVisualChildByType<Grid>())
-                ?.Select(x => x.GetFirstVisualChildByType<ContentPresenter>());
+                ?.Select(x => x?.GetFirstVisualChildByType<ContentPresenter>())
+                ?.NotNull() ?? Enumerable.Empty<ContentPresenter>();
             foreach (var presenter in columnHeaderContentPresenters)
                 presenter.HorizontalAlignment = HorizontalAlignment.Stretch;
         }

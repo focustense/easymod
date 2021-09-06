@@ -19,7 +19,7 @@ namespace Focus.Apps.EasyNpc.Main
             int processInformationLength,
             out int returnLength);
 
-        public static Process Parent(this Process process)
+        public static Process? Parent(this Process process)
         {
             var pbi = new ProcessBasicInfo();
             int status = NtQueryInformationProcess(process.Handle, 0, ref pbi, Marshal.SizeOf(pbi), out var _);

@@ -6,10 +6,12 @@ namespace Focus.Files
 {
     public class EmptyFileIndex : INotifyingBucketedFileIndex, INotifyingFileIndex
     {
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
         public event EventHandler<FileEventArgs>? Added;
         public event EventHandler<FileEventArgs>? Removed;
         public event EventHandler<BucketedFileEventArgs>? AddedToBucket;
         public event EventHandler<BucketedFileEventArgs>? RemovedFromBucket;
+#pragma warning restore 67
 
         public bool Contains(string path)
         {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -48,7 +47,7 @@ namespace Focus.Apps.EasyNpc
             }
         }
 
-        public static T FindVisualParentByType<T>(this DependencyObject child)
+        public static T? FindVisualParentByType<T>(this DependencyObject child)
             where T : DependencyObject
         {
             for (var parent = child; parent != null; parent = VisualTreeHelper.GetParent(parent))
@@ -57,7 +56,7 @@ namespace Focus.Apps.EasyNpc
             return default;
         }
 
-        public static T GetFirstVisualChildByType<T>(this DependencyObject parent)
+        public static T? GetFirstVisualChildByType<T>(this DependencyObject parent)
             where T : DependencyObject
         {
             var childCount = VisualTreeHelper.GetChildrenCount(parent);

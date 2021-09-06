@@ -16,9 +16,9 @@ using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Configuration
 {
-    public class SettingsViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class SettingsViewModel
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler? WelcomeAcked;
 
         public IEnumerable<string> AvailableModNames => modRepository.Select(x => x.Name);
@@ -213,12 +213,16 @@ namespace Focus.Apps.EasyNpc.Configuration
 
     public record BuildWarningSelection(BuildWarningId Id, bool IsSelected) : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
+        public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
     }
 
     public class BuildWarningSuppressionViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
+        public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public static IEnumerable<BuildWarningId> ParseWarnings(string serializedWarnings)
         {
@@ -235,12 +239,12 @@ namespace Focus.Apps.EasyNpc.Configuration
         }
 
         public string PluginName { get; set; }
-        public IEnumerable<BuildWarningId> SelectedWarnings { get; private set; }
+        public IEnumerable<BuildWarningId> SelectedWarnings { get; private set; } = Enumerable.Empty<BuildWarningId>();
         public IReadOnlyList<BuildWarningSelection> WarningSelections { get; init; }
 
-        public BuildWarningSuppressionViewModel(string pluginName, IEnumerable<BuildWarningId> warnings = null)
+        public BuildWarningSuppressionViewModel(string? pluginName, IEnumerable<BuildWarningId>? warnings = null)
         {
-            PluginName = pluginName;
+            PluginName = pluginName ?? string.Empty;
             WarningSelections = Enum.GetValues<BuildWarningId>()
                 .Where(x => x != BuildWarningId.Unknown)
                 .Select(id => new BuildWarningSelection(id, warnings?.Contains(id) ?? false))
@@ -265,7 +269,9 @@ namespace Focus.Apps.EasyNpc.Configuration
 
     public class MugshotRedirectViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
+        public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public string ModName { get; set; }
         public string Mugshots { get; set; }

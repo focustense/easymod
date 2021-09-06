@@ -8,11 +8,13 @@ namespace Focus.Apps.EasyNpc.Messages
         public static readonly IMessageBus Instance = new MessageBus();
 
         public static void Send<T>(T message)
+            where T : notnull
         {
             Instance.Send(message);
         }
 
         public static void Subscribe<T>(Action<T> handler)
+            where T : notnull
         {
             Instance.Subscribe(handler);
         }

@@ -5,17 +5,18 @@ using Focus.Apps.EasyNpc.Maintenance;
 using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profiles;
 using Focus.Apps.EasyNpc.Reports;
+using PropertyChanged;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Main
 {
+    [AddINotifyPropertyChangedInterface]
     public class MainViewModel :
-        IProfileContainer, IBuildContainer, IMaintenanceContainer, ISettingsContainer, ILogContainer,
-        INotifyPropertyChanged
+        IProfileContainer, IBuildContainer, IMaintenanceContainer, ISettingsContainer, ILogContainer
     {
         public class NavigationMenuItem
         {
@@ -38,19 +39,21 @@ namespace Focus.Apps.EasyNpc.Main
 
         public delegate MainViewModel Factory(bool isFirstLaunch);
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
+        [AllowNull] // Not accessed until after load
         public BuildViewModel Build { get; private set; }
         public object Content { get; private set; }
         public LoaderViewModel Loader { get; private init; }
         public LogViewModel Log { get; private init; }
         public ILogger Logger { get; private init; }
+        [AllowNull] // Not accessed until after load
         public MaintenanceViewModel Maintenance { get; private set; }
         public IReadOnlyList<NavigationMenuItem> NavigationMenuItems { get; private set; } =
             new List<NavigationMenuItem>().AsReadOnly();
+        [AllowNull] // Not accessed until after load
         public ProfileViewModel Profile { get; private set; }
-        public NavigationMenuItem SelectedNavigationMenuItem { get; set; }
+        public NavigationMenuItem? SelectedNavigationMenuItem { get; set; }
         public SettingsViewModel Settings { get; private init; }
+        [AllowNull] // Not accessed until after load
         public StartupReportViewModel StartupReport { get; private set; }
 
         public bool IsSettingsNavigationItemSelected
@@ -90,7 +93,7 @@ namespace Focus.Apps.EasyNpc.Main
 
             Loader.Loaded += async () =>
             {
-                var profileModel = await Loader.Tasks.Profile.ConfigureAwait(false);
+                var profileModel = await Loader.Tasks!.Profile.ConfigureAwait(false);
                 Profile = profileFactory(profileModel);
                 StartupReport = startupReportFactory(profileModel);
                 Build = buildFactory(profileModel);

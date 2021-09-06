@@ -66,12 +66,12 @@ namespace Focus
             return $"{LocalFormIdHex}:{BasePluginName}";
         }
 
-        public static bool operator ==(RecordKey x, IRecordKey y)
+        public static bool operator ==(RecordKey? x, IRecordKey? y)
         {
             return Equals(x, y);
         }
 
-        public static bool operator !=(RecordKey x, IRecordKey y)
+        public static bool operator !=(RecordKey? x, IRecordKey? y)
         {
             return !(x == y);
         }

@@ -4,16 +4,15 @@ using Focus.Environment;
 using PropertyChanged;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Main
 {
-    public class LoaderViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class LoaderViewModel
     {
-        public event Action Loaded;
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event Action? Loaded;
 
         public TaskViewModel AnalysisTask { get; private init; } = new("Analysis");
         public bool CanLoad { get; private set; }
@@ -27,7 +26,7 @@ namespace Focus.Apps.EasyNpc.Main
         public TaskViewModel ModIndexTask { get; private init; } = new("Mod Scan");
         public IReadOnlyList<PluginSetting> Plugins { get; private set; }
         public TaskViewModel ProfileTask { get; private init; } = new("Profile");
-        public LoaderTasks Tasks { get; private set; }
+        public LoaderTasks? Tasks { get; private set; }
 
         private readonly LoaderModel loader;
         private readonly IGameSetup setup;
@@ -86,9 +85,10 @@ namespace Focus.Apps.EasyNpc.Main
                     plugin.ShouldLoad = shouldLoad;
         }
 
-        private void Plugin_Toggled(object sender, EventArgs e)
+        private void Plugin_Toggled(object? sender, EventArgs e)
         {
-            var pluginSetting = (PluginSetting)sender;
+            if (sender is not PluginSetting pluginSetting)
+                return;
             setup.LoadOrderGraph.SetEnabled(pluginSetting.FileName, pluginSetting.ShouldLoad);
             UpdatePluginStates();
         }
@@ -108,10 +108,10 @@ namespace Focus.Apps.EasyNpc.Main
         }
     }
 
-    public class PluginSetting : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class PluginSetting
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler Toggled;
+        public event EventHandler? Toggled;
 
         public bool CanLoad { get; set; }
         public string FileName { get; private init; }

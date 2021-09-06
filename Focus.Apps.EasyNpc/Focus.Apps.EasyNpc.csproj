@@ -12,6 +12,7 @@
     <Product>EasyMod</Product>
     <Version>0.9.2</Version>
     <ApplicationIcon>EasyNPC.ico</ApplicationIcon>
+    <NoWarn>MSB3246</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -43,7 +44,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FontAwesome5" Version="2.1.1" />
-    <PackageReference Include="MathConverter" Version="1.2.1.6" />
+    <PackageReference Include="MathConverter" Version="1.2.1.6">
+      <NoWarn>NU1701</NoWarn>
+    </PackageReference>
     <PackageReference Include="ModernWpfUI" Version="0.9.4" />
     <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.31.0" />
     <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.31.0" />

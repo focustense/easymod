@@ -12,11 +12,10 @@ using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class ProfileViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class ProfileViewModel
     {
         public delegate ProfileViewModel Factory(Profile profile);
-
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         public NpcFiltersViewModel Filters { get; private init; } = new();
         public NpcGridViewModel Grid { get; private init; }

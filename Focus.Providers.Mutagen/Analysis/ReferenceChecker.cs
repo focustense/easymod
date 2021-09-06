@@ -69,18 +69,16 @@ namespace Focus.Providers.Mutagen.Analysis
         }
 
         public ReferenceChecker<T> Follow<G, U>(
-            Func<T, IGenderedItemGetter<G>?> itemSelector, Func<G, IFormLinkGetter<U>?> linkSelector,
+            Func<T, IGenderedItemGetter<G?>?> itemSelector, Func<G, IFormLinkGetter<U>?> linkSelector,
             Action<ReferenceChecker<U>>? configure = null)
-            where G : class
             where U : class, ISkyrimMajorRecordGetter
         {
             return Follow(itemSelector, g => new[] { linkSelector(g) }, configure);
         }
 
         public ReferenceChecker<T> Follow<G, U>(
-            Func<T, IGenderedItemGetter<G>?> itemSelector, Func<G, IEnumerable<IFormLinkGetter<U>?>?> linksSelector,
+            Func<T, IGenderedItemGetter<G?>?> itemSelector, Func<G, IEnumerable<IFormLinkGetter<U>?>?> linksSelector,
             Action<ReferenceChecker<U>>? configure = null)
-            where G : class
             where U : class, ISkyrimMajorRecordGetter
         {
             return Follow(r =>
@@ -88,7 +86,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 var item = itemSelector(r);
                 if (item is null)
                     return Enumerable.Empty<IFormLinkGetter<U>>();
-                var subItems = new[] { item.Male, item.Female }.NotNull();
+                var subItems = new[] { item.Male, item.Female }.Where(x => x is not null).Select(x => x!);
                 return subItems.SelectMany(x => linksSelector(x) ?? Enumerable.Empty<IFormLinkGetter<U>>());
             }, configure);
         }

@@ -9,7 +9,6 @@ using Focus.Files;
 using Focus.ModManagers;
 using PropertyChanged;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -17,11 +16,10 @@ using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Build
 {
-    public class BuildViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class BuildViewModel
     {
         public delegate BuildViewModel Factory(Profile profile);
-
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         public BuildReport? BuildReport { get; private set; }
         public bool EnableDewiggify { get; set; } = true;
@@ -107,12 +105,9 @@ namespace Focus.Apps.EasyNpc.Build
 
         private BuildSettings GetBuildSettings()
         {
-            return new BuildSettings
+            return new BuildSettings(profile, OutputDirectory, OutputModName)
             {
                 EnableDewiggify = EnableDewiggify,
-                OutputModName = OutputModName,
-                OutputDirectory = OutputDirectory,
-                Profile = profile,
             };
         }
 
@@ -144,7 +139,8 @@ namespace Focus.Apps.EasyNpc.Build
 
         public void ExpandWarning(BuildWarning warning)
         {
-            messageBus.Send(new JumpToNpc(warning.RecordKey));
+            if (warning.RecordKey is not null)
+                messageBus.Send(new JumpToNpc(warning.RecordKey));
         }
 
         public void OpenBuildOutput()

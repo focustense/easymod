@@ -14,9 +14,11 @@ namespace Focus.Apps.EasyNpc.Main
 {
     public class LoaderTasks
     {
+#pragma warning disable CS8618 // Don't care, C#. Deal with it. https://github.com/dotnet/csharplang/issues/3630
         public Task<LoadOrderAnalysis> LoadOrderAnalysis { get; init; }
         public Task<IModRepository> ModRepository { get; init; }
         public Task<Profile> Profile { get; init; }
+#pragma warning restore CS8618
     }
 
     public class LoaderModel

@@ -9,11 +9,10 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Maintenance
 {
-    public class MaintenanceViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class MaintenanceViewModel
     {
         public delegate MaintenanceViewModel Factory(Profile profile);
-
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         public int AutosaveInvalidNpcCount { get; private set; }
         public int AutosaveRecordCount { get; private set; }

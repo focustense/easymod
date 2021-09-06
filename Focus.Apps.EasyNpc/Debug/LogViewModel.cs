@@ -1,12 +1,11 @@
 ﻿using Focus.Apps.EasyNpc.Configuration;
-using System.ComponentModel;
+using PropertyChanged;
 
 namespace Focus.Apps.EasyNpc.Debug
 {
-    public class LogViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class LogViewModel
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
         public string Text { get; private set; } = "";
 
         public void Append(string message)

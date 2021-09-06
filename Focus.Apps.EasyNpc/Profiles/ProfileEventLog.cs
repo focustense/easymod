@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace Focus.Apps.EasyNpc.Profiles
@@ -27,9 +28,13 @@ namespace Focus.Apps.EasyNpc.Profiles
                 yield break;
             using var fs = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new StreamReader(fs);
-            string line;
+            string? line;
             while ((line = reader.ReadLine()) != null)
-                yield return ProfileEvent.Deserialize(line);
+            {
+                var profileEvent = ProfileEvent.Deserialize(line);
+                if (profileEvent is not null)
+                    yield return profileEvent;
+            }
         }
 
         public string FileName { get; private init; }
@@ -38,7 +43,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         private bool isDisposed;
         private bool isSuspended;
-        private StreamWriter writer;
+        private StreamWriter? writer;
 
         public ProfileEventLog(string fileName)
         {
@@ -52,6 +57,8 @@ namespace Focus.Apps.EasyNpc.Profiles
                 return;
             lock (writerSync)
             {
+                if (writer is null)
+                    throw new InvalidOperationException("Profile log has not been opened for writing");
                 writer.WriteLine(e.Serialize());
                 // Auto-flush since this is used to recover from crashes
                 writer.Flush();
@@ -68,7 +75,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             lock (writerSync)
             {
-                writer.Dispose();
+                writer?.Dispose();
                 var backupName = Path.ChangeExtension(FileName, $".{DateTime.Now:yyyyMMdd_HHmmss_fffffff}.bak");
                 File.Move(FileName, backupName);
                 OpenLogFile();
@@ -99,12 +106,13 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             if (!isDisposed)
             {
-                if (disposing)
+                if (disposing && writer is not null)
                     writer.Dispose();
                 isDisposed = true;
             }
         }
 
+        [MemberNotNull(nameof(writer))]
         private void OpenLogFile()
         {
             var fs = File.Open(FileName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);

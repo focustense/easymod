@@ -1,14 +1,13 @@
-﻿using System;
+﻿using PropertyChanged;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class MugshotViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class MugshotViewModel
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public IReadOnlyList<string> InstalledPlugins => mugshot.InstalledPlugins;
         public bool IsDisabledByErrors { get; private init; }
         public bool IsFocused { get; set; }

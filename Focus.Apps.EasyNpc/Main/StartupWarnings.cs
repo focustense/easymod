@@ -4,8 +4,8 @@ namespace Focus.Apps.EasyNpc.Main
 {
     public class StartupWarning
     {
-        public string Title { get; init; }
-        public object Description { get; init; }
+        public string Title { get; init; } = string.Empty;
+        public object Description { get; init; } = string.Empty;
     }
 
     public class StartupWarnings

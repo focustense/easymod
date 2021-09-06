@@ -62,10 +62,10 @@ namespace Focus.Apps.EasyNpc.Profiles
                     var npcKey = new RecordKey(npc);
                     var isDefaultPluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.DefaultPlugin), out var defaultPluginEvent) &&
-                        npc.SetDefaultOption(defaultPluginEvent.NewValue) == Npc.ChangeResult.Invalid;
+                        npc.SetDefaultOption(defaultPluginEvent.NewValue ?? string.Empty) == Npc.ChangeResult.Invalid;
                     var isFacePluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.FacePlugin), out var facePluginEvent) &&
-                        npc.SetFaceOption(facePluginEvent.NewValue) == Npc.ChangeResult.Invalid;
+                        npc.SetFaceOption(facePluginEvent.NewValue ?? string.Empty) == Npc.ChangeResult.Invalid;
                     // Face mods are now "facegen overrides", so we only care about (want to restore) this setting if it
                     // actually looks like an override - i.e. if the chosen mod exists and does not include any of the
                     // plugins in the record chain.
