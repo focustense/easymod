@@ -7,9 +7,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
 {
     public class MissingRecordException : Exception
     {
-        public FormKey FormKey { get; private init; }
-        public string ModName { get; private init; }
-        public string RecordType { get; private init; }
+        public FormKey? FormKey { get; private init; }
+        public string? ModName { get; private init; }
+        public string? RecordType { get; private init; }
 
         public MissingRecordException()
         {
@@ -51,7 +51,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
         {
         }
 
-        private static string GetExceptionMessage(FormKey formKey, string recordType = null, string modName = null)
+        private static string GetExceptionMessage(FormKey formKey, string? recordType = null, string? modName = null)
         {
             var sb = new StringBuilder($"Could not locate record {formKey}");
             if (!string.IsNullOrEmpty(recordType))

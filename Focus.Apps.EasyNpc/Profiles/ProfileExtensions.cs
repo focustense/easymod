@@ -22,7 +22,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             return
                 (e.Field == NpcProfileField.DefaultPlugin || e.Field == NpcProfileField.FacePlugin) &&
-                !currentPlugins.Contains(e.NewValue);
+                !currentPlugins.Contains(e.NewValue ?? string.Empty);
         }
     }
 }

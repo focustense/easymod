@@ -7,7 +7,9 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public class NpcGridViewModel : INotifyPropertyChanged
     {
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
         public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public NpcGridHeaders Headers { get; private set; }
         public IEnumerable<Npc> Npcs { get; set; } = Enumerable.Empty<Npc>();

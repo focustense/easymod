@@ -1,5 +1,6 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Messages;
+using Focus.Environment;
 using Focus.ModManagers;
 using Ookii.Dialogs.Wpf;
 using PropertyChanged;
@@ -11,82 +12,102 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Configuration
 {
-    public class SettingsViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class SettingsViewModel
     {
-        private static readonly Settings Settings = Settings.Default;
-
-        public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler? WelcomeAcked;
 
         public IEnumerable<string> AvailableModNames => modRepository.Select(x => x.Name);
         public IEnumerable<string> AvailableMugshotModNames { get; private set; } = Enumerable.Empty<string>();
-        public IEnumerable<string> AvailablePlugins => gameSettings.PluginLoadOrder.OrderBy(p => p);
+        public IEnumerable<string> AvailablePlugins { get; private set; } = Enumerable.Empty<string>();
         public ObservableCollection<BuildWarningSuppressionViewModel> BuildWarningWhitelist { get; init; }
         public bool HasDefaultModRootDirectory { get; private init; }
-        [DependsOn("ModRootDirectory")]
+        [DependsOn(nameof(UseModManagerForModDirectory))]
+        public bool HasModManagerModDirectory => !string.IsNullOrEmpty(modManagerConfig.ModsDirectory);
+        [DependsOn(nameof(ModRootDirectory))]
         public bool IsModDirectorySpecified => !string.IsNullOrEmpty(ModRootDirectory);
         public bool IsWelcomeScreen { get; set; }
-        [DependsOn("ModRootDirectory")]
+        [DependsOn(nameof(ModRootDirectory))]
         public bool ModDirectoryExists => IsModDirectorySpecified && Directory.Exists(ModRootDirectory);
+        public string ModManagerModDirectory => modManagerConfig.ModsDirectory;
         public ObservableCollection<MugshotRedirectViewModel> MugshotRedirects { get; init; }
         public string MugshotsDirectoryPlaceholderText => ProgramData.DefaultMugshotsPath;
 
         public string ModRootDirectory
         {
-            get => Settings.ModRootDirectory;
+            get => settings.DefaultModRootDirectory;
             set
             {
-                Settings.ModRootDirectory = value;
-                Settings.Save();
-                messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.ModDirectory));
+                settings.DefaultModRootDirectory = value;
+                settings.Save();
+                messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.DefaultModDirectory));
             }
         }
 
         public string MugshotsDirectory
         {
-            get => Settings.MugshotsDirectory;
+            get => settings.MugshotsDirectory;
             set
             {
-                Settings.MugshotsDirectory = value;
-                Settings.Save();
+                settings.MugshotsDirectory = value;
+                settings.Save();
                 messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.MugshotDirectory));
             }
         }
 
-        private readonly IGameSettings gameSettings;
-        private readonly IMessageBus messageBus;
-        private readonly IModRepository modRepository;
-
-        public SettingsViewModel(IModRepository modRepository, IGameSettings gameSettings, IMessageBus messageBus)
+        public bool UseModManagerForModDirectory
         {
-            this.gameSettings = gameSettings;
+            get => settings.UseModManagerForModDirectory;
+            set
+            {
+                settings.UseModManagerForModDirectory = value;
+                settings.Save();
+                messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.ModDirectorySource));
+            }
+        }
+
+        private readonly IMessageBus messageBus;
+        private readonly IModManagerConfiguration modManagerConfig;
+        private readonly IModRepository modRepository;
+        private readonly IMutableAppSettings settings;
+
+        public SettingsViewModel(
+            IMutableAppSettings settings, IModManagerConfiguration modManagerConfig, IModRepository modRepository,
+            IAfterGameSetup<IGameSettings> gameSettingsFuture, IMessageBus messageBus)
+        {
             this.messageBus = messageBus;
+            this.modManagerConfig = modManagerConfig;
             this.modRepository = modRepository;
+            this.settings = settings;
 
             HasDefaultModRootDirectory = !string.IsNullOrEmpty(ModRootDirectory);
 
             // Since these are pass-through properties, we need to force an initial update.
             OnMugshotsDirectoryChanged();
 
-            var buildWarningSuppressions = Settings.BuildWarningWhitelist
+            var buildWarningSuppressions = settings.BuildWarningWhitelist
                 .Select(x => new BuildWarningSuppressionViewModel(x.PluginName, x.IgnoredWarnings));
             BuildWarningWhitelist = new(buildWarningSuppressions);
             WatchCollection(BuildWarningWhitelist, SaveBuildWarningSuppressions);
 
-            var mugshotRedirects = Settings.MugshotRedirects
+            var mugshotRedirects = settings.MugshotRedirects
                 .Select(x => new MugshotRedirectViewModel(x.ModName, x.Mugshots));
             MugshotRedirects = new(mugshotRedirects);
             WatchCollection(MugshotRedirects, SaveMugshotRedirects);
+
+            gameSettingsFuture.OnValue(gameSettings =>
+            {
+                AvailablePlugins = gameSettings.PluginLoadOrder.OrderBy(p => p).ToList().AsReadOnly();
+            });
         }
 
         public void AckWelcome()
         {
-            Settings.Save();
+            settings.Save();
             IsWelcomeScreen = false;
             WelcomeAcked?.Invoke(this, EventArgs.Empty);
         }
@@ -137,19 +158,19 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         private void SaveBuildWarningSuppressions()
         {
-            Settings.BuildWarningWhitelist = BuildWarningWhitelist
+            settings.BuildWarningWhitelist = BuildWarningWhitelist
                 .Select(x => new BuildWarningSuppression(x.PluginName, x.SelectedWarnings))
                 .ToList();
-            Settings.Save();
+            settings.Save();
             messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.BuildWarnings));
         }
 
         private void SaveMugshotRedirects()
         {
-            Settings.MugshotRedirects = MugshotRedirects
+            settings.MugshotRedirects = MugshotRedirects
                 .Select(x => new MugshotRedirect(x.ModName, x.Mugshots))
                 .ToList();
-            Settings.Save();
+            settings.Save();
             messageBus.Send(new SettingsChanged(SettingsChanged.SettingKind.MugshotSynonyms));
         }
 
@@ -192,12 +213,16 @@ namespace Focus.Apps.EasyNpc.Configuration
 
     public record BuildWarningSelection(BuildWarningId Id, bool IsSelected) : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
+        public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
     }
 
     public class BuildWarningSuppressionViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
+        public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public static IEnumerable<BuildWarningId> ParseWarnings(string serializedWarnings)
         {
@@ -214,12 +239,12 @@ namespace Focus.Apps.EasyNpc.Configuration
         }
 
         public string PluginName { get; set; }
-        public IEnumerable<BuildWarningId> SelectedWarnings { get; private set; }
+        public IEnumerable<BuildWarningId> SelectedWarnings { get; private set; } = Enumerable.Empty<BuildWarningId>();
         public IReadOnlyList<BuildWarningSelection> WarningSelections { get; init; }
 
-        public BuildWarningSuppressionViewModel(string pluginName, IEnumerable<BuildWarningId> warnings = null)
+        public BuildWarningSuppressionViewModel(string? pluginName, IEnumerable<BuildWarningId>? warnings = null)
         {
-            PluginName = pluginName;
+            PluginName = pluginName ?? string.Empty;
             WarningSelections = Enum.GetValues<BuildWarningId>()
                 .Where(x => x != BuildWarningId.Unknown)
                 .Select(id => new BuildWarningSelection(id, warnings?.Contains(id) ?? false))
@@ -244,7 +269,9 @@ namespace Focus.Apps.EasyNpc.Configuration
 
     public class MugshotRedirectViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
+        public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public string ModName { get; set; }
         public string Mugshots { get; set; }

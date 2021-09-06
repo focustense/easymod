@@ -1,8 +1,10 @@
 ﻿using Focus.Environment;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Environments;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
+using System;
 using System.Linq;
 
 namespace Focus.Providers.Mutagen
@@ -27,6 +29,9 @@ namespace Focus.Providers.Mutagen
 
         public GameEnvironmentState<ISkyrimMod, ISkyrimModGetter> CreateEnvironment()
         {
+            if (!setup.IsConfirmed)
+                throw new InvalidOperationException(
+                    "Attempted to create the game environment before settings were confirmed.");
             var loadOrderKeys = setup.AvailablePlugins
                 .Where(p => setup.LoadOrderGraph.IsEnabled(p.FileName) && setup.LoadOrderGraph.CanLoad(p.FileName))
                 .Select(p => ModKey.FromNameAndExtension(p.FileName));
@@ -37,7 +42,7 @@ namespace Focus.Providers.Mutagen
             var creationClubFile =
                 CreationClubListings.GetListingsPath(game.GameRelease.ToCategory(), setup.DataDirectory);
             return new GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>(
-                setup.DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
+                game.GameRelease, setup.DataDirectory, listingsFile, creationClubFile, loadOrder, linkCache, true);
         }
     }
 }

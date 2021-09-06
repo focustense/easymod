@@ -13,10 +13,12 @@ namespace Focus.Providers.Mutagen.Analysis
         public RecordType RecordType => RecordType.HeadPart;
 
         private readonly IGroupCache groups;
+        private readonly IReferenceChecker<IHeadPartGetter>? referenceChecker;
 
-        public HeadPartAnalyzer(IGroupCache groups)
+        public HeadPartAnalyzer(IGroupCache groups, IReferenceChecker<IHeadPartGetter>? referenceChecker = null)
         {
             this.groups = groups;
+            this.referenceChecker = referenceChecker;
         }
 
         public HeadPartAnalysis Analyze(string pluginName, IRecordKey key)
@@ -35,6 +37,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 LocalFormIdHex = key.LocalFormIdHex,
                 EditorId = headPart.EditorID ?? string.Empty,
                 Exists = true,
+                InvalidPaths = referenceChecker.SafeCheck(headPart),
                 IsInjectedOrInvalid = isOverride && !groups.MasterExists(key.ToFormKey(), RecordType),
                 IsOverride = isOverride,
                 ExtraPartKeys = headPart.ExtraParts.ToRecordKeys(),

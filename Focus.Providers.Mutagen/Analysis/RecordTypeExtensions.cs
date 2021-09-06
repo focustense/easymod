@@ -1,11 +1,16 @@
 ﻿using Mutagen.Bethesda.Skyrim;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using RecordType = Focus.Analysis.Records.RecordType;
 
 namespace Focus.Providers.Mutagen.Analysis
 {
     public static class RecordTypeExtensions
     {
+        private static readonly Dictionary<Type, RecordType> GettersToRecordTypes =
+            Enum.GetValues<RecordType>().ToDictionary(x => GetGroupType(x));
+
         public static Type GetGroupType(this RecordType type) => type switch
         {
             RecordType.AcousticSpace => typeof(IAcousticSpaceGetter),
@@ -25,6 +30,7 @@ namespace Focus.Providers.Mutagen.Analysis
             RecordType.CameraPath => typeof(ICameraPathGetter),
             RecordType.CameraShot => typeof(ICameraShotGetter),
             RecordType.Cell => typeof(ICellGetter),
+            RecordType.Class => typeof(IClassGetter),
             RecordType.Climate => typeof(IClimateGetter),
             RecordType.CollisionLayer => typeof(ICollisionLayerGetter),
             RecordType.Color => typeof(IColorRecordGetter),
@@ -120,5 +126,10 @@ namespace Focus.Providers.Mutagen.Analysis
             RecordType.Worldspace => typeof(IWorldspaceGetter),
             _ => throw new ArgumentException($"Record type {type} is not recognized or not supported.", nameof(type))
         };
+
+        public static RecordType GetRecordType(this Type recordGetterType)
+        {
+            return GettersToRecordTypes.TryGetValue(recordGetterType, out var recordType) ? recordType : 0;
+        }
     }
 }

@@ -1,32 +1,19 @@
 ﻿using Focus.Apps.EasyNpc.Build;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace Focus.Apps.EasyNpc.Configuration
 {
-    public class Settings : IAppSettings, IObservableAppSettings
+    public class Settings : IAppSettings, IMutableAppSettings, IObservableAppSettings
     {
-        // This needs to be first (contrary to default sorting rules) so that it can be used in the Default
-        // construction.
-        private static readonly JsonSerializer Serializer = new()
-        {
-            ContractResolver = new DefaultContractResolver
-            {
-                NamingStrategy = new CamelCaseNamingStrategy(),
-            },
-            Formatting = Formatting.Indented,
-        };
-
         public static readonly Settings Default = new(ProgramData.SettingsPath);
 
-        
-        [JsonIgnore] // Report path is a command-line setting used for interop; we don't save it.
         public string BuildReportPath { get; set; } = Path.Combine(ProgramData.DirectoryPath, "BuildReport.json");
 
         public IReadOnlyList<BuildWarningSuppression> BuildWarningWhitelist
@@ -35,10 +22,10 @@ namespace Focus.Apps.EasyNpc.Configuration
             set => buildWarningWhitelist.OnNext(value);
         }
 
-        public string ModRootDirectory
+        public string DefaultModRootDirectory
         {
-            get => modRootDirectory.Value;
-            set => modRootDirectory.OnNext(value);
+            get => defaultModRootDirectory.Value;
+            set => defaultModRootDirectory.OnNext(value);
         }
 
         public IReadOnlyList<MugshotRedirect> MugshotRedirects
@@ -55,26 +42,30 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         public string StaticAssetsPath => ProgramData.AssetsPath;
 
-        [JsonIgnore]
+        public bool UseModManagerForModDirectory
+        {
+            get => useModManagerForModDirectory.Value;
+            set => useModManagerForModDirectory.OnNext(value);
+        }
+
         public IObservable<IReadOnlyList<BuildWarningSuppression>> BuildWarningWhitelistObservable =>
             buildWarningWhitelist;
-        [JsonIgnore]
-        public IObservable<string> ModRootDirectoryObservable => modRootDirectory;
-        [JsonIgnore]
+        public IObservable<string> DefaultModRootDirectoryObservable => defaultModRootDirectory;
         public IObservable<IReadOnlyList<MugshotRedirect>> MugshotRedirectsObservable => mugshotRedirects;
-        [JsonIgnore]
         public IObservable<string> MugshotsDirectoryObservable => mugshotsDirectory;
+        public IObservable<bool> UseModManagerForModDirectoryObservable => useModManagerForModDirectory;
 
         IEnumerable<BuildWarningSuppression> IAppSettings.BuildWarningWhitelist => BuildWarningWhitelist;
         IEnumerable<MugshotRedirect> IAppSettings.MugshotRedirects => MugshotRedirects;
 
         private readonly BehaviorSubject<IReadOnlyList<BuildWarningSuppression>> buildWarningWhitelist =
             new(new List<BuildWarningSuppression>());
-        private readonly BehaviorSubject<string> modRootDirectory = new(string.Empty);
+        private readonly BehaviorSubject<string> defaultModRootDirectory = new(string.Empty);
         private readonly BehaviorSubject<IReadOnlyList<MugshotRedirect>> mugshotRedirects =
             new(GetDefaultMugshotRedirects());
         private readonly BehaviorSubject<string> mugshotsDirectory = new(string.Empty);
         private readonly string path;
+        private readonly BehaviorSubject<bool> useModManagerForModDirectory = new(true);
 
         public Settings(string path)
         {
@@ -84,41 +75,41 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         public bool Load()
         {
-            if (!File.Exists(path))
+            var data = File.Exists(path) ? SettingsData.LoadFromFile(path) : null;
+            if (data is null)
                 return false;
-            using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var streamReader = new StreamReader(fs);
-            using var jsonReader = new JsonTextReader(streamReader);
-            // Using Serializer.Populate(this) would require us to clear various lists to avoid duplicates, since
-            // JSON.NET doesn't clear them prior to populating. However, this obscures the distinction between settings
-            // with default values and missing settings. It's more tedious, but better to just deserialize an entirely
-            // new settings object and copy the fields directly.
-            var settings = Serializer.Deserialize<Settings>(jsonReader);
-            if (settings is not null)
-            {
-                foreach (var entry in settings.BuildWarningWhitelist)
+            if (data.BuildWarningWhitelist is not null)
+                foreach (var entry in data.BuildWarningWhitelist)
                     entry.IgnoredWarnings.RemoveAll(x => x == BuildWarningId.Unknown);
-                CopyFrom(settings);
-            }
+            CopyFrom(data);
             return true;
         }
 
         public void Save()
         {
-            using var fs = File.Create(path);
-            using var streamWriter = new StreamWriter(fs);
-            using var jsonWriter = new JsonTextWriter(streamWriter);
-            Serializer.Serialize(jsonWriter, this);
+            var data = new SettingsData
+            {
+                BuildWarningWhitelist = BuildWarningWhitelist,
+                ModRootDirectory = DefaultModRootDirectory,
+                MugshotRedirects = MugshotRedirects,
+                MugshotsDirectory = MugshotsDirectory,
+                UseModManagerForModDirectory = UseModManagerForModDirectory,
+            };
+            data.SaveToFile(path);
         }
 
-        private void CopyFrom(Settings other)
+        private void CopyFrom(SettingsData data)
         {
-            // This doesn't make deep copies, as it's assumed to only be working with temporary Settings instances, i.e.
-            // from the Load() method. If this method is made public, the behavior needs to change.
-            BuildWarningWhitelist = other.BuildWarningWhitelist;
-            ModRootDirectory = other.ModRootDirectory;
-            MugshotRedirects = other.MugshotRedirects;
-            MugshotsDirectory = other.MugshotsDirectory;
+            if (data.BuildWarningWhitelist is not null)
+                BuildWarningWhitelist = data.BuildWarningWhitelist;
+            if (!string.IsNullOrEmpty(data.ModRootDirectory))
+                DefaultModRootDirectory = data.ModRootDirectory;
+            if (data.MugshotRedirects is not null)
+                MugshotRedirects = data.MugshotRedirects;
+            if (!string.IsNullOrEmpty(data.MugshotsDirectory))
+                MugshotsDirectory = data.MugshotsDirectory;
+            if (data.UseModManagerForModDirectory.HasValue)
+                UseModManagerForModDirectory = data.UseModManagerForModDirectory.Value;
         }
 
         private static List<MugshotRedirect> GetDefaultMugshotRedirects()
@@ -169,7 +160,7 @@ namespace Focus.Apps.EasyNpc.Configuration
 
     public class BuildWarningSuppression
     {
-        public string PluginName { get; set; }
+        public string PluginName { get; set; } = string.Empty;
         [JsonProperty(
             ItemConverterType = typeof(SafeStringEnumConverter),
             ItemConverterParameters = new object[] { BuildWarningId.Unknown })]
@@ -188,8 +179,8 @@ namespace Focus.Apps.EasyNpc.Configuration
 
     public class MugshotRedirect
     {
-        public string ModName { get; set; } 
-        public string Mugshots { get; set; }
+        public string ModName { get; set; } = string.Empty;
+        public string Mugshots { get; set; } = string.Empty;
 
         public MugshotRedirect() { }
 
@@ -198,5 +189,45 @@ namespace Focus.Apps.EasyNpc.Configuration
             ModName = modName;
             Mugshots = mugshots;
         }
+    }
+
+    public class SettingsData
+    {
+        // This needs to be first (contrary to default sorting rules) so that it can be used in the Default
+        // construction.
+        private static readonly JsonSerializer Serializer = new()
+        {
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new CamelCaseNamingStrategy(),
+            },
+            Formatting = Formatting.Indented,
+        };
+
+        public static SettingsData? LoadFromFile(string path)
+        {
+            using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var streamReader = new StreamReader(fs);
+            using var jsonReader = new JsonTextReader(streamReader);
+            // Using Serializer.Populate(this) would require us to clear various lists to avoid duplicates, since
+            // JSON.NET doesn't clear them prior to populating. However, this obscures the distinction between settings
+            // with default values and missing settings. It's more tedious, but better to just deserialize an entirely
+            // new settings object and copy the fields directly.
+            return Serializer.Deserialize<SettingsData>(jsonReader);
+        }
+
+        public void SaveToFile(string path)
+        {
+            using var fs = File.Create(path);
+            using var streamWriter = new StreamWriter(fs);
+            using var jsonWriter = new JsonTextWriter(streamWriter);
+            Serializer.Serialize(jsonWriter, this);
+        }
+
+        public IReadOnlyList<BuildWarningSuppression>? BuildWarningWhitelist { get; set; }
+        public string? ModRootDirectory { get; set; }
+        public IReadOnlyList<MugshotRedirect>? MugshotRedirects { get; set; }
+        public string? MugshotsDirectory { get; set; }
+        public bool? UseModManagerForModDirectory { get; set; }
     }
 }

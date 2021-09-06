@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
+﻿using PropertyChanged;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class MugshotViewModel : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class MugshotViewModel
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public IReadOnlyList<string> InstalledPlugins => mugshot.InstalledPlugins;
+        public bool IsDisabledByErrors { get; private init; }
         public bool IsFocused { get; set; }
         public bool IsHighlighted { get; set; }
         public bool IsModDisabled => IsModInstalled && !mugshot.InstalledComponents.Any(x => x.IsEnabled);
@@ -20,10 +21,16 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         private readonly Mugshot mugshot;
 
-        public MugshotViewModel(Mugshot mugshot, bool isSelectedSource = false)
+        public MugshotViewModel(Mugshot mugshot, IEnumerable<NpcOption> options, bool isSelectedSource = false)
         {
             this.mugshot = mugshot;
             IsSelectedSource = isSelectedSource;
+
+            var applicableOptions = options
+                .Where(x => mugshot.InstalledPlugins.Contains(x.PluginName, StringComparer.CurrentCultureIgnoreCase))
+                .ToList();
+            if (applicableOptions.Count > 0 && applicableOptions.All(x => x.HasErrors))
+                IsDisabledByErrors = true;
         }
     }
 }

@@ -9,7 +9,9 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public class NpcViewModel : INotifyPropertyChanged, INpcBasicInfo
     {
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
         public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public string BasePluginName => npc.BasePluginName;
         [DependsOn(nameof(DefaultOption))]
@@ -45,7 +47,8 @@ namespace Focus.Apps.EasyNpc.Profiles
             Options = npc.Options.Select(x => CreateOption(x)).ToList().AsReadOnly();
             DefaultOption = GetOption(npc.DefaultOption.PluginName);
             FaceOption = GetOption(npc.FaceOption.PluginName);
-            Mugshots = mugshots.Select(x => new MugshotViewModel(x, IsSelectedMugshot(x.ModName, x.InstalledPlugins)))
+            Mugshots = mugshots
+                .Select(x => new MugshotViewModel(x, npc.Options, IsSelectedMugshot(x.ModName, x.InstalledPlugins)))
                 .ToObservableCollection();
             isInitialized = true;
         }

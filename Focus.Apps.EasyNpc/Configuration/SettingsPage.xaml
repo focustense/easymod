@@ -46,34 +46,29 @@
                         </TextBlock>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
                             If you haven't already, you should also browse the
-                            <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://github.com/focustense/easymod/blob/master/Focus.Apps.EasyNpc/Docs/getting-started.md">Getting Started</Hyperlink>
+                            <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="{Binding Source='getting-started', Converter={StaticResource DocUrl}}">Getting Started</Hyperlink>
                             section of the how-to guide for how to set up your load order for first-time use. In general: Put your NPC overhauls last, order them from least to most favorite, and disable any compatibility
                             patches or AIOs for them. For more details, see the guide.
                         </TextBlock>
                     </ui:SimpleStackPanel>
                 </Border>
                 <GroupBox Header="Paths">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="48"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Style="{StaticResource FormLabelStyle}" Text="Mod Root Directory" Grid.ColumnSpan="2" Grid.Row="0"/>
-                        <TextBox Text="{Binding ModRootDirectory}" Grid.Column="0" Grid.Row="1"/>
-                        <Button x:Name="ModRootDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Grid.Row="1" Click="ModRootDirSelectButton_Click">
-                            <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
-                        </Button>
-                        <Expander Header="What's this?" Grid.ColumnSpan="2" Grid.Row="2">
+                    <ui:SimpleStackPanel>
+                        <TextBlock Style="{StaticResource FormLabelStyle}">
+                            Mod Root Directory
+                            <TextBlock Visibility="{Binding UseModManagerForModDirectory, Converter={StaticResource BoolToVisibility}}">(Default)</TextBlock>
+                        </TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="48"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding ModRootDirectory}" Grid.Column="0"/>
+                            <Button x:Name="ModRootDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Click="ModRootDirSelectButton_Click">
+                                <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
+                            </Button>
+                        </Grid>
+                        <Expander Header="What's this?">
                             <TextBlock Background="{StaticResource ExpandoBackgroundBrush}" Foreground="{StaticResource MutedTextBrush}" Cursor="Arrow" Padding="4" TextWrapping="Wrap">
                                 Bethesda games look at two sources for face geometry: face data in plugins (ESPs) and pre-generated facegen meshes (NIFs).
                                 If these two don't match in-game for any given actor, the result is the dreaded "black face", "gray face" or "dark face" bug.
@@ -89,32 +84,60 @@
                                 <Bold>Do not use your Skyrim data directory here.</Bold> It won't work, and could cause bad side effects that break your game.
                             </TextBlock>
                         </Expander>
+                        <ui:SimpleStackPanel Orientation="Horizontal">
+                            <CheckBox IsChecked="{Binding UseModManagerForModDirectory}" Margin="8,0,0,0">
+                                Use mod directory setting from mod manager when available
+                            </CheckBox>
+                            <ContentControl Style="{StaticResource HelpIconStyle}" Margin="4,0,0,0">
+                                <ContentControl.ToolTip>
+                                    <ui:SimpleStackPanel>
+                                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap">
+                                            When enabled (default), and <Run Text="{StaticResource AppName}"/> is launched from a mod manager such as Mod Organizer or Vortex,
+                                            the setting from the mod manager will be used instead of the <Run FontStyle="Italic">Mod Root Directory</Run> specified above.
+                                        </TextBlock>
+                                        <TextBlock Visibility="{Binding HasModManagerModDirectory, Converter={StaticResource BoolToVisibility}}" TextWrapping="Wrap">
+                                            The directory for this session is:<LineBreak/>
+                                            <Run FontWeight="SemiBold" Text="{Binding ModManagerModDirectory, Mode=OneWay}"/>
+                                        </TextBlock>
+                                        <TextBlock Visibility="{Binding HasModManagerModDirectory, Converter={StaticResource InvBoolToVisibility}}" TextWrapping="Wrap">
+                                            No mod manager detected for this session. The <Run FontStyle="Italic">Mod Root Directory</Run> specified above will be used.
+                                        </TextBlock>
+                                    </ui:SimpleStackPanel>
+                                </ContentControl.ToolTip>
+                            </ContentControl>
+                        </ui:SimpleStackPanel>
 
-                        <TextBlock Style="{StaticResource FormLabelStyle}" Text="Face Preview Directory" Grid.ColumnSpan="2" Grid.Row="3"/>
-                        <TextBox x:Name="MugshotsDirectoryTextBox" Text="{Binding MugshotsDirectory}" Grid.Column="0" Grid.Row="4"/>
-                        <TextBox Background="Transparent" IsHitTestVisible="False" IsEnabled="False" Text="{Binding MugshotsDirectoryPlaceholderText, Mode=OneWay}" Grid.Column="0" Grid.Row="4">
-                            <TextBox.Style>
-                                <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsFocused, ElementName=MugshotsDirectoryTextBox}" Value="false"/>
-                                                <Condition Binding="{Binding Text, ElementName=MugshotsDirectoryTextBox}" Value=""/>
-                                            </MultiDataTrigger.Conditions>
-                                            <MultiDataTrigger.Setters>
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </MultiDataTrigger.Setters>
-                                        </MultiDataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBox.Style>
-                        </TextBox>
-                        <Button x:Name="MugshotsDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Grid.Row="4" Click="MugshotsDirSelectButton_Click">
-                            <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
-                        </Button>
-                        <ui:SimpleStackPanel Visibility="{Binding IsWelcomeScreen, Converter={StaticResource InvBoolToVisibility}}" Grid.Row="5" Grid.ColumnSpan="2">
-                            <TextBlock Style="{StaticResource FormLabelStyle}" Grid.ColumnSpan="2" Grid.Row="3">
+                        <TextBlock Style="{StaticResource FormLabelStyle}" Text="Face Preview Directory"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="48"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="MugshotsDirectoryTextBox" Text="{Binding MugshotsDirectory}" Grid.Column="0"/>
+                            <TextBox Background="Transparent" IsHitTestVisible="False" IsEnabled="False" Text="{Binding MugshotsDirectoryPlaceholderText, Mode=OneWay}" Grid.Column="0">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsFocused, ElementName=MugshotsDirectoryTextBox}" Value="false"/>
+                                                    <Condition Binding="{Binding Text, ElementName=MugshotsDirectoryTextBox}" Value=""/>
+                                                </MultiDataTrigger.Conditions>
+                                                <MultiDataTrigger.Setters>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger.Setters>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Button x:Name="MugshotsDirSelectButton" Margin="8,0,0,0" Grid.Column="1" Click="MugshotsDirSelectButton_Click">
+                                <fa5:SvgAwesome Icon="Regular_FolderOpen"/>
+                            </Button>
+                        </Grid>
+                        <ui:SimpleStackPanel Visibility="{Binding IsWelcomeScreen, Converter={StaticResource InvBoolToVisibility}}">
+                            <TextBlock Style="{StaticResource FormLabelStyle}">
                                 Face Preview Synonyms
                                 <ContentControl Style="{StaticResource HelpIconStyle}" Margin="4,0,0,0">
                                     <ContentControl.ToolTip>
@@ -150,11 +173,11 @@
                                 <fa5:SvgAwesome Icon="Solid_Plus" Width="16" Height="16" HorizontalAlignment="Center"/>
                             </Button>
                         </ui:SimpleStackPanel>
-                    </Grid>
+                    </ui:SimpleStackPanel>
                 </GroupBox>
                 <GroupBox Header="Build Settings" Visibility="{Binding IsWelcomeScreen, Converter={StaticResource InvBoolToVisibility}}">
                     <ui:SimpleStackPanel>
-                        <TextBlock Style="{StaticResource FormLabelStyle}" Margin="0,0,0,8" Text="Ignore Warnings" Grid.ColumnSpan="2" Grid.Row="0"/>
+                        <TextBlock Style="{StaticResource FormLabelStyle}" Margin="0,0,0,8" Text="Ignore Warnings"/>
                         <DataGrid x:Name="BuildWarningWhitelistGrid" AutoGenerateColumns="False" ItemsSource="{Binding BuildWarningWhitelist}">
                             <DataGrid.Resources>
                                 <CollectionViewSource x:Key="AvailablePlugins" Source="{Binding AvailablePlugins}"/>

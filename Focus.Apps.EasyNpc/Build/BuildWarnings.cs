@@ -25,9 +25,9 @@ namespace Focus.Apps.EasyNpc.Build
     {
         // Used for help links, if provided.
         public BuildWarningId? Id { get; init; }
-        public string Message { get; init; }
-        public RecordKey RecordKey { get; init; }
-        public string PluginName { get; init; }
+        public string Message { get; init; } = string.Empty;
+        public RecordKey? RecordKey { get; init; }
+        public string? PluginName { get; init; }
 
         public BuildWarning() { }
 

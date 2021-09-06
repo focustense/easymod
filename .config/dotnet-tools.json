@@ -7,6 +7,12 @@
       "commands": [
         "t4"
       ]
+    },
+    "unex": {
+      "version": "1.0.0",
+      "commands": [
+        "unex"
+      ]
     }
   }
 }

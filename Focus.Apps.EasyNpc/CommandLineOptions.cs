@@ -14,15 +14,15 @@ namespace Focus.Apps.EasyNpc
         public string GameName { get; set; } = "SkyrimSE";
 
         [Option('p', "game-path")]
-        public string GamePath { get; set; } = null;
+        public string? GamePath { get; set; } = null;
 
         [Option("mo2-exe")]
-        public string ModOrganizerExecutablePath { get; set; } = null;
+        public string? ModOrganizerExecutablePath { get; set; } = null;
 
         [Option('r', "report-path")]
-        public string ReportPath { get; set; }
+        public string? ReportPath { get; set; }
 
         [Option("vortex-manifest")]
-        public string VortexManifest { get; set; }
+        public string? VortexManifest { get; set; }
     }
 }

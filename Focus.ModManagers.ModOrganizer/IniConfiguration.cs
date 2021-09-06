@@ -11,6 +11,7 @@ namespace Focus.ModManagers.ModOrganizer
 
         public string BaseDirectory { get; private init; }
         public string DownloadDirectory { get; private init; }
+        public string GameDataPath { get; private init; }
         public string ModsDirectory { get; private init; }
         public string OverwriteDirectory { get; private init; }
         public string ProfilesDirectory { get; private init; }
@@ -47,10 +48,17 @@ namespace Focus.ModManagers.ModOrganizer
             ProfilesDirectory = ResolveDirectory(settings, "profiles_directory", "%BASE_DIR%/profiles", BaseDirectory);
 
             var general = entryIni["General"] ?? new KeyDataCollection();
-            var selectedProfileValue = general["selected_profile"] ?? string.Empty;
-            if (selectedProfileValue.StartsWith("@ByteArray("))
-                selectedProfileValue = selectedProfileValue[11..^1];
-            SelectedProfileName = selectedProfileValue;
+            GameDataPath = AddDataSuffix(UnwrapString(general["gamePath"] ?? string.Empty).Replace(@"\\", @"\"));
+            SelectedProfileName = UnwrapString(general["selected_profile"] ?? string.Empty);
+        }
+
+        private static string AddDataSuffix(string gamePath)
+        {
+            if (string.IsNullOrEmpty(gamePath))
+                return gamePath;
+            var leafDirectory = new DirectoryInfo(gamePath).Name;
+            return leafDirectory.Equals("data", StringComparison.OrdinalIgnoreCase) ?
+                gamePath : Path.Combine(gamePath, "data");
         }
 
         private static string ResolveDirectory(
@@ -60,6 +68,11 @@ namespace Focus.ModManagers.ModOrganizer
             if (string.IsNullOrEmpty(value))
                 value = defaultValue ?? string.Empty;
             return value.Replace("%BASE_DIR%", baseDirectory, StringComparison.OrdinalIgnoreCase).Replace('/', '\\');
+        }
+
+        private static string UnwrapString(string maybeWrapped)
+        {
+            return maybeWrapped.StartsWith("@ByteArray(") ? maybeWrapped[11..^1] : maybeWrapped;
         }
     }
 }

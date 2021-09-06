@@ -7,11 +7,16 @@ namespace Focus.Apps.EasyNpc.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterInstance(Settings.Default)
+            builder.RegisterType<Settings>()
+                .WithParameter("path", ProgramData.SettingsPath)
                 .As<IAppSettings>()
+                .As<IMutableAppSettings>()
                 .As<IObservableAppSettings>()
                 // Currently don't need OnActivated because we use Settings.Default.
                 //.OnActivated(settings => settings.Instance.Load())
+                .SingleInstance();
+            builder.RegisterType<ModSettings>()
+                .As<IModSettings>()
                 .SingleInstance();
             builder.RegisterType<SettingsViewModel>();
         }

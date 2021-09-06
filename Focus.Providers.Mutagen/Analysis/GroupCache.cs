@@ -38,7 +38,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 if (genericGroups.TryGetValue(groupKey, out var genericGroup) && genericGroup != null)
                     return genericGroup.RecordCache;
                 var mod = GetMod(x.Item1);
-                return mod?.GetTopLevelGroupGetter(groupType);
+                return mod?.GetTopLevelGroup(groupType)?.RecordCache as IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>;
             });
         }
 

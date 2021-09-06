@@ -17,7 +17,11 @@ namespace Focus.Apps.EasyNpc.Profiles
             using var reader = new StreamReader(stream);
             string? line;
             while ((line = reader.ReadLine()) != null)
-                npcs.Add(SavedNpcConfiguration.DeserializeFromString(line));
+            {
+                var savedConfig = SavedNpcConfiguration.DeserializeFromString(line);
+                if (savedConfig is not null)
+                    npcs.Add(savedConfig);
+            }
             return new SavedProfile { Npcs = npcs };
         }
 
@@ -45,9 +49,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         }
     }
 
-    public class SavedNpcConfiguration
+    public class SavedNpcConfiguration : IRecordKey
     {
-        public static SavedNpcConfiguration DeserializeFromString(string serialized)
+        public static SavedNpcConfiguration? DeserializeFromString(string serialized)
         {
             var sides = serialized.Split('=', 2);
             if (sides.Length != 2)

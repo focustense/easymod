@@ -1,8 +1,8 @@
 ﻿using Focus.Analysis.Execution;
 using Focus.Analysis.Plugins;
 using Focus.Analysis.Records;
-using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.ModManagers;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,13 +19,16 @@ namespace Focus.Apps.EasyNpc.Profiles
 
     public class ProfileFactory : IProfileFactory
     {
+        private readonly ILogger log;
         private readonly IModRepository modRepository;
         private readonly ISuspendableProfileEventLog profileEventLog;
         private readonly IProfilePolicy policy;
 
         public ProfileFactory(
-            IProfilePolicy policy, IModRepository modRepository, ISuspendableProfileEventLog profileEventLog)
+            IProfilePolicy policy, IModRepository modRepository, ISuspendableProfileEventLog profileEventLog,
+            ILogger log)
         {
+            this.log = log;
             this.modRepository = modRepository;
             this.policy = policy;
             this.profileEventLog = profileEventLog;
@@ -59,10 +62,10 @@ namespace Focus.Apps.EasyNpc.Profiles
                     var npcKey = new RecordKey(npc);
                     var isDefaultPluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.DefaultPlugin), out var defaultPluginEvent) &&
-                        npc.SetDefaultOption(defaultPluginEvent.NewValue) == Npc.ChangeResult.Invalid;
+                        npc.SetDefaultOption(defaultPluginEvent.NewValue ?? string.Empty) == Npc.ChangeResult.Invalid;
                     var isFacePluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.FacePlugin), out var facePluginEvent) &&
-                        npc.SetFaceOption(facePluginEvent.NewValue) == Npc.ChangeResult.Invalid;
+                        npc.SetFaceOption(facePluginEvent.NewValue ?? string.Empty) == Npc.ChangeResult.Invalid;
                     // Face mods are now "facegen overrides", so we only care about (want to restore) this setting if it
                     // actually looks like an override - i.e. if the chosen mod exists and does not include any of the
                     // plugins in the record chain.
@@ -130,10 +133,24 @@ namespace Focus.Apps.EasyNpc.Profiles
                     x.Any(r =>
                         r.Analysis.TemplateInfo is null ||
                         r.Analysis.TemplateInfo.TargetType == NpcTemplateTargetType.Npc))
+                .Tap(LogInvalidReferences)
                 .Select(x => new Npc(x, baseGamePluginNames, modRepository, profileEventLog, policy))
                 .Where(x => x.HasAvailableFaceCustomizations)
                 .Tap(defaultAction);
             return new Profile(npcs);
+        }
+
+        private void LogInvalidReferences(RecordAnalysisChain<NpcAnalysis> chain)
+        {
+            foreach (var record in chain)
+            {
+                if (record.Analysis.InvalidPaths.Count == 0)
+                    continue;
+                log.Warning(
+                    "Record {recordKey} in plugin {pluginName} contains invalid references:\n{referenceList:l}",
+                    chain.Key, record.PluginName,
+                    string.Join("\n", record.Analysis.InvalidPaths.Select(p => $"  {p}")));
+            }
         }
     }
 }

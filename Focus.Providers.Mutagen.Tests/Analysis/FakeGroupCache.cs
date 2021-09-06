@@ -43,12 +43,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             foreach (var configure in configureRecords)
             {
                 var formKey = new FormKey(masterName, ++nextId);
+                nextIds[pluginName] = nextId;
                 var record = (T)Activator.CreateInstance(typeof(T), formKey, SkyrimRelease.SkyrimSE);
                 configure(record);
                 group.Put(record);
                 newKeys.Add(formKey);
             }
-            nextIds[pluginName] = nextId;
             return newKeys.Select(x => x.ToRecordKey()).ToArray();
         }
 
@@ -60,6 +60,15 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 mods.Add(pluginName, modMock);
             }
             configure(modMock);
+        }
+
+        public FormKey FindKeyForEditorId(string editorId, out FakeReadOnlyCache group)
+        {
+            var found = groups.Values
+                .SelectMany(g => g.Where(x => x.Value.EditorID == editorId).Select(x => (g, x.Key)))
+                .FirstOrDefault();
+            group = found.g;
+            return found.Key;
         }
 
         public IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey> Get(string pluginName, Type groupType)

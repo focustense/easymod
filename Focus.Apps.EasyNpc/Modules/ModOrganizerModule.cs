@@ -7,7 +7,7 @@ namespace Focus.Apps.EasyNpc.Modules
 {
     public class ModOrganizerModule : Module
     {
-        public string ExecutablePath { get; set; } = string.Empty;
+        public string? ExecutablePath { get; set; }
 
         protected override void Load(ContainerBuilder builder)
         {

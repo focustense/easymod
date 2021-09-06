@@ -7,25 +7,25 @@ namespace Focus.Apps.EasyNpc.Build.Checks
 {
     public class ModSettings : IBuildCheck
     {
-        private readonly IAppSettings appSettings;
         private readonly IFileSystem fs;
+        private readonly IModSettings modSettings;
 
-        public ModSettings(IAppSettings appSettings, IFileSystem fs)
+        public ModSettings(IModSettings modSettings, IFileSystem fs)
         {
-            this.appSettings = appSettings;
             this.fs = fs;
+            this.modSettings = modSettings;
         }
 
         public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(appSettings.ModRootDirectory))
+            if (string.IsNullOrWhiteSpace(modSettings.RootDirectory))
                 yield return new BuildWarning(
                     BuildWarningId.ModDirectoryNotSpecified,
                     WarningMessages.ModDirectoryNotSpecified());
-            else if (!fs.Directory.Exists(appSettings.ModRootDirectory))
+            else if (!fs.Directory.Exists(modSettings.RootDirectory))
                 yield return new BuildWarning(
                     BuildWarningId.ModDirectoryNotFound,
-                    WarningMessages.ModDirectoryNotFound(appSettings.ModRootDirectory));
+                    WarningMessages.ModDirectoryNotFound(modSettings.RootDirectory));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Focus.Apps.EasyNpc.Main;
+using Focus.Apps.EasyNpc.Reports;
 
 namespace Focus.Apps.EasyNpc.Modules
 {
@@ -9,6 +10,8 @@ namespace Focus.Apps.EasyNpc.Modules
         {
             builder.RegisterType<LoaderModel>();
             builder.RegisterType<LoaderViewModel>();
+            builder.RegisterType<InvalidReferencesViewModel>();
+            builder.RegisterType<StartupReportViewModel>();
             builder.RegisterType<MainViewModel>();
         }
     }

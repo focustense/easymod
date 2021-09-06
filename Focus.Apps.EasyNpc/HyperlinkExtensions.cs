@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Documents;
 
@@ -31,7 +30,8 @@ namespace Focus.Apps.EasyNpc
 
         private static void OnDefaultNavigationChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
-            var hyperlink = sender as Hyperlink;
+            if (sender is not Hyperlink hyperlink)
+                return;
             if ((bool)args.NewValue)
                 hyperlink.RequestNavigate += Hyperlink_RequestNavigate;
             else

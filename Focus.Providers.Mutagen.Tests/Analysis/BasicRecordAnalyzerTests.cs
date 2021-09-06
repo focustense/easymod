@@ -9,7 +9,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
     {
         public BasicRecordAnalyzerTests()
         {
-            Analyzer = new BasicRecordAnalyzer(Groups, RecordType.Container);
+            Analyzer = new BasicRecordAnalyzer(Groups, RecordType.Container, ReferenceChecker);
         }
     }
 }

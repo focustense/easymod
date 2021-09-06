@@ -2,7 +2,7 @@
 {
     public enum RecordType
     {
-        AcousticSpace,
+        AcousticSpace = 1,
         Action,
         Activator,
         ActorValueInformation,
@@ -19,6 +19,7 @@
         CameraPath,
         CameraShot,
         Cell,
+        Class,
         Climate,
         CollisionLayer,
         Color,

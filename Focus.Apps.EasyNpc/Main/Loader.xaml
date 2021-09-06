@@ -32,8 +32,8 @@
             </TextBlock>
             <Grid DockPanel.Dock="Bottom">
                 <ui:SimpleStackPanel Margin="8" Orientation="Horizontal" Visibility="{Binding IsUnloadablePluginWarningVisible, Converter={StaticResource BoolToVisibility}}">
-                    <fa5:SvgAwesome Foreground="{StaticResource DangerForegroundBrush}" Icon="Solid_ExclamationTriangle" Height="20" VerticalAlignment="Center"/>
-                    <TextBlock FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource DangerForegroundBrush}" Margin="8,0,0,0" VerticalAlignment="Center">
+                    <fa5:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Icon="Solid_ExclamationTriangle" Height="20" VerticalAlignment="Center"/>
+                    <TextBlock FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Margin="8,0,0,0" VerticalAlignment="Center">
                         Some plugins are selected but can't be loaded.
                     </TextBlock>
                 </ui:SimpleStackPanel>
@@ -87,7 +87,7 @@
                                                     </TextBlock>
                                                 </ui:SimpleStackPanel>
                                             </Border.ToolTip>
-                                            <fa5:SvgAwesome Icon="Solid_ExclamationTriangle" Foreground="{StaticResource DangerForegroundBrush}" Height="16" IsHitTestVisible="False"/>
+                                            <fa5:SvgAwesome Icon="Solid_ExclamationTriangle" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Height="16" IsHitTestVisible="False"/>
                                         </Border>
                                     </Grid>
                                 </DataTemplate>

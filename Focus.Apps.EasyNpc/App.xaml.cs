@@ -39,8 +39,8 @@ namespace Focus.Apps.EasyNpc
             }
 
             var container = AppContainer.Build(options, startupInfo);
-            if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.ModRootDirectory))
-                Settings.Default.ModRootDirectory = container.Resolve<IModManagerConfiguration>().ModsDirectory;
+            if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.DefaultModRootDirectory))
+                Settings.Default.DefaultModRootDirectory = container.Resolve<IModManagerConfiguration>().ModsDirectory;
             try
             {
                 var mainViewModelFactory = container.Resolve<MainViewModel.Factory>();

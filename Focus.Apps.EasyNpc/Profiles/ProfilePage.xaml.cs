@@ -1,5 +1,4 @@
-﻿using Focus.Apps.EasyNpc.Profiles;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 
 namespace Focus.Apps.EasyNpc.Profiles
@@ -9,7 +8,7 @@ namespace Focus.Apps.EasyNpc.Profiles
     /// </summary>
     public partial class ProfilePage : ModernWpf.Controls.Page
     {
-        protected ProfileViewModel Model => ((IProfileContainer)DataContext)?.Profile;
+        protected ProfileViewModel Model => ((IProfileContainer)DataContext)!.Profile;
 
         public ProfilePage()
         {

@@ -1,12 +1,12 @@
-﻿using System;
+﻿using PropertyChanged;
+using System;
 using System.ComponentModel;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class LabeledValue<T> : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class LabeledValue<T>
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public string Label { get; set; } = string.Empty;
 
         public T Value

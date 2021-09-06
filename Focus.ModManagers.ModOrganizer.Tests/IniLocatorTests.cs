@@ -1,6 +1,7 @@
 ﻿using Focus.Abstractions.Windows;
 using Microsoft.Win32;
 using Moq;
+using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 using static System.Environment;
 
@@ -15,6 +16,7 @@ namespace Focus.ModManagers.ModOrganizer.Tests
         private static readonly string PortableIniPath = $@"{PortablePath}\ModOrganizer.ini";
 
         private readonly Mock<IEnvironmentStatics> environmentMock;
+        private readonly MockFileSystem fs;
         private readonly Mock<IRegistryKey> hkcuMock;
         private readonly IniLocator locator;
         private readonly Mock<IRegistryKeyStatics> registryMock;
@@ -27,7 +29,8 @@ namespace Focus.ModManagers.ModOrganizer.Tests
             hkcuMock = new Mock<IRegistryKey>();
             registryMock.Setup(x => x.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default))
                 .Returns(hkcuMock.Object);
-            locator = new IniLocator(environmentMock.Object, registryMock.Object);
+            fs = new MockFileSystem();
+            locator = new IniLocator(environmentMock.Object, registryMock.Object, fs);
         }
 
         [Fact]
@@ -73,6 +76,17 @@ namespace Focus.ModManagers.ModOrganizer.Tests
         [Fact]
         public void WhenNoKeysExist_UsesPortableInstance()
         {
+            var iniPath = locator.DetectIniPath(PortableExePath);
+            Assert.Equal(PortableIniPath, iniPath);
+        }
+
+        [Fact]
+        public void WhenPortableOverrideFileExists_AlwaysUsesPortableInstance()
+        {
+            SetupSubkey(@"SOFTWARE\Tannin\Mod Organizer", "CurrentInstance", "Old Instance");
+            SetupSubkey(@"SOFTWARE\Mod Organizer Team\Mod Organizer", "CurrentInstance", "My Instance");
+            fs.AddFile(@$"{PortablePath}\Portable.txt", new MockFileData(""));
+
             var iniPath = locator.DetectIniPath(PortableExePath);
             Assert.Equal(PortableIniPath, iniPath);
         }

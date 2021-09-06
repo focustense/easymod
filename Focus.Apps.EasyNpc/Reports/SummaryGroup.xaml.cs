@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PropertyChanged;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -36,10 +37,9 @@ namespace Focus.Apps.EasyNpc.Reports
         }
     }
 
-    public class SummaryGroupDesignContext : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class SummaryGroupDesignContext
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public string Title { get; set; } = string.Empty;
         public IEnumerable<SummaryItem> Items { get; set; } = Enumerable.Empty<SummaryItem>();
     }

@@ -1,0 +1,68 @@
+name: Upload to Nexus
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name of the release to upload, e.g. v1.0.0'
+        required: true
+  release:
+    types:
+      - released # Don't upload prereleases
+
+jobs:
+  push:
+    runs-on: windows-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        submodules: true
+
+    # Nexus uploader targets 3.1.x
+    - name: Setup .NET Core 3.1.x
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+
+    - name: Setup .NET 5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Build custom uploader
+      run: |
+        dotnet restore
+        dotnet pack
+      working-directory: ./nexus-uploader/src
+
+    - name: Add uploader as tool
+      run: dotnet tool install --add-source ./nexus-uploader/nupkg unex
+
+    - name: Download release asset
+      id: download
+      run: |
+        $tag = "${{ github.event.inputs.tag }}${{ github.event.release.tag_name }}"
+        $version = $tag.substring(1) # Without "v" prefix
+        $release = Invoke-WebRequest -uri "https://api.github.com/repos/focustense/easymod/releases/tags/${tag}" | ConvertFrom-Json
+        $asset = $release.assets[0] # Only expect one asset for this project
+        Invoke-WebRequest $asset.browser_download_url -OutFile $asset.name
+        $filename = $asset.name
+        echo "::set-output name=filename::${filename}"
+        echo "::set-output name=version::${version}"
+      shell: pwsh
+
+    - name: Upload
+      run: >
+        dotnet unex upload 52313 ${{ steps.download.outputs.filename }} -v ${{ steps.download.outputs.version }}
+        --set-main-vortex=false --remove-download-with-manager=true
+      env:
+        unex_apikey: ${{ secrets.NEXUS_API_KEY }}
+        unex_cookies: ${{ secrets.NEXUS_SID }}
+        unex_debug: true,
+        unex_filename: EasyNPC
+        unex_filedescription: The main app.
+        unex_game: skyrimspecialedition
+        unex_previousfile: auto

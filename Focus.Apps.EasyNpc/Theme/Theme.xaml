@@ -3,6 +3,7 @@
     xmlns:fa="http://schemas.fontawesome.com/icons/"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <SolidColorBrush x:Key="ChipBackgroundBrush" Color="{StaticResource ChipBackgroundColor}"/>
     <SolidColorBrush x:Key="DangerBackgroundBrush" Color="{StaticResource DangerColor}"/>
     <SolidColorBrush x:Key="DangerForegroundBrush" Color="{StaticResource DangerColor}"/>
     <SolidColorBrush x:Key="ErrorForegroundBrush" Color="{StaticResource ErrorForegroundColor}"/>
@@ -12,6 +13,8 @@
     <SolidColorBrush x:Key="HelpPanelBackgroundBrush" Color="{StaticResource HelpPanelBackgroundColor}"/>
     <SolidColorBrush x:Key="HighlightBackgroundBrush" Color="{StaticResource ContentHighlightColor}"/>
     <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="NpcDefaultIconBrush" Color="{StaticResource NpcDefaultIconColor}"/>
+    <SolidColorBrush x:Key="NpcFaceIconBrush" Color="{StaticResource NpcFaceIconColor}"/>
     <SolidColorBrush x:Key="SuccessForegroundBrush" Color="{StaticResource SuccessForegroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressBackgroundBrush" Color="{StaticResource TaskProgressBackgroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressCancelledBackgroundBrush" Color="{StaticResource TaskProgressCancelledBackgroundColor}"/>

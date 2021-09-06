@@ -5,7 +5,8 @@
         public enum SettingKind
         {
             BuildWarnings,
-            ModDirectory,
+            DefaultModDirectory,
+            ModDirectorySource,
             MugshotDirectory,
             MugshotSynonyms
         };

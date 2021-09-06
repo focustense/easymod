@@ -156,7 +156,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public ChangeResult SetFaceOption(string pluginName, bool keepFaceGenMod = false, bool asFallback = false)
         {
             var option = FindOption(pluginName);
-            if (option is not null &&
+            if (option is not null && !option.HasErrors &&
                 (option != FaceOption || FaceGenOverride is not null || !string.IsNullOrEmpty(MissingFacePluginName)))
             {
                 var oldPluginName = !string.IsNullOrEmpty(MissingFacePluginName) ?

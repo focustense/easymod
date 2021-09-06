@@ -8,7 +8,7 @@ namespace Focus.Apps.EasyNpc.Build
     /// </summary>
     public partial class BuildPage : ModernWpf.Controls.Page
     {
-        protected BuildViewModel Model => ((IBuildContainer)DataContext)?.Build;
+        protected BuildViewModel Model => ((IBuildContainer)DataContext)!.Build;
 
         public BuildPage()
         {

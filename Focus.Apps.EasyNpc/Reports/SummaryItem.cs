@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using PropertyChanged;
+using System;
 
 namespace Focus.Apps.EasyNpc.Reports
 {
@@ -20,10 +18,9 @@ namespace Focus.Apps.EasyNpc.Reports
         StatusWarning,
     }
 
-    public class SummaryItem : INotifyPropertyChanged
+    [AddINotifyPropertyChangedInterface]
+    public class SummaryItem
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public SummaryItemCategory Category { get; set; }
         public string Description { get; set; } = string.Empty;
         public string? Value { get; set; }

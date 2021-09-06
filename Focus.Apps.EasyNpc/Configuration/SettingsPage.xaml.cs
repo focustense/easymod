@@ -46,14 +46,16 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         private void RemoveWarningSuppressionsButton_Click(object sender, RoutedEventArgs e)
         {
-            var suppressions = (sender as FrameworkElement).DataContext as BuildWarningSuppressionViewModel;
-            Model.RemoveBuildWarningSuppression(suppressions);
+            var suppressions = (sender as FrameworkElement)?.DataContext as BuildWarningSuppressionViewModel;
+            if (suppressions is not null)
+                Model.RemoveBuildWarningSuppression(suppressions);
         }
 
         private void RemoveMugshotRedirectButton_Click(object sender, RoutedEventArgs e)
         {
-            var redirect = (sender as FrameworkElement).DataContext as MugshotRedirectViewModel;
-            Model.RemoveMugshotRedirect(redirect);
+            var redirect = (sender as FrameworkElement)?.DataContext as MugshotRedirectViewModel;
+            if (redirect is not null)
+                Model.RemoveMugshotRedirect(redirect);
         }
 
         private void WelcomeDoneButton_Click(object sender, RoutedEventArgs e)

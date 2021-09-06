@@ -1,17 +1,15 @@
 ﻿using Focus.Apps.EasyNpc.Build.Pipeline;
 using PropertyChanged;
 using System;
-using System.ComponentModel;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace Focus.Apps.EasyNpc.Build.UI
 {
-    public class BuildTaskViewModel : INotifyPropertyChanged, IDisposable
+    [AddINotifyPropertyChangedInterface]
+    public class BuildTaskViewModel : IDisposable
     {
         public delegate BuildTaskViewModel Factory(IBuildTask buildTask);
-
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         public int CurrentProgress { get; private set; }
         public string ErrorMessage { get; private set; } = string.Empty;

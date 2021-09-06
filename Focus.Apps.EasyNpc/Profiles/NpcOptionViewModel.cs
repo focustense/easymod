@@ -6,9 +6,12 @@ namespace Focus.Apps.EasyNpc.Profiles
 {
     public class NpcOptionViewModel : INotifyPropertyChanged
     {
+#pragma warning disable 67 // Implemented by PropertyChanged.Fody
         public event PropertyChangedEventHandler? PropertyChanged;
+#pragma warning restore 67
 
         public bool HasBehaviorOverride => ComparisonToBase?.ModifiesBehavior ?? true;
+        public bool HasErrors => option.HasErrors;
         public bool HasFaceOverride => ComparisonToBase?.ModifiesFace ?? true;
         public bool HasFaceGenOverride => ComparisonToBase?.ModifiesHeadParts ?? true;
         public bool HasOutfitOverride => ComparisonToBase?.ModifiesOutfits ?? true;

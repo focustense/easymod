@@ -22,7 +22,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
 
         public NpcAnalyzerTests()
         {
-            Analyzer = new NpcAnalyzer(Groups, armorAddonHelperMock.Object, Logger);
+            Analyzer = new NpcAnalyzer(Groups, armorAddonHelperMock.Object, ReferenceChecker.Of<INpcGetter>());
         }
 
         [Fact]

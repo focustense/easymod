@@ -20,6 +20,7 @@ namespace Focus.ModManagers.Vortex
         public string ModsDirectory => StagingDir;
 
         public Dictionary<string, FileInfo> Files { get; set; } = new();
+        public string GameDataPath => string.Empty;
         public Dictionary<string, ModInfo> Mods { get; set; } = new();
         public string StagingDir { get; set; } = string.Empty;
 

@@ -24,7 +24,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             var savedProfile = SavedProfile.LoadFromStream(stream);
             Parallel.ForEach(savedProfile.Npcs, x =>
             {
-                var key = new RecordKey(x.BasePluginName, x.LocalFormIdHex);
+                var key = new RecordKey(x);
                 if (!npcs.TryGetValue(key, out var npc))
                     return;
                 npc.SetDefaultOption(x.DefaultPluginName);
