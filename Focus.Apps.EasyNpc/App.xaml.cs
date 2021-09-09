@@ -45,7 +45,8 @@ namespace Focus.Apps.EasyNpc
             {
                 var mainViewModelFactory = container.Resolve<MainViewModel.Factory>();
                 var mainViewModel = mainViewModelFactory(isFirstLaunch);
-                var mainWindow = MainWindow = new MainWindow(mainViewModel);
+                var mainWindow = MainWindow = new MainWindow(mainViewModel.Logger);
+                mainWindow.DataContext = mainViewModel;
                 mainWindow.Show();
             }
             catch (MissingGameDataException ex)
