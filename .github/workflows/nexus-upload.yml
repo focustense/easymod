@@ -35,7 +35,7 @@ jobs:
     - name: Build custom uploader
       run: |
         dotnet restore
-        dotnet pack
+        dotnet pack -o ../nupkg
       working-directory: ./nexus-uploader/src
 
     - name: Add uploader as tool
