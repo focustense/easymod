@@ -89,6 +89,12 @@ namespace Focus.Providers.Mutagen
             {
                 return action();
             }
+            catch (ArgumentException ex)
+            {
+                // Can happen with e.g. a bad file name inside the archive.
+                log.Error(ex, "Archive {archivePath} is invalid, corrupt or unreadable", archivePath);
+                badArchivePaths.Add(archivePath);
+            }
             catch (InvalidDataException ex)
             {
                 // This type of error happens in the BsaFileNameBlock and means we'll never be able to use the archive.

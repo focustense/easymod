@@ -2,7 +2,9 @@
 using CommandLine;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Main;
+using Focus.Apps.EasyNpc.Reports;
 using Focus.ModManagers;
+using Serilog;
 using System;
 using System.IO;
 using System.Windows;
@@ -39,14 +41,24 @@ namespace Focus.Apps.EasyNpc
             }
 
             var container = AppContainer.Build(options, startupInfo);
+            var logger = container.Resolve<ILogger>();
+            var mainWindow = MainWindow = new MainWindow(logger);
             if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.DefaultModRootDirectory))
                 Settings.Default.DefaultModRootDirectory = container.Resolve<IModManagerConfiguration>().ModsDirectory;
             try
             {
-                var mainViewModelFactory = container.Resolve<MainViewModel.Factory>();
-                var mainViewModel = mainViewModelFactory(isFirstLaunch);
-                var mainWindow = MainWindow = new MainWindow(mainViewModel.Logger);
-                mainWindow.DataContext = mainViewModel;
+                if (options.PostBuild)
+                {
+                    var postBuildReportViewModel = container.Resolve<PostBuildReportViewModel>();
+                    mainWindow.DataContext = postBuildReportViewModel;
+                    _ = postBuildReportViewModel.UpdateReport();
+                }
+                else
+                {
+                    var mainViewModelFactory = container.Resolve<MainViewModel.Factory>();
+                    var mainViewModel = mainViewModelFactory(isFirstLaunch);
+                    mainWindow.DataContext = mainViewModel;
+                }
                 mainWindow.Show();
             }
             catch (MissingGameDataException ex)

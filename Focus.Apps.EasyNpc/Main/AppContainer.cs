@@ -25,10 +25,12 @@ namespace Focus.Apps.EasyNpc.Main
                 .RegisterModule(GetModManagerModule(options, startupInfo))
                 .RegisterModule(new MutagenModule
                 {
-                    BlacklistedPluginNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                    {
-                        FileStructure.MergeFileName,
-                    },
+                    BlacklistedPluginNames = options.PostBuild ?
+                        new HashSet<string>(StringComparer.OrdinalIgnoreCase) :
+                        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                        {
+                            FileStructure.MergeFileName,
+                        },
                     DataDirectory = options.GamePath,
                     GameId = options.GameName,
                 })
@@ -37,6 +39,7 @@ namespace Focus.Apps.EasyNpc.Main
                     AutosavePath = ProgramData.ProfileLogFileName,
                 })
                 .RegisterModule<BuildModule>()
+                .RegisterModule<PostBuildModule>()
                 .RegisterModule<MaintenanceModule>()
                 .RegisterModule<MainModule>();
             return builder.Build();

@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
+        xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         mc:Ignorable="d"
         ui:WindowHelper.UseModernWindowStyle="True"
@@ -13,6 +14,11 @@
         <ContentControl.Resources>
             <DataTemplate DataType="{x:Type main:MainViewModel}">
                 <main:MainView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type rpt:PostBuildReportViewModel}">
+                <ui:ScrollViewerEx Padding="16">
+                    <rpt:PostBuildReportView/>
+                </ui:ScrollViewerEx>
             </DataTemplate>
         </ContentControl.Resources>
     </ContentControl>
