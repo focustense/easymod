@@ -17,7 +17,7 @@ namespace Focus.Files.Tests
             fs = new MockFileSystem();
             archiveProvider = new FakeArchiveProvider();
             settings = new ReadOnlyGameSettings(
-                @"C:\game\data", archiveOrder: new[] { "archive1", "archive2", "archive3" });
+                @"C:\game\data", archiveOrder: new[] { "archive3", "archive2", "archive1" });
             provider = new GameFileProvider(fs, settings, archiveProvider);
         }
 
