@@ -1,5 +1,6 @@
 ﻿using PropertyChanged;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -28,6 +29,8 @@ namespace Focus.Apps.EasyNpc.Reports
         public bool HasConsistentFaceGens => Report.Npcs.All(x => x.HasConsistentHeadParts);
         [DependsOn(nameof(Report))]
         public bool HasConsistentFaceTints => Report.Npcs.All(x => x.HasConsistentFaceTint);
+        [DependsOn(nameof(Report))]
+        public IEnumerable<NpcConsistencyInfo> InconsistentNpcs => Report.Npcs.Where(x => !x.HasConsistentHeadParts);
         [DependsOn(nameof(Report))]
         public bool IsMainPluginEnabled => Report.MainPluginState == PluginState.Enabled;
         public bool IsReportReady { get; private set; }

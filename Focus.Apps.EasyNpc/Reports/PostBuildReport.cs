@@ -27,9 +27,10 @@ namespace Focus.Apps.EasyNpc.Reports
         public bool HasConsistentHeadParts { get; init; }
         public string LocalFormIdHex { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
-        public ModComponentInfo? WinningFaceGenComponent { get; init; }
-        public ModComponentInfo? WinningFaceTintComponent { get; init; }
+        public ModSearchResult? WinningFaceGenSource { get; init; }
+        public ModSearchResult? WinningFaceTintSource { get; init; }
         public string WinningPluginName { get; init; } = string.Empty;
+        public ModSearchResult? WinningPluginSource { get; init; }
     }
 
     public class PostBuildReport

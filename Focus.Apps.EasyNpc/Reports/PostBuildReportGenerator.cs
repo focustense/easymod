@@ -1,4 +1,6 @@
 ﻿using Focus.Analysis.Execution;
+using Focus.Analysis.Plugins;
+using Focus.Analysis.Records;
 using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
@@ -6,6 +8,7 @@ using Focus.Environment;
 using Focus.Files;
 using Focus.ModManagers;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
@@ -19,12 +22,15 @@ namespace Focus.Apps.EasyNpc.Reports
     {
         public IObservable<string> Status => status;
 
+        private readonly ArchiveIndex archiveIndex;
+        private readonly ConcurrentDictionary<string, ModSearchResult?> archiveSources =
+            new(StringComparer.CurrentCultureIgnoreCase);
         private readonly IArchiveProvider archiveProvider;
         // Facegen editor must be lazy because it depends on the created environment.
         private readonly Lazy<IFaceGenEditor> faceGenEditor;
-        // File provider must be lazy because it depends on the created environment.
-        private readonly Lazy<IFileProvider> fileProvider;
         private readonly IFileSystem fs;
+        // Game settings must be lazy because it depends on the created environment.
+        private readonly Lazy<IGameSettings> gameSettings;
         // Load order analyzer must be lazy because it depends on the created environment.
         private readonly Lazy<ILoadOrderAnalyzer> loadOrderAnalyzer;
         private readonly IConfigurableModRepository<ComponentPerDirectoryConfiguration> modRepository;
@@ -32,19 +38,23 @@ namespace Focus.Apps.EasyNpc.Reports
         private readonly IGameSetup setup;
         private readonly BehaviorSubject<string> status = new("Waiting to start");
 
+        private Dictionary<IRecordKey, HeadPartAnalysis> headParts = new();
+
         public PostBuildReportGenerator(
             IConfigurableModRepository<ComponentPerDirectoryConfiguration> modRepository, IModSettings modSettings,
-            IGameSetup setup, IFileSystem fs, Lazy<IFileProvider> fileProvider, IArchiveProvider archiveProvider,
+            IGameSetup setup, Lazy<IGameSettings> gameSettings, IFileSystem fs, IArchiveProvider archiveProvider,
             Lazy<ILoadOrderAnalyzer> loadOrderAnalyzer, Lazy<IFaceGenEditor> faceGenEditor)
         {
             this.archiveProvider = archiveProvider;
             this.faceGenEditor = faceGenEditor;
-            this.fileProvider = fileProvider;
             this.fs = fs;
+            this.gameSettings = gameSettings;
             this.loadOrderAnalyzer = loadOrderAnalyzer;
             this.modRepository = modRepository;
             this.modSettings = modSettings;
             this.setup = setup;
+
+            archiveIndex = new(archiveProvider);
         }
 
         public async Task<PostBuildReport> CreateReport()
@@ -54,6 +64,12 @@ namespace Focus.Apps.EasyNpc.Reports
             // Start mod indexing right away so we can do other things while it's running.
             status.OnNext("Beginning mod indexing");
             var modRepositoryConfigTask = Task.Run(() => modRepository.Configure(new(modSettings.RootDirectory)));
+            var archiveIndexTask = Task.Run(() =>
+            {
+                var archivePaths = gameSettings.Value.ArchiveOrder
+                    .Select(f => fs.Path.Combine(gameSettings.Value.DataDirectory, f));
+                archiveIndex.AddArchives(archivePaths);
+            });
             // Start the analysis right away so we can do other things while it's running.
             status.OnNext("Beginning analysis");
             var analysisTask = Task.Run(() => loadOrderAnalyzer.Value.Analyze(
@@ -63,11 +79,16 @@ namespace Focus.Apps.EasyNpc.Reports
             var archives = await Task.Run(() => CheckArchives(mainPluginName)
                 .OrderBy(x => x.ArchiveName?.IndexOf("- Textures") ?? -1)
                 .ThenBy(x => x.ArchiveName)
-                .ToList());
+                .ToList()
+                .AsReadOnly());
             status.OnNext("Waiting for analysis to finish");
             var analysis = await analysisTask;
+            headParts = analysis.ExtractChains<HeadPartAnalysis>(RecordType.HeadPart)
+                .ToDictionary(x => x.Key, x => x.Winner, RecordKeyComparer.Default);
             status.OnNext("Waiting for mod indexing to finish");
-            await modRepositoryConfigTask;
+            await Task.WhenAll(archiveIndexTask, modRepositoryConfigTask);
+            status.OnNext("Checking NPC consistency");
+            var npcs = (await Task.Run(() => CheckNpcs(analysis, mainPluginName))).ToList().AsReadOnly();
             status.OnNext("Finishing the report");
             var mergeComponents = modRepository.SearchForFiles(mainPluginName, false)
                 .Select(x => x.ModComponent)
@@ -80,6 +101,7 @@ namespace Focus.Apps.EasyNpc.Reports
                 MainPluginState = GetPluginState(mainPluginName),
                 ActiveMergeComponents = mergeComponents,
                 Archives = archives,
+                Npcs = npcs,
             };
             return report;
         }
@@ -122,6 +144,102 @@ namespace Focus.Apps.EasyNpc.Reports
                 .OrderBy(x => x.ArchiveName ?? x.DummyPluginName);
         }
 
+        private async Task<NpcConsistencyInfo> CheckNpc(RecordAnalysisChain<NpcAnalysis> chain, string mainPluginName)
+        {
+            var main = chain[mainPluginName];
+            var winner = chain.Winner;
+            var winningPluginName = chain[^1].PluginName;
+            var pluginSource = FindAssetSource(winningPluginName, false);
+            var faceGenPath = FileStructure.GetFaceMeshFileName(chain.Key);
+            var faceGenSource = FindAssetSource(faceGenPath, true);
+            return new NpcConsistencyInfo
+            {
+                BasePluginName = chain.Key.BasePluginName,
+                LocalFormIdHex = chain.Key.LocalFormIdHex,
+                EditorId = chain.Winner.EditorId,
+                HasConsistentHeadParts = await HasConsistentHeadParts(winner, pluginSource, faceGenSource),
+                Name = chain.Winner.Name,
+                WinningPluginName = winningPluginName,
+                WinningPluginSource = pluginSource,
+                WinningFaceGenSource = faceGenSource,
+            };
+        }
+
+        private async Task<IEnumerable<NpcConsistencyInfo>> CheckNpcs(LoadOrderAnalysis analysis, string mainPluginName)
+        {
+            var loadOrder = setup.AvailablePlugins.Select(x => x.FileName);
+            var npcTasks = analysis
+                .ExtractChains<NpcAnalysis>(RecordType.Npc)
+                .AsParallel()
+                .Where(x => x.Contains(mainPluginName))
+                .Select(x => CheckNpc(x, mainPluginName));
+            var npcs = await Task.WhenAll(npcTasks);
+            return npcs.OrderByLoadOrder(x => x, loadOrder);
+        }
+
+        private bool FileContentsEqual(IFileInfo info1, IFileInfo info2)
+        {
+            const int BUFFER_SIZE = 8192;
+
+            using var fs1 = info1.OpenRead();
+            using var fs2 = info2.OpenRead();
+            var buffer1 = new byte[BUFFER_SIZE];
+            var buffer2 = new byte[BUFFER_SIZE];
+            var span1 = new ReadOnlySpan<byte>(buffer1);
+            var span2 = new ReadOnlySpan<byte>(buffer2);
+            while (true)
+            {
+                int length1 = fs1.Read(buffer1);
+                int length2 = fs2.Read(buffer2);
+                if (length1 != length2)
+                    return false;
+                if (length1 == 0)
+                    return true;
+                if (!span1.SequenceEqual(span2))
+                    return false;
+            }
+        }
+
+        private ModSearchResult? FindAssetSource(string assetPath, bool checkArchives)
+        {
+            var settings = gameSettings.Value;
+            var loosePath = fs.Path.Combine(settings.DataDirectory, assetPath);
+            if (fs.File.Exists(loosePath))
+                return FindAssetSource(assetPath, loosePath);
+            if (!checkArchives)
+                return null;
+            var containingArchiveName = archiveIndex.FindInBuckets(assetPath)
+                .Select(x => fs.Path.GetFileName(x.Key))
+                .FirstOrDefault();
+            if (!string.IsNullOrEmpty(containingArchiveName))
+                return archiveSources.GetOrAdd(
+                    containingArchiveName,
+                    _ => FindAssetSource(
+                        containingArchiveName, fs.Path.Combine(settings.DataDirectory, containingArchiveName)));
+            return null;
+        }
+
+        private ModSearchResult? FindAssetSource(string assetPath, string absoluteGamePath)
+        {
+            var targetInfo = fs.FileInfo.FromFileName(absoluteGamePath);
+            var allResults = modRepository.SearchForFiles(assetPath, false).ToList();
+            if (allResults.Count == 1)
+                return allResults[0];
+            // If search results are in listed (reverse priority) order, this is accurate, and if they aren't in order,
+            // then there is probably no way to be more accurate.
+            for (int i = allResults.Count - 1; i >= 0; i--)
+            {
+                var result = allResults[i];
+                var resultPath = fs.Path.Combine(result.ModComponent.Path, assetPath);
+                var resultInfo = fs.FileInfo.FromFileName(resultPath);
+                if (targetInfo.Length != resultInfo.Length)
+                    continue;
+                if (FileContentsEqual(targetInfo, resultInfo))
+                    return result;
+            }
+            return null;
+        }
+
         private PluginState GetPluginState(string fileNameOrPath)
         {
             var fileName = fs.Path.GetFileName(fileNameOrPath);
@@ -136,12 +254,51 @@ namespace Focus.Apps.EasyNpc.Reports
             return setup.LoadOrderGraph.CanLoad(fileName) ? PluginState.Enabled : PluginState.Unloadable;
         }
 
+        private async Task<bool> HasConsistentHeadParts(
+            NpcAnalysis npc, ModSearchResult? pluginSource, ModSearchResult? faceGenSource)
+        {
+            if (faceGenSource is null)
+                return npc.ComparisonToBase?.ModifiesHeadParts != true;
+            if (pluginSource is null)
+                return false;
+            if (faceGenSource.ModComponent == pluginSource.ModComponent)
+                // Shortcut/optimization: assume that each mod is self-consistent. If the plugin source and facegen
+                // source both belong to the same component, don't deep-check for consistency.
+                return true;
+            var recordHeadParts = npc.MainHeadParts.Select(x => headParts.GetOrDefault(x)).NotNull().ToList();
+            var extraPartKeys = recordHeadParts.SelectMany(x => x.ExtraPartKeys);
+            while (extraPartKeys.Any())
+            {
+                var extraParts = extraPartKeys.Select(x => headParts.GetOrDefault(x)).NotNull().ToList();
+                recordHeadParts.AddRange(extraParts);
+                extraPartKeys = extraParts.SelectMany(x => x.ExtraPartKeys);
+            }
+            // TODO: Should this set use a case-insensitive comparer? Does the game care when it comes to Editor IDs?
+            var recordHeadPartNames = recordHeadParts.Select(x => x.EditorId).ToHashSet();
+            var faceGenPath = FileStructure.GetFaceMeshFileName(npc);
+            var faceGenData = await ReadAllBytes(faceGenPath, faceGenSource);
+            var faceGenHeadPartNames = faceGenEditor.Value.GetHeadPartNames(faceGenPath, faceGenData);
+            return recordHeadPartNames.SetEquals(faceGenHeadPartNames);
+        }
+
         private bool IsMainArchive(string archivePath, string mainBaseName)
         {
             var fileName = fs.Path.GetFileNameWithoutExtension(archivePath);
             return
                 fileName.Equals(mainBaseName, StringComparison.CurrentCultureIgnoreCase) ||
                 fileName.Equals($"{mainBaseName} - Textures", StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private async Task<byte[]> ReadAllBytes(string relativePath, ModSearchResult source)
+        {
+            if (archiveProvider.IsArchiveFile(source.RelativePath))
+            {
+                var archivePath = fs.Path.Combine(source.ModComponent.Path, source.RelativePath);
+                return archiveProvider.ReadBytes(archivePath, relativePath).ToArray();
+            }
+
+            var filePath = fs.Path.Combine(source.ModComponent.Path, relativePath);
+            return await fs.File.ReadAllBytesAsync(filePath);
         }
     }
 }

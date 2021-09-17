@@ -281,11 +281,37 @@
                     <rpt:PostBuildReportSection DefaultText="No conflicts detected"
                                                 ErrorText="Conflicting overrides detected"
                                                 Status="{Binding HasConsistentFaceGens, Converter={StaticResource BoolToStatus}}">
-                        <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource BodyTextBlockStyle}">
-                            <Run Text="{StaticResource AppName}"/> expects to be only mod/plugin affecting NPC faces. If any of the original NPC overhauls are
-                            still enabled, and either load after <Run FontWeight="SemiBold">NPC Appearances Merged.esp</Run> or provide facegens/facetints as loose
-                            files, then they will conflict with EasyNPC and cause blackface, vanilla faces, bald NPCs, and various other issues.
-                        </TextBlock>
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceGens, Converter={StaticResource BoolToVisibility}}">
+                                All FaceGen files appear consistent with NPC records.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceGens, Converter={StaticResource InvBoolToVisibility}}">
+                                Some NPCs have FaceGen conflicts, and will have blackface or other glitches. This happens when <Run Text="{StaticResource AppName}"/>
+                                is inconsistently overridden by another mod, most often one with loose files, which will take precedence over any merged BSAs even if
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> is last in the load order.
+                                Refer to the list below for details.
+                            </TextBlock>
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding InconsistentNpcs}"
+                                      Margin="0,8,0,0"
+                                      MaxHeight="300"
+                                      SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding BasePluginName}" Header="Base Plugin" Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding LocalFormIdHex}" Header="Form ID" Width="100"/>
+                                    <DataGridTextColumn Binding="{Binding EditorId}" Header="Editor ID" Width="200"/>
+                                    <DataGridTextColumn Binding="{Binding Name}" Header="Name" Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding WinningPluginName}" Header="Winning Plugin" Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding WinningPluginSource.ModComponent.Name}" Header="Expected FaceGen Mod" Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding WinningFaceGenSource.ModComponent.Name}" Header="Actual FaceGen Mod" Width="150"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ui:SimpleStackPanel>
                     </rpt:PostBuildReportSection>
                     <rpt:PostBuildReportSection DefaultText="Face tints appear consistent"
                                                 ErrorText="Face tints may be inconsistent"
