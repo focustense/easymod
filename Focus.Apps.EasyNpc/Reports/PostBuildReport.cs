@@ -19,6 +19,13 @@ namespace Focus.Apps.EasyNpc.Reports
         public bool RequiresDummyPlugin { get; init; }
     }
 
+    public class AssetSource
+    {
+        public string? ArchiveName { get; init; }
+        public ModComponentInfo ModComponent { get; init; } = ModComponentInfo.Invalid;
+        public string RelativePath { get; init; } = string.Empty;
+    }
+
     public class NpcConsistencyInfo : IRecordKey
     {
         public string BasePluginName { get; init; } = string.Empty;
@@ -27,10 +34,10 @@ namespace Focus.Apps.EasyNpc.Reports
         public bool HasConsistentHeadParts { get; init; }
         public string LocalFormIdHex { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
-        public ModSearchResult? WinningFaceGenSource { get; init; }
-        public ModSearchResult? WinningFaceTintSource { get; init; }
+        public AssetSource? WinningFaceGenSource { get; init; }
+        public AssetSource? WinningFaceTintSource { get; init; }
         public string WinningPluginName { get; init; } = string.Empty;
-        public ModSearchResult? WinningPluginSource { get; init; }
+        public AssetSource? WinningPluginSource { get; init; }
     }
 
     public class PostBuildReport
