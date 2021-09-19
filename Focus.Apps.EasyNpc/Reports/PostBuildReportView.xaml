@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:fa="http://schemas.fontawesome.com/icons/"
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              mc:Ignorable="d" 
@@ -170,7 +171,12 @@
                                 means that some meshes and/or textures will be missing, resulting in purple textures, headless NPCs, floating eyes/hair, and other glitches.
                                 Refer to the table below for details.
                             </TextBlock>
-                            <DataGrid AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Report.Archives}" Margin="0,8,0,0" SelectionMode="Single">
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding Report.Archives}"
+                                      Margin="0,8,0,0"
+                                      SelectionMode="Single"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
                                         <Style.Triggers>
@@ -205,7 +211,12 @@
                                 delete the corresponding dummy plugins. If this was not intentional, then the current <Run Text="{StaticResource AppName}"/> mod is
                                 incomplete or corrupted and needs to be rebuilt. Refer to the list below.
                             </TextBlock>
-                            <DataGrid AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Report.Archives}" Margin="0,8,0,0" SelectionMode="Single">
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding Report.Archives}"
+                                      Margin="0,8,0,0"
+                                      SelectionMode="Single"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
                                         <Style.Triggers>
@@ -300,15 +311,43 @@
                                       ItemsSource="{Binding InconsistentNpcs}"
                                       Margin="0,8,0,0"
                                       MaxHeight="300"
-                                      SelectionMode="Single">
+                                      SelectionMode="Single"
+                                      Visibility="{Binding HasConsistentFaceGens, Converter={StaticResource InvBoolToVisibility}}"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
+                                <DataGrid.Resources>
+                                    <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+                                        <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
+                                    </Style>
+                                </DataGrid.Resources>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Binding="{Binding BasePluginName}" Header="Base Plugin" Width="150"/>
-                                    <DataGridTextColumn Binding="{Binding LocalFormIdHex}" Header="Form ID" Width="100"/>
-                                    <DataGridTextColumn Binding="{Binding EditorId}" Header="Editor ID" Width="200"/>
-                                    <DataGridTextColumn Binding="{Binding Name}" Header="Name" Width="*"/>
-                                    <DataGridTextColumn Binding="{Binding WinningPluginName}" Header="Winning Plugin" Width="150"/>
-                                    <DataGridTextColumn Binding="{Binding WinningPluginSource.ModComponent.Name}" Header="Expected FaceGen Mod" Width="150"/>
-                                    <DataGridTextColumn Binding="{Binding WinningFaceGenSource.ModComponent.Name}" Header="Actual FaceGen Mod" Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding BasePluginName}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Base Plugin"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding LocalFormIdHex}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Form ID"
+                                                        Width="100"/>
+                                    <DataGridTextColumn Binding="{Binding EditorId}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Editor ID"
+                                                        Width="200"/>
+                                    <DataGridTextColumn Binding="{Binding Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Name"
+                                                        Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding WinningPluginName}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Winning Plugin"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding WinningPluginSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Expected FaceGen Mod"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding WinningFaceGenSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Actual FaceGen Mod"
+                                                        Width="150"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </ui:SimpleStackPanel>
