@@ -83,7 +83,9 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             var moddedHeadPartKeys = Groups.AddRecords<HeadPart>(
                 "mod.esp",
                 x => { x.EditorID = "ModdedFace"; x.Type = HeadPart.TypeEnum.Face; },
-                x => { x.EditorID = "ModdedHair"; x.Type = HeadPart.TypeEnum.Hair; });
+                x => { x.EditorID = "ModdedHair"; x.Type = HeadPart.TypeEnum.Hair; },
+                x => { x.EditorID = "Scar1"; x.Type = HeadPart.TypeEnum.Scars; },
+                x => { x.EditorID = "Scar2"; x.Type = HeadPart.TypeEnum.Scars; });
             var npcKeys = Groups.AddRecords<Npc>("mod.esp", npc =>
             {
                 npc.Race.SetTo(raceKeys[0].ToFormKey());
@@ -96,6 +98,8 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 {
                     moddedHeadPartKeys[0], // Face
                     moddedHeadPartKeys[1], // Hair
+                    moddedHeadPartKeys[2], // Scar 1
+                    moddedHeadPartKeys[3], // Scar 2
                     vanillaHeadPartKeys[1], // Eyes
                     vanillaHeadPartKeys[3], // Facial hair
                 },
