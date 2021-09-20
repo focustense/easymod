@@ -123,7 +123,18 @@ const init = (context: IExtensionContext) => {
     return lookupPath;
   }
 
-  function launchEasyNpc() {
+  function getCurrentProfile(): IProfile {
+    const state = context.api.getState();
+    return state.persistent.profiles[state.settings.profiles.activeProfileId]
+  }
+
+  function isGameSupported(): boolean {
+    const profile = getCurrentProfile();
+    return ['skyrim', 'skyrimse', 'skyrimvr', 'enderal', 'enderalse', 'fallout4', 'fallout4vr']
+      .includes(profile.gameId);
+  }
+
+  function launchEasyNpc(parameters?: string[]) {
     const reportPath = join(tmpdir(), 'easynpc-vortex-report.json');
     // Since we can't communicate with the process directly, writing a "sentinel" file before starting can give us a
     // better clue of what actually happened. If the file is unchanged, then most likely the tool was closed before
@@ -132,8 +143,7 @@ const init = (context: IExtensionContext) => {
     const sentinelContent = 'sentinel';
     writeFileSync(reportPath, sentinelContent);
 
-    const state = context.api.getState();
-    const profile = state.persistent.profiles[state.settings.profiles.activeProfileId];
+    const profile = getCurrentProfile();
     const dataPath = createLookupFile(profile, reportPath);
 
     const tools = context.api.getState().settings.gameMode.discovered[profile.gameId]?.tools || {};
@@ -141,10 +151,11 @@ const init = (context: IExtensionContext) => {
     if (easyNpcTool) {
       context.api.runExecutable(
         easyNpcTool.path,
-        [
-          `--report-path=${reportPath}`,
-          `--vortex-manifest="${dataPath}"`,
-        ],
+        (easyNpcTool.parameters || []).concat(parameters || []).concat(
+          [
+            `--report-path=${reportPath}`,
+            `--vortex-manifest="${dataPath}"`,
+          ]),
         {
           shell: false,
           suggestDeploy: true,
@@ -183,7 +194,8 @@ const init = (context: IExtensionContext) => {
     }
   }
 
-  context.registerAction('mod-icons', 999, 'launch-simple', {}, 'Launch EasyNPC', () => launchEasyNpc());
+  context.registerAction('mod-icons', 998, 'launch-simple', {}, 'Launch EasyNPC', () => launchEasyNpc(), isGameSupported);
+  context.registerAction('mod-icons', 999, 'conflict', {}, 'EasyNPC Post-Build', () => launchEasyNpc(['-z']), isGameSupported);
 };
 
 function zeroPad(value: number, digits: number) {
