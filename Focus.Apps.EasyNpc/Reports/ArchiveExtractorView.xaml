@@ -76,9 +76,13 @@
                     Extracting: <Run Text="{Binding CurrentFile.ArchiveName, Mode=OneWay}"/> ->
                     <Run Text="{Binding CurrentFile.RelativePath, Mode=OneWay}"/>
                 </TextBlock>
-                <TextBlock Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
+                <TextBlock TextWrapping="Wrap"
+                           Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVisibility}}"
+                           d:Visibility="Collapsed">
                     All files extracted. Exit and restart the app to verify that there are no remaining conflicts.
-                    Vortex users may need to Deploy Files again.
+                    Vortex users will need to disable and re-enable the
+                    <Run FontWeight="SemiBold" Text="{Binding ComponentName, Mode=OneWay}"/> mod and resolve the new file conflicts in
+                    order for the changes to take effect.
                 </TextBlock>
             </Grid>
         </Grid>
