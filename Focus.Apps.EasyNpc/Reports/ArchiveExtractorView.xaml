@@ -1,0 +1,86 @@
+﻿<UserControl x:Class="Focus.Apps.EasyNpc.Reports.ArchiveExtractorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:fa="http://schemas.fontawesome.com/icons/"
+             xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=rpt:ArchiveExtractorViewModel}"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Border BorderBrush="{StaticResource GroupBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Margin="0,4"
+            Padding="8">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource HighlightBackgroundBrush}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsStarted}" Value="True">
+                        <Setter Property="Background" Value="{StaticResource TaskProgressBackgroundBrush}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                        <Setter Property="Background" Value="{StaticResource TaskProgressCompletedBackgroundBrush}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <fa:SvgAwesome Grid.Column="0" Icon="Solid_Wrench" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+            <TextBlock FontWeight="SemiBold" FontSize="16" Grid.Column="1" VerticalAlignment="Center">
+                Workaround Available: BSA Extraction
+            </TextBlock>
+            <Button Grid.Column="2"
+                    IsEnabled="{Binding IsStarted, Converter={StaticResource InverseBoolean}}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    VerticalAlignment="Center"
+                    Click="ExtractButton_Click">
+                Apply workaround
+            </Button>
+            <TextBlock Grid.ColumnSpan="3"
+                       Grid.Row="1"
+                       Margin="0,8,0,4"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding IsStarted, Converter={StaticResource InvBoolToVisibility}}">
+                Some conflicts are being caused by loose files in lower-priority mods. If these <Run FontWeight="SemiBold">cannot</Run>
+                be disabled, <Run Text="{StaticResource AppName}"/> can try to fix the conflicts by extracting these files from its own
+                BSAs. You will still need to ensure that the mod named
+                <Run FontWeight="SemiBold" Text="{Binding ComponentName, Mode=OneWay}"/> is at the bottom of your mod order (Mod
+                Organizer) or configured to win all file conflicts (Vortex).
+            </TextBlock>
+            <ui:ProgressBar Grid.ColumnSpan="3"
+                            Grid.Row="1"
+                            Margin="0,8"
+                            Maximum="{Binding Count, Mode=OneWay}"
+                            Minimum="0"
+                            Value="{Binding CurrentIndex, Mode=OneWay}"
+                            Visibility="{Binding IsStarted, Converter={StaticResource BoolToVisibility}}"
+                            d:Visibility="Collapsed"/>
+            <Grid Grid.ColumnSpan="3"
+                  Grid.Row="2"
+                  Visibility="{Binding IsStarted, Converter={StaticResource BoolToVisibility}}"
+                  d:Visibility="Collapsed">
+                <TextBlock Visibility="{Binding IsCompleted, Converter={StaticResource InvBoolToVisibility}}">
+                    Extracting: <Run Text="{Binding CurrentFile.ArchiveName, Mode=OneWay}"/> ->
+                    <Run Text="{Binding CurrentFile.RelativePath, Mode=OneWay}"/>
+                </TextBlock>
+                <TextBlock Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVisibility}}" d:Visibility="Collapsed">
+                    All files extracted. Exit and restart the app to verify that there are no remaining conflicts.
+                    Vortex users may need to Deploy Files again.
+                </TextBlock>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

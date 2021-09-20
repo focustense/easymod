@@ -306,82 +306,12 @@
                                 <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> is last in the plugin order.
                                 To resolve this, <Run FontWeight="SemiBold">disable the conflicting mods in your mod manager</Run>.
                             </TextBlock>
-                            <Border BorderBrush="{StaticResource GroupBorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Margin="0,4"
-                                    Padding="8"
-                                    Visibility="{Binding IsArchiveExtractionWorkaroundAvailable, Converter={StaticResource BoolToVisibility}}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Background" Value="{StaticResource HighlightBackgroundBrush}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsArchiveExtractionStarted}" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource TaskProgressBackgroundBrush}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding ArchiveExtractor.IsCompleted}" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource TaskProgressCompletedBackgroundBrush}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <fa:SvgAwesome Grid.Column="0" Icon="Solid_Wrench" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock FontWeight="SemiBold" FontSize="16" Grid.Column="1" VerticalAlignment="Center">
-                                        Workaround Available: BSA Extraction
-                                    </TextBlock>
-                                    <Button Grid.Column="2"
-                                            IsEnabled="{Binding IsArchiveExtractionStarted, Converter={StaticResource InverseBoolean}}"
-                                            Style="{StaticResource AccentButtonStyle}"
-                                            VerticalAlignment="Center"
-                                            Click="ExtractArchivesButton_Click">
-                                        Apply workaround
-                                    </Button>
-                                    <TextBlock Grid.ColumnSpan="3"
-                                               Grid.Row="1"
-                                               Margin="0,8,0,4"
-                                               TextWrapping="Wrap"
-                                               Visibility="{Binding IsArchiveExtractionStarted, Converter={StaticResource InvBoolToVisibility}}">
-                                        Some conflicts are being caused by loose files in lower-priority mods. If these <Run FontWeight="SemiBold">cannot</Run>
-                                        be disabled, <Run Text="{StaticResource AppName}"/> can try to fix the conflicts by extracting these files from its own
-                                        BSAs. You will still need to ensure that the mod named
-                                        <Run FontWeight="SemiBold" Text="{Binding MergeComponentName, Mode=OneWay}"/> is at the bottom of your mod order (Mod
-                                        Organizer) or configured to win all file conflicts (Vortex).
-                                    </TextBlock>
-                                    <ui:ProgressBar Grid.ColumnSpan="3"
-                                                    Grid.Row="1"
-                                                    Margin="0,8"
-                                                    Maximum="{Binding ArchiveExtractor.Count, Mode=OneWay}"
-                                                    Minimum="0"
-                                                    Value="{Binding ArchiveExtractor.CurrentIndex, Mode=OneWay}"
-                                                    Visibility="{Binding IsArchiveExtractionStarted, Converter={StaticResource BoolToVisibility}}"/>
-                                    <Grid Grid.ColumnSpan="3"
-                                          Grid.Row="2"
-                                          Visibility="{Binding IsArchiveExtractionStarted, Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Visibility="{Binding ArchiveExtractor.IsCompleted, Converter={StaticResource InvBoolToVisibility}}">
-                                            Extracting: <Run Text="{Binding ArchiveExtractor.CurrentFile.ArchiveName, Mode=OneWay}"/> ->
-                                            <Run Text="{Binding ArchiveExtractor.CurrentFile.RelativePath, Mode=OneWay}"/>
-                                        </TextBlock>
-                                        <TextBlock Visibility="{Binding ArchiveExtractor.IsCompleted, Converter={StaticResource BoolToVisibility}}">
-                                            All files extracted. Exit and restart the app to verify that there are no remaining conflicts.
-                                            Vortex users may need to Deploy Files again.
-                                        </TextBlock>
-                                    </Grid>
-                                </Grid>
-                            </Border>
+                            <ContentControl Visibility="{Binding CanExtractFaceGenFiles, Converter={StaticResource BoolToVisibility}}">
+                                <rpt:ArchiveExtractorView DataContext="{Binding FaceGenArchiveExtractor}"/>
+                            </ContentControl>
                             <DataGrid AutoGenerateColumns="False"
                                       IsReadOnly="True"
-                                      ItemsSource="{Binding InconsistentNpcs}"
+                                      ItemsSource="{Binding InconsistentHeadPartNpcs}"
                                       Margin="0,8,0,0"
                                       MaxHeight="300"
                                       SelectionMode="Single"
@@ -430,11 +360,62 @@
                                                 Status="{Binding HasConsistentFaceTints,
                                                                  Converter={StaticResource BoolToStatus},
                                                                  ConverterParameter={x:Static rpt:PostBuildReportSectionStatus.Warning}}">
-                        <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource BodyTextBlockStyle}">
-                            The face tint for any given NPC should generally come from the same mod as the facegen mesh. While it is not always incorrect for them
-                            to come from different mods, inconsistencies between tints and other assets may be responsible for "neck seam" issues due to the head
-                            and neck having different skin tones.
-                        </TextBlock>
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceTints, Converter={StaticResource BoolToVisibility}}">
+                                All NPC face tints come from the same mod as their FaceGen file.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceTints, Converter={StaticResource InvBoolToVisibility}}">
+                                Some NPCs are using face tints in a different mod from their FaceGen file. This won't cause severe issues like blackface, but may
+                                cause the appearance of "neck seams" due to texture mismatches.
+                            </TextBlock>
+                            <ContentControl Visibility="{Binding CanExtractFaceTintFiles, Converter={StaticResource BoolToVisibility}}">
+                                <rpt:ArchiveExtractorView DataContext="{Binding FaceTintArchiveExtractor}"/>
+                            </ContentControl>
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding InconsistentFaceTintNpcs}"
+                                      Margin="0,8,0,0"
+                                      MaxHeight="300"
+                                      SelectionMode="Single"
+                                      Visibility="{Binding HasConsistentFaceTints, Converter={StaticResource InvBoolToVisibility}}"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
+                                <DataGrid.Resources>
+                                    <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+                                        <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
+                                    </Style>
+                                </DataGrid.Resources>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding BasePluginName}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Base Plugin"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding LocalFormIdHex}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Form ID"
+                                                        Width="100"/>
+                                    <DataGridTextColumn Binding="{Binding EditorId}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Editor ID"
+                                                        Width="200"/>
+                                    <DataGridTextColumn Binding="{Binding Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Name"
+                                                        Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding WinningFaceGenSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="FaceGen Mod"
+                                                        Width="200"/>
+                                    <DataGridTextColumn Binding="{Binding WinningFaceTintSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="FaceTint Mod"
+                                                        Width="200"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ui:SimpleStackPanel>
                     </rpt:PostBuildReportSection>
                 </ui:SimpleStackPanel>
             </GroupBox>

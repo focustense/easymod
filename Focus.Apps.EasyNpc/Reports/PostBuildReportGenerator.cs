@@ -193,6 +193,10 @@ namespace Focus.Apps.EasyNpc.Reports
                 FaceGenLoosePath = faceGenLoosePath,
                 FaceTintArchivePath = faceTintArchivePath,
                 FaceTintLoosePath = faceTintLoosePath,
+                HasConsistentFaceTint =
+                    // Don't care about the face tint unless EasyNPC is (or could be) providing the facegen.
+                    string.IsNullOrEmpty(faceGenArchivePath) || string.IsNullOrEmpty(faceGenLoosePath) ||
+                    faceTintSource?.ModComponent == faceGenSource?.ModComponent,
                 HasConsistentHeadParts = await HasConsistentHeadParts(winner, pluginSource, faceGenSource),
                 Name = chain.Winner.Name,
                 WinningPluginName = winningPluginName,

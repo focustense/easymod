@@ -11,7 +11,12 @@ namespace Focus.Apps.EasyNpc.Reports
     [AddINotifyPropertyChangedInterface]
     public class PostBuildReportViewModel
     {
-        public ArchiveExtractorViewModel? ArchiveExtractor { get; private set; }
+        [DependsOn(nameof(FaceGenArchiveExtractor))]
+        public bool CanExtractFaceGenFiles => FaceGenArchiveExtractor is not null;
+        [DependsOn(nameof(FaceTintArchiveExtractor))]
+        public bool CanExtractFaceTintFiles => FaceTintArchiveExtractor is not null;
+        public ArchiveExtractorViewModel? FaceGenArchiveExtractor { get; private set; }
+        public ArchiveExtractorViewModel? FaceTintArchiveExtractor { get; private set; }
         public string GenerationStatus { get; private set; } = string.Empty;
         [DependsOn(nameof(Report))]
         public bool HasAllArchives => Report.Archives.All(x => !string.IsNullOrEmpty(x.ArchiveName));
@@ -32,12 +37,15 @@ namespace Focus.Apps.EasyNpc.Reports
         [DependsOn(nameof(Report))]
         public bool HasConsistentFaceTints => Report.Npcs.All(x => x.HasConsistentFaceTint);
         [DependsOn(nameof(Report))]
-        public IEnumerable<NpcConsistencyInfo> InconsistentNpcs => Report.Npcs.Where(x => !x.HasConsistentHeadParts);
-        [DependsOn(nameof(ArchiveExtractor))]
-        public bool IsArchiveExtractionStarted => ArchiveExtractor is not null;
-        [DependsOn(nameof(HasSingleMergeComponent), nameof(InconsistentNpcs))]
-        public bool IsArchiveExtractionWorkaroundAvailable =>
-            HasSingleMergeComponent && InconsistentNpcs.Any(x => x.HasFaceGenArchive && !x.HasFaceGenLoose);
+        public IEnumerable<NpcConsistencyInfo> InconsistentFaceTintNpcs =>
+            Report.Npcs.Where(x => !x.HasConsistentFaceTint);
+        [DependsOn(nameof(Report))]
+        public IEnumerable<NpcConsistencyInfo> InconsistentHeadPartNpcs =>
+            Report.Npcs.Where(x => !x.HasConsistentHeadParts);
+        [DependsOn(nameof(FaceGenArchiveExtractor))]
+        public bool IsFaceGenArchiveExtractionStarted => FaceGenArchiveExtractor is not null;
+        [DependsOn(nameof(FaceTintArchiveExtractor))]
+        public bool IsFaceTintArchiveExtractionStarted => FaceTintArchiveExtractor is not null;
         [DependsOn(nameof(Report))]
         public bool IsMainPluginEnabled => Report.MainPluginState == PluginState.Enabled;
         public bool IsReportReady { get; private set; }
@@ -57,25 +65,29 @@ namespace Focus.Apps.EasyNpc.Reports
             reportGenerator.Status.Subscribe(s => GenerationStatus = s);
         }
 
-        public void ExtractConflictingFiles()
-        {
-            if (!IsArchiveExtractionWorkaroundAvailable)
-                return;
-            var mergeComponent = Report.ActiveMergeComponents[0];
-            var faceGenFiles = InconsistentNpcs
-                .Where(x => x.HasFaceGenArchive && !x.HasFaceGenLoose)
-                .Select(x => new ArchiveFile(x.FaceGenArchivePath!, FileStructure.GetFaceMeshFileName(x)));
-            var faceTintFiles = InconsistentNpcs
-                .Where(x => x.HasFaceTintArchive && !x.HasFaceTintLoose)
-                .Select(x => new ArchiveFile(x.FaceTintArchivePath!, FileStructure.GetFaceTintFileName(x)));
-            ArchiveExtractor = archiveExtractorFactory(faceGenFiles.Concat(faceTintFiles), mergeComponent.Path);
-            Task.Run(() => ArchiveExtractor.ExtractAll());
-        }
-
         public async Task UpdateReport()
         {
             IsReportReady = false;
             Report = await reportGenerator.CreateReport();
+            if (HasSingleMergeComponent)
+            {
+                var mergeComponent = Report.ActiveMergeComponents[0];
+                var faceGenFiles = InconsistentHeadPartNpcs
+                    .Where(x => x.HasFaceGenArchive && !x.HasFaceGenLoose)
+                    .Select(x => new ArchiveFile(x.FaceGenArchivePath!, FileStructure.GetFaceMeshFileName(x)));
+                var faceGenTintFiles = InconsistentHeadPartNpcs
+                    .Where(x => x.HasFaceTintArchive && !x.HasFaceTintLoose)
+                    .Select(x => new ArchiveFile(x.FaceTintArchivePath!, FileStructure.GetFaceTintFileName(x)));
+                if (faceGenFiles.Any())
+                    FaceGenArchiveExtractor =
+                        archiveExtractorFactory(faceGenFiles.Concat(faceGenTintFiles), mergeComponent);
+
+                var faceTintFiles = InconsistentFaceTintNpcs
+                    .Where(x => x.HasFaceTintArchive && !x.HasFaceTintLoose)
+                    .Select(x => new ArchiveFile(x.FaceTintArchivePath!, FileStructure.GetFaceTintFileName(x)));
+                if (faceTintFiles.Any())
+                    FaceTintArchiveExtractor = archiveExtractorFactory(faceTintFiles, mergeComponent);
+            }
             IsReportReady = true;
         }
 
