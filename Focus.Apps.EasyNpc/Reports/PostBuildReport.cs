@@ -30,8 +30,16 @@ namespace Focus.Apps.EasyNpc.Reports
     {
         public string BasePluginName { get; init; } = string.Empty;
         public string EditorId { get; init; } = string.Empty;
+        public string? FaceGenArchivePath { get; init; }
+        public string? FaceTintArchivePath { get; init; }
+        public string? FaceGenLoosePath { get; init; }
+        public string? FaceTintLoosePath { get; init; }
         public bool HasConsistentFaceTint { get; init; }
         public bool HasConsistentHeadParts { get; init; }
+        public bool HasFaceGenArchive => !string.IsNullOrEmpty(FaceGenArchivePath);
+        public bool HasFaceGenLoose => !string.IsNullOrEmpty(FaceGenLoosePath);
+        public bool HasFaceTintArchive => !string.IsNullOrEmpty(FaceTintArchivePath);
+        public bool HasFaceTintLoose => !string.IsNullOrEmpty(FaceTintLoosePath);
         public string LocalFormIdHex { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
         public AssetSource? WinningFaceGenSource { get; init; }

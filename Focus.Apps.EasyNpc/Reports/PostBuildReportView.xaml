@@ -302,10 +302,83 @@
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        Visibility="{Binding HasConsistentFaceGens, Converter={StaticResource InvBoolToVisibility}}">
                                 Some NPCs have FaceGen conflicts, and will have blackface or other glitches. This happens when <Run Text="{StaticResource AppName}"/>
-                                is inconsistently overridden by another mod, most often one with loose files, which will take precedence over any merged BSAs even if
-                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> is last in the load order.
-                                Refer to the list below for details.
+                                is inconsistently overridden by another mod, usually with loose files, which take precedence over any merged BSAs even if
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> is last in the plugin order.
+                                To resolve this, <Run FontWeight="SemiBold">disable the conflicting mods in your mod manager</Run>.
                             </TextBlock>
+                            <Border BorderBrush="{StaticResource GroupBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Margin="0,4"
+                                    Padding="8"
+                                    Visibility="{Binding IsArchiveExtractionWorkaroundAvailable, Converter={StaticResource BoolToVisibility}}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{StaticResource HighlightBackgroundBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsArchiveExtractionStarted}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource TaskProgressBackgroundBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding ArchiveExtractor.IsCompleted}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource TaskProgressCompletedBackgroundBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <fa:SvgAwesome Grid.Column="0" Icon="Solid_Wrench" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock FontWeight="SemiBold" FontSize="16" Grid.Column="1" VerticalAlignment="Center">
+                                        Workaround Available: BSA Extraction
+                                    </TextBlock>
+                                    <Button Grid.Column="2"
+                                            IsEnabled="{Binding IsArchiveExtractionStarted, Converter={StaticResource InverseBoolean}}"
+                                            Style="{StaticResource AccentButtonStyle}"
+                                            VerticalAlignment="Center"
+                                            Click="ExtractArchivesButton_Click">
+                                        Apply workaround
+                                    </Button>
+                                    <TextBlock Grid.ColumnSpan="3"
+                                               Grid.Row="1"
+                                               Margin="0,8,0,4"
+                                               TextWrapping="Wrap"
+                                               Visibility="{Binding IsArchiveExtractionStarted, Converter={StaticResource InvBoolToVisibility}}">
+                                        Some conflicts are being caused by loose files in lower-priority mods. If these <Run FontWeight="SemiBold">cannot</Run>
+                                        be disabled, <Run Text="{StaticResource AppName}"/> can try to fix the conflicts by extracting these files from its own
+                                        BSAs. You will still need to ensure that the mod named
+                                        <Run FontWeight="SemiBold" Text="{Binding MergeComponentName, Mode=OneWay}"/> is at the bottom of your mod order (Mod
+                                        Organizer) or configured to win all file conflicts (Vortex).
+                                    </TextBlock>
+                                    <ui:ProgressBar Grid.ColumnSpan="3"
+                                                    Grid.Row="1"
+                                                    Margin="0,8"
+                                                    Maximum="{Binding ArchiveExtractor.Count, Mode=OneWay}"
+                                                    Minimum="0"
+                                                    Value="{Binding ArchiveExtractor.CurrentIndex, Mode=OneWay}"
+                                                    Visibility="{Binding IsArchiveExtractionStarted, Converter={StaticResource BoolToVisibility}}"/>
+                                    <Grid Grid.ColumnSpan="3"
+                                          Grid.Row="2"
+                                          Visibility="{Binding IsArchiveExtractionStarted, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Visibility="{Binding ArchiveExtractor.IsCompleted, Converter={StaticResource InvBoolToVisibility}}">
+                                            Extracting: <Run Text="{Binding ArchiveExtractor.CurrentFile.ArchiveName, Mode=OneWay}"/> ->
+                                            <Run Text="{Binding ArchiveExtractor.CurrentFile.RelativePath, Mode=OneWay}"/>
+                                        </TextBlock>
+                                        <TextBlock Visibility="{Binding ArchiveExtractor.IsCompleted, Converter={StaticResource BoolToVisibility}}">
+                                            All files extracted. Exit and restart the app to verify that there are no remaining conflicts.
+                                            Vortex users may need to Deploy Files again.
+                                        </TextBlock>
+                                    </Grid>
+                                </Grid>
+                            </Border>
                             <DataGrid AutoGenerateColumns="False"
                                       IsReadOnly="True"
                                       ItemsSource="{Binding InconsistentNpcs}"

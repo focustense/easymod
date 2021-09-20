@@ -89,13 +89,15 @@ namespace Focus.Apps.EasyNpc.Reports
                 .ToDictionary(x => x.Key, x => x.Winner, RecordKeyComparer.Default);
             status.OnNext("Waiting for mod indexing to finish");
             await Task.WhenAll(archiveIndexTask, modRepositoryConfigTask);
-            status.OnNext("Checking NPC consistency");
-            var npcs = (await Task.Run(() => CheckNpcs(analysis, mainPluginName))).ToList().AsReadOnly();
-            status.OnNext("Finishing the report");
             var mergeComponents = modRepository.SearchForFiles(mainPluginName, false)
                 .Select(x => x.ModComponent)
                 .Distinct()
                 .ToList();
+            status.OnNext("Checking NPC consistency");
+            var mainMergeComponent = mergeComponents.Count == 1 ? mergeComponents[0] : null;
+            var npcs = (await Task.Run(() => CheckNpcs(analysis, mainPluginName, mainMergeComponent)))
+                .ToList().AsReadOnly();
+            status.OnNext("Finishing the report");
             var report = new PostBuildReport
             {
                 MainPluginMissingMasters = setup.LoadOrderGraph.GetMissingMasters(mainPluginName).ToList().AsReadOnly(),
@@ -146,35 +148,69 @@ namespace Focus.Apps.EasyNpc.Reports
                 .OrderBy(x => x.ArchiveName ?? x.DummyPluginName);
         }
 
-        private async Task<NpcConsistencyInfo> CheckNpc(RecordAnalysisChain<NpcAnalysis> chain, string mainPluginName)
+        private async Task<NpcConsistencyInfo> CheckNpc(
+            RecordAnalysisChain<NpcAnalysis> chain, string mainPluginName, ModComponentInfo? mergeComponent)
         {
             var main = chain[mainPluginName];
             var winner = chain.Winner;
             var winningPluginName = chain[^1].PluginName;
             var pluginSource = FindAssetSource(winningPluginName, false);
             var faceGenPath = FileStructure.GetFaceMeshFileName(chain.Key);
+            var faceTintPath = FileStructure.GetFaceTintFileName(chain.Key);
             var faceGenSource = FindAssetSource(faceGenPath, true);
+            var faceTintSource = FindAssetSource(faceTintPath, true);
+            string? faceGenArchivePath = null;
+            string? faceGenLoosePath = null;
+            string? faceTintArchivePath = null;
+            string? faceTintLoosePath = null;
+            if (mergeComponent is not null)
+            {
+                var mergedFaceGens = modRepository.SearchForFiles(new[] { mergeComponent }, faceGenPath, true).ToList();
+                faceGenArchivePath = mergedFaceGens
+                    .Where(x => !string.IsNullOrEmpty(x.ArchiveName))
+                    .Select(x => fs.Path.Combine(mergeComponent.Path, x.ArchiveName))
+                    .FirstOrDefault();
+                faceGenLoosePath = mergedFaceGens
+                    .Where(x => string.IsNullOrEmpty(x.ArchiveName))
+                    .Select(x => fs.Path.Combine(mergeComponent.Path, x.RelativePath))
+                    .FirstOrDefault();
+                var mergedFaceTints = modRepository.SearchForFiles(new[] { mergeComponent }, faceTintPath, true).ToList();
+                faceTintArchivePath = mergedFaceTints
+                    .Where(x => !string.IsNullOrEmpty(x.ArchiveName))
+                    .Select(x => fs.Path.Combine(mergeComponent.Path, x.ArchiveName))
+                    .FirstOrDefault();
+                faceTintLoosePath = mergedFaceTints
+                    .Where(x => string.IsNullOrEmpty(x.ArchiveName))
+                    .Select(x => fs.Path.Combine(mergeComponent.Path, x.RelativePath))
+                    .FirstOrDefault();
+            }
             return new NpcConsistencyInfo
             {
                 BasePluginName = chain.Key.BasePluginName,
                 LocalFormIdHex = chain.Key.LocalFormIdHex,
                 EditorId = chain.Winner.EditorId,
+                FaceGenArchivePath = faceGenArchivePath,
+                FaceGenLoosePath = faceGenLoosePath,
+                FaceTintArchivePath = faceTintArchivePath,
+                FaceTintLoosePath = faceTintLoosePath,
                 HasConsistentHeadParts = await HasConsistentHeadParts(winner, pluginSource, faceGenSource),
                 Name = chain.Winner.Name,
                 WinningPluginName = winningPluginName,
                 WinningPluginSource = pluginSource,
                 WinningFaceGenSource = faceGenSource,
+                WinningFaceTintSource = faceTintSource,
             };
         }
 
-        private async Task<IEnumerable<NpcConsistencyInfo>> CheckNpcs(LoadOrderAnalysis analysis, string mainPluginName)
+        private async Task<IEnumerable<NpcConsistencyInfo>> CheckNpcs(
+            LoadOrderAnalysis analysis, string mainPluginName, ModComponentInfo? mergeComponent)
         {
             var loadOrder = setup.AvailablePlugins.Select(x => x.FileName);
             var npcTasks = analysis
                 .ExtractChains<NpcAnalysis>(RecordType.Npc)
                 .AsParallel()
                 .Where(x => x.Winner.TemplateInfo?.InheritsTraits != true && x.Contains(mainPluginName))
-                .Select(x => CheckNpc(x, mainPluginName));
+                .Select(x => CheckNpc(x, mainPluginName, mergeComponent));
             var npcs = await Task.WhenAll(npcTasks);
             return npcs.OrderByLoadOrder(x => x, loadOrder);
         }

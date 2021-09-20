@@ -8,6 +8,7 @@ namespace Focus.Apps.EasyNpc.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<PostBuildReportGenerator>();
+            builder.RegisterType<ArchiveExtractorViewModel>();
             builder.RegisterType<PostBuildReportViewModel>();
         }
     }
