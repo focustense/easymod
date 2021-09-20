@@ -1,13 +1,9 @@
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { basename, join } from 'path';
 import { actions } from 'vortex-api';
-import { IExtensionApi, IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
-import { IMod } from 'vortex-api/lib/types/IState';
-
-enum GameId {
-  SSE = 'skyrimse',
-}
+import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
+import { IMod, IProfile } from 'vortex-api/lib/types/IState';
 
 interface IModAttributes {
   fileId: string;
@@ -45,9 +41,9 @@ const userDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
   process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share");
 
 const init = (context: IExtensionContext) => {
-  function activateMod(modName: string): Promise<void> {
+  function activateMod(gameId: string, modName: string): Promise<void> {
     const now = new Date();
-    const hasExistingMod = !!context.api.getState().persistent.mods[GameId.SSE]?.[modName];
+    const hasExistingMod = !!context.api.getState().persistent.mods[gameId]?.[modName];
     return hasExistingMod ? updateMod() : createMod();
 
     function createMod(): Promise<void> {
@@ -69,7 +65,7 @@ const init = (context: IExtensionContext) => {
         type: '',
       };
       return new Promise<void>((resolve, reject) => {
-        context.api.events.emit('create-mod', GameId.SSE, mod, async (error) => {
+        context.api.events.emit('create-mod', gameId, mod, async (error) => {
           if (error != null) {
             return reject(error);
           }
@@ -86,7 +82,7 @@ const init = (context: IExtensionContext) => {
 
     function updateMod(): Promise<void> {
       const setAttribute = (name: string, value: unknown) =>
-        context.api.store.dispatch(actions.setModAttribute(GameId.SSE, modName, name, value));
+        context.api.store.dispatch(actions.setModAttribute(gameId, modName, name, value));
       setAttribute('category', 33);
       setAttribute('installTime', now);
       setAttribute('logicalFileName', modName);
@@ -99,10 +95,9 @@ const init = (context: IExtensionContext) => {
     }
   }
 
-  function createLookupFile(reportPath: string): string {
+  function createLookupFile(profile: IProfile, reportPath: string): string {
     const state = context.api.getState();
-    const profile = state.persistent.profiles[state.settings.profiles.activeProfileId];
-    const mods = state.persistent.mods[GameId.SSE] || {};
+    const mods = state.persistent.mods[profile.gameId] || {};
     let stagingDir = state.settings.mods.installPath[profile.gameId]
       .replace(/{userdata}/ig, userDataDir)
       .replace(/{game}/ig, profile.gameId);
@@ -137,9 +132,11 @@ const init = (context: IExtensionContext) => {
     const sentinelContent = 'sentinel';
     writeFileSync(reportPath, sentinelContent);
 
-    const dataPath = createLookupFile(reportPath);
+    const state = context.api.getState();
+    const profile = state.persistent.profiles[state.settings.profiles.activeProfileId];
+    const dataPath = createLookupFile(profile, reportPath);
 
-    const tools = context.api.getState().settings.gameMode.discovered[GameId.SSE]?.tools || {};
+    const tools = context.api.getState().settings.gameMode.discovered[profile.gameId]?.tools || {};
     const easyNpcTool = Object.values(tools).find(t => t.path && basename(t.path).toLowerCase() == "easynpc.exe");
     if (easyNpcTool) {
       context.api.runExecutable(
@@ -169,7 +166,7 @@ const init = (context: IExtensionContext) => {
           }
           var report = JSON.parse(reportFile) as IReportFile;
           if (report.modName) {
-            activateMod(report.modName);
+            activateMod(profile.gameId, report.modName);
           }
         })
         .catch(() => {
