@@ -38,6 +38,12 @@ interface IReportFile {
 
 const DUMMY_MOD_ID = 7777777;
 
+// This really should come from Electron's app.getPath(), same as Vortex itself, but not sure how to
+// use that without including the entire electron package.
+// This implementation comes from https://stackoverflow.com/a/26227660/38360
+const userDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
+  process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share");
+
 const init = (context: IExtensionContext) => {
   function activateMod(modName: string): Promise<void> {
     const now = new Date();
@@ -97,11 +103,14 @@ const init = (context: IExtensionContext) => {
     const state = context.api.getState();
     const profile = state.persistent.profiles[state.settings.profiles.activeProfileId];
     const mods = state.persistent.mods[GameId.SSE] || {};
+    let stagingDir = state.settings.mods.installPath[profile.gameId]
+      .replace(/{userdata}/ig, userDataDir)
+      .replace(/{game}/ig, profile.gameId);
     const data: IBootstrapFile = {
       files: {},
       mods: {},
       reportPath,
-      stagingDir: state.settings.mods.installPath[GameId.SSE],
+      stagingDir,
     };
     for (const mod of Object.values(mods)) {
       const attributes = (mod.attributes || {}) as IModAttributes;
