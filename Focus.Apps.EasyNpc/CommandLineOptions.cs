@@ -19,6 +19,9 @@ namespace Focus.Apps.EasyNpc
         [Option("mo2-exe")]
         public string? ModOrganizerExecutablePath { get; set; } = null;
 
+        [Option('z', "post-build")]
+        public bool PostBuild { get; set; }
+
         [Option('r', "report-path")]
         public string? ReportPath { get; set; }
 

@@ -1,0 +1,424 @@
+﻿<UserControl x:Class="Focus.Apps.EasyNpc.Reports.PostBuildReportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:fa="http://schemas.fontawesome.com/icons/"
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+             xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=rpt:PostBuildReportViewModel}"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <rpt:PostBuildReportSectionStatusConverter x:Key="BoolToStatus"/>
+    </UserControl.Resources>
+    <Grid>
+        <ui:SimpleStackPanel HorizontalAlignment="Center"
+                             Orientation="Horizontal"
+                             VerticalAlignment="Center"
+                             Visibility="{Binding IsReportReady, Converter={StaticResource InvBoolToVisibility}}"
+                             d:Visibility="Collapsed">
+            <ui:ProgressRing Width="48" Height="48" Margin="0,0,16,0" IsActive="True"/>
+            <TextBlock Style="{StaticResource SubheaderTextBlockStyle}" Text="{Binding GenerationStatus}" d:Text="Starting" VerticalAlignment="Center"/>
+        </ui:SimpleStackPanel>
+        <ui:SimpleStackPanel Visibility="{Binding IsReportReady, Converter={StaticResource BoolToVisibility}}">
+            <ui:SimpleStackPanel Grid.Row="0"
+                                 Margin="0,0,0,16"
+                                 Orientation="Horizontal"
+                                 Visibility="{Binding HasIssues, Converter={StaticResource InvBoolToVisibility}}">
+                <fa:SvgAwesome Foreground="{StaticResource SuccessForegroundBrush}"
+                               Height="48"
+                               Icon="Solid_ThumbsUp"
+                               Margin="0,0,16,0"
+                               VerticalAlignment="Center"/>
+                <TextBlock Foreground="{StaticResource SuccessForegroundBrush}"
+                           Style="{StaticResource SubheaderTextBlockStyle}"
+                           VerticalAlignment="Center">
+                    You're all set!
+                </TextBlock>
+            </ui:SimpleStackPanel>
+            <ui:SimpleStackPanel Grid.Row="0"
+                                 Margin="0,0,0,16"
+                                 Orientation="Horizontal"
+                                 Visibility="{Binding HasIssues, Converter={StaticResource BoolToVisibility}}"
+                                 d:Visibility="Collapsed">
+                <fa:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                               Height="48"
+                               Icon="Solid_ExclamationTriangle"
+                               Margin="0,0,16,0"
+                               VerticalAlignment="Center"/>
+                <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                           Style="{StaticResource SubheaderTextBlockStyle}"
+                           VerticalAlignment="Center">
+                    Problems detected
+                </TextBlock>
+            </ui:SimpleStackPanel>
+            <GroupBox Header="Details">
+                <ui:SimpleStackPanel>
+                    <rpt:PostBuildReportSection DefaultText="Main plugin enabled"
+                                                Status="{Binding IsMainPluginEnabled, Converter={StaticResource BoolToStatus}}">
+                        <rpt:PostBuildReportSection.Style>
+                            <Style TargetType="rpt:PostBuildReportSection" BasedOn="{StaticResource {x:Type rpt:PostBuildReportSection}}">
+                                <Setter Property="ErrorText" Value="Main plugin disabled"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Report.MainPluginState}" Value="Missing">
+                                        <Setter Property="ErrorText" Value="Main plugin missing"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Report.MainPluginState}" Value="Unloadable">
+                                        <Setter Property="ErrorText" Value="Main plugin has missing masters"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </rpt:PostBuildReportSection.Style>
+                        <Grid>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding IsMainPluginEnabled, Converter={StaticResource BoolToVisibility}}">
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> is present and enabled in the current
+                                load order.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding Report.MainPluginState, Converter={StaticResource VisibleWhen}, ConverterParameter={x:Static rpt:PluginState.Missing}}">
+                                <Run Text="{StaticResource AppName}"/> generates a plugin named
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/>, which is not present in the current
+                                load order. This may happen if the EasyNPC mod has not been activated in the mod manager.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding Report.MainPluginState, Converter={StaticResource VisibleWhen}, ConverterParameter={x:Static rpt:PluginState.Disabled}}">
+                                <Run Text="{StaticResource AppName}"/> generates a plugin named
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/>.
+                                This plugin must be enabled for the mod to work correctly.
+                            </TextBlock>
+                            <ui:SimpleStackPanel Orientation="Vertical"
+                                                 Visibility="{Binding Report.MainPluginState, Converter={StaticResource VisibleWhen}, ConverterParameter={x:Static rpt:PluginState.Unloadable}}">
+                                <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                           Style="{StaticResource BodyTextBlockStyle}">
+                                    <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/>, is enabled, but cannot be
+                                    loaded because of the following missing masters:
+                                </TextBlock>
+                                <ItemsControl ItemsSource="{Binding Report.MainPluginMissingMasters}" Padding="16">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                                       Style="{StaticResource BodyTextBlockStyle}"
+                                                       Text="{Binding}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ui:SimpleStackPanel>
+                        </Grid>
+                    </rpt:PostBuildReportSection>
+                    <rpt:PostBuildReportSection DefaultText="Canonical merge located"
+                                                Status="{Binding HasSingleMergeComponent, Converter={StaticResource BoolToStatus}}">
+                        <rpt:PostBuildReportSection.Style>
+                            <Style TargetType="rpt:PostBuildReportSection" BasedOn="{StaticResource {x:Type rpt:PostBuildReportSection}}">
+                                <Setter Property="ErrorText" Value="Merge mod not found"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasMultipleMergeComponents}" Value="True">
+                                        <Setter Property="ErrorText" Value="Multiple merge mods enabled"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </rpt:PostBuildReportSection.Style>
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding Report.ActiveMergeComponents.Count, Converter={StaticResource VisibleWhen}, ConverterParameter=0}">
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> was not found in any active mods.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasSingleMergeComponent, Converter={StaticResource BoolToVisibility}}">
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> was found in the mod named
+                                <Run FontWeight="SemiBold" Text="{Binding MergeComponentName, Mode=OneWay}" d:Text="NPC Merge 2099-04-32"/>. No duplicates detected.
+                            </TextBlock>
+                            <ui:SimpleStackPanel Visibility="{Binding HasMultipleMergeComponents, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource BodyTextBlockStyle}">
+                                    <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> was found in multiple mods:
+                                </TextBlock>
+                                <ItemsControl ItemsSource="{Binding Report.ActiveMergeComponents}" Padding="16">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                                       Style="{StaticResource BodyTextBlockStyle}"
+                                                       Text="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource BodyTextBlockStyle}">
+                                    Only one of these mods should be active. Multiple <Run Text="{StaticResource AppName}"/> mods may conflict with each other in ways that can
+                                    be subtle and difficult to detect.
+                                </TextBlock>
+                            </ui:SimpleStackPanel>
+                        </ui:SimpleStackPanel>
+                    </rpt:PostBuildReportSection>
+                    <rpt:PostBuildReportSection DefaultText="Dummy plugins enabled"
+                                                ErrorText="Dummy plugins missing/disabled"
+                                                Status="{Binding HasAllDummyPluginsEnabled, Converter={StaticResource BoolToStatus}}">
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasAllDummyPluginsEnabled, Converter={StaticResource BoolToVisibility}}">
+                                No dummy plugins are required, or all required plugins are enabled.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasAllDummyPluginsEnabled, Converter={StaticResource InvBoolToVisibility}}">
+                                This merge is large and requires dummy plugins in order to load all required BSAs. Some of these plugins are missing or disabled, which
+                                means that some meshes and/or textures will be missing, resulting in purple textures, headless NPCs, floating eyes/hair, and other glitches.
+                                Refer to the table below for details.
+                            </TextBlock>
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding Report.Archives}"
+                                      Margin="0,8,0,0"
+                                      SelectionMode="Single"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasPluginError}" Value="True">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Foreground" Value="{StaticResource DangerForegroundBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding ArchiveName}" Header="Archive" Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding DummyPluginName}" Header="Plugin" Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding ArchiveState}" Header="Status" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ui:SimpleStackPanel>
+                    </rpt:PostBuildReportSection>
+                    <rpt:PostBuildReportSection DefaultText="All archives found"
+                                                ErrorText="Some archives missing"
+                                                Status="{Binding HasAllArchives, Converter={StaticResource BoolToStatus}}">
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasAllArchives, Converter={StaticResource BoolToVisibility}}">
+                                All <Run Text="{StaticResource AppName}"/> archives are available.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasAllDummyPluginsEnabled, Converter={StaticResource InvBoolToVisibility}}">
+                                Dummy plugins were found for archives that are currently missing. If you deleted them intentionally after extracting them, you can also
+                                delete the corresponding dummy plugins. If this was not intentional, then the current <Run Text="{StaticResource AppName}"/> mod is
+                                incomplete or corrupted and needs to be rebuilt. Refer to the list below.
+                            </TextBlock>
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding Report.Archives}"
+                                      Margin="0,8,0,0"
+                                      SelectionMode="Single"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasMissingArchive}" Value="True">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Foreground" Value="{StaticResource DangerForegroundBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding ArchiveName}" Header="Archive" Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding DummyPluginName}" Header="Plugin" Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding ArchiveState}" Header="Status" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ui:SimpleStackPanel>
+                    </rpt:PostBuildReportSection>
+                    <rpt:PostBuildReportSection DefaultText="All archives readable"
+                                                ErrorText="Corrupted archives found"
+                                                Status="{Binding HasAllReadableArchives, Converter={StaticResource BoolToStatus}}">
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasAllReadableArchives, Converter={StaticResource BoolToVisibility}}">
+                                All <Run Text="{StaticResource AppName}"/> archives are readable.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasAllReadableArchives, Converter={StaticResource InvBoolToVisibility}}">
+                                Some archives are corrupted or unreadable. This will cause glitches or crashes in the game. Bad archives may be caused by
+                                <Run Text="{StaticResource AppName}"/> having crashed or being closed while a merge is in progress. There may also be a problem with the
+                                disk drive. Check the log file for further details.
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding Report.Archives}" Padding="16">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <ui:SimpleStackPanel Orientation="Horizontal"
+                                                             Visibility="{Binding HasMissingArchive, Converter={StaticResource InvBoolToVisibility}}">
+                                            <fa:SvgAwesome Height="14" Margin="0,0,4,0">
+                                                <fa:SvgAwesome.Style>
+                                                    <Style TargetType="fa:SvgAwesome">
+                                                        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                                                        <Setter Property="Icon" Value="Solid_Check"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsReadable}" Value="False">
+                                                                <Setter Property="Foreground" Value="{StaticResource DangerForegroundBrush}"/>
+                                                                <Setter Property="Icon" Value="Solid_Times"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </fa:SvgAwesome.Style>
+                                            </fa:SvgAwesome>
+                                            <TextBlock Text="{Binding ArchiveName}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
+                                                        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsReadable}" Value="False">
+                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource DangerForegroundBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </ui:SimpleStackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ui:SimpleStackPanel>
+                    </rpt:PostBuildReportSection>
+                    <rpt:PostBuildReportSection DefaultText="No conflicts detected"
+                                                ErrorText="Conflicting overrides detected"
+                                                Status="{Binding HasConsistentFaceGens, Converter={StaticResource BoolToStatus}}">
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceGens, Converter={StaticResource BoolToVisibility}}">
+                                All FaceGen files appear consistent with NPC records.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceGens, Converter={StaticResource InvBoolToVisibility}}">
+                                Some NPCs have FaceGen conflicts, and will have blackface or other glitches. This happens when <Run Text="{StaticResource AppName}"/>
+                                is inconsistently overridden by another mod, usually with loose files, which take precedence over any merged BSAs even if
+                                <Run FontWeight="SemiBold" Text="{Binding Report.MainPluginName}" d:Text="NPC Appearances Merged.esp"/> is last in the plugin order.
+                                To resolve this, <Run FontWeight="SemiBold">disable the conflicting mods in your mod manager</Run>.
+                            </TextBlock>
+                            <ContentControl Visibility="{Binding CanExtractFaceGenFiles, Converter={StaticResource BoolToVisibility}}">
+                                <rpt:ArchiveExtractorView DataContext="{Binding FaceGenArchiveExtractor}"/>
+                            </ContentControl>
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding InconsistentHeadPartNpcs}"
+                                      Margin="0,8,0,0"
+                                      MaxHeight="300"
+                                      SelectionMode="Single"
+                                      Visibility="{Binding HasConsistentFaceGens, Converter={StaticResource InvBoolToVisibility}}"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
+                                <DataGrid.Resources>
+                                    <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+                                        <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
+                                    </Style>
+                                </DataGrid.Resources>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding BasePluginName}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Base Plugin"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding LocalFormIdHex}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Form ID"
+                                                        Width="100"/>
+                                    <DataGridTextColumn Binding="{Binding EditorId}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Editor ID"
+                                                        Width="200"/>
+                                    <DataGridTextColumn Binding="{Binding Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Name"
+                                                        Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding WinningPluginName}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Winning Plugin"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding WinningPluginSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Expected FaceGen Mod"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding WinningFaceGenSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Actual FaceGen Mod"
+                                                        Width="150"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ui:SimpleStackPanel>
+                    </rpt:PostBuildReportSection>
+                    <rpt:PostBuildReportSection DefaultText="Face tints appear consistent"
+                                                ErrorText="Face tints may be inconsistent"
+                                                Status="{Binding HasConsistentFaceTints,
+                                                                 Converter={StaticResource BoolToStatus},
+                                                                 ConverterParameter={x:Static rpt:PostBuildReportSectionStatus.Warning}}">
+                        <ui:SimpleStackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceTints, Converter={StaticResource BoolToVisibility}}">
+                                All NPC face tints come from the same mod as their FaceGen file.
+                            </TextBlock>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Visibility="{Binding HasConsistentFaceTints, Converter={StaticResource InvBoolToVisibility}}">
+                                Some NPCs are using face tints in a different mod from their FaceGen file. This won't cause severe issues like blackface, but may
+                                cause the appearance of "neck seams" due to texture mismatches.
+                            </TextBlock>
+                            <ContentControl Visibility="{Binding CanExtractFaceTintFiles, Converter={StaticResource BoolToVisibility}}">
+                                <rpt:ArchiveExtractorView DataContext="{Binding FaceTintArchiveExtractor}"/>
+                            </ContentControl>
+                            <DataGrid AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding InconsistentFaceTintNpcs}"
+                                      Margin="0,8,0,0"
+                                      MaxHeight="300"
+                                      SelectionMode="Single"
+                                      Visibility="{Binding HasConsistentFaceTints, Converter={StaticResource InvBoolToVisibility}}"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
+                                <DataGrid.Resources>
+                                    <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+                                        <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
+                                    </Style>
+                                </DataGrid.Resources>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding BasePluginName}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Base Plugin"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding LocalFormIdHex}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Form ID"
+                                                        Width="100"/>
+                                    <DataGridTextColumn Binding="{Binding EditorId}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Editor ID"
+                                                        Width="200"/>
+                                    <DataGridTextColumn Binding="{Binding Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="Name"
+                                                        Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding WinningFaceGenSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="FaceGen Mod"
+                                                        Width="200"/>
+                                    <DataGridTextColumn Binding="{Binding WinningFaceTintSource.ModComponent.Name}"
+                                                        CellStyle="{StaticResource TooltipCellStyle}"
+                                                        Header="FaceTint Mod"
+                                                        Width="200"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ui:SimpleStackPanel>
+                    </rpt:PostBuildReportSection>
+                </ui:SimpleStackPanel>
+            </GroupBox>
+        </ui:SimpleStackPanel>
+    </Grid>
+</UserControl>

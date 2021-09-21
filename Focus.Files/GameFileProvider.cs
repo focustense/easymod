@@ -16,7 +16,6 @@ namespace Focus.Files
             IFileSystem fs, IGameSettings settings, IArchiveProvider archiveProvider)
         {
             return settings.ArchiveOrder
-                .Reverse()  // Listed -> Priority order
                 .Select(f =>
                     new ArchiveFileProvider(archiveProvider, fs.Path.Combine(settings.DataDirectory, f))
                     as IFileProvider)

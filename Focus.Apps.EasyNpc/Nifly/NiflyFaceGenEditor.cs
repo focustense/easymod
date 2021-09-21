@@ -27,6 +27,33 @@ namespace Focus.Apps.EasyNpc.Nifly
             this.log = log;
         }
 
+        public async Task<IEnumerable<string>> GetHeadPartNames(string faceGenPath)
+        {
+            if (!File.Exists(faceGenPath))
+            {
+                log.Error("Couldn't find FaceGen file at {faceGenPath}", faceGenPath);
+                return Enumerable.Empty<string>();
+            }
+            using var _ = fileSync.Lock(faceGenPath);
+            var faceGenData = await fs.File.ReadAllBytesAsync(faceGenPath);
+            return GetHeadPartNames(faceGenPath, faceGenData);
+        }
+
+        public IEnumerable<string> GetHeadPartNames(string referencePath, byte[] faceGenData)
+        {
+            using var faceGenFile = new NifFile(new vectoruchar(faceGenData));
+            var faceGenNode = faceGenFile.GetNodes().FirstOrDefault(x => x.name.get() == "BSFaceGenNiNodeSkinned");
+            if (faceGenNode is null)
+            {
+                log.Error(
+                    "FaceGen file '{faceGenPath}' cannot be processed because it is missing a BSFaceGenNiNodeSkinned " +
+                    "node. Either it is not a valid FaceGen file or it is for the wrong game.", referencePath);
+                return Enumerable.Empty<string>();
+            }
+
+            return GetChildShapes(faceGenFile, faceGenNode).Select(x => x.name.get()).ToList();
+        }
+
         public async Task<bool> ReplaceHeadParts(
             string faceGenPath, IEnumerable<HeadPartInfo> removedParts, IEnumerable<HeadPartInfo> addedParts,
             Color? hairColorNullable)

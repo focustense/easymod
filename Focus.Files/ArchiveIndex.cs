@@ -5,6 +5,7 @@ namespace Focus.Files
 {
     public class ArchiveIndex : IBucketedFileIndex
     {
+        private readonly List<string> archiveOrder = new();
         private readonly IArchiveProvider archiveProvider;
         private readonly Dictionary<string, IReadOnlySet<string>> contentPaths = new(PathComparer.Default);
         private readonly Dictionary<string, HashSet<string>> inverseContentPaths = new(PathComparer.Default);
@@ -22,6 +23,7 @@ namespace Focus.Files
         public void AddArchives(IEnumerable<string> archivePaths)
         {
             var newArchivePaths = archivePaths.Where(f => !contentPaths.ContainsKey(f));
+            archiveOrder.AddRange(newArchivePaths);
             var newEntries = newArchivePaths
                 .AsParallel()
                 .Select(p => new
@@ -44,6 +46,7 @@ namespace Focus.Files
 
         public void Clear()
         {
+            archiveOrder.Clear();
             contentPaths.Clear();
             inverseContentPaths.Clear();
         }
@@ -55,19 +58,24 @@ namespace Focus.Files
 
         public IEnumerable<KeyValuePair<string, string>> FindInBuckets(string pathInBucket)
         {
-            return inverseContentPaths.TryGetValue(pathInBucket, out var archivePaths) ?
-                archivePaths.Select(p => new KeyValuePair<string, string>(p, PathComparer.NormalizePath(pathInBucket))) :
-                Enumerable.Empty<KeyValuePair<string, string>>();
+            if (inverseContentPaths.TryGetValue(pathInBucket, out var archivePaths))
+            {
+                var orderings = archiveOrder.Select((name, index) => (name, index)).ToDictionary(x => x.name, x => x.index);
+                return archivePaths
+                    .OrderBy(p => orderings[p])
+                    .Select(p => new KeyValuePair<string, string>(p, PathComparer.NormalizePath(pathInBucket)));
+            }
+            return Enumerable.Empty<KeyValuePair<string, string>>();
         }
 
         public IEnumerable<KeyValuePair<string, IEnumerable<string>>> GetBucketedFilePaths()
         {
-            return contentPaths.Select(x => new KeyValuePair<string, IEnumerable<string>>(x.Key, x.Value));
+            return archiveOrder.Select(f => new KeyValuePair<string, IEnumerable<string>>(f, contentPaths[f]));
         }
 
         public IEnumerable<string> GetBucketNames()
         {
-            return contentPaths.Keys;
+            return archiveOrder;
         }
 
         public IEnumerable<string> GetFilePaths(string bucketName)
@@ -88,6 +96,7 @@ namespace Focus.Files
                 foreach (var contentPath in contents)
                     GetOrAddInverseSet(contentPath).Remove(archivePath);
             }
+            archiveOrder.Remove(archivePath);
             return removed;
         }
 

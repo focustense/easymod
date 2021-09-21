@@ -256,11 +256,8 @@ namespace Focus.Providers.Mutagen.Analysis
                 .Select(x => x.Head.WinnerFrom(groups))
                 .Concat(npc.HeadParts.Select(x => x.WinnerFrom(groups)))
                 .NotNull()
-                // Some parts can be "misc", i.e. don't specify what type they are, but these should always be "extra
-                // parts" that are deterministically related to the "main" parts, so we can ignore them for comparison.
-                .Where(x => !x.Flags.HasFlag(HeadPart.Flag.IsExtraPart))
                 .GroupBy(x => x.Type)
-                .Select(g => g.Last());
+                .SelectMany(g => IsSecondaryPart(g.Key) ? g.Cast<IHeadPartGetter>() : new[] { g.Last() });
         }
 
         private IFormLinkGetter<IArmorGetter> GetSkin(INpcGetter npc)
@@ -338,6 +335,13 @@ namespace Focus.Providers.Mutagen.Analysis
             var lhsParts = GetMainHeadParts(x).Select(x => x.FormKey.ToRecordKey());
             var rhsParts = GetMainHeadParts(y).Select(x => x.FormKey.ToRecordKey());
             return new HashSet<RecordKey>(lhsParts).SetEquals(rhsParts);
+        }
+
+        private static bool IsSecondaryPart(HeadPart.TypeEnum? headPartType)
+        {
+            // Marks (scars) are confirmed to be a "secondary" or "additional" head part, meaning multiple can be added.
+            // Unsure if any other types are in the same category.
+            return headPartType == HeadPart.TypeEnum.Scars;
         }
 
         private static bool NearlyEquals(float x, float y)

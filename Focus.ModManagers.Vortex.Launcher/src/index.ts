@@ -1,13 +1,9 @@
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { basename, join } from 'path';
 import { actions } from 'vortex-api';
-import { IExtensionApi, IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
-import { IMod } from 'vortex-api/lib/types/IState';
-
-enum GameId {
-  SSE = 'skyrimse',
-}
+import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
+import { IMod, IProfile } from 'vortex-api/lib/types/IState';
 
 interface IModAttributes {
   fileId: string;
@@ -38,10 +34,16 @@ interface IReportFile {
 
 const DUMMY_MOD_ID = 7777777;
 
+// This really should come from Electron's app.getPath(), same as Vortex itself, but not sure how to
+// use that without including the entire electron package.
+// This implementation comes from https://stackoverflow.com/a/26227660/38360
+const userDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
+  process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share");
+
 const init = (context: IExtensionContext) => {
-  function activateMod(modName: string): Promise<void> {
+  function activateMod(gameId: string, modName: string): Promise<void> {
     const now = new Date();
-    const hasExistingMod = !!context.api.getState().persistent.mods[GameId.SSE]?.[modName];
+    const hasExistingMod = !!context.api.getState().persistent.mods[gameId]?.[modName];
     return hasExistingMod ? updateMod() : createMod();
 
     function createMod(): Promise<void> {
@@ -63,7 +65,7 @@ const init = (context: IExtensionContext) => {
         type: '',
       };
       return new Promise<void>((resolve, reject) => {
-        context.api.events.emit('create-mod', GameId.SSE, mod, async (error) => {
+        context.api.events.emit('create-mod', gameId, mod, async (error) => {
           if (error != null) {
             return reject(error);
           }
@@ -80,7 +82,7 @@ const init = (context: IExtensionContext) => {
 
     function updateMod(): Promise<void> {
       const setAttribute = (name: string, value: unknown) =>
-        context.api.store.dispatch(actions.setModAttribute(GameId.SSE, modName, name, value));
+        context.api.store.dispatch(actions.setModAttribute(gameId, modName, name, value));
       setAttribute('category', 33);
       setAttribute('installTime', now);
       setAttribute('logicalFileName', modName);
@@ -93,15 +95,17 @@ const init = (context: IExtensionContext) => {
     }
   }
 
-  function createLookupFile(reportPath: string): string {
+  function createLookupFile(profile: IProfile, reportPath: string): string {
     const state = context.api.getState();
-    const profile = state.persistent.profiles[state.settings.profiles.activeProfileId];
-    const mods = state.persistent.mods[GameId.SSE] || {};
+    const mods = state.persistent.mods[profile.gameId] || {};
+    let stagingDir = state.settings.mods.installPath[profile.gameId]
+      .replace(/{userdata}/ig, userDataDir)
+      .replace(/{game}/ig, profile.gameId);
     const data: IBootstrapFile = {
       files: {},
       mods: {},
       reportPath,
-      stagingDir: state.settings.mods.installPath[GameId.SSE],
+      stagingDir,
     };
     for (const mod of Object.values(mods)) {
       const attributes = (mod.attributes || {}) as IModAttributes;
@@ -119,7 +123,18 @@ const init = (context: IExtensionContext) => {
     return lookupPath;
   }
 
-  function launchEasyNpc() {
+  function getCurrentProfile(): IProfile {
+    const state = context.api.getState();
+    return state.persistent.profiles[state.settings.profiles.activeProfileId]
+  }
+
+  function isGameSupported(): boolean {
+    const profile = getCurrentProfile();
+    return ['skyrim', 'skyrimse', 'skyrimvr', 'enderal', 'enderalse', 'fallout4', 'fallout4vr']
+      .includes(profile.gameId);
+  }
+
+  function launchEasyNpc(parameters?: string[]) {
     const reportPath = join(tmpdir(), 'easynpc-vortex-report.json');
     // Since we can't communicate with the process directly, writing a "sentinel" file before starting can give us a
     // better clue of what actually happened. If the file is unchanged, then most likely the tool was closed before
@@ -128,17 +143,19 @@ const init = (context: IExtensionContext) => {
     const sentinelContent = 'sentinel';
     writeFileSync(reportPath, sentinelContent);
 
-    const dataPath = createLookupFile(reportPath);
+    const profile = getCurrentProfile();
+    const dataPath = createLookupFile(profile, reportPath);
 
-    const tools = context.api.getState().settings.gameMode.discovered[GameId.SSE]?.tools || {};
+    const tools = context.api.getState().settings.gameMode.discovered[profile.gameId]?.tools || {};
     const easyNpcTool = Object.values(tools).find(t => t.path && basename(t.path).toLowerCase() == "easynpc.exe");
     if (easyNpcTool) {
       context.api.runExecutable(
         easyNpcTool.path,
-        [
-          `--report-path=${reportPath}`,
-          `--vortex-manifest="${dataPath}"`,
-        ],
+        (easyNpcTool.parameters || []).concat(parameters || []).concat(
+          [
+            `--report-path=${reportPath}`,
+            `--vortex-manifest="${dataPath}"`,
+          ]),
         {
           shell: false,
           suggestDeploy: true,
@@ -160,7 +177,7 @@ const init = (context: IExtensionContext) => {
           }
           var report = JSON.parse(reportFile) as IReportFile;
           if (report.modName) {
-            activateMod(report.modName);
+            activateMod(profile.gameId, report.modName);
           }
         })
         .catch(() => {
@@ -177,7 +194,8 @@ const init = (context: IExtensionContext) => {
     }
   }
 
-  context.registerAction('mod-icons', 999, 'launch-simple', {}, 'Launch EasyNPC', () => launchEasyNpc());
+  context.registerAction('mod-icons', 998, 'launch-simple', {}, 'Launch EasyNPC', () => launchEasyNpc(), isGameSupported);
+  context.registerAction('mod-icons', 999, 'conflict', {}, 'EasyNPC Post-Build', () => launchEasyNpc(['-z']), isGameSupported);
 };
 
 function zeroPad(value: number, digits: number) {

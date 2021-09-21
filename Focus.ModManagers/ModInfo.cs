@@ -29,6 +29,8 @@ namespace Focus.ModManagers
 
     public class ModComponentInfo
     {
+        public static readonly ModComponentInfo Invalid = new(ModLocatorKey.Empty, "", "", "");
+
         public IModLocatorKey ModKey { get; init; }
         public string Id { get; init; }
         public bool IsEnabled { get; init; }

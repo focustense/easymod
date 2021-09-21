@@ -1,11 +1,13 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace Focus.Apps.EasyNpc
 {
     public static class ForceTextTrimming
     {
-        public static TextTrimming GetCanForceTextTrimming(DependencyObject obj)
+        public static TextTrimming GetForceTextTrimming(DependencyObject obj)
         {
             return (TextTrimming)obj.GetValue(ForceTextTrimmingProperty);
         }
@@ -20,10 +22,33 @@ namespace Focus.Apps.EasyNpc
                 "ForceTextTrimming", typeof(TextTrimming), typeof(ForceTextTrimming),
                 new PropertyMetadata(ForceTextTrimmingChanged));
 
+        private static void Element_Loaded(object sender, RoutedEventArgs e)
+        {
+            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+            {
+                var fe = (FrameworkElement)sender;
+                var textTrimming = GetForceTextTrimming(fe);
+                UpdateAll(fe, textTrimming);
+            }));
+        }
+
         private static void ForceTextTrimmingChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
         {
+            if (obj is FrameworkElement fe)
+                WatchDataContext(fe);
+            UpdateAll(obj, (TextTrimming)e.NewValue);
+        }
+
+        private static void UpdateAll(DependencyObject obj, TextTrimming value)
+        {
             foreach (var textBlock in obj.FindVisualChildrenByType<TextBlock>())
-                textBlock.TextTrimming = (TextTrimming)e.NewValue;
+                textBlock.TextTrimming = value;
+        }
+
+        private static void WatchDataContext(FrameworkElement fe)
+        {
+            fe.Loaded -= Element_Loaded;
+            fe.Loaded += Element_Loaded;
         }
     }
 }
