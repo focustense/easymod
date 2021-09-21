@@ -5,6 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **Post-Build Report**: A major new feature/app mode designed to be run on the _final_ mod order, just before launching the game. Features include:
+  - Checks for the integrity of the EasyNPC mod itself, including merge plugin, dummy plugins and archives.
+  - Facegen/facetint consistency checks on all NPCs managed by EasyNPC. (NPCs _not_ customized by EasyNPC are ignored.)
+  - An automated workaround to **extract conflicting files** from the EasyNPC archives in order to resolve loose-file conflicts.
+    - This workaround is primarily intended for scenarios where the conflicts cannot be eliminated by disabling the conflicting mod - especially mods with a wide scope, such as EEO or BUVARP, or some of the conflict-resolution patches included in popular mod guides and Wabbajack lists.
+  - To run the Post-Build Report, add the `-z` or `--post-build` command-line option to your normal options.
+    - Vortex users will see a new "EasyNPC Post-Build" action next to the EasyNPC Launcher after upgrading their extension.
+    - Mod Organizer users should configure this as a new executable for convenience.
+    - Make sure to run this mode on your _final game profile_ - i.e. the one with the EasyNPC mod active and other overhauls disabled, _not_ the profile you'd normally use to run EasyNPC to build a new merge.
+
+### Changed
+- [Vortex Extension] Game ID is obtained from the current profile, instead of being hardcoded to `skyrimse`. Note that it is still required to set the `-g` or `--game` command-line option in order to use EasyNPC with a game other than Skyrim Special Edition - this change only ensures that the correct Vortex mod list and staging directory are used.
+- [Vortex Extension] Don't show EasyNPC actions in the mod toolbar for unsupported games.
+
+### Fixed
+- Multiple marks/scars and other additional/extra head parts are now correctly carried over in the merged plugin. Previously, only one was being copied, which may have resulted in a few rare blackface issues.
+- Fixed reversed archive ordering in `GameFileProvider`, which caused the lowest-priority mod to be used for shared assets instead of the highest-priority mod. Facegen data was never affected, only shared textures, morphs, etc.
+- [Vortex Extension] Additional command-line parameters configured in the dashboard are now passed to the app.
+- [Vortex Extension] Correctly handle path substitutions like `{userdata}` and `{game}` in the staging directory path.
 
 ## [0.9.3] - 2021-09-06
 ### Added
