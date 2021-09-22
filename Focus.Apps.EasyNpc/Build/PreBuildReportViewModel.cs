@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build
 {
-    public class PreBuildReportV2 : PreBuildReport
+    public class PreBuildReportViewModel : PreBuildReport
     {
         public ObservableCollection<SummaryItem> AlertSummaryItems { get; init; } = new();
         public IReadOnlyList<IncompatibleMod> IncompatibleMods { get; init; } =
@@ -85,7 +85,7 @@ namespace Focus.Apps.EasyNpc.Build
         public string RelativePath { get; init; } = string.Empty;
     }
 
-    public class SamplePreBuildReport : PreBuildReportV2
+    public class SamplePreBuildReport : PreBuildReportViewModel
     {
         public SamplePreBuildReport()
         {

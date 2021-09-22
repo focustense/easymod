@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Focus.Apps.EasyNpc.Build.PreBuildReportViewer"
+﻿<UserControl x:Class="Focus.Apps.EasyNpc.Build.PreBuildReportView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -11,34 +11,34 @@
              d:DataContext="{d:DesignData SamplePreBuildReport.xaml}"
              d:DesignHeight="750" d:DesignWidth="1000">
     <d:UserControl.DataContext>
-        <build:PreBuildReportV2>
-            <build:PreBuildReportV2.NpcSummaryItems>
+        <build:PreBuildReportViewModel>
+            <build:PreBuildReportViewModel.NpcSummaryItems>
                 <rpt:SummaryItem Category="CountFull" Description="Total NPCs" Value="12345"/>
                 <rpt:SummaryItem Category="CountIncluded" Description="Modded NPCs" Value="3049"/>
                 <rpt:SummaryItem Category="CountExcluded" Description="Ignored NPCs" Value="241"/>
                 <rpt:SummaryItem Category="CountEmpty" Description="Vanilla NPCs" Value="1763"/>
                 <rpt:SummaryItem Category="CountUnavailable" Description="Unmoddable NPCs" Value="7292"/>
-            </build:PreBuildReportV2.NpcSummaryItems>
-            <build:PreBuildReportV2.PluginSummaryItems>
+            </build:PreBuildReportViewModel.NpcSummaryItems>
+            <build:PreBuildReportViewModel.PluginSummaryItems>
                 <rpt:SummaryItem Category="StatusInfo" Description="Required masters" Value="23"/>
                 <rpt:SummaryItem Category="StatusWarning" Description="Suspicious masters" Value="2"/>
                 <rpt:SummaryItem Category="SpecialFlag" Description="Global replacers" Value="3"/>
                 <rpt:SummaryItem Category="StatusInfo" Description="Merged overhauls" Value="65"/>
-            </build:PreBuildReportV2.PluginSummaryItems>
-            <build:PreBuildReportV2.AlertSummaryItems>
+            </build:PreBuildReportViewModel.PluginSummaryItems>
+            <build:PreBuildReportViewModel.AlertSummaryItems>
                 <rpt:SummaryItem Category="StatusError" Description="Incompatible mods" Value="2"/>
                 <rpt:SummaryItem Category="StatusError" Description="Invalid NPC profiles" Value="13"/>
                 <rpt:SummaryItem Category="StatusWarning" Description="Missing resources" Value="36"/>
                 <rpt:SummaryItem Category="StatusWarning" Description="Possible conflicts" Value="108"/>
                 <rpt:SummaryItem Category="StatusInfo" Description="Suppressed warnings" Value="841"/>
-            </build:PreBuildReportV2.AlertSummaryItems>
-            <build:PreBuildReportV2.OutputSummaryItems>
+            </build:PreBuildReportViewModel.AlertSummaryItems>
+            <build:PreBuildReportViewModel.OutputSummaryItems>
                 <rpt:SummaryItem Category="StatusOk" Description="Output path is valid" Value=""/>
                 <rpt:SummaryItem Category="StatusOk" Description="Output directory is empty" Value=""/>
                 <rpt:SummaryItem Category="StatusInfo" Description="GB assets" Value="34.8"/>
                 <rpt:SummaryItem Category="StatusInfo" Description="GB packed (est.)" Value="3.7"/>
-            </build:PreBuildReportV2.OutputSummaryItems>
-        </build:PreBuildReportV2>
+            </build:PreBuildReportViewModel.OutputSummaryItems>
+        </build:PreBuildReportViewModel>
     </d:UserControl.DataContext>
     <DockPanel Background="White">
         <ListBox DockPanel.Dock="Left">
