@@ -19,14 +19,14 @@
     <Border BorderBrush="{StaticResource GroupBorderBrush}" BorderThickness="1">
         <DockPanel>
             <ListBox DockPanel.Dock="Left">
-                <ListBoxItem>Summary</ListBoxItem>
-                <ListBoxItem>NPCs</ListBoxItem>
-                <ListBoxItem>Plugins</ListBoxItem>
+                <ListBoxItem Selected="SummaryListBoxItem_Selected">Summary</ListBoxItem>
+                <ListBoxItem Selected="NpcsListBoxItem_Selected">NPCs</ListBoxItem>
+                <ListBoxItem Selected="PluginsListBoxItem_Selected">Plugins</ListBoxItem>
                 <ListBoxItem>Alerts</ListBoxItem>
                 <ListBoxItem>Output</ListBoxItem>
             </ListBox>
             <Rectangle DockPanel.Dock="Left" Width="1" Fill="{StaticResource SystemControlBackgroundBaseLowBrush}"/>
-            <ScrollViewer>
+            <ScrollViewer x:Name="ContentScrollViewer" local:ScrollAnimation.TimeDuration="00:00:00.400">
                 <ui:SimpleStackPanel Margin="0,0,8,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -41,7 +41,7 @@
                         <rpt:SummaryGroup Grid.Column="3" Margin="8" Title="Output"/>
                     </Grid>
                     <Separator Margin="8,4,8,4" Height="4"/>
-                    <Expander IsExpanded="{Binding IsNpcsExpanded}" Margin="8" d:IsExpanded="False">
+                    <Expander x:Name="NpcsExpander" IsExpanded="{Binding IsNpcsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
                             <TextBlock FontSize="18">NPC Details</TextBlock>
                         </Expander.Header>
@@ -212,7 +212,7 @@
                             </DataGrid>
                         </ui:SimpleStackPanel>
                     </Expander>
-                    <Expander IsExpanded="{Binding IsPluginsExpanded}" Margin="8" d:IsExpanded="False">
+                    <Expander x:Name="PluginsExpander" IsExpanded="{Binding IsPluginsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
                             <TextBlock FontSize="18">Master Details</TextBlock>
                         </Expander.Header>
