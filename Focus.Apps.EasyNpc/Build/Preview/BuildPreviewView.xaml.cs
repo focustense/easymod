@@ -22,5 +22,13 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             if (dg.SelectedItem is IRecordKey key)
                 Model.ShowProfile(key);
         }
+
+        private void PluginGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left || sender is not DataGrid dg)
+                return;
+            if (dg.SelectedItem is PluginViewModel plugin)
+                Model.ShowMaster(plugin.PluginName);
+        }
     }
 }

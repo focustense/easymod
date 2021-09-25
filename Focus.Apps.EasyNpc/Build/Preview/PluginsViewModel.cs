@@ -1,6 +1,7 @@
 ﻿using Focus.Apps.EasyNpc.Profiles;
 using Focus.Apps.EasyNpc.Reports;
 using Focus.Environment;
+using Focus.ModManagers;
 using PropertyChanged;
 using System;
 using System.Collections.Generic;
@@ -20,14 +21,17 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         };
 
         public PluginCategory Category { get; private init; }
+        public string CategoryDescription => Description.Of(Category);
+        public ModComponentInfo? Component { get; private init; }
         [DependsOn(nameof(Category))]
         public bool IsSuspiciousMaster => IsSuspiciousMasterCategory(Category);
         public string PluginName { get; private init; }
 
-        public PluginViewModel(string pluginName, PluginCategory category)
+        public PluginViewModel(string pluginName, ModComponentInfo? component, PluginCategory category)
         {
             PluginName = pluginName;
             Category = category;
+            Component = component;
         }
     }
 
@@ -55,15 +59,20 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         {
             new(SummaryItemCategory.StatusInfo, "Required masters", MasterCount),
             // TODO: Only show "suspicious" if it's non-zero
-            new(SummaryItemCategory.StatusWarning, "Suspicious masters", SuspiciousMasterCount),
+            new(
+                SuspiciousMasterCount > 0 ? SummaryItemCategory.StatusWarning : SummaryItemCategory.StatusOk,
+                "Suspicious masters", SuspiciousMasterCount),
             new(SummaryItemCategory.StatusInfo, "Merged overhauls", MergedCount),
         }.AsReadOnly();
 
+        private readonly IModRepository modRepository;
         private readonly IPluginCategorizer pluginCategorizer;
 
         public PluginsViewModel(
-            IReadOnlyLoadOrderGraph loadOrderGraph, IPluginCategorizer pluginCategorizer, Profile profile)
+            IReadOnlyLoadOrderGraph loadOrderGraph, IPluginCategorizer pluginCategorizer, IModRepository modRepository,
+            Profile profile)
         {
+            this.modRepository = modRepository;
             this.pluginCategorizer = pluginCategorizer;
 
             Observable.CombineLatest(profile.Npcs.Select(x => x.DefaultOptionObservable))
@@ -94,7 +103,10 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private PluginViewModel DescribePlugin(string pluginName)
         {
             var category = pluginCategorizer.GetCategory(pluginName);
-            return new(pluginName, category);
+            var providingComponent = modRepository.SearchForFiles(pluginName, false)
+                .Select(x => x.ModComponent)
+                .FirstOrDefault();
+            return new(pluginName, providingComponent, category);
         }
     }
 }

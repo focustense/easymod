@@ -1,15 +1,22 @@
 ﻿using Focus.Apps.EasyNpc.Profiles;
+using Focus.Apps.EasyNpc.Resources;
 using Focus.Environment;
+using System.ComponentModel;
 using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build.Preview
 {
     public enum PluginCategory
     {
+        [LocalizedDescription(typeof(EnumResources), "PluginCategory_Unknown")]
         Unknown = 0,
+        [LocalizedDescription(typeof(EnumResources), "PluginCategory_BaseGame")]
         BaseGame,
+        [LocalizedDescription(typeof(EnumResources), "PluginCategory_NpcOverhaul")]
         NpcOverhaul,
+        [LocalizedDescription(typeof(EnumResources), "PluginCategory_NpcOverhaulPatch")]
         NpcOverhaulPatch,
+        [LocalizedDescription(typeof(EnumResources), "PluginCategory_Other")]
         Other,
     }
 

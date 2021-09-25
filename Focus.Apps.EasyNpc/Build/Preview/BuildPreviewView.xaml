@@ -11,6 +11,11 @@
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance bp:BuildPreviewViewModel}"
              d:DesignHeight="750" d:DesignWidth="1000">
+    <UserControl.Resources>
+        <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+            <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
+        </Style>
+    </UserControl.Resources>
     <Border BorderBrush="{StaticResource GroupBorderBrush}" BorderThickness="1">
         <DockPanel>
             <ListBox DockPanel.Dock="Left">
@@ -36,7 +41,7 @@
                         <rpt:SummaryGroup Grid.Column="3" Margin="8" Title="Output"/>
                     </Grid>
                     <Separator Margin="8,4,8,4" Height="4"/>
-                    <Expander Margin="8" d:IsExpanded="False">
+                    <Expander IsExpanded="{Binding IsNpcsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
                             <TextBlock FontSize="18">NPC Details</TextBlock>
                         </Expander.Header>
@@ -170,11 +175,6 @@
                                       HeadersVisibility="Column"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
                                       MouseDoubleClick="NpcGrid_MouseDoubleClick">
-                                <DataGrid.Resources>
-                                    <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
-                                        <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
-                                    </Style>
-                                </DataGrid.Resources>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Binding="{Binding BasePluginName}" CellStyle="{StaticResource TooltipCellStyle}" Header="Base Plugin" Width="150"/>
                                     <DataGridTextColumn Binding="{Binding LocalFormIdHex}" CellStyle="{StaticResource TooltipCellStyle}" Header="Form ID" Width="100"/>
@@ -212,17 +212,43 @@
                             </DataGrid>
                         </ui:SimpleStackPanel>
                     </Expander>
-                    <Expander Margin="8" d:IsExpanded="False">
+                    <Expander IsExpanded="{Binding IsPluginsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
-                            <TextBlock FontSize="18">Plugin Details</TextBlock>
+                            <TextBlock FontSize="18">Master Details</TextBlock>
                         </Expander.Header>
+                        <ui:SimpleStackPanel>
+                            <DataGrid AutoGenerateColumns="False"
+                                      Height="300"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding Plugins.MasterPlugins.Values}"
+                                      Margin="0,4,0,0"
+                                      SelectionMode="Single"
+                                      HeadersVisibility="Column"
+                                      local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
+                                      MouseDoubleClick="PluginGrid_MouseDoubleClick">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding PluginName}" CellStyle="{StaticResource TooltipCellStyle}" Header="Plugin Name" Width="300"/>
+                                    <DataGridTextColumn Binding="{Binding Component.ModKey.Name}" CellStyle="{StaticResource TooltipCellStyle}" Header="Providing Mod" Width="*"/>
+                                    <DataGridTextColumn Binding="{Binding CategoryDescription}" CellStyle="{StaticResource TooltipCellStyle}" Header="Category" Width="200"/>
+                                </DataGrid.Columns>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSuspiciousMaster}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource NpcFilterUnmoddableBackgroundBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                            </DataGrid>
+                        </ui:SimpleStackPanel>
                     </Expander>
-                    <Expander Margin="8" d:IsExpanded="False">
+                    <Expander IsExpanded="{Binding IsAlertsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
                             <TextBlock FontSize="18">Alert Details</TextBlock>
                         </Expander.Header>
                     </Expander>
-                    <Expander Margin="8" d:IsExpanded="False">
+                    <Expander IsExpanded="{Binding IsOutputExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
                             <TextBlock FontSize="18">Output Settings</TextBlock>
                         </Expander.Header>

@@ -10,6 +10,10 @@ namespace Focus.Apps.EasyNpc.Build.Preview
     {
         public delegate BuildPreviewViewModel Factory(Profile profile, LoadOrderAnalysis analysis);
 
+        public bool IsAlertsExpanded { get; set; }
+        public bool IsNpcsExpanded { get; set; } 
+        public bool IsOutputExpanded { get; set; }
+        public bool IsPluginsExpanded { get; set; }
         public NpcSummaryViewModel Npcs { get; private init; }
         public PluginsViewModel Plugins { get; private init; }
 
@@ -22,6 +26,11 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             this.messageBus = messageBus;
             Npcs = npcsFactory(profile, analysis);
             Plugins = pluginsFactory(profile);
+        }
+
+        public void ShowMaster(string pluginName)
+        {
+            messageBus.Send(new JumpToProfile(new JumpToProfile.FilterOverrides { DefaultPlugin = pluginName }));
         }
 
         public void ShowProfile(IRecordKey? key)
