@@ -10,7 +10,9 @@
              xmlns:ui="http://schemas.modernwpf.com/2019"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance bp:BuildPreviewViewModel}"
-             d:DesignHeight="750" d:DesignWidth="1000">
+             d:DesignHeight="750" d:DesignWidth="1000"
+             DataContextChanged="View_DataContextChanged"
+             Loaded="View_Loaded">
     <UserControl.Resources>
         <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
             <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
@@ -18,15 +20,26 @@
     </UserControl.Resources>
     <Border BorderBrush="{StaticResource GroupBorderBrush}" BorderThickness="1">
         <DockPanel>
-            <ListBox DockPanel.Dock="Left">
-                <ListBoxItem Selected="SummaryListBoxItem_Selected">Summary</ListBoxItem>
-                <ListBoxItem Selected="NpcsListBoxItem_Selected">NPCs</ListBoxItem>
-                <ListBoxItem Selected="PluginsListBoxItem_Selected">Plugins</ListBoxItem>
-                <ListBoxItem>Alerts</ListBoxItem>
-                <ListBoxItem>Output</ListBoxItem>
+            <ListBox x:Name="SectionsListBox" DockPanel.Dock="Left">
+                <ListBoxItem Selected="SectionListBoxItem_Selected"
+                             PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown">Summary</ListBoxItem>
+                <ListBoxItem Selected="SectionListBoxItem_Selected"
+                             PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown"
+                             Tag="{Binding ElementName=NpcsExpander}">NPCs</ListBoxItem>
+                <ListBoxItem Selected="SectionListBoxItem_Selected"
+                             PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown"
+                             Tag="{Binding ElementName=PluginsExpander}">Plugins</ListBoxItem>
+                <ListBoxItem Selected="SectionListBoxItem_Selected"
+                             PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown"
+                             Tag="{Binding ElementName=AlertsExpander}">Alerts</ListBoxItem>
+                <ListBoxItem Selected="SectionListBoxItem_Selected"
+                             PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown"
+                             Tag="{Binding ElementName=OutputExpander}">Output</ListBoxItem>
             </ListBox>
             <Rectangle DockPanel.Dock="Left" Width="1" Fill="{StaticResource SystemControlBackgroundBaseLowBrush}"/>
-            <ScrollViewer x:Name="ContentScrollViewer" local:ScrollAnimation.TimeDuration="00:00:00.400">
+            <ScrollViewer x:Name="ContentScrollViewer"
+                          ScrollChanged="ContentScrollViewer_ScrollChanged"
+                          local:ScrollAnimation.TimeDuration="00:00:00.400">
                 <ui:SimpleStackPanel Margin="0,0,8,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -37,7 +50,7 @@
                         </Grid.ColumnDefinitions>
                         <rpt:SummaryGroup Grid.Column="0" Items="{Binding Npcs.SummaryItems}" Margin="8" Title="NPCs"/>
                         <rpt:SummaryGroup Grid.Column="1" Items="{Binding Plugins.SummaryItems}" Margin="8" Title="Plugins"/>
-                        <rpt:SummaryGroup Grid.Column="2" Margin="8" Title="Alerts"/>
+                        <rpt:SummaryGroup Grid.Column="2" Items="{Binding Alerts.SummaryItems}" Margin="8" Title="Alerts"/>
                         <rpt:SummaryGroup Grid.Column="3" Margin="8" Title="Output"/>
                     </Grid>
                     <Separator Margin="8,4,8,4" Height="4"/>
@@ -168,11 +181,11 @@
                                 </Grid>
                             </Border>
                             <DataGrid AutoGenerateColumns="False"
-                                      Height="300"
+                                      HeadersVisibility="Column"
                                       IsReadOnly="True"
                                       ItemsSource="{Binding Npcs.FilteredRows}"
+                                      MaxHeight="300"
                                       SelectionMode="Single"
-                                      HeadersVisibility="Column"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
                                       MouseDoubleClick="NpcGrid_MouseDoubleClick">
                                 <DataGrid.Columns>
@@ -240,11 +253,11 @@
                                 </ui:SimpleStackPanel>
                             </Border>
                             <DataGrid AutoGenerateColumns="False"
-                                      Height="300"
+                                      HeadersVisibility="Column"
                                       IsReadOnly="True"
                                       ItemsSource="{Binding Plugins.MasterPlugins.Values}"
+                                      MaxHeight="300"
                                       SelectionMode="Single"
-                                      HeadersVisibility="Column"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
                                       MouseDoubleClick="PluginGrid_MouseDoubleClick">
                                 <DataGrid.Columns>
@@ -264,12 +277,49 @@
                             </DataGrid>
                         </ui:SimpleStackPanel>
                     </Expander>
-                    <Expander IsExpanded="{Binding IsAlertsExpanded}" Margin="8" d:IsExpanded="False">
+                    <Expander x:Name="AlertsExpander" IsExpanded="{Binding IsAlertsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
                             <TextBlock FontSize="18">Alert Details</TextBlock>
                         </Expander.Header>
+                        <ui:SimpleStackPanel Margin="0,4,0,0">
+                            <ListBox x:Name="WarningsListBox"
+                                     Background="{StaticResource SystemControlPageBackgroundTransparentBrush}"
+                                     BorderBrush="{StaticResource GroupBorderBrush}"
+                                     BorderThickness="1"
+                                     ItemsSource="{Binding Alerts.Warnings}"
+                                     MaxHeight="300"
+                                     SelectedItem="{Binding Alerts.SelectedWarning}"
+                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                     MouseDoubleClick="WarningsListBox_MouseDoubleClick">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Padding" Value="12,0"/>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <ui:SimpleStackPanel>
+                                            <Rectangle Fill="{StaticResource GroupBorderBrush}" Height="1" HorizontalAlignment="Stretch" Margin="-12,0">
+                                                <Rectangle.Style>
+                                                    <Style TargetType="Rectangle">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Rectangle.Style>
+                                            </Rectangle>
+                                            <TextBlock Margin="0,8" Text="{Binding Message}"/>
+                                        </ui:SimpleStackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ui:SimpleStackPanel>
                     </Expander>
-                    <Expander IsExpanded="{Binding IsOutputExpanded}" Margin="8" d:IsExpanded="False">
+                    <Expander x:Name="OutputExpander" IsExpanded="{Binding IsOutputExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>
                             <TextBlock FontSize="18">Output Settings</TextBlock>
                         </Expander.Header>

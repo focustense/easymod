@@ -60,7 +60,6 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public IEnumerable<SummaryItem> SummaryItems => new List<SummaryItem>
         {
             new(SummaryItemCategory.StatusInfo, "Required masters", MasterCount),
-            // TODO: Only show "suspicious" if it's non-zero
             new(
                 SuspiciousMasterCount > 0 ? SummaryItemCategory.StatusWarning : SummaryItemCategory.StatusOk,
                 "Suspicious masters", SuspiciousMasterCount),
