@@ -216,12 +216,33 @@
                         <Expander.Header>
                             <TextBlock FontSize="18">Master Details</TextBlock>
                         </Expander.Header>
-                        <ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel Margin="0,4,0,0">
+                            <Border Background="{StaticResource HelpPanelBackgroundBrush}"
+                                    BorderBrush="{StaticResource SystemControlBackgroundChromeMediumBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4,4,0,0"
+                                    Padding="8"
+                                    Visibility="{Binding Plugins.HasSuspiciousMasters, Converter={StaticResource BoolToVisibility}}">
+                                <ui:SimpleStackPanel Orientation="Vertical">
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap">
+                                        <Run Foreground="{StaticResource SystemControlErrorTextForegroundBrush}">Suspicious masters</Run> are plugins that
+                                        <Run Text="{StaticResource AppName}"/> has identified as "probably" being either an NPC overhaul, or a patch for one. Each of these is a
+                                        master because at least one NPC uses it as the <Run FontStyle="Italic">Default Plugin</Run> setting. To see which ones, double-click on
+                                        the row below, or use the NPCs grid above and sort by the Default Plugin. You won't be able to deactivate any of these plugins/mods after
+                                        building unless they are eliminated as masters.
+                                    </TextBlock>
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,8,0,0" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap">
+                                        Detection of overhauls may not be 100% accurate. It is always recommended to review the entire list below, and eliminate any plugins
+                                        that you personally recognize as NPC overhauls, regardless of whether <Run Text="{StaticResource AppName}"/> has flagged them as
+                                        suspicious. <Run FontWeight="SemiBold">Master dependencies can be indirect</Run>, so it is best to
+                                        <Run FontWeight="SemiBold">start from the bottom and work your way up.</Run>
+                                    </TextBlock>
+                                </ui:SimpleStackPanel>
+                            </Border>
                             <DataGrid AutoGenerateColumns="False"
                                       Height="300"
                                       IsReadOnly="True"
                                       ItemsSource="{Binding Plugins.MasterPlugins.Values}"
-                                      Margin="0,4,0,0"
                                       SelectionMode="Single"
                                       HeadersVisibility="Column"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"

@@ -42,6 +42,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public IReadOnlyDictionary<string, PluginViewModel> FacePlugins { get; private set; } =
             new Dictionary<string, PluginViewModel>();
+        [DependsOn(nameof(SuspiciousMasters))]
+        public bool HasSuspiciousMasters => SuspiciousMasters.Any();
         [DependsOn(nameof(MasterPlugins))]
         public int MasterCount => MasterPlugins.Count;
         public IReadOnlyDictionary<string, PluginViewModel> MasterPlugins { get; private set; } =
