@@ -59,5 +59,16 @@ namespace Focus
                 yield return item;
             }
         }
+
+        public static IEnumerable<T> ThenByLoadOrder<T>(
+            this IOrderedEnumerable<T> sequence, Func<T, IRecordKey> keySelector, IEnumerable<string> loadOrder)
+        {
+            var loadOrderIndices = loadOrder
+                .Select((plugin, index) => (plugin, index))
+                .ToDictionary(x => x.plugin, x => x.index, StringComparer.CurrentCultureIgnoreCase);
+            return sequence
+                .ThenBy(x => loadOrderIndices.TryGetValue(keySelector(x).BasePluginName, out var index) ? index : -1)
+                .ThenBy(x => int.TryParse(keySelector(x).LocalFormIdHex, NumberStyles.HexNumber, null, out var id) ? id : -1);
+        }
     }
 }

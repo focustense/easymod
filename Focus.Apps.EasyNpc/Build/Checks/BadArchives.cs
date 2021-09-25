@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build.Checks
 {
-    public class BadArchives : IBuildCheck
+    public class BadArchives : IGlobalBuildCheck
     {
         private readonly IArchiveProvider archiveProvider;
 

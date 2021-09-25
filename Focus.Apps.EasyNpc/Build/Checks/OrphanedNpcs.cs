@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build.Checks
 {
-    public class OrphanedNpcs : IBuildCheck
+    public class OrphanedNpcs : IGlobalBuildCheck
     {
         private readonly IGameSettings gameSettings;
         private readonly IReadOnlyProfileEventLog profileEvents;

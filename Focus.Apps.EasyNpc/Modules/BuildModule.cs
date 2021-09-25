@@ -20,13 +20,13 @@ namespace Focus.Apps.EasyNpc.Modules
                 .As<IWigResolver>()
                 .As<ILoadOrderAnalysisReceiver>()
                 .SingleInstance();
-            builder.RegisterType<BadArchives>().As<IBuildCheck>();
-            builder.RegisterType<FaceGenConsistency>().As<IBuildCheck>();
-            builder.RegisterType<MissingPlugins>().As<IBuildCheck>();
-            builder.RegisterType<ModSettings>().As<IBuildCheck>();
-            builder.RegisterType<OrphanedNpcs>().As<IBuildCheck>();
-            builder.RegisterType<OverriddenArchives>().As<IBuildCheck>();
-            builder.RegisterType<WigConversions>().As<IBuildCheck>();
+            builder.RegisterType<BadArchives>().As<IGlobalBuildCheck>();
+            builder.RegisterType<FaceGenConsistency>().As<INpcBuildCheck>();
+            builder.RegisterType<MissingPlugins>().As<INpcBuildCheck>();
+            builder.RegisterType<ModSettings>().As<IGlobalBuildCheck>();
+            builder.RegisterType<OrphanedNpcs>().As<IGlobalBuildCheck>();
+            builder.RegisterType<OverriddenArchives>().As<IGlobalBuildCheck>();
+            builder.RegisterType<WigConversions>().As<INpcBuildCheck>();
             builder.RegisterType<BuildChecker>().As<IBuildChecker>().SingleInstance();
             builder.RegisterType<BuildTaskViewModel>();
             builder.RegisterType<BuildProgressViewModel<BuildReport>>();
