@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Build;
+using Focus.Apps.EasyNpc.Build.Preview;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.Maintenance;
@@ -41,6 +42,9 @@ namespace Focus.Apps.EasyNpc.Main
 
         [AllowNull] // Not accessed until after load
         public BuildViewModel Build { get; private set; }
+        // Here for testing, for now - will eventually be moved to BuildViewModel.
+        [AllowNull] // Not accessed until after load
+        public BuildPreviewViewModel BuildPreview { get; private set; }
         public object Content { get; private set; }
         public LoaderViewModel Loader { get; private init; }
         public LogViewModel Log { get; private init; }
@@ -71,6 +75,7 @@ namespace Focus.Apps.EasyNpc.Main
             StartupReportViewModel.Factory startupReportFactory,
             ProfileViewModel.Factory profileFactory,
             BuildViewModel.Factory buildFactory,
+            BuildPreviewViewModel.Factory buildPreviewFactory,
             MaintenanceViewModel.Factory maintenanceFactory,
             IMessageBus messageBus,
             ILogger logger,
@@ -93,16 +98,19 @@ namespace Focus.Apps.EasyNpc.Main
 
             Loader.Loaded += async () =>
             {
+                var loadOrderAnalysis = await Loader.Tasks!.LoadOrderAnalysis;
                 var profileModel = await Loader.Tasks!.Profile.ConfigureAwait(false);
                 Profile = profileFactory(profileModel);
                 StartupReport = startupReportFactory(profileModel);
                 Build = buildFactory(profileModel);
+                BuildPreview = buildPreviewFactory(profileModel, loadOrderAnalysis);
                 Maintenance = maintenanceFactory(profileModel);
 
                 NavigationMenuItems = new List<NavigationMenuItem>
                 {
                     new NavigationMenuItem("Profile", Profile, typeof(ProfilePage)),
                     new NavigationMenuItem("Build", Build, typeof(BuildPage)),
+                    new NavigationMenuItem("Build Preview", BuildPreview, typeof(BuildPreviewPage)),
                     new NavigationMenuItem("Maintenance", Maintenance, typeof(MaintenancePage)),
                     new NavigationMenuItem("Log", Log, typeof(LogPage)),
                 }.AsReadOnly();
@@ -146,6 +154,7 @@ namespace Focus.Apps.EasyNpc.Main
         {
             MainPage.Profile => Profile,
             MainPage.Build => Build,
+            MainPage.BuildPreview => BuildPreview,
             MainPage.Maintenance => Maintenance,
             MainPage.Log => Log,
             _ => null

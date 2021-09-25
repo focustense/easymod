@@ -34,7 +34,7 @@
                         <fa:SvgAwesome Grid.Row="0" Grid.Column="0" Height="24" VerticalAlignment="Center">
                             <fa:SvgAwesome.Style>
                                 <Style TargetType="fa:SvgAwesome">
-                                    <Setter Property="Foreground" Value="Blue"/>
+                                    <Setter Property="Foreground" Value="{StaticResource HelpIconForegroundBrush}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.CountEmpty}">
                                             <Setter Property="Icon" Value="Regular_Circle"/>
@@ -56,7 +56,7 @@
                                             <Setter Property="Icon" Value="Solid_Flag"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusError}">
-                                            <Setter Property="Foreground" Value="{StaticResource ErrorForegroundBrush}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource SystemControlErrorTextForegroundBrush}"/>
                                             <Setter Property="Icon" Value="Solid_TimesCircle"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusInfo}">
@@ -67,7 +67,7 @@
                                             <Setter Property="Icon" Value="Solid_CheckCircle"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusWarning}">
-                                            <Setter Property="Foreground" Value="{StaticResource WarningForegroundBrush}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource SystemControlErrorTextForegroundBrush}"/>
                                             <Setter Property="Icon" Value="Solid_ExclamationTriangle"/>
                                         </DataTrigger>
                                     </Style.Triggers>

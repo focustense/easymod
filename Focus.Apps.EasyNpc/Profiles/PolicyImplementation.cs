@@ -84,6 +84,17 @@ namespace Focus.Apps.EasyNpc.Profiles
             return overhaulNames.Contains(pluginName);
         }
 
+        public bool IsModdable(RecordAnalysisChain<NpcAnalysis> npcChain)
+        {
+            if (!npcChain.Master.CanUseFaceGen || npcChain.Master.IsChild || npcChain.Master.IsAudioTemplate)
+                return false;
+            // Template NPCs that are based on another NPC should be included but treated as "read only".
+            // If ALL POSSIBILITIES point only to Leveled NPC or unknown/invalid (not standard NPC) targets,
+            // then there is effectively nothing useful we can do with it and it should be excluded entirely.
+            return npcChain.Any(r =>
+                r.Analysis.TemplateInfo is null || r.Analysis.TemplateInfo.TargetType == NpcTemplateTargetType.Npc);
+        }
+
         public void Receive(LoadOrderAnalysis analysis)
         {
             baseNames = analysis.Plugins

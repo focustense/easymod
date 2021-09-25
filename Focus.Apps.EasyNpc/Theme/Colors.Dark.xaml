@@ -13,6 +13,10 @@
     <Color x:Key="MutedTextColor">#FFA9A9A9</Color>
     <Color x:Key="NpcDefaultIconColor">#FF64CEEB</Color>
     <Color x:Key="NpcFaceIconColor">#FF209C00</Color>
+    <Color x:Key="NpcFilterAllBackgroundColor">#FF121230</Color>
+    <Color x:Key="NpcFilterModdedBackgroundColor">#FF002C00</Color>
+    <Color x:Key="NpcFilterUnmoddableBackgroundColor">#FF480000</Color>
+    <Color x:Key="NpcFilterUnmoddedBackgroundColor">#FF332200</Color>
     <Color x:Key="SuccessForegroundColor">#FF008000</Color>
     <Color x:Key="TaskProgressBackgroundColor">#FF040618</Color>
     <Color x:Key="TaskProgressCancelledBackgroundColor">#FF555555</Color>

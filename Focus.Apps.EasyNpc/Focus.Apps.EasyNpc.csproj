@@ -88,6 +88,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="Build\Preview\BuildPreviewView.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+    </Page>
     <Page Update="Configuration\SettingsPage.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>

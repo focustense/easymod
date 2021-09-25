@@ -2,9 +2,9 @@
 {
     public class JumpToNpc
     {
-        public RecordKey Key { get; private init; }
+        public IRecordKey Key { get; private init; }
 
-        public JumpToNpc(RecordKey key)
+        public JumpToNpc(IRecordKey key)
         {
             Key = key;
         }

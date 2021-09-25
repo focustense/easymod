@@ -1,21 +1,24 @@
-﻿#nullable enable
-
+﻿using Focus.Apps.EasyNpc.Profiles;
 using Focus.Apps.EasyNpc.Reports;
+using Focus.ModManagers;
 using PropertyChanged;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using static Focus.Apps.EasyNpc.Build.PreBuildReport;
 
 namespace Focus.Apps.EasyNpc.Build
 {
-    public class PreBuildReportViewModel : PreBuildReport
+    public class PreBuildReportViewModel
     {
         public ObservableCollection<SummaryItem> AlertSummaryItems { get; init; } = new();
         public IReadOnlyList<IncompatibleMod> IncompatibleMods { get; init; } =
             new List<IncompatibleMod>().AsReadOnly();
         public bool IsStale { get; set; }
         public int MasterCount => Masters.Count;
+        public IReadOnlyList<MasterDependency> Masters { get; init; } = new List<MasterDependency>().AsReadOnly();
         public ObservableCollection<SummaryItem> NpcSummaryItems { get; init; } = new();
         public ObservableCollection<SummaryItem> OutputSummaryItems { get; init; } = new();
         public ObservableCollection<SummaryItem> PluginSummaryItems { get; init; } = new();

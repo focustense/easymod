@@ -1,4 +1,5 @@
-﻿using Focus.Analysis.Execution;
+﻿using Focus.Analysis.Plugins;
+using Focus.Analysis.Records;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
@@ -6,6 +7,7 @@ namespace Focus.Apps.EasyNpc.Profiles
     {
         NpcSetupAttributes GetSetupRecommendation(INpcBasicInfo npc);
         bool IsLikelyOverhaul(string pluginName);
+        bool IsModdable(RecordAnalysisChain<NpcAnalysis> npcChain);
     }
 
     public class NpcSetupAttributes

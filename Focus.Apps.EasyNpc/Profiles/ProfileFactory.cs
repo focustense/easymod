@@ -125,18 +125,14 @@ namespace Focus.Apps.EasyNpc.Profiles
             var npcs = analysis
                 .ExtractChains<NpcAnalysis>(RecordType.Npc)
                 .AsParallel()
-                .Where(x =>
-                    x.Master.CanUseFaceGen && !x.Master.IsChild && !x.Master.IsAudioTemplate &&
-                    // Template NPCs that are based on another NPC should be included but treated as "read only".
-                    // If ALL POSSIBILITIES point only to Leveled NPC or unknown/invalid (not standard NPC) targets,
-                    // then there is effectively nothing useful we can do with it and it should be excluded entirely.
-                    x.Any(r =>
-                        r.Analysis.TemplateInfo is null ||
-                        r.Analysis.TemplateInfo.TargetType == NpcTemplateTargetType.Npc))
+                .Where(x => policy.IsModdable(x))
                 .Tap(LogInvalidReferences)
                 .Select(x => new Npc(x, baseGamePluginNames, modRepository, profileEventLog, policy))
-                .Where(x => x.HasAvailableFaceCustomizations)
-                .Tap(defaultAction);
+                .Tap(x =>
+                {
+                    if (x.HasAvailableFaceCustomizations)
+                        defaultAction(x);
+                });
             return new Profile(npcs);
         }
 

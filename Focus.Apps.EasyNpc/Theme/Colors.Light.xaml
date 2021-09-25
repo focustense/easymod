@@ -11,6 +11,10 @@
     <Color x:Key="HelpIconColor">#FF0000FF</Color>
     <Color x:Key="HelpPanelBackgroundColor">#FFF0F8FF</Color>
     <Color x:Key="MutedTextColor">#FF696969</Color>
+    <Color x:Key="NpcFilterAllBackgroundColor">#FFF0F8FF</Color>
+    <Color x:Key="NpcFilterModdedBackgroundColor">#FFCCFFCC</Color>
+    <Color x:Key="NpcFilterUnmoddableBackgroundColor">#FFFFC0CB</Color>
+    <Color x:Key="NpcFilterUnmoddedBackgroundColor">#FFFFEECC</Color>
     <Color x:Key="NpcDefaultIconColor">#FF0000FF</Color>
     <Color x:Key="NpcFaceIconColor">#FF008000</Color>
     <Color x:Key="SuccessForegroundColor">#FF008000</Color>

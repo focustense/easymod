@@ -45,6 +45,7 @@
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
             <local:InverseBooleanConverter x:Key="InverseBoolean"/>
+            <local:EqualsConverter x:Key="Equals"/>
             <local:EqualsVisibilityConverter x:Key="VisibleWhen"/>
             <local:MultiBooleanConverter x:Key="BooleanAnd" Operator="And"/>
             <local:MultiBooleanConverter x:Key="BooleanOr" Operator="Or"/>

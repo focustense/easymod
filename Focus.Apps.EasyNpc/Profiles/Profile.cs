@@ -7,16 +7,32 @@ using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class Profile
+    public class ProfileSection
     {
         public int Count => npcs.Count;
         public IEnumerable<Npc> Npcs => npcs.Values;
 
         private readonly Dictionary<IRecordKey, Npc> npcs = new();
 
-        public Profile(IEnumerable<Npc> npcs)
+        public ProfileSection(IEnumerable<Npc> npcs)
         {
             this.npcs = npcs.ToDictionary(x => new RecordKey(x), RecordKeyComparer.Default);
+        }
+
+        public bool TryGetNpc(IRecordKey key, [MaybeNullWhen(false)] out Npc npc)
+        {
+            return npcs.TryGetValue(key, out npc);
+        }
+    }
+
+    public class Profile : ProfileSection
+    {
+        public ProfileSection Hidden { get; private init; }
+
+        public Profile(IEnumerable<Npc> npcs)
+            : base(npcs.Where(x => x.HasAvailableFaceCustomizations))
+        {
+            Hidden = new ProfileSection(npcs.Where(x => !x.HasAvailableFaceCustomizations));
         }
 
         public void Load(Stream stream)
@@ -25,7 +41,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             Parallel.ForEach(savedProfile.Npcs, x =>
             {
                 var key = new RecordKey(x);
-                if (!npcs.TryGetValue(key, out var npc))
+                if (!TryGetNpc(key, out var npc))
                     return;
                 npc.SetDefaultOption(x.DefaultPluginName);
                 npc.SetFaceOption(x.FacePluginName);
@@ -63,11 +79,6 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             using var fs = File.Create(path);
             Save(fs);
-        }
-
-        public bool TryGetNpc(IRecordKey key, [MaybeNullWhen(false)] out Npc npc)
-        {
-            return npcs.TryGetValue(key, out npc);
         }
 
         private bool TryResolveTemplate(

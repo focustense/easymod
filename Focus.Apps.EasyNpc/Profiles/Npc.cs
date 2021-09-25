@@ -5,6 +5,7 @@ using Focus.ModManagers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Subjects;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
@@ -22,10 +23,13 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string Name => records.Master.Name;
         public bool SupportsFaceGen => records.Master.CanUseFaceGen;
 
-        public bool CanCustomizeFace => FaceOption.Analysis.TemplateInfo?.InheritsTraits != true;
-        public NpcOption DefaultOption { get; private set; }
-        public ModInfo? FaceGenOverride { get; private set; }
-        public NpcOption FaceOption { get; private set; }
+        public bool CanCustomizeFace => DefaultOption.Analysis.TemplateInfo?.InheritsTraits != true;
+        public NpcOption DefaultOption => defaultOption.Value;
+        public IObservable<NpcOption> DefaultOptionObservable => defaultOption;
+        public ModInfo? FaceGenOverride => faceGenOverride.Value;
+        public IObservable<ModInfo?> FaceGenOverrideObservable => faceGenOverride;
+        public NpcOption FaceOption => faceOption.Value;
+        public IObservable<NpcOption> FaceOptionObservable => faceOption;
         public bool HasMissingPlugins =>
             !string.IsNullOrEmpty(MissingDefaultPluginName) || !string.IsNullOrEmpty(MissingFacePluginName);
         public bool IsFemale => records.Master.IsFemale;
@@ -33,6 +37,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         public string? MissingFacePluginName { get; private set; }
         public IReadOnlyList<NpcOption> Options { get; private init; }
 
+        private readonly BehaviorSubject<NpcOption> defaultOption;
+        private readonly BehaviorSubject<ModInfo?> faceGenOverride = new(null);
+        private readonly BehaviorSubject<NpcOption> faceOption;
         private readonly Lazy<bool> hasAvailableModdedFaceGens;
         private readonly IModRepository modRepository;
         private readonly IProfilePolicy policy;
@@ -56,8 +63,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 var faceGenPath = FileStructure.GetFaceMeshFileName(this);
                 // Vanilla BSAs aren't in the mod directory, so all results below are actually modded.
                 return modRepository.SearchForFiles(faceGenPath, true)
-                    .Where(x => !masterComponentNames.Contains(x.ModComponent.Name))
-                    .Any();
+                    .Any(x => !masterComponentNames.Contains(x.ModComponent.Name));
             }, true);
 
             Options = records
@@ -72,7 +78,9 @@ namespace Focus.Apps.EasyNpc.Profiles
             // (incomplete resets/profile corruption). The constructing parent can then choose to either configure
             // defaults based on some rule set - i.e. for first-time loads or manual resets - or load previously-saved
             // settings for that NPC. The only reason to set any option here at all is to avoid nulls.
-            FaceOption = DefaultOption = Options[Options.Count - 1];
+            var lastOption = Options[^1];
+            defaultOption = new(lastOption);
+            faceOption = new(lastOption);
         }
 
         public void ApplyPolicy(bool resetDefaultPlugin = false, bool resetFacePlugin = false, bool alwaysLog = false)
@@ -99,7 +107,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public int GetOverrideCount(bool includeBaseGame)
         {
-            return Options.Where(x => includeBaseGame || !x.IsBaseGame).Count();
+            return Options.Count(x => includeBaseGame || !x.IsBaseGame);
         }
 
         public bool HasUnmodifiedFaceTemplate()
@@ -130,7 +138,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                     MissingDefaultPluginName : DefaultOption.PluginName;
                 if (!asFallback)
                     LogProfileEvent(NpcProfileField.DefaultPlugin, oldPluginName, option.PluginName);
-                DefaultOption = option;
+                defaultOption.OnNext(option);
                 if (!asFallback)
                     MissingDefaultPluginName = null;
                 return ChangeResult.OK;
@@ -163,7 +171,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                     MissingFacePluginName : DefaultOption.PluginName;
                 if (!asFallback)
                     LogProfileEvent(NpcProfileField.FacePlugin, oldPluginName, option.PluginName);
-                FaceOption = option;
+                faceOption.OnNext(option);
                 if (!asFallback)
                     MissingFacePluginName = null;
                 if (!keepFaceGenMod)
@@ -192,7 +200,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             var newKey = mod is not null ? new ModLocatorKey(mod) : null;
             if (newKey != oldKey)
             {
-                FaceGenOverride = mod;
+                faceGenOverride.OnNext(mod);
                 LogProfileEvent(NpcProfileField.FaceMod, oldKey?.ToString(), newKey?.ToString());
                 return ChangeResult.OK;
             }
