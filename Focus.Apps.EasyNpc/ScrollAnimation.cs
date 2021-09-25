@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
@@ -7,15 +9,17 @@ namespace Focus.Apps.EasyNpc
 {
     public static class ScrollAnimation
     {
-        public static DependencyProperty TimeDurationProperty = DependencyProperty.RegisterAttached(
+        public static readonly DependencyProperty TimeDurationProperty = DependencyProperty.RegisterAttached(
             "TimeDuration", typeof(TimeSpan), typeof(ScrollAnimation), new(TimeSpan.FromMilliseconds(200)));
 
-        public static DependencyProperty VerticalOffsetProperty = DependencyProperty.RegisterAttached(
+        public static readonly DependencyProperty VerticalOffsetProperty = DependencyProperty.RegisterAttached(
             "VerticalOffset", typeof(double), typeof(ScrollAnimation),
             new UIPropertyMetadata(0.0, OnVerticalOffsetChanged));
 
-        public static void AnimateVertical(ScrollViewer scrollViewer, double offset)
+        public static Task AnimateVertical(
+            ScrollViewer scrollViewer, double offset, CancellationToken? cancellationToken = null)
         {
+            var cts = new TaskCompletionSource();
             var animation = new DoubleAnimation
             {
                 From = scrollViewer.VerticalOffset,
@@ -26,7 +30,15 @@ namespace Focus.Apps.EasyNpc
             var storyboard = new Storyboard { Children = { animation } };
             Storyboard.SetTarget(animation, scrollViewer);
             Storyboard.SetTargetProperty(animation, new(VerticalOffsetProperty));
-            storyboard.Begin();
+            storyboard.Completed += (_, _) => cts.TrySetResult();
+            if (cancellationToken.HasValue)
+                cancellationToken.Value.Register(() =>
+                {
+                    storyboard.Stop();
+                    cts.TrySetCanceled();
+                });
+            storyboard.Begin(scrollViewer, true);
+            return cts.Task;
         }
 
         public static TimeSpan GetTimeDuration(FrameworkElement target)

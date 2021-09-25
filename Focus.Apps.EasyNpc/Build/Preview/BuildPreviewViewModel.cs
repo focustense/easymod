@@ -18,6 +18,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public NpcSummaryViewModel Npcs { get; private init; }
         public OutputViewModel Output { get; private init; }
         public PluginsViewModel Plugins { get; private init; }
+        [DoNotNotify]
+        public double ScrollPosition { get; set; }
 
         private readonly IMessageBus messageBus;
 
