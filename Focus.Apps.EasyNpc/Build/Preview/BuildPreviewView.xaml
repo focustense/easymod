@@ -139,7 +139,7 @@
                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                    TextWrapping="Wrap"
                                                    VerticalAlignment="Center">
-                                            Showing all NPCs from every category.
+                                            Showing all NPCs from every category. Click any of the tabs above to filter.
                                         </TextBlock>
                                         <ui:SimpleStackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
                                             <Border Background="{StaticResource NpcFilterModdedBackgroundBrush}" Style="{StaticResource LegendBorder}">
