@@ -24,8 +24,8 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         protected override void Configure(AnalysisRunner runner)
         {
-            runner
-                .Configure(RecordType.Npc, new NpcAnalyzer(groupCache, new ReferenceChecker<INpcGetter>(groupCache)
+            var referenceChecker = new ReferenceChecker<INpcGetter>(groupCache)
+                .Configure(f => f
                     .Follow(x => x.HairColor)
                     .Follow(x => x.HeadParts, headPart => headPart
                         .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture))
@@ -48,7 +48,9 @@ namespace Focus.Apps.EasyNpc.Mutagen
                             .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(x => x.NewTexture)))
                         .Follow(x => x.Keywords)
                         .FollowSelf(x => x.TemplateArmor)
-                        .Follow(x => x.WorldModel, g => g.Model?.AlternateTextures?.Select(t => t.NewTexture)))))
+                        .Follow(x => x.WorldModel, g => g.Model?.AlternateTextures?.Select(t => t.NewTexture))));
+            runner
+                .Configure(RecordType.Npc, new NpcAnalyzer(groupCache, referenceChecker))
                 .Configure(RecordType.HeadPart, new HeadPartAnalyzer(groupCache));
         }
 
