@@ -15,25 +15,26 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
 {
     public class ReferenceCheckerTests
     {
-        private readonly ReferenceChecker<INpcGetter> checker;
+        private readonly IReferenceChecker<INpcGetter> checker;
         private readonly FakeGroupCache groups = new();
 
         public ReferenceCheckerTests()
         {
             checker = new ReferenceChecker<INpcGetter>(groups)
-                .Follow(x => x.Class)
-                .Follow(x => x.DefaultOutfit)
-                .Follow(x => x.Keywords)
-                .Follow(x => x.HeadParts, headPart => headPart
-                    .Follow(x => x.Color)
-                    .FollowSelf(x => x.ExtraParts)
-                    .Follow(x => x.TextureSet))
-                .Follow(x => x.Race, race => race
-                    .Follow(x => x.DefaultHairColors)
-                    .Follow(x => x.Skin, skin => skin
-                        .Follow(x => x.Armature, addon => addon
-                            .Follow(x => x.AdditionalRaces)
-                            .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(t => t.NewTexture)))));
+                .Configure(f => f
+                    .Follow(x => x.Class)
+                    .Follow(x => x.DefaultOutfit)
+                    .Follow(x => x.Keywords)
+                    .Follow(x => x.HeadParts, headPart => headPart
+                        .Follow(x => x.Color)
+                        .FollowSelf(x => x.ExtraParts)
+                        .Follow(x => x.TextureSet))
+                    .Follow(x => x.Race, race => race
+                        .Follow(x => x.DefaultHairColors)
+                        .Follow(x => x.Skin, skin => skin
+                            .Follow(x => x.Armature, addon => addon
+                                .Follow(x => x.AdditionalRaces)
+                                .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(t => t.NewTexture))))));
         }
 
         [Fact]

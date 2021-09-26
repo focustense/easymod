@@ -13,11 +13,13 @@ namespace Focus.Analysis.Records
         public bool IsOverride { get; init; }
         public string LocalFormIdHex { get; init; } = string.Empty;
         public abstract RecordType Type { get; }
+        public IReadOnlyList<AssetReference> ReferencedAssets { get; init; } = Empty.ReadOnlyList<AssetReference>();
     }
 
     public class ReferenceInfo
     {
         public string? EditorId { get; init; }
+        public bool Exists { get; init; } = true;
         public IRecordKey Key { get; init; } = RecordKey.Null;
         public RecordType Type { get; init; } = 0;
 
