@@ -24,7 +24,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         [DependsOn(nameof(GlobalWarnings), nameof(NpcWarnings))]
         public IEnumerable<BuildWarning> Warnings => GlobalWarnings.Concat(NpcWarnings)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.Severity)
+            .ThenBy(x => x.Id)
             .ThenBy(x => x.PluginName, StringComparer.CurrentCultureIgnoreCase)
             .ThenByLoadOrder(x => x.RecordKey ?? RecordKey.Null, gameSettings.PluginLoadOrder);
 
@@ -109,12 +110,13 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                     suppressedCount++;
                     continue;
                 }
+                if (warning.Severity == BuildWarningSeverity.High)
+                {
+                    criticalCount++;
+                    continue;
+                }
                 switch (warning.Id)
                 {
-                    case BuildWarningId.ModDirectoryNotFound:
-                    case BuildWarningId.ModDirectoryNotSpecified:
-                        criticalCount++;
-                        break;
                     case BuildWarningId.MissingFaceGen:
                         conflictCount++;
                         break;

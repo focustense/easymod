@@ -111,10 +111,10 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         {
             if (offset == ContentScrollViewer.VerticalOffset)
                 return;
+            scrollCts?.Cancel();
+            var currentCts = scrollCts = new();
             Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Render, new Action(async () =>
             {
-                scrollCts?.Cancel();
-                var currentCts = scrollCts = new();
                 try
                 {
                     await ScrollAnimation.AnimateVertical(ContentScrollViewer, offset, scrollCts.Token);

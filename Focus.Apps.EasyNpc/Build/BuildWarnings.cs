@@ -21,6 +21,14 @@ namespace Focus.Apps.EasyNpc.Build
         FaceGenOverride,
     }
 
+    public enum BuildWarningSeverity
+    {
+        Unspecified = 0,
+        High = 1,
+        Medium = 2,
+        Low = 3,
+    }
+
     public class BuildWarning
     {
         // Used for help links, if provided.
@@ -28,6 +36,7 @@ namespace Focus.Apps.EasyNpc.Build
         public string Message { get; init; } = string.Empty;
         public RecordKey? RecordKey { get; init; }
         public string? PluginName { get; init; }
+        public BuildWarningSeverity Severity => GetSeverity(Id);
 
         public BuildWarning() { }
 
@@ -57,6 +66,21 @@ namespace Focus.Apps.EasyNpc.Build
         {
             RecordKey = key;
         }
+
+        private static BuildWarningSeverity GetSeverity(BuildWarningId? id) => id switch
+        {
+            BuildWarningId.BadArchive => BuildWarningSeverity.High,
+            BuildWarningId.FaceGenOverride => BuildWarningSeverity.Low,
+            BuildWarningId.MasterPluginRemoved => BuildWarningSeverity.Low,
+            BuildWarningId.MissingFaceGen => BuildWarningSeverity.Medium,
+            BuildWarningId.ModDirectoryNotFound => BuildWarningSeverity.High,
+            BuildWarningId.ModDirectoryNotSpecified => BuildWarningSeverity.High,
+            BuildWarningId.MultipleArchiveSources => BuildWarningSeverity.Low,
+            BuildWarningId.MultipleFaceGen => BuildWarningSeverity.Low,
+            BuildWarningId.SelectedPluginRemoved => BuildWarningSeverity.Low,
+            BuildWarningId.WigNotMatched => BuildWarningSeverity.Low,
+            _ => BuildWarningSeverity.Unspecified,
+        };
     }
 
     public class BuildWarningIdsToTextConverter : IValueConverter
