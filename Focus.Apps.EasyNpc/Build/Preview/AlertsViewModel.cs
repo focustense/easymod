@@ -4,11 +4,11 @@ using Focus.Apps.EasyNpc.Profiles;
 using Focus.Apps.EasyNpc.Reports;
 using PropertyChanged;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using System.Windows;
 
 namespace Focus.Apps.EasyNpc.Build.Preview
 {
@@ -34,7 +34,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly IGameSettings gameSettings;
         private readonly IEnumerable<IGlobalBuildCheck> globalChecks;
         private readonly IEnumerable<INpcBuildCheck> npcChecks;
-        private readonly Dictionary<IRecordKey, IReadOnlyList<BuildWarning>> npcWarnings =
+        private readonly ConcurrentDictionary<IRecordKey, IReadOnlyList<BuildWarning>> npcWarnings =
             new(RecordKeyComparer.Default);
         private readonly Profile profile;
 
@@ -52,31 +52,34 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public void BeginWatching()
         {
-            buildSettings
+            var throttledBuildSettings = buildSettings
+                .Throttle(TimeSpan.FromSeconds(1))
+                .DistinctUntilChanged(x => x.EnableDewiggify)
+                .Publish();
+            throttledBuildSettings
                 .SubscribeOn(NewThreadScheduler.Default)
                 .Select(settings => globalChecks.SelectMany(x => x.Run(profile, settings)).ToList())
-                .ObserveOn(Application.Current.Dispatcher)
                 .Subscribe(x => GlobalWarnings = x.AsReadOnly());
             foreach (var npc in profile.Npcs)
             {
                 Observable
                     .CombineLatest(
-                        buildSettings, npc.DefaultOptionObservable, npc.FaceOptionObservable,
+                        throttledBuildSettings, npc.DefaultOptionObservable, npc.FaceOptionObservable,
                         npc.FaceGenOverrideObservable,
                         (settings, _, _, _) => (npc, settings))
                     .SubscribeOn(NewThreadScheduler.Default)
                     .Select(x => npcChecks.SelectMany(c => c.Run(x.npc, x.settings)).ToList())
-                    .ObserveOn(Application.Current.Dispatcher)
                     .Subscribe(warnings =>
                     {
                         if (warnings.Count > 0)
                             npcWarnings[npc] = warnings;
                         else
-                            npcWarnings.Remove(npc);
-                        NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings);
+                            npcWarnings.TryRemove(npc, out _);
+                        NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings).ToList().AsReadOnly();
                         UpdateSummaryItems();
                     });
             }
+            throttledBuildSettings.Connect();
             appSettings.BuildWarningWhitelistObservable.Subscribe(_ => UpdateSummaryItems());
         }
 

@@ -14,6 +14,9 @@
              DataContextChanged="View_DataContextChanged"
              Loaded="View_Loaded">
     <UserControl.Resources>
+        <Style TargetType="TextBlock" x:Key="LoweredFormLabelStyle" BasedOn="{StaticResource FormLabelStyle}">
+            <Setter Property="Margin" Value="0,16,0,2"/>
+        </Style>
         <Style x:Key="TooltipCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
             <Setter Property="ToolTip" Value="{Binding Path=Content.Text, RelativeSource={RelativeSource Mode=Self}}"/>
         </Style>
@@ -51,7 +54,7 @@
                         <rpt:SummaryGroup Grid.Column="0" Items="{Binding Npcs.SummaryItems}" Margin="8" Title="NPCs"/>
                         <rpt:SummaryGroup Grid.Column="1" Items="{Binding Plugins.SummaryItems}" Margin="8" Title="Plugins"/>
                         <rpt:SummaryGroup Grid.Column="2" Items="{Binding Alerts.SummaryItems}" Margin="8" Title="Alerts"/>
-                        <rpt:SummaryGroup Grid.Column="3" Margin="8" Title="Output"/>
+                        <rpt:SummaryGroup Grid.Column="3" Items="{Binding Output.SummaryItems}" Margin="8" Title="Output"/>
                     </Grid>
                     <Separator Margin="8,4,8,4" Height="4"/>
                     <Expander x:Name="NpcsExpander" IsExpanded="{Binding IsNpcsExpanded}" Margin="8" d:IsExpanded="False">
@@ -331,6 +334,24 @@
                         <Expander.Header>
                             <TextBlock FontSize="18">Output Settings</TextBlock>
                         </Expander.Header>
+                        <Border BorderBrush="{StaticResource GroupBorderBrush}" BorderThickness="1" Padding="8,0,8,8" Margin="0,4,0,0">
+                            <ui:SimpleStackPanel>
+                                <TextBlock Text="Mod Name" Style="{StaticResource FormLabelStyle}"/>
+                                <TextBox Text="{Binding Output.ModName, UpdateSourceTrigger=PropertyChanged}"/>
+                                <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding Output.IsExistingMod, Converter={StaticResource BoolToVisibility}}">
+                                    <fa:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Icon="Solid_ExclamationTriangle" Width="10" Height="10"/>
+                                    <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Text="Mod already exists" Margin="4,0,0,0"/>
+                                </ui:SimpleStackPanel>
+                                <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" Style="{StaticResource CaptionTextBlockStyle}">
+                                    Please specify a <Bold>new or empty</Bold> mod. Existing files can interfere with the merge and may also be overwritten or deleted.
+                                </TextBlock>
+                                <TextBlock Text="Plugin Name" Style="{StaticResource LoweredFormLabelStyle}"/>
+                                <TextBox Text="{Binding Output.PluginName, Mode=OneWay}" IsEnabled="False"/>
+                                <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource CaptionTextBlockStyle}">
+                                    This is shown for your information. You can't change it.
+                                </TextBlock>
+                            </ui:SimpleStackPanel>
+                        </Border>
                     </Expander>
                 </ui:SimpleStackPanel>
             </ScrollViewer>
