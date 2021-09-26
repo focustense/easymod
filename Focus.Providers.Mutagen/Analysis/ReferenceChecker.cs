@@ -15,7 +15,6 @@ namespace Focus.Providers.Mutagen.Analysis
     public interface IReferenceChecker<T>
         where T : class, ISkyrimMajorRecordGetter
     {
-        IReferenceChecker<T> Configure(Action<IReferenceFollower<T>> config);
         IEnumerable<ReferencePath> GetInvalidPaths(T record);
     }
 
@@ -36,7 +35,8 @@ namespace Focus.Providers.Mutagen.Analysis
         }
     }
 
-    public class ReferenceChecker<T> : ReferenceFollower<T, ReferenceInfo>, IReferenceChecker<T>
+    public class ReferenceChecker<T> :
+        ReferenceFollower<T, ReferenceInfo, IEnumerable<ReferenceInfo>>, IReferenceChecker<T>
         where T : class, ISkyrimMajorRecordGetter
     {
         public ReferenceChecker(IGroupCache groupCache)
@@ -52,7 +52,9 @@ namespace Focus.Providers.Mutagen.Analysis
 
         public IEnumerable<ReferencePath> GetInvalidPaths(T record)
         {
-            return WalkAll(record).Select(refs => new ReferencePath(refs));
+            return WalkAll(record)
+                .SelectMany(paths => paths)
+                .Select(refs => new ReferencePath(refs));
         }
 
         public IEnumerable<ReferencePath> GetInvalidPaths(ISkyrimMajorRecordGetter record)
@@ -63,9 +65,19 @@ namespace Focus.Providers.Mutagen.Analysis
             return GetInvalidPaths(typedRecord);
         }
 
-        protected override ReferenceFollower<TNext, ReferenceInfo> CreateChild<TNext>()
+        protected override IEnumerable<ReferenceInfo> Accumulate(IEnumerable<ReferenceInfo>? previous, ReferenceInfo current)
+        {
+            return (previous ?? Enumerable.Empty<ReferenceInfo>()).Append(current);
+        }
+
+        protected override ReferenceFollower<TNext, ReferenceInfo, IEnumerable<ReferenceInfo>> CreateChild<TNext>()
         {
             return new ReferenceChecker<TNext>(GroupCache);
+        }
+
+        protected override bool IsTerminal(ReferenceInfo current)
+        {
+            return !current.Exists;
         }
 
         protected override ReferenceInfo Visit(T record)
@@ -76,7 +88,7 @@ namespace Focus.Providers.Mutagen.Analysis
 
         protected override ReferenceInfo VisitMissing<TNext>(IFormLinkGetter<TNext> link)
         {
-            return new ReferenceInfo(link.FormKey.ToRecordKey(), link.Type.GetRecordType());
+            return new ReferenceInfo(link.FormKey.ToRecordKey(), link.Type.GetRecordType()) { Exists = false };
         }
     }
 }

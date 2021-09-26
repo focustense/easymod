@@ -42,13 +42,13 @@ namespace Focus.Providers.Mutagen.Analysis
         IReferenceFollower<T> FollowSelf(Func<T, IEnumerable<IFormLinkGetter<T>?>?> linksSelector);
     }
 
-    public abstract class ReferenceFollower<T, TResult> : IReferenceFollower<T>
+    public abstract class ReferenceFollower<T, TAccumulate, TResult> : IReferenceFollower<T>
         where T : class, ISkyrimMajorRecordGetter
     {
+        protected ConcurrentDictionary<FormKey, TAccumulate> AccumulatorCache { get; private init; } = new();
         protected IGroupCache GroupCache { get; private init; }
-        protected ConcurrentDictionary<FormKey, TResult> ResultCache { get; private init; } = new();
 
-        private readonly List<Func<T, IEnumerable<IEnumerable<TResult>>>> routes = new();
+        private readonly List<Func<T, TResult?, IEnumerable<TResult>>> routes = new();
 
         public ReferenceFollower(IGroupCache groupCache)
         {
@@ -108,62 +108,66 @@ namespace Focus.Providers.Mutagen.Analysis
         {
             var subrecordFollower = CreateChild<TNext>();
             configure?.Invoke(subrecordFollower);
-            routes.Add(r => Walk(r, linksSelector, subrecordFollower));
+            routes.Add((record, previous) => Walk(record, previous, linksSelector, subrecordFollower));
             return this;
         }
 
         public IReferenceFollower<T> FollowSelf(Func<T, IFormLinkGetter<T>?> linkSelector)
         {
-            routes.Add(r => Walk(r, r => new[] { linkSelector(r) }, this));
+            routes.Add((record, previous) => Walk(record, previous, r => new[] { linkSelector(r) }, this));
             return this;
         }
 
         public IReferenceFollower<T> FollowSelf(Func<T, IEnumerable<IFormLinkGetter<T>?>?> linksSelector)
         {
-            routes.Add(r => Walk(r, linksSelector, this));
+            routes.Add((record, previous) => Walk(record, previous, linksSelector, this));
             return this;
         }
 
         protected IEnumerable<IEnumerable<TResult>> WalkAll(T record)
         {
-            return routes
-                .Select(walk => walk(record))
-                .SelectMany(resultSets => resultSets);
+            return routes.Select(walk => walk(record, default));
         }
 
-        private IEnumerable<IEnumerable<TResult>> Walk<U>(
+        private IEnumerable<TResult> Walk<U>(
             T record,
+            TResult? previous,
             Func<T, IEnumerable<IFormLinkGetter<U>?>?> linksSelector,
-            ReferenceFollower<U, TResult> subrecordFollower)
+            ReferenceFollower<U, TAccumulate, TResult> subrecordFollower)
             where U : class, ISkyrimMajorRecordGetter
         {
             var originKey = record.FormKey.ToRecordKey();
             var originType = typeof(T).GetRecordType();
-            var currentResult = ResultCache.GetOrAdd(record.FormKey, _ => Visit(record));
+            var current = AccumulatorCache.GetOrAdd(record.FormKey, _ => Visit(record));
+            var result = Accumulate(previous, current);
+            if (IsTerminal(current))
+                yield return result;
             foreach (var link in linksSelector(record) ?? Enumerable.Empty<IFormLinkGetter<U>>())
             {
                 if (link is null || link.IsNull)
                     continue;
-                var target = link.WinnerFrom(GroupCache);
-                if (target is null)
+                var nextRecord = link.WinnerFrom(GroupCache);
+                if (nextRecord is null)
                 {
-                    var targetResult = ResultCache.GetOrAdd(link.FormKey, _ => VisitMissing(link));
-                    yield return new[] { currentResult, targetResult };
+                    var target = AccumulatorCache.GetOrAdd(link.FormKey, _ => VisitMissing(link));
+                    if (IsTerminal(target))
+                        yield return Accumulate(result, target);
                     continue;
                 }
                 var subrecordResults = subrecordFollower.routes
-                    .Select(ps => ps(target))
-                    .SelectMany(refLists => refLists)
-                    .Select(path => path.Prepend(currentResult));
+                    .Select(ps => ps(nextRecord, result))
+                    .SelectMany(results => results);
                 foreach (var subrecordPath in subrecordResults)
                     yield return subrecordPath;
             }
         }
 
-        protected abstract ReferenceFollower<TNext, TResult> CreateChild<TNext>()
+        protected abstract ReferenceFollower<TNext, TAccumulate, TResult> CreateChild<TNext>()
             where TNext : class, ISkyrimMajorRecordGetter;
-        protected abstract TResult Visit(T record);
-        protected abstract TResult VisitMissing<TNext>(IFormLinkGetter<TNext> link)
+        protected abstract TResult Accumulate(TResult? previous, TAccumulate current);
+        protected abstract bool IsTerminal(TAccumulate current);
+        protected abstract TAccumulate Visit(T record);
+        protected abstract TAccumulate VisitMissing<TNext>(IFormLinkGetter<TNext> link)
             where TNext : class, ISkyrimMajorRecordGetter;
     }
 }
