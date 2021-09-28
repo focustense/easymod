@@ -42,7 +42,7 @@ namespace Focus.Apps.EasyNpc
 
             var container = AppContainer.Build(options, startupInfo);
             var logger = container.Resolve<ILogger>();
-            var mainWindow = MainWindow = new MainWindow(logger);
+            var mainWindow = MainWindow = new MainWindow(logger, container);
             if (isFirstLaunch && string.IsNullOrEmpty(Settings.Default.DefaultModRootDirectory))
                 Settings.Default.DefaultModRootDirectory = container.Resolve<IModManagerConfiguration>().ModsDirectory;
             try
@@ -64,11 +64,13 @@ namespace Focus.Apps.EasyNpc
             catch (MissingGameDataException ex)
             {
                 Warn(StartupWarnings.MissingGameData(ex.GameId, ex.GameName), true);
+                container.Dispose();
                 Current.Shutdown();
             }
             catch (UnsupportedGameException ex)
             {
                 Warn(StartupWarnings.UnsupportedGame(ex.GameId, ex.GameName), true);
+                container.Dispose();
                 Current.Shutdown();
             }
         }

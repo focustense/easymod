@@ -12,8 +12,11 @@ namespace Focus.Apps.EasyNpc.Main
     /// </summary>
     public partial class MainWindow : Window
     {
-        public MainWindow(ILogger logger)
+        private readonly IDisposable container;
+
+        public MainWindow(ILogger logger, IDisposable container)
         {
+            this.container = container;
             InitializeComponent();
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
@@ -29,12 +32,14 @@ namespace Focus.Apps.EasyNpc.Main
                 {
                     // The ship is going down and we're out of lifeboats.
                 }
+                container.Dispose();
                 Application.Current.Shutdown();
             };
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            container.Dispose();
             Application.Current.Shutdown();
         }
     }
