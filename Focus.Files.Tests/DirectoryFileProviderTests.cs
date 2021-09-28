@@ -32,6 +32,22 @@ namespace Focus.Files.Tests
         }
 
         [Fact]
+        public void WhenFileNotFoundAtRoot_GetSize_ReturnsZero()
+        {
+            fileSystem.AddFile(@"C:\Other\file", new("zzz"));
+
+            Assert.Equal(0U, provider.GetSize("file"));
+        }
+
+        [Fact]
+        public void WhenFileFoundAtRoot_GetSize_ReturnsFileSize()
+        {
+            fileSystem.AddFile(@"C:\Path\To\Root\file", new(new byte[] { 1, 2, 3, 4, 5 }));
+
+            Assert.Equal(5U, provider.GetSize("file"));
+        }
+
+        [Fact]
         public void WhenFileNotFoundAtRoot_ReadBytes_Throws()
         {
             fileSystem.AddFile(@"C:\Other\file", new("zzz"));

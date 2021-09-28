@@ -44,14 +44,42 @@ namespace Focus.Files.Tests
         }
 
         [Fact]
-        public void WhenFileIsNowhere_GetBytes_ReturnsNull()
+        public void WhenFileIsNowhere_GetSize_ReturnsZero()
+        {
+            Assert.Equal(0U, provider.GetSize("file"));
+        }
+
+        [Fact]
+        // The reason it is first, and not last, is that archive names are provided in priority order (last to first).
+        public void WhenFileIsInArchives_GetSize_ReturnsFirstArchiveFileSize()
+        {
+            archiveProvider.AddFile(@"C:\game\data\archive2", "file", new byte[] { 1 });
+            archiveProvider.AddFile(@"C:\game\data\archive3", "file", new byte[] { 1, 2, 3, 4 });
+            archiveProvider.AddFile(@"C:\game\data\archive1", "file", new byte[] { 1, 2, 3, 4, 5, 6 });
+
+            Assert.Equal(4U, provider.GetSize("file"));
+        }
+
+        [Fact]
+        public void WhenFileIsLooseAndInArchives_GetSize_ReturnsLooseFileSize()
+        {
+            archiveProvider.AddFile(@"C:\game\data\archive1", "file", new byte[] { 1, 2 });
+            archiveProvider.AddFile(@"C:\game\data\archive2", "file", new byte[] { 1, 2, 3, 4, 5 });
+            archiveProvider.AddFile(@"C:\game\data\archive3", "file", new byte[] { 1, 2, 3 });
+            fs.AddFile(@"C:\game\data\file", new MockFileData(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }));
+
+            Assert.Equal(9U, provider.GetSize("file"));
+        }
+
+        [Fact]
+        public void WhenFileIsNowhere_ReadBytes_ReturnsNull()
         {
             Assert.False(provider.ReadBytes("file") != null);
         }
 
         [Fact]
         // The reason it is first, and not last, is that archive names are provided in priority order (last to first).
-        public void WhenFileIsInArchives_GetBytes_ReturnsFirstArchiveVersion()
+        public void WhenFileIsInArchives_ReadBytes_ReturnsFirstArchiveVersion()
         {
             archiveProvider.AddFile(@"C:\game\data\archive2", "file", new byte[] { 4, 5, 6 });
             archiveProvider.AddFile(@"C:\game\data\archive3", "file", new byte[] { 7, 8, 9 });
@@ -61,7 +89,7 @@ namespace Focus.Files.Tests
         }
 
         [Fact]
-        public void WhenFileIsLooseAndInArchives_GetBytes_ReturnsLooseVersion()
+        public void WhenFileIsLooseAndInArchives_ReadBytes_ReturnsLooseVersion()
         {
             archiveProvider.AddFile(@"C:\game\data\archive1", "file", new byte[] { 1, 2, 3 });
             archiveProvider.AddFile(@"C:\game\data\archive2", "file", new byte[] { 4, 5, 6 });

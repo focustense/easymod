@@ -8,7 +8,9 @@ namespace Focus.Files
 {
     public class CachingArchiveProvider : IArchiveProvider
     {
-        private readonly ConcurrentDictionary<string, HashSet<string>> cache = new();
+        private readonly ConcurrentDictionary<string, HashSet<string>> fileNameCache = new(PathComparer.Default);
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, uint>> fileSizeCache =
+            new(PathComparer.Default);
         private readonly IFileSystem fs;
         private readonly IArchiveProvider innerProvider;
 
@@ -38,6 +40,15 @@ namespace Focus.Files
                 string.IsNullOrEmpty(prefix) || PathComparer.NormalizePath(p).StartsWith(prefix));
         }
 
+        public uint GetArchiveFileSize(string archivePath, string archiveFilePath)
+        {
+            var sizes = fileSizeCache.GetOrAdd(archivePath, _ => new(PathComparer.Default));
+            return sizes.GetOrAdd(
+                archiveFilePath,
+                _ => ContainsFile(archivePath, archiveFilePath) ?
+                    innerProvider.GetArchiveFileSize(archivePath, archiveFilePath) : 0);
+        }
+
         public IEnumerable<string> GetBadArchivePaths()
         {
             // This list could change at any time, so we don't want to cache it. Providers shouldn't scan every archive
@@ -57,7 +68,7 @@ namespace Focus.Files
 
         private HashSet<string> GetArchiveFileNamesInternal(string archivePath)
         {
-            return cache.GetOrAdd(archivePath, _ =>
+            return fileNameCache.GetOrAdd(archivePath, _ =>
                 innerProvider.GetArchiveFileNames(archivePath).ToHashSet(PathComparer.Default));
         }
     }

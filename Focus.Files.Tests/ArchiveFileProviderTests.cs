@@ -30,6 +30,19 @@ namespace Focus.Files.Tests
         }
 
         [Fact]
+        public void GetSize_ReturnsSizeFromNamedArchive()
+        {
+            archiveProvider.AddFile("myarchive", "foo", new byte[] { 1, 2, 3, 4, 5, 6, 7 });
+            archiveProvider.AddFile("otherarchive", "bar", new byte[] { 1, 2, 3 });
+            archiveProvider.AddFile("otherarchive", "baz", new byte[] { 1, 2 });
+            archiveProvider.AddFile("myarchive", "bar", new byte[] { 1, 2, 3, 4, 5 });
+
+            Assert.Equal(7U, provider.GetSize("foo"));
+            Assert.Equal(5U, provider.GetSize("bar"));
+            Assert.Equal(0U, provider.GetSize("baz"));
+        }
+
+        [Fact]
         public void ReadBytes_ReturnsDataFromNamedArchive()
         {
             archiveProvider.AddFile("myarchive", "foo", new byte[] { 1, 2 });

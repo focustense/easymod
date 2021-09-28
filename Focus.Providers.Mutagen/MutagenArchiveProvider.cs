@@ -1,7 +1,9 @@
 ﻿using Focus.Files;
+using Mutagen.Bethesda.Archives;
 using Noggog;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,6 +18,7 @@ namespace Focus.Providers.Mutagen
         private readonly HashSet<string> badArchivePaths = new(StringComparer.OrdinalIgnoreCase);
         private readonly GameSelection game;
         private readonly ILogger log;
+        private readonly ConcurrentDictionary<string, IArchiveReader> readers = new(PathComparer.Default);
 
         public MutagenArchiveProvider(GameSelection game, ILogger log)
             : this(ArchiveStatics.Instance, game, log)
@@ -33,7 +36,7 @@ namespace Focus.Providers.Mutagen
         {
             return Safe(archivePath, () =>
             {
-                var reader = archive.CreateReader(game.GameRelease, archivePath);
+                var reader = GetReader(archivePath);
                 return reader.Files.Any(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
             });
         }
@@ -45,7 +48,7 @@ namespace Focus.Providers.Mutagen
                 var prefix = PathComparer.NormalizePath(path);
                 if (!string.IsNullOrEmpty(prefix))
                     prefix += Path.DirectorySeparatorChar;
-                var reader = archive.CreateReader(game.GameRelease, archivePath);
+                var reader = GetReader(archivePath);
                 return reader.Files
                     .Select(f => Safe(archivePath, () => f.Path))
                     .NotNull()
@@ -53,6 +56,17 @@ namespace Focus.Providers.Mutagen
                         string.IsNullOrEmpty(prefix) ||
                         PathComparer.NormalizePath(p).StartsWith(prefix));
             }) ?? Enumerable.Empty<string>();
+        }
+
+        public uint GetArchiveFileSize(string archivePath, string archiveFilePath)
+        {
+            var reader = GetReader(archivePath);
+            return reader.Files
+                .Select(f => Safe(archivePath, () => new { f.Path, Size = new Lazy<uint>(() => f.Size) }))
+                .NotNull()
+                .Where(x => PathComparer.Default.Equals(x.Path, archiveFilePath))
+                .Select(x => x.Size.Value)
+                .FirstOrDefault();
         }
 
         public IEnumerable<string> GetBadArchivePaths()
@@ -68,7 +82,7 @@ namespace Focus.Providers.Mutagen
 
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
         {
-            var reader = archive.CreateReader(game.GameRelease, archivePath);
+            var reader = GetReader(archivePath);
             var folderName = Path.GetDirectoryName(archiveFilePath)?.ToLower();  // Mutagen is case-sensitive
             if (string.IsNullOrEmpty(folderName))
                 throw new ArgumentException($"Archive path '{archivePath}' is missing directory info.", nameof(archivePath));
@@ -79,6 +93,11 @@ namespace Focus.Providers.Mutagen
             if (file == null)
                 throw new ArchiveException($"Couldn't find file {archiveFilePath} in archive {archivePath}");
             return file.GetSpan();
+        }
+
+        private IArchiveReader GetReader(string archivePath)
+        {
+            return readers.GetOrAdd(archivePath, _ => archive.CreateReader(game.GameRelease, archivePath));
         }
 
         private T? Safe<T>(string archivePath, Func<T> action)

@@ -14,6 +14,11 @@ namespace Focus.Testing.Files
             return files.ContainsKey(fileName);
         }
 
+        public ulong GetSize(string fileName)
+        {
+            return files.TryGetValue(fileName, out var data) ? (ulong)data.LongLength : 0;
+        }
+
         public void PutFile(string fileName, byte[] data)
         {
             files[fileName] = data;
