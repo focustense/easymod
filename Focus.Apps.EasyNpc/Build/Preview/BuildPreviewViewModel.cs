@@ -11,6 +11,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public delegate BuildPreviewViewModel Factory(Profile profile, LoadOrderAnalysis analysis);
 
         public AlertsViewModel Alerts { get; private init; }
+        public AssetsViewModel Assets { get; private init; }
         public bool IsAlertsExpanded { get; set; }
         public bool IsNpcsExpanded { get; set; } 
         public bool IsOutputExpanded { get; set; }
@@ -25,13 +26,14 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public BuildPreviewViewModel(
             IMessageBus messageBus, NpcSummaryViewModel.Factory npcsFactory, PluginsViewModel.Factory pluginsFactory,
-            AlertsViewModel.Factory alertsFactory, OutputViewModel.Factory outputFactory, Profile profile,
-            LoadOrderAnalysis analysis)
+            AlertsViewModel.Factory alertsFactory, OutputViewModel.Factory outputFactory,
+            AssetsViewModel.Factory assetsFactory, Profile profile, LoadOrderAnalysis analysis)
         {
             this.messageBus = messageBus;
             Npcs = npcsFactory(profile, analysis);
             Plugins = pluginsFactory(profile);
-            Output = outputFactory(profile);
+            Assets = assetsFactory(profile, analysis);
+            Output = outputFactory(profile, analysis);
             Alerts = alertsFactory(profile, Output.BuildSettings);
             Alerts.BeginWatching();
         }

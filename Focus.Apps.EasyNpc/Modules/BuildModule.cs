@@ -55,6 +55,7 @@ namespace Focus.Apps.EasyNpc.Modules
             // Realtime preview
             builder.RegisterType<PluginCategorizer>().As<IPluginCategorizer>();
             builder.RegisterType<AlertsViewModel>();
+            builder.RegisterType<AssetsViewModel>();
             builder.RegisterType<BuildPreviewViewModel>();
             builder.RegisterType<NpcSummaryViewModel>();
             builder.RegisterType<OutputViewModel>();

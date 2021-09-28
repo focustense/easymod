@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text.RegularExpressions;
+using Focus.Analysis.Execution;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Profiles;
@@ -17,7 +18,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
     [AddINotifyPropertyChangedInterface]
     public class OutputViewModel
     {
-        public delegate OutputViewModel Factory(Profile profile);
+        public delegate OutputViewModel Factory(Profile profile, LoadOrderAnalysis analysis);
 
         private static readonly char[] InvalidPathChars = Path.GetInvalidFileNameChars()
             .Where(c => c != Path.DirectorySeparatorChar && c != Path.AltDirectorySeparatorChar)
@@ -34,8 +35,6 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             set => enableDewiggify.OnNext(value);
         }
 
-        public decimal AssetSizeCompressedGb { get; private set; }
-        public decimal AssetSizeUncompressedGb { get; private set; }
         public bool IsExistingMod { get; private set; }
         public bool IsValidDirectory { get; private set; }
 
@@ -47,9 +46,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public string PluginName => FileStructure.MergeFileName;
 
-        [DependsOn(
-            nameof(IsExistingMod), nameof(IsValidDirectory), nameof(AssetSizeCompressedGb),
-            nameof(AssetSizeUncompressedGb))]
+        [DependsOn(nameof(IsExistingMod), nameof(IsValidDirectory))]
         public IEnumerable<SummaryItem> SummaryItems => new SummaryItem[]
         {
             IsValidDirectory ?
@@ -58,8 +55,6 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             IsExistingMod ?
                 new(SummaryItemCategory.StatusError, "Output already exists") :
                 new(SummaryItemCategory.StatusOk, "Output directory is empty"),
-            new(SummaryItemCategory.StatusInfo, "GB assets", AssetSizeUncompressedGb),
-            new(SummaryItemCategory.StatusInfo, "GB packed (est.)", AssetSizeCompressedGb),
         };
 
         private readonly BehaviorSubject<bool> enableDewiggify = new(true);

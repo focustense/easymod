@@ -7,6 +7,7 @@ namespace Focus.Analysis.Records
     public class AssetReference
     {
         public AssetKind Kind { get; init; }
+        public string NormalizedPath => GetNormalizedPath();
         public string Path { get; init; } = string.Empty;
 
         public AssetReference()
@@ -36,6 +37,16 @@ namespace Focus.Analysis.Records
         public override int GetHashCode()
         {
             return HashCode.Combine(Kind, Path);
+        }
+
+        private string GetNormalizedPath()
+        {
+            return Kind switch
+            {
+                AssetKind.Mesh or AssetKind.Morph => Path.PrefixPath("meshes"),
+                AssetKind.Texture => Path.PrefixPath("textures"),
+                _ => Path,
+            };
         }
     }
 }

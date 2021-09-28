@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace Focus.Apps.EasyNpc
+namespace Focus
 {
-    static class StringExtensions
+    public static class StringExtensions
     {
         public static string PrefixPath(this string path, string prefix)
         {
