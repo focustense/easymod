@@ -20,9 +20,10 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public delegate AlertsViewModel Factory(Profile profile, IObservable<BuildSettings> buildSettings);
 
         public IEnumerable<BuildWarning> GlobalWarnings { get; private set; } = Enumerable.Empty<BuildWarning>();
+        public IEnumerable<SummaryItem> HeaderSummaryItems { get; private set; } = Enumerable.Empty<SummaryItem>();
+        public IEnumerable<SummaryItem> MainSummaryItems { get; private set; } = Enumerable.Empty<SummaryItem>();
         public IEnumerable<BuildWarning> NpcWarnings { get; private set; } = Enumerable.Empty<BuildWarning>();
         public BuildWarning? SelectedWarning { get; set; }
-        public IEnumerable<SummaryItem> SummaryItems { get; private set; } = Enumerable.Empty<SummaryItem>();
 
         [DependsOn(nameof(GlobalWarnings), nameof(NpcWarnings))]
         public IEnumerable<BuildWarning> Warnings => GlobalWarnings.Concat(NpcWarnings)
@@ -153,13 +154,13 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
                 }
             }
-            SummaryItems = new SummaryItem[]
+            HeaderSummaryItems = new SummaryItem[]
             {
                 new(PickCategory(criticalCount, SummaryItemCategory.StatusError), "Critical issues", criticalCount),
-                new(
-                    PickCategory(missingResourceCount, SummaryItemCategory.StatusError),
-                    "Missing resources", missingResourceCount),
                 new(PickCategory(conflictCount, SummaryItemCategory.StatusError), "NPC conflicts", conflictCount),
+            };
+            MainSummaryItems = new SummaryItem[]
+            {
                 new(PickCategory(otherCount, SummaryItemCategory.StatusWarning), "Other issues", otherCount),
                 new(SummaryItemCategory.StatusInfo, "Suppressed warnings", suppressedCount),
             };

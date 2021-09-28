@@ -53,7 +53,15 @@
                         </Grid.ColumnDefinitions>
                         <rpt:SummaryGroup Grid.Column="0" Items="{Binding Npcs.SummaryItems}" Margin="8" Title="NPCs"/>
                         <rpt:SummaryGroup Grid.Column="1" Items="{Binding Plugins.SummaryItems}" Margin="8" Title="Plugins"/>
-                        <rpt:SummaryGroup Grid.Column="2" Items="{Binding Alerts.SummaryItems}" Margin="8" Title="Alerts"/>
+                        <rpt:SummaryGroup Grid.Column="2" Margin="8" Title="Alerts">
+                            <rpt:SummaryGroup.Items>
+                                <MultiBinding Converter="{StaticResource ConcatSequences}">
+                                    <Binding Path="Alerts.HeaderSummaryItems"/>
+                                    <Binding Path="Assets.AlertSummaryItems"/>
+                                    <Binding Path="Alerts.MainSummaryItems"/>
+                                </MultiBinding>
+                            </rpt:SummaryGroup.Items>
+                        </rpt:SummaryGroup>
                         <rpt:SummaryGroup Grid.Column="3" Margin="8" Title="Output">
                             <rpt:SummaryGroup.Items>
                                 <MultiBinding Converter="{StaticResource ConcatSequences}">

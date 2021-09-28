@@ -24,9 +24,21 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private const int MB = KB * 1024;
         private const int GB = MB * 1024;
 
+        public IReadOnlyList<AssetReference> MissingAssets { get; private set; } =
+            new List<AssetReference>().AsReadOnly();
         public ulong UncompressedSizeBytes { get; private set; }
         [DependsOn(nameof(UncompressedSizeBytes))]
         public decimal UncompressedSizeGb => Math.Round((decimal)UncompressedSizeBytes / GB, 1);
+
+        [DependsOn(nameof(MissingAssets))]
+        public IEnumerable<SummaryItem> AlertSummaryItems => new SummaryItem[]
+        {
+            isInitialSizeComputed ?
+                MissingAssets.Count > 0 ?
+                    new(SummaryItemCategory.StatusWarning, "Missing assets", MissingAssets.Count) :
+                    new(SummaryItemCategory.StatusOk, "All assets found") :
+                new(SummaryItemCategory.StatusInfo, "Checking assets..."),
+        };
 
         [DependsOn(nameof(UncompressedSizeGb))]
         public IEnumerable<SummaryItem> SummaryItems => new SummaryItem[]
@@ -87,15 +99,21 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         private void RefreshAssetSizes()
         {
-            UncompressedSizeBytes = npcAssets.Values
+            var allAssets = npcAssets.Values
+                .SelectMany(refs => refs)
+                .Distinct()
+                .ToList();
+            isInitialSizeComputed = true;
+            UncompressedSizeBytes = allAssets
                 // AsParallel would speed this up considerably on the first run, but can make the UI seem sluggish on
                 // startup due to hogging cores, and since the user will usually take at least a few seconds to actually
                 // get to this screen, the tradeoff isn't really worth it.
-                .SelectMany(refs => refs)
-                .Distinct()
                 .Select(x => assetSizes.GetOrAdd(x.NormalizedPath, path => fileProvider.GetSize(path)))
                 .Aggregate((sum, value) => sum + value);
-            isInitialSizeComputed = true;
+            MissingAssets = allAssets
+                .Where(x => assetSizes.GetOrDefault(x.NormalizedPath) == 0)
+                .ToList()
+                .AsReadOnly();
         }
     }
 }
