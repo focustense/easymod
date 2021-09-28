@@ -45,7 +45,7 @@ namespace Focus.Providers.Mutagen.Analysis
     public abstract class ReferenceFollower<T, TAccumulate, TResult> : IReferenceFollower<T>
         where T : class, ISkyrimMajorRecordGetter
     {
-        protected ConcurrentDictionary<FormKey, TAccumulate> AccumulatorCache { get; private init; } = new();
+        protected ConcurrentDictionary<FormKey, TAccumulate> AccumulatorCache { get; private set; } = new();
         protected IGroupCache GroupCache { get; private init; }
 
         private readonly List<Func<T, TResult?, IEnumerable<TResult>>> routes = new();
@@ -107,6 +107,7 @@ namespace Focus.Providers.Mutagen.Analysis
             where TNext : class, ISkyrimMajorRecordGetter
         {
             var subrecordFollower = CreateChild<TNext>();
+            subrecordFollower.AccumulatorCache = AccumulatorCache;
             configure?.Invoke(subrecordFollower);
             routes.Add((record, previous) => Walk(record, previous, linksSelector, subrecordFollower));
             return this;
