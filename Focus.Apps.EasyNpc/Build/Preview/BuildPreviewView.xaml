@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:bp="clr-namespace:Focus.Apps.EasyNpc.Build.Preview"
+             xmlns:bu="clr-namespace:Focus.Apps.EasyNpc.Build.UI"
              xmlns:fa="http://schemas.fontawesome.com/icons/"
              xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
@@ -313,7 +314,7 @@
                                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                                         <Setter Property="HorizontalAlignment" Value="Stretch"/>
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                        <Setter Property="Padding" Value="12,0"/>
+                                        <Setter Property="Padding" Value="12,0,8,0"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Severity}" Value="High">
                                                 <Setter Property="Background" Value="{StaticResource NpcFilterUnmoddableBackgroundBrush}"/>
@@ -338,7 +339,49 @@
                                                     </Style>
                                                 </Rectangle.Style>
                                             </Rectangle>
-                                            <TextBlock Margin="0,8" Text="{Binding Message}"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ui:SimpleStackPanel Orientation="Horizontal">
+                                                    <fa:SvgAwesome Height="16" Margin="0,0,8,0">
+                                                        <fa:SvgAwesome.Style>
+                                                            <Style TargetType="fa:SvgAwesome">
+                                                                <Setter Property="Foreground" Value="{StaticResource HelpIconForegroundBrush}"/>
+                                                                <Setter Property="Icon" Value="Solid_InfoCircle"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="High">
+                                                                        <Setter Property="Foreground" Value="{StaticResource SystemControlErrorTextForegroundBrush}"/>
+                                                                        <Setter Property="Icon" Value="Regular_TimesCircle"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="Medium">
+                                                                        <Setter Property="Foreground" Value="{StaticResource WarningForegroundBrush}"/>
+                                                                        <Setter Property="Icon" Value="Solid_ExclamationTriangle"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </fa:SvgAwesome.Style>
+                                                    </fa:SvgAwesome>
+                                                    <TextBlock Grid.Column="0" Margin="0,8" Text="{Binding Message}"/>
+                                                </ui:SimpleStackPanel>
+                                                <Border Background="{StaticResource SystemControlBackgroundAltMediumHighBrush}" CornerRadius="2" Grid.Column="1" Height="24" Margin="6" Width="24">
+                                                    <Button HorizontalAlignment="Stretch" Padding="6" VerticalAlignment="Stretch">
+                                                        <fa:SvgAwesome Icon="Solid_Question" VerticalAlignment="Stretch"/>
+                                                        <ui:FlyoutService.Flyout>
+                                                            <ui:Flyout Placement="Left" >
+                                                                <ui:Flyout.FlyoutPresenterStyle>
+                                                                    <Style TargetType="ui:FlyoutPresenter">
+                                                                        <Setter Property="Background" Value="{StaticResource HelpPanelBackgroundBrush}"/>
+                                                                        <Setter Property="FontSize" Value="12"/>
+                                                                    </Style>
+                                                                </ui:Flyout.FlyoutPresenterStyle>
+                                                                <bu:BuildWarningHelp Width="400"/>
+                                                            </ui:Flyout>
+                                                        </ui:FlyoutService.Flyout>
+                                                    </Button>
+                                                </Border>
+                                            </Grid>
                                         </ui:SimpleStackPanel>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
