@@ -20,6 +20,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
     {
         public delegate AssetsViewModel Factory(Profile profile, LoadOrderAnalysis analysis);
 
+        private static readonly RecordType[] NonCriticalSourceRecordTypes = new[] { RecordType.HeadPart };
+
         private const int KB = 1024;
         private const int MB = KB * 1024;
         private const int GB = MB * 1024;
@@ -111,6 +113,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 .Select(x => assetSizes.GetOrAdd(x.NormalizedPath, path => fileProvider.GetSize(path)))
                 .Aggregate((sum, value) => sum + value);
             MissingAssets = allAssets
+                .Where(x => !x.SourceRecordTypes.SetEquals(NonCriticalSourceRecordTypes))
                 .Where(x => assetSizes.GetOrDefault(x.NormalizedPath) == 0)
                 .ToList()
                 .AsReadOnly();

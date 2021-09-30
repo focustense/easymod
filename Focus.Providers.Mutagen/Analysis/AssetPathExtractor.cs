@@ -86,9 +86,16 @@ namespace Focus.Providers.Mutagen.Analysis
             return true;
         }
 
+        protected override void Link(T record, AssetReferences current)
+        {
+            var recordType = typeof(T).GetRecordType();
+            foreach (var reference in current)
+                reference.SourceRecordTypes.Add(recordType);
+        }
+
         protected override AssetReferences Visit(T record)
         {
-            return subAnalyzerBundle.Analyze(record) ?? Enumerable.Empty<AssetReference>();
+            return subAnalyzerBundle.Analyze(record)?.ToList() ?? Enumerable.Empty<AssetReference>();
         }
 
         protected override AssetReferences VisitMissing<TNext>(IFormLinkGetter<TNext> link)
@@ -140,7 +147,7 @@ namespace Focus.Providers.Mutagen.Analysis
     class AssetPathRecordConfigurationBuilder<T> : IAssetPathRecordConfigurationBuilder<T>
         where T : class, ISkyrimMajorRecordGetter
     {
-        private readonly List<Func<T, IEnumerable<AssetReference?>?>> selectors = new();
+        private readonly List<Func<T, AssetReferences?>> selectors = new();
 
         public IAssetPathRecordConfigurationBuilder<T> Add(AssetKind kind, Func<T, string?> pathSelector)
         {

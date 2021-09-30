@@ -140,6 +140,8 @@ namespace Focus.Providers.Mutagen.Analysis
             var originKey = record.FormKey.ToRecordKey();
             var originType = typeof(T).GetRecordType();
             var current = AccumulatorCache.GetOrAdd(record.FormKey, _ => Visit(record));
+            if (current is not null)
+                Link(record, current);
             var result = Accumulate(previous, current);
             if (IsTerminal(current))
                 yield return result;
@@ -167,6 +169,7 @@ namespace Focus.Providers.Mutagen.Analysis
             where TNext : class, ISkyrimMajorRecordGetter;
         protected abstract TResult Accumulate(TResult? previous, TAccumulate current);
         protected abstract bool IsTerminal(TAccumulate current);
+        protected virtual void Link(T record, TAccumulate current) { }
         protected abstract TAccumulate Visit(T record);
         protected abstract TAccumulate VisitMissing<TNext>(IFormLinkGetter<TNext> link)
             where TNext : class, ISkyrimMajorRecordGetter;
