@@ -6,6 +6,7 @@
              xmlns:bp="clr-namespace:Focus.Apps.EasyNpc.Build.Preview"
              xmlns:bu="clr-namespace:Focus.Apps.EasyNpc.Build.UI"
              xmlns:fa="http://schemas.fontawesome.com/icons/"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
              xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
              xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -207,6 +208,9 @@
                                       SelectionMode="Single"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
                                       MouseDoubleClick="NpcGrid_MouseDoubleClick">
+                                <i:Interaction.Behaviors>
+                                    <local:WheelBubblingBehavior/>
+                                </i:Interaction.Behaviors>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Binding="{Binding BasePluginName}" CellStyle="{StaticResource TooltipCellStyle}" Header="Base Plugin" Width="150"/>
                                     <DataGridTextColumn Binding="{Binding LocalFormIdHex}" CellStyle="{StaticResource TooltipCellStyle}" Header="Form ID" Width="100"/>
@@ -279,6 +283,9 @@
                                       SelectionMode="Single"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
                                       MouseDoubleClick="PluginGrid_MouseDoubleClick">
+                                <i:Interaction.Behaviors>
+                                    <local:WheelBubblingBehavior/>
+                                </i:Interaction.Behaviors>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Binding="{Binding PluginName}" CellStyle="{StaticResource TooltipCellStyle}" Header="Plugin Name" Width="300"/>
                                     <DataGridTextColumn Binding="{Binding Component.ModKey.Name}" CellStyle="{StaticResource TooltipCellStyle}" Header="Providing Mod" Width="*"/>
@@ -310,6 +317,9 @@
                                      SelectedItem="{Binding Alerts.SelectedWarning}"
                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
                                      MouseDoubleClick="WarningsListBox_MouseDoubleClick">
+                                <i:Interaction.Behaviors>
+                                    <local:WheelBubblingBehavior/>
+                                </i:Interaction.Behaviors>
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                                         <Setter Property="HorizontalAlignment" Value="Stretch"/>
