@@ -62,6 +62,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             Filter == NpcSummaryFilter.All ? rows : rows.Where(x => x.Filter == Filter);
         public int IgnoredCount { get; private set; }
         public int ModdedCount { get; private set; }
+        public NpcSummaryRow? SelectedRow { get; set; }
         public int TotalCount { get; private set; }
         [DependsOn(nameof(IgnoredCount), nameof(ModdedCount), nameof(TotalCount), nameof(UnmoddedCount))]
         public int UnmoddableCount => TotalCount - IgnoredCount - ModdedCount - UnmoddedCount;

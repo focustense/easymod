@@ -207,11 +207,13 @@
                                       HeadersVisibility="Column"
                                       IsReadOnly="True"
                                       ItemsSource="{Binding Npcs.FilteredRows}"
-                                      MaxHeight="300"
+                                      MaxHeight="{Binding ElementName=ContentScrollViewer, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter='max(x-250,200)'}"
+                                      SelectedItem="{Binding Npcs.SelectedRow}"
                                       SelectionMode="Single"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
                                       MouseDoubleClick="NpcGrid_MouseDoubleClick">
                                 <i:Interaction.Behaviors>
+                                    <local:ScrollRestoreBehavior Key="PreBuild_Npcs"/>
                                     <local:WheelBubblingBehavior/>
                                 </i:Interaction.Behaviors>
                                 <DataGrid.Columns>
@@ -282,11 +284,13 @@
                                       HeadersVisibility="Column"
                                       IsReadOnly="True"
                                       ItemsSource="{Binding Plugins.MasterPlugins.Values}"
-                                      MaxHeight="300"
+                                      MaxHeight="{Binding ElementName=ContentScrollViewer, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter='max(x-250,200)'}"
+                                      SelectedItem="{Binding Plugins.SelectedPlugin}"
                                       SelectionMode="Single"
                                       local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
                                       MouseDoubleClick="PluginGrid_MouseDoubleClick">
                                 <i:Interaction.Behaviors>
+                                    <local:ScrollRestoreBehavior Key="PreBuild_Plugins"/>
                                     <local:WheelBubblingBehavior/>
                                 </i:Interaction.Behaviors>
                                 <DataGrid.Columns>
@@ -337,20 +341,54 @@
                                         below for details.
                                     </TextBlock>
                                 </Border>
-                                <DataGrid AutoGenerateColumns="False"
+                                <DataGrid x:Name="MissingAssetsGrid"
+                                          AutoGenerateColumns="False"
                                           HeadersVisibility="Column"
                                           IsReadOnly="True"
                                           ItemsSource="{Binding Assets.MissingAssets}"
-                                          MaxHeight="300"
+                                          MaxHeight="{Binding ElementName=ContentScrollViewer, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter='max(x-250,200)'}"
+                                          SelectedItem="{Binding Assets.SelectedMissingAsset}"
                                           SelectionMode="Single"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                           local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
                                     <i:Interaction.Behaviors>
+                                        <local:ScrollRestoreBehavior Key="PreBuild_MissingAssets"/>
                                         <local:WheelBubblingBehavior/>
                                     </i:Interaction.Behaviors>
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Binding="{Binding Kind}" CellStyle="{StaticResource TooltipCellStyle}" Header="Type" Width="100"/>
                                         <DataGridTextColumn Binding="{Binding NormalizedPath}" CellStyle="{StaticResource TooltipCellStyle}" Header="File Name" Width="*"/>
                                     </DataGrid.Columns>
+                                    <DataGrid.RowDetailsTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="8">
+                                                <ui:SimpleStackPanel>
+                                                    <TextBlock Style="{StaticResource BodyTextBlockStyle}">NPCs using this resource:</TextBlock>
+                                                    <DataGrid AutoGenerateColumns="False"
+                                                              HeadersVisibility="Column"
+                                                              IsReadOnly="True"
+                                                              ItemsSource="{Binding ReferencedByNpcs}"
+                                                              Margin="0,8,0,0"
+                                                              MaxHeight="{Binding ElementName=MissingAssetsGrid, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter='x/2'}"
+                                                              SelectionMode="Single"
+                                                              local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis"
+                                                              MouseDoubleClick="NpcGrid_MouseDoubleClick">
+                                                        <i:Interaction.Behaviors>
+                                                            <local:ScrollRestoreBehavior Key="{Binding ScrollKey}"/>
+                                                            <local:WheelBubblingBehavior/>
+                                                        </i:Interaction.Behaviors>
+                                                        <DataGrid.Columns>
+                                                            <DataGridTextColumn Binding="{Binding BasePluginName}" CellStyle="{StaticResource TooltipCellStyle}" Header="Base Plugin" Width="180"/>
+                                                            <DataGridTextColumn Binding="{Binding LocalFormIdHex}" CellStyle="{StaticResource TooltipCellStyle}" Header="Form ID" Width="100"/>
+                                                            <DataGridTextColumn Binding="{Binding EditorId}" CellStyle="{StaticResource TooltipCellStyle}"  Header="Editor ID" Width="180"/>
+                                                            <DataGridTextColumn Binding="{Binding Name}" CellStyle="{StaticResource TooltipCellStyle}"  Header="Full Name" Width="*"/>
+                                                            <DataGridTextColumn Binding="{Binding FaceOption.PluginName}" CellStyle="{StaticResource TooltipCellStyle}"  Header="Plugin" Width="250"/>
+                                                        </DataGrid.Columns>
+                                                    </DataGrid>
+                                                </ui:SimpleStackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGrid.RowDetailsTemplate>
                                 </DataGrid>
                             </ui:SimpleStackPanel>
                         </Grid>
@@ -370,6 +408,7 @@
                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
                                      MouseDoubleClick="WarningsListBox_MouseDoubleClick">
                                 <i:Interaction.Behaviors>
+                                    <local:ScrollRestoreBehavior Key="PreBuild_Warnings"/>
                                     <local:WheelBubblingBehavior/>
                                 </i:Interaction.Behaviors>
                                 <ListBox.ItemContainerStyle>

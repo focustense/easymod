@@ -127,7 +127,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         private void UpdateSummaryItems()
         {
-            int criticalCount = 0, conflictCount = 0, missingResourceCount = 0, otherCount = 0, suppressedCount = 0;
+            int criticalCount = 0, conflictCount = 0, otherCount = 0, suppressedCount = 0;
             var suppressions = GetBuildWarningSuppressions();
             foreach (var warning in Warnings)
             {

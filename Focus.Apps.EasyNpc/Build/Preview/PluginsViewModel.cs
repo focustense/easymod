@@ -50,6 +50,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             new Dictionary<string, PluginViewModel>();
         [DependsOn(nameof(FacePlugins), nameof(MasterPlugins))]
         public int MergedCount => FacePlugins.Keys.Count(p => !MasterPlugins.ContainsKey(p));
+        public PluginViewModel? SelectedPlugin { get; set; }
         [DependsOn(nameof(SuspiciousMasters))]
         public int SuspiciousMasterCount => SuspiciousMasters.Count();
         [DependsOn(nameof(MasterPlugins))]

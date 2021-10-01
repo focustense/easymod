@@ -21,6 +21,23 @@ namespace Focus.Apps.EasyNpc.Build.Preview
     record FaceGenInfo(ulong FaceGenSizeBytes, ulong FaceTintSizeBytes);
 
     [AddINotifyPropertyChangedInterface]
+    public class MissingAssetViewModel
+    {
+        public AssetKind Kind => assetRef.Kind;
+        public string NormalizedPath => assetRef.NormalizedPath;
+        public IEnumerable<Npc> ReferencedByNpcs { get; private init; }
+        public string ScrollKey => $"PreBuild_MissingAssetDetails_{NormalizedPath}";
+
+        private readonly AssetReference assetRef;
+
+        public MissingAssetViewModel(AssetReference assetRef, IEnumerable<Npc> referencedByNpcs)
+        {
+            this.assetRef = assetRef;
+            ReferencedByNpcs = referencedByNpcs;
+        }
+    }
+
+    [AddINotifyPropertyChangedInterface]
     public class AssetsViewModel : IDisposable
     {
         public delegate AssetsViewModel Factory(Profile profile, LoadOrderAnalysis analysis);
@@ -36,8 +53,9 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public ulong CompressedSizeBytes { get; private set; }
         [DependsOn(nameof(MissingAssets))]
         public bool HasMissingAssets => MissingAssets.Count > 0;
-        public IReadOnlyList<AssetReference> MissingAssets { get; private set; } =
-            new List<AssetReference>().AsReadOnly();
+        public IReadOnlyList<MissingAssetViewModel> MissingAssets { get; private set; } =
+            new List<MissingAssetViewModel>().AsReadOnly();
+        public MissingAssetViewModel? SelectedMissingAsset { get; set; }
         public ulong UncompressedSizeBytes { get; private set; }
         [DependsOn(nameof(UncompressedSizeBytes))]
         public decimal UncompressedSizeGb => Math.Round((decimal)UncompressedSizeBytes / GB, 1);
@@ -75,6 +93,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly ConcurrentDictionary<IRecordKey, IEnumerable<AssetReference>> npcAssets = new();
         private readonly Dictionary<IRecordKey, RecordAnalysisChain<NpcAnalysis>> npcChains;
         private readonly ConcurrentDictionary<IRecordKey, FaceGenInfo> npcFaceGens = new();
+        private readonly Profile profile;
 
         public AssetsViewModel(
             IFileSystem fs, IFileProvider fileProvider, IArchiveProvider archiveProvider, IModRepository modRepository,
@@ -85,6 +104,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             this.fileProvider = fileProvider;
             this.fs = fs;
             this.modRepository = modRepository;
+            this.profile = profile;
             npcChains = analysis.ExtractChains<NpcAnalysis>(RecordType.Npc)
                 .ToDictionary(x => x.Key, RecordKeyComparer.Default);
             changes
@@ -150,11 +170,9 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         private void RefreshAssetSizes()
         {
-            var allAssets = npcAssets.Values
+            var (sharedUncompressedSize, sharedCompressedSize) = npcAssets.Values
                 .SelectMany(refs => refs)
                 .Distinct()
-                .ToList();
-            var (sharedUncompressedSize, sharedCompressedSize) = allAssets
                 // AsParallel would speed this up considerably on the first run, but can make the UI seem sluggish on
                 // startup due to hogging cores, and since the user will usually take at least a few seconds to actually
                 // get to this screen, the tradeoff isn't really worth it.
@@ -176,9 +194,14 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             isInitialSizeComputed = true;
             UncompressedSizeBytes = sharedUncompressedSize + faceGenUncompressedSize;
             CompressedSizeBytes = sharedCompressedSize + faceGenCompressedSize;
-            MissingAssets = allAssets
-                .Where(x => !x.SourceRecordTypes.SetEquals(NonCriticalSourceRecordTypes))
-                .Where(x => assetSizes.GetOrDefault(x.NormalizedPath) == 0)
+            MissingAssets = npcAssets
+                .SelectMany(x => x.Value.Select(asset => (asset, npc: x.Key)))
+                .Distinct()
+                .Where(x => !x.asset.SourceRecordTypes.SetEquals(NonCriticalSourceRecordTypes))
+                .Where(x => assetSizes.GetOrDefault(x.asset.NormalizedPath) == 0)
+                .GroupBy(x => x.asset, x => x.npc)
+                .Select(g => new MissingAssetViewModel(
+                    g.Key, g.Select(key => profile.TryGetNpc(key, out var npc) ? npc : null).NotNull()))
                 .OrderBy(x => x.Kind)
                 .ThenBy(x => PathComparer.NormalizePath(x.NormalizedPath))
                 .ToList()
