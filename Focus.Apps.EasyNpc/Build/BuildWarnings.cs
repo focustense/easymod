@@ -24,9 +24,9 @@ namespace Focus.Apps.EasyNpc.Build
     public enum BuildWarningSeverity
     {
         Unspecified = 0,
-        High = 1,
+        Low = 1,
         Medium = 2,
-        Low = 3,
+        High = 3,
     }
 
     public class BuildWarning

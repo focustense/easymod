@@ -6,14 +6,24 @@ namespace Focus.Apps.EasyNpc
 {
     public class EqualsConverter : IValueConverter
     {
+        protected virtual bool Invert => false;
+
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return Equals(value, parameter);
+            return Invert ? !Equals(value, parameter) : Equals(value, parameter);
         }
 
         public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is bool b && b ? parameter : null;
+            var comparison = value is bool b && b;
+            if (Invert)
+                comparison = !comparison;
+            return comparison ? parameter : null;
         }
+    }
+
+    public class InvertedEqualsConverter : EqualsConverter
+    {
+        protected override bool Invert => true;
     }
 }

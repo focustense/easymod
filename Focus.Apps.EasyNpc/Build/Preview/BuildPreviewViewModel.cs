@@ -2,16 +2,22 @@
 using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profiles;
 using PropertyChanged;
+using System;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 namespace Focus.Apps.EasyNpc.Build.Preview
 {
     [AddINotifyPropertyChangedInterface]
-    public class BuildPreviewViewModel
+    public class BuildPreviewViewModel : IDisposable
     {
         public delegate BuildPreviewViewModel Factory(Profile profile, LoadOrderAnalysis analysis);
 
         public AlertsViewModel Alerts { get; private init; }
         public AssetsViewModel Assets { get; private init; }
+        [DependsOn(nameof(ErrorLevel))]
+        public bool HasErrorsOrWarnings => OverallErrorLevel >= ErrorLevel.Warning;
         public bool IsAlertsExpanded { get; set; }
         public bool IsAssetsExpanded { get; set; }
         public bool IsNpcsExpanded { get; set; } 
@@ -19,10 +25,12 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public bool IsPluginsExpanded { get; set; }
         public NpcSummaryViewModel Npcs { get; private init; }
         public OutputViewModel Output { get; private init; }
+        public ErrorLevel OverallErrorLevel { get; private set; }
         public PluginsViewModel Plugins { get; private init; }
         [DoNotNotify]
         public double ScrollPosition { get; set; }
 
+        private readonly Subject<bool> disposed = new();
         private readonly IMessageBus messageBus;
 
         public BuildPreviewViewModel(
@@ -37,6 +45,17 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             Output = outputFactory(profile, analysis);
             Alerts = alertsFactory(profile, Output.BuildSettings);
             Alerts.BeginWatching();
+
+            Observable.CombineLatest(Assets.OverallErrorLevel, Output.OverallErrorLevel, Alerts.OverallErrorLevel)
+                .Select(errorLevels => errorLevels.Max())
+                .TakeUntil(disposed)
+                .Subscribe(lvl => OverallErrorLevel = lvl);
+        }
+
+        public void Dispose()
+        {
+            disposed.OnNext(true);
+            GC.SuppressFinalize(this);
         }
 
         public void ExpandWarning(BuildWarning warning)

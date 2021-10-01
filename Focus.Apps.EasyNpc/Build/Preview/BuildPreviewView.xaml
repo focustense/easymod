@@ -76,6 +76,58 @@
                             </rpt:SummaryGroup.Items>
                         </rpt:SummaryGroup>
                     </Grid>
+                    <Border Background="{StaticResource HelpPanelBackgroundBrush}"
+                            BorderBrush="{StaticResource GroupBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Margin="8,0,8,8"
+                            Padding="12,8">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right"
+                                    IsEnabled="{Binding OverallErrorLevel, Converter={StaticResource NotEqual}, ConverterParameter={x:Static bp:ErrorLevel.Fatal}}"
+                                    Style="{StaticResource AccentButtonStyle}">
+                                <ui:SimpleStackPanel Orientation="Horizontal">
+                                    <fa:SvgAwesome Foreground="{StaticResource SystemControlForegroundAltHighBrush}"
+                                                   Icon="Solid_Cogs"
+                                                   Height="16"
+                                                   Margin="0,0,8,0"
+                                                   VerticalAlignment="Center"/>
+                                    <TextBlock Visibility="{Binding OverallErrorLevel, Converter={StaticResource HiddenWhen}, ConverterParameter={x:Static bp:ErrorLevel.Warning}}">
+                                        Build
+                                    </TextBlock>
+                                    <TextBlock Visibility="{Binding OverallErrorLevel, Converter={StaticResource VisibleWhen}, ConverterParameter={x:Static bp:ErrorLevel.Warning}}">
+                                        Build Anyway
+                                    </TextBlock>
+                                </ui:SimpleStackPanel>
+                            </Button>
+                            <TextBlock Style="{StaticResource BodyTextBlockStyle}"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding OverallErrorLevel, Converter={StaticResource VisibleWhen}, ConverterParameter={x:Static bp:ErrorLevel.Fatal}}">
+                                Building is disabled until
+                                <fa:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                                               Height="{Binding FontSize, RelativeSource={RelativeSource AncestorType=TextBlock}}"
+                                               Margin="0,0,0,-2"
+                                               Icon="Solid_TimesCircle"/>
+                                <Run FontWeight="SemiBold" Foreground="{StaticResource SystemControlErrorTextForegroundBrush}">critical errors</Run> are resolved.
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BodyTextBlockStyle}"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding OverallErrorLevel, Converter={StaticResource VisibleWhen}, ConverterParameter={x:Static bp:ErrorLevel.Warning}}">
+                                Building is <Run FontWeight="SemiBold">not recommended</Run> until all
+                                <fa:SvgAwesome Foreground="{StaticResource WarningForegroundBrush}"
+                                               Height="{Binding FontSize, RelativeSource={RelativeSource AncestorType=TextBlock}}"
+                                               Margin="2,0,0,-2"
+                                               Icon="Solid_ExclamationTriangle"/>
+                                <Run FontWeight="SemiBold" Foreground="{StaticResource WarningForegroundBrush}">warnings</Run>
+                                have been cleared or confirmed as acceptable.
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BodyTextBlockStyle}"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding HasErrorsOrWarnings, Converter={StaticResource InvBoolToVisibility}}">
+                                Ready to build.
+                            </TextBlock>
+                        </DockPanel>
+                    </Border>
                     <Separator Margin="8,4,8,4" Height="4"/>
                     <Expander x:Name="NpcsExpander" IsExpanded="{Binding IsNpcsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>

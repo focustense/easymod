@@ -23,6 +23,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public IEnumerable<SummaryItem> HeaderSummaryItems { get; private set; } = Enumerable.Empty<SummaryItem>();
         public IEnumerable<SummaryItem> MainSummaryItems { get; private set; } = Enumerable.Empty<SummaryItem>();
         public IEnumerable<BuildWarning> NpcWarnings { get; private set; } = Enumerable.Empty<BuildWarning>();
+        public IObservable<ErrorLevel> OverallErrorLevel => overallErrorLevel;
         public BuildWarning? SelectedWarning { get; set; }
 
         [DependsOn(nameof(GlobalWarnings), nameof(NpcWarnings))]
@@ -40,6 +41,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly IEnumerable<INpcBuildCheck> npcChecks;
         private readonly ConcurrentDictionary<IRecordKey, IReadOnlyList<BuildWarning>> npcWarnings =
             new(RecordKeyComparer.Default);
+        private readonly BehaviorSubject<ErrorLevel> overallErrorLevel = new(ErrorLevel.None);
         private readonly Profile profile;
 
         public AlertsViewModel(
@@ -69,6 +71,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                     Parallel.ForEach(profile.Npcs, npc => RunNpcChecks(npc, settings));
                     NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings).ToList().AsReadOnly();
                     UpdateSummaryItems();
+                    overallErrorLevel.OnNext(GetErrorLevel());
                 });
             var modifiedNpcs = Observable
                 .Merge(profile.Npcs.SelectMany(npc => new[]
@@ -86,6 +89,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                     RunNpcChecks(res.npc, res.settings);
                     NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings).ToList().AsReadOnly();
                     UpdateSummaryItems();
+                    overallErrorLevel.OnNext(GetErrorLevel());
                 });
             throttledBuildSettings.Connect();
             appSettings.BuildWarningWhitelistObservable
@@ -109,6 +113,17 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             return appSettings.BuildWarningWhitelist
                 .SelectMany(x => x.IgnoredWarnings.Select(id => new { Plugin = x.PluginName, Id = id }))
                 .ToLookup(x => x.Plugin, x => x.Id);
+        }
+
+        private ErrorLevel GetErrorLevel()
+        {
+            var maxSeverity = GlobalWarnings.Concat(NpcWarnings).Max(x => x.Severity);
+            return maxSeverity switch
+            {
+                BuildWarningSeverity.High => ErrorLevel.Fatal,
+                BuildWarningSeverity.Medium => ErrorLevel.Warning,
+                _ => ErrorLevel.None
+            };
         }
 
         private static SummaryItemCategory PickCategory(int issueCount, SummaryItemCategory nonZeroCategory)
@@ -157,11 +172,11 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             HeaderSummaryItems = new SummaryItem[]
             {
                 new(PickCategory(criticalCount, SummaryItemCategory.StatusError), "Critical issues", criticalCount),
-                new(PickCategory(conflictCount, SummaryItemCategory.StatusError), "NPC conflicts", conflictCount),
+                new(PickCategory(conflictCount, SummaryItemCategory.StatusWarning), "NPC conflicts", conflictCount),
             };
             MainSummaryItems = new SummaryItem[]
             {
-                new(PickCategory(otherCount, SummaryItemCategory.StatusWarning), "Other issues", otherCount),
+                new(PickCategory(otherCount, SummaryItemCategory.StatusInfo), "Other issues", otherCount),
                 new(SummaryItemCategory.StatusInfo, "Suppressed warnings", suppressedCount),
             };
         }

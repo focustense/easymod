@@ -55,6 +55,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public bool HasMissingAssets => MissingAssets.Count > 0;
         public IReadOnlyList<MissingAssetViewModel> MissingAssets { get; private set; } =
             new List<MissingAssetViewModel>().AsReadOnly();
+        public IObservable<ErrorLevel> OverallErrorLevel => overallErrorLevel;
         public MissingAssetViewModel? SelectedMissingAsset { get; set; }
         public ulong UncompressedSizeBytes { get; private set; }
         [DependsOn(nameof(UncompressedSizeBytes))]
@@ -93,6 +94,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly ConcurrentDictionary<IRecordKey, IEnumerable<AssetReference>> npcAssets = new();
         private readonly Dictionary<IRecordKey, RecordAnalysisChain<NpcAnalysis>> npcChains;
         private readonly ConcurrentDictionary<IRecordKey, FaceGenInfo> npcFaceGens = new();
+        private readonly BehaviorSubject<ErrorLevel> overallErrorLevel = new(ErrorLevel.None);
         private readonly Profile profile;
 
         public AssetsViewModel(
@@ -206,6 +208,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 .ThenBy(x => PathComparer.NormalizePath(x.NormalizedPath))
                 .ToList()
                 .AsReadOnly();
+            overallErrorLevel.OnNext(MissingAssets.Count > 0 ? ErrorLevel.Warning : ErrorLevel.None);
         }
     }
 }

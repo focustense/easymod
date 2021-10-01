@@ -67,7 +67,7 @@
                                             <Setter Property="Icon" Value="Solid_CheckCircle"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Category}" Value="{x:Static local:SummaryItemCategory.StatusWarning}">
-                                            <Setter Property="Foreground" Value="{StaticResource SystemControlErrorTextForegroundBrush}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource WarningForegroundBrush}"/>
                                             <Setter Property="Icon" Value="Solid_ExclamationTriangle"/>
                                         </DataTrigger>
                                     </Style.Triggers>

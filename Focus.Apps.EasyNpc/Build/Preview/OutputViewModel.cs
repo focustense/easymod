@@ -44,6 +44,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             set => modName.OnNext(value);
         }
 
+        public IObservable<ErrorLevel> OverallErrorLevel => overallErrorLevel;
         public string PluginName => FileStructure.MergeFileName;
 
         [DependsOn(nameof(IsExistingMod), nameof(IsValidDirectory))]
@@ -60,6 +61,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly BehaviorSubject<bool> enableDewiggify = new(true);
         private readonly IFileSystem fs;
         private readonly BehaviorSubject<string> modName = new($"NPC Merge {DateTime.Now:yyyy-MM-dd}");
+        private readonly BehaviorSubject<ErrorLevel> overallErrorLevel = new(ErrorLevel.None);
         private readonly Profile profile;
 
         public OutputViewModel(IObservableModSettings modSettings, IFileSystem fs, Profile profile)
@@ -73,6 +75,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             {
                 IsExistingMod = IsOutputDirectoryNonEmpty(settings);
                 IsValidDirectory = IsOutputDirectoryValid(settings);
+                overallErrorLevel.OnNext(GetErrorLevel());
             });
         }
 
@@ -85,6 +88,15 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             {
                 EnableDewiggify = enableDewiggify,
             };
+        }
+
+        private ErrorLevel GetErrorLevel()
+        {
+            if (!IsValidDirectory)
+                return ErrorLevel.Fatal;
+            if (IsExistingMod)
+                return ErrorLevel.Warning;
+            return ErrorLevel.None;
         }
 
         private bool IsOutputDirectoryNonEmpty(BuildSettings settings)
