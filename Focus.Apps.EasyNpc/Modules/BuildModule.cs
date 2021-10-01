@@ -20,6 +20,7 @@ namespace Focus.Apps.EasyNpc.Modules
                 .As<IWigResolver>()
                 .As<ILoadOrderAnalysisReceiver>()
                 .SingleInstance();
+            builder.RegisterType<CompressionEstimator>().As<ICompressionEstimator>();
             builder.RegisterType<BadArchives>().As<IGlobalBuildCheck>();
             builder.RegisterType<FaceGenConsistency>().As<INpcBuildCheck>();
             builder.RegisterType<MissingPlugins>().As<INpcBuildCheck>();

@@ -16,6 +16,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         private const long GB = 1024 * 1024 * 1024;
 
+        private readonly ICompressionEstimator compressionEstimator;
         private readonly IDummyPluginBuilder dummyPluginBuilder;
         private readonly FaceGenCopyTask.Result faceGens;
         private readonly IFileSystem fs;
@@ -24,11 +25,12 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private readonly TextureCopyTask.Result textures;
 
         public ArchiveCreationTask(
-            IFileSystem fs, IDummyPluginBuilder dummyPluginBuilder, PatchSaveTask.Result patch,
-            FaceGenCopyTask.Result faceGens, DewiggifyFaceGensTask.Result faceGenDewiggify,
+            IFileSystem fs, ICompressionEstimator compressionEstimator, IDummyPluginBuilder dummyPluginBuilder,
+            PatchSaveTask.Result patch, FaceGenCopyTask.Result faceGens, DewiggifyFaceGensTask.Result faceGenDewiggify,
             SharedResourceCopyTask.Result headParts, TextureCopyTask.Result textures)
         {
             RunsAfter(faceGenDewiggify);
+            this.compressionEstimator = compressionEstimator;
             this.dummyPluginBuilder = dummyPluginBuilder;
             this.faceGens = faceGens;
             this.fs = fs;
@@ -71,8 +73,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 RelativePath = "meshes",
                 DefaultProgressWeight = MeshProgressWeight,
                 FaceGenProgressWeight = MeshProgressWeight * FaceGenWeightMultiplier,
-                EstimatedDefaultCompressionRatio = 0.7,
-                EstimatedFaceGenCompressionRatio = 0.5,
                 MaxUncompressedSize = MaxMeshesUncompressedSize,
             }));
             var texturesTask = Task.Run(() => BuildFilteredArchive(settings.OutputDirectory, new()
@@ -81,8 +81,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 RelativePath = "textures",
                 DefaultProgressWeight = TextureProgressWeight,
                 FaceGenProgressWeight = TextureProgressWeight * FaceGenWeightMultiplier,
-                EstimatedDefaultCompressionRatio = 0.5,
-                EstimatedFaceGenCompressionRatio = 0.08,
                 MaxUncompressedSize = MaxTexturesUncompressedSize,
             }));
             await Task.WhenAll(meshesTask, texturesTask);
@@ -116,8 +114,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 .ShareData(true)
                 .MaxCompressedSize((long)(1.8 * GB /* leave headroom */), x =>
                 {
-                    var ratio = FileStructure.IsFaceGen(x.PathInArchive) ?
-                        settings.EstimatedFaceGenCompressionRatio : settings.EstimatedDefaultCompressionRatio;
+                    var ratio = compressionEstimator.EstimateCompressionRatio(x.PathInArchive);
                     return (int)(x.Size * ratio);
                 })
                 .MaxUncompressedSize(settings.MaxUncompressedSize)
@@ -137,8 +134,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         class ArchiveSettings
         {
             public int DefaultProgressWeight { get; init; }
-            public double EstimatedDefaultCompressionRatio { get; init; }
-            public double EstimatedFaceGenCompressionRatio { get; init; }
             public int FaceGenProgressWeight { get; init; }
             public long MaxUncompressedSize { get; init; }
             public string Name { get; init; } = string.Empty;

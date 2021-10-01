@@ -18,7 +18,7 @@ using System.Reactive.Subjects;
 
 namespace Focus.Apps.EasyNpc.Build.Preview
 {
-    record FaceGenInfo(long FaceGenSizeBytes, long FaceTintSizeBytes);
+    record FaceGenInfo(ulong FaceGenSizeBytes, ulong FaceTintSizeBytes);
 
     [AddINotifyPropertyChangedInterface]
     public class AssetsViewModel : IDisposable
@@ -31,6 +31,9 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private const int MB = KB * 1024;
         private const int GB = MB * 1024;
 
+        [DependsOn(nameof(CompressedSizeBytes))]
+        public decimal CompressedSizeGb => Math.Round((decimal)CompressedSizeBytes / GB, 1);
+        public ulong CompressedSizeBytes { get; private set; }
         public IReadOnlyList<AssetReference> MissingAssets { get; private set; } =
             new List<AssetReference>().AsReadOnly();
         public ulong UncompressedSizeBytes { get; private set; }
@@ -54,13 +57,14 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 new(SummaryItemCategory.StatusInfo, "GB assets", UncompressedSizeGb) :
                 new(SummaryItemCategory.StatusInfo, "Calculating mod size..."),
             isInitialSizeComputed ?
-                new(SummaryItemCategory.StatusInfo, "GB packed (est.)", 0) :
+                new(SummaryItemCategory.StatusInfo, "GB packed (est.)", CompressedSizeGb) :
                 new(SummaryItemCategory.StatusInfo, "Calculating compressed size..."),
         };
 
         private readonly IArchiveProvider archiveProvider;
         private readonly ConcurrentDictionary<string, ulong> assetSizes = new(PathComparer.Default);
         private readonly Subject<bool> changes = new();
+        private readonly ICompressionEstimator compressionEstimator;
         private readonly Subject<bool> disposed = new();
         private readonly IFileProvider fileProvider;
         private readonly IFileSystem fs;
@@ -72,9 +76,10 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public AssetsViewModel(
             IFileSystem fs, IFileProvider fileProvider, IArchiveProvider archiveProvider, IModRepository modRepository,
-            Profile profile, LoadOrderAnalysis analysis)
+            ICompressionEstimator compressionEstimator, Profile profile, LoadOrderAnalysis analysis)
         {
             this.archiveProvider = archiveProvider;
+            this.compressionEstimator = compressionEstimator;
             this.fileProvider = fileProvider;
             this.fs = fs;
             this.modRepository = modRepository;
@@ -123,7 +128,12 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 modRepository.SearchForFiles(npc.FaceOption.PluginName, false).Select(x => x.ModComponent).ToList();
             var faceGenResult = modRepository.SearchForFiles(candidateComponents, faceGenPath, true).FirstOrDefault();
             var faceTintResult = modRepository.SearchForFiles(candidateComponents, faceTintPath, true).FirstOrDefault();
-            return new(GetFileSize(faceGenResult), GetFileSize(faceTintResult));
+            return new((ulong)GetFileSize(faceGenResult), (ulong)GetFileSize(faceTintResult));
+        }
+
+        private ulong EstimateCompressedSize((string path, ulong size) asset)
+        {
+            return (ulong)Math.Round(asset.size * compressionEstimator.EstimateCompressionRatio(asset.path));
         }
 
         private long GetFileSize(ModSearchResult? result)
@@ -142,15 +152,28 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 .SelectMany(refs => refs)
                 .Distinct()
                 .ToList();
-            var sharedAssetsSizeBytes = allAssets
+            var (sharedUncompressedSize, sharedCompressedSize) = allAssets
                 // AsParallel would speed this up considerably on the first run, but can make the UI seem sluggish on
                 // startup due to hogging cores, and since the user will usually take at least a few seconds to actually
                 // get to this screen, the tradeoff isn't really worth it.
-                .Select(x => assetSizes.GetOrAdd(x.NormalizedPath, path => fileProvider.GetSize(path)))
-                .Aggregate((sum, value) => sum + value);
-            var faceGenAssetsSizeBytes = npcFaceGens.Values.Sum(x => x.FaceGenSizeBytes + x.FaceTintSizeBytes);
+                .Select(x => (
+                    path: x.NormalizedPath,
+                    size: assetSizes.GetOrAdd(x.NormalizedPath, path => fileProvider.GetSize(path))))
+                .Aggregate(
+                    (uncompressed: 0UL, compressed: 0UL),
+                    (sums, value) => (sums.uncompressed + value.size, sums.compressed + EstimateCompressedSize(value)));
+            var (faceGenUncompressedSize, faceGenCompressedSize) = npcFaceGens
+                .SelectMany(pair => new[]
+                {
+                    (path: FileStructure.GetFaceMeshFileName(pair.Key), size: pair.Value.FaceGenSizeBytes),
+                    (path: FileStructure.GetFaceTintFileName(pair.Key), size: pair.Value.FaceTintSizeBytes),
+                })
+                .Aggregate(
+                    (uncompressed: 0UL, compressed: 0UL),
+                    (sums, value) => (sums.uncompressed + value.size, sums.compressed + EstimateCompressedSize(value)));
             isInitialSizeComputed = true;
-            UncompressedSizeBytes = sharedAssetsSizeBytes + (ulong)faceGenAssetsSizeBytes;
+            UncompressedSizeBytes = sharedUncompressedSize + faceGenUncompressedSize;
+            CompressedSizeBytes = sharedCompressedSize + faceGenCompressedSize;
             MissingAssets = allAssets
                 .Where(x => !x.SourceRecordTypes.SetEquals(NonCriticalSourceRecordTypes))
                 .Where(x => assetSizes.GetOrDefault(x.NormalizedPath) == 0)
