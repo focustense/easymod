@@ -36,6 +36,9 @@
                              Tag="{Binding ElementName=PluginsExpander}">Plugins</ListBoxItem>
                 <ListBoxItem Selected="SectionListBoxItem_Selected"
                              PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown"
+                             Tag="{Binding ElementName=AssetsExpander}">Resources</ListBoxItem>
+                <ListBoxItem Selected="SectionListBoxItem_Selected"
+                             PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown"
                              Tag="{Binding ElementName=AlertsExpander}">Alerts</ListBoxItem>
                 <ListBoxItem Selected="SectionListBoxItem_Selected"
                              PreviewMouseLeftButtonDown="SectionListBoxItem_PreviewMouseLeftButtonDown"
@@ -302,6 +305,55 @@
                                 </DataGrid.RowStyle>
                             </DataGrid>
                         </ui:SimpleStackPanel>
+                    </Expander>
+                    <Expander x:Name="AssetsExpander" IsExpanded="{Binding IsAssetsExpanded}" Margin="8" d:IsExpanded="False">
+                        <Expander.Header>
+                            <TextBlock FontSize="18">Resources</TextBlock>
+                        </Expander.Header>
+                        <Grid>
+                            <Border Background="{StaticResource NpcFilterModdedBackgroundBrush}"
+                                    BorderBrush="{StaticResource GroupBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Margin="0,4,0,0"
+                                    Padding="8"
+                                    Visibility="{Binding Assets.HasMissingAssets, Converter={StaticResource InvBoolToVisibility}}">
+                                <TextBlock TextWrapping="Wrap">
+                                    <Run FontWeight="SemiBold">You're all good!</Run> All of the resource files (meshes, textures, etc.) required by your chosen NPC overhauls are
+                                    present and accounted for.
+                                </TextBlock>
+                            </Border>
+                            <ui:SimpleStackPanel Margin="0,4,0,0"
+                                                 Visibility="{Binding Assets.HasMissingAssets, Converter={StaticResource BoolToVisibility}}">
+                                <Border Background="{StaticResource HelpPanelBackgroundBrush}"
+                                        BorderBrush="{StaticResource SystemControlBackgroundChromeMediumBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4,4,0,0"
+                                        Padding="8">
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap">
+                                        Your current profile references <Run Foreground="{StaticResource SystemControlErrorTextForegroundBrush}">missing assets</Run>.
+                                        <Run Text="{StaticResource AppName}"/> can't find these files anywhere in your game data or loaded archives, and the NPCs which
+                                        reference them - even indirectly - may not have the expected appearance, or in severe cases may crash the game. Refer to the list
+                                        below for details.
+                                    </TextBlock>
+                                </Border>
+                                <DataGrid AutoGenerateColumns="False"
+                                          HeadersVisibility="Column"
+                                          IsReadOnly="True"
+                                          ItemsSource="{Binding Assets.MissingAssets}"
+                                          MaxHeight="300"
+                                          SelectionMode="Single"
+                                          local:ForceTextTrimming.ForceTextTrimming="CharacterEllipsis">
+                                    <i:Interaction.Behaviors>
+                                        <local:WheelBubblingBehavior/>
+                                    </i:Interaction.Behaviors>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Kind}" CellStyle="{StaticResource TooltipCellStyle}" Header="Type" Width="100"/>
+                                        <DataGridTextColumn Binding="{Binding NormalizedPath}" CellStyle="{StaticResource TooltipCellStyle}" Header="File Name" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </ui:SimpleStackPanel>
+                        </Grid>
                     </Expander>
                     <Expander x:Name="AlertsExpander" IsExpanded="{Binding IsAlertsExpanded}" Margin="8" d:IsExpanded="False">
                         <Expander.Header>

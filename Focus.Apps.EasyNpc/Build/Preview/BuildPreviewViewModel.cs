@@ -13,6 +13,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public AlertsViewModel Alerts { get; private init; }
         public AssetsViewModel Assets { get; private init; }
         public bool IsAlertsExpanded { get; set; }
+        public bool IsAssetsExpanded { get; set; }
         public bool IsNpcsExpanded { get; set; } 
         public bool IsOutputExpanded { get; set; }
         public bool IsPluginsExpanded { get; set; }

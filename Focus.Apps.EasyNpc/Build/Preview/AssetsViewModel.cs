@@ -34,6 +34,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         [DependsOn(nameof(CompressedSizeBytes))]
         public decimal CompressedSizeGb => Math.Round((decimal)CompressedSizeBytes / GB, 1);
         public ulong CompressedSizeBytes { get; private set; }
+        [DependsOn(nameof(MissingAssets))]
+        public bool HasMissingAssets => MissingAssets.Count > 0;
         public IReadOnlyList<AssetReference> MissingAssets { get; private set; } =
             new List<AssetReference>().AsReadOnly();
         public ulong UncompressedSizeBytes { get; private set; }
@@ -177,6 +179,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             MissingAssets = allAssets
                 .Where(x => !x.SourceRecordTypes.SetEquals(NonCriticalSourceRecordTypes))
                 .Where(x => assetSizes.GetOrDefault(x.NormalizedPath) == 0)
+                .OrderBy(x => x.Kind)
+                .ThenBy(x => PathComparer.NormalizePath(x.NormalizedPath))
                 .ToList()
                 .AsReadOnly();
         }
