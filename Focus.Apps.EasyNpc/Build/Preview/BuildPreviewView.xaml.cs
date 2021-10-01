@@ -14,6 +14,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
     /// </summary>
     public partial class BuildPreviewView : UserControl
     {
+        public event EventHandler? BuildClick;
+
         protected BuildPreviewViewModel Model => (BuildPreviewViewModel)DataContext;
 
         private CancellationTokenSource? scrollCts;
@@ -31,6 +33,11 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 ScrollToGroup(expander);
             else
                 ScrollToOffset(0);
+        }
+
+        private void BuildButton_Click(object sender, RoutedEventArgs e)
+        {
+            BuildClick?.Invoke(this, EventArgs.Empty);
         }
 
         private void ContentScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)

@@ -16,6 +16,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public AlertsViewModel Alerts { get; private init; }
         public AssetsViewModel Assets { get; private init; }
+        public BuildSettings? CurrentSettings { get; private set; }
         [DependsOn(nameof(ErrorLevel))]
         public bool HasErrorsOrWarnings => OverallErrorLevel >= ErrorLevel.Warning;
         public bool IsAlertsExpanded { get; set; }
@@ -50,6 +51,9 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 .Select(errorLevels => errorLevels.Max())
                 .TakeUntil(disposed)
                 .Subscribe(lvl => OverallErrorLevel = lvl);
+            Output.BuildSettings
+                .TakeUntil(disposed)
+                .Subscribe(settings => CurrentSettings = settings);
         }
 
         public void Dispose()
