@@ -28,7 +28,6 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<OrphanedNpcs>().As<IGlobalBuildCheck>();
             builder.RegisterType<OverriddenArchives>().As<IGlobalBuildCheck>();
             builder.RegisterType<WigConversions>().As<INpcBuildCheck>();
-            builder.RegisterType<BuildChecker>().As<IBuildChecker>().SingleInstance();
             builder.RegisterType<BuildTaskViewModel>();
             builder.RegisterType<BuildProgressViewModel<BuildReport>>();
             builder.RegisterType<BuildViewModel>();
