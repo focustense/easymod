@@ -32,6 +32,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         public IObservable<NpcOption> FaceOptionObservable => faceOption;
         public bool HasMissingPlugins =>
             !string.IsNullOrEmpty(MissingDefaultPluginName) || !string.IsNullOrEmpty(MissingFacePluginName);
+        public bool HasUnmodifiedFaceTemplate { get; private init; }
         public bool IsFemale => records.Master.IsFemale;
         public string? MissingDefaultPluginName { get; private set; }
         public string? MissingFacePluginName { get; private set; }
@@ -70,6 +71,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 .Select(x => new NpcOption(x, baseGamePluginNames.Contains(x.PluginName)))
                 .ToList()
                 .AsReadOnly();
+            HasUnmodifiedFaceTemplate = CheckUnmodifiedFaceTemplate();
 
             // The last plugin in the load order is not a suitable default choice, despite this being the same behavior
             // as the game itself, without a patch.
@@ -108,15 +110,6 @@ namespace Focus.Apps.EasyNpc.Profiles
         public int GetOverrideCount(bool includeBaseGame)
         {
             return Options.Count(x => includeBaseGame || !x.IsBaseGame);
-        }
-
-        public bool HasUnmodifiedFaceTemplate()
-        {
-            return Options
-                .Select(x => x.Analysis.TemplateInfo?.InheritsTraits == true ? x.Analysis.TemplateInfo.Key : null)
-                .NotNull()
-                .Distinct(RecordKeyComparer.Default)
-                .Count() == 1;
         }
 
         public bool IsDefaultPlugin(string pluginName)
@@ -200,6 +193,24 @@ namespace Focus.Apps.EasyNpc.Profiles
             LogProfileEvent(NpcProfileField.FacePlugin, null, FaceOption.PluginName);
             if (FaceGenOverride is not null)
                 LogProfileEvent(NpcProfileField.FaceMod, null, new ModLocatorKey(FaceGenOverride).ToString());
+        }
+
+        private bool CheckUnmodifiedFaceTemplate()
+        {
+            if (Options.Count == 0)
+                return false;
+            RecordKey? previousTemplateKey = null;
+            var keyComparer = RecordKeyComparer.Default;
+            foreach (var option in Options)
+            {
+                if (option.Analysis.TemplateInfo is null || !option.Analysis.TemplateInfo.InheritsTraits)
+                    return false;
+                var currentTemplateKey = option.Analysis.TemplateInfo.Key;
+                if (previousTemplateKey is not null && !keyComparer.Equals(previousTemplateKey, currentTemplateKey))
+                    return false;
+                previousTemplateKey = currentTemplateKey;
+            }
+            return true;
         }
 
         private ChangeResult SetFaceGenOverride(ModInfo? mod)

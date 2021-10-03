@@ -127,7 +127,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                     formId : uint.MaxValue);
             // Permanent filter - never show NPCs whose overrides all inherit traits from the same template, as there
             // are no meaningful visual customization choices to be made.
-            filteredNpcs = filteredNpcs.Where(x => !x.HasUnmodifiedFaceTemplate());
+            filteredNpcs = filteredNpcs.Where(x => !x.HasUnmodifiedFaceTemplate);
             Grid.Npcs = alwaysVisibleNpcKeys
                 .Select(x => npcs.GetOrDefault(x))
                 .NotNull()

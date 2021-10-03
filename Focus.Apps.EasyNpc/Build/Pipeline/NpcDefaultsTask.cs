@@ -46,7 +46,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 {
                     log.Debug("Importing default attributes for {npcLabel}", npc.DescriptiveLabel);
                     NextItem(npc.DescriptiveLabel);
-                    if (npc.HasUnmodifiedFaceTemplate())
+                    if (npc.HasUnmodifiedFaceTemplate)
                     {
                         log.Information(
                             "Skipping {npcLabel} because all overrides use the same template.", npc.DescriptiveLabel);
