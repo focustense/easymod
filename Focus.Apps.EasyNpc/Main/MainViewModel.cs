@@ -98,7 +98,7 @@ namespace Focus.Apps.EasyNpc.Main
                 var loadOrderAnalysis = await Loader.Tasks!.LoadOrderAnalysis;
                 var profileModel = await Loader.Tasks!.Profile.ConfigureAwait(false);
                 Profile = profileFactory(profileModel);
-                StartupReport = startupReportFactory(profileModel);
+                StartupReport = startupReportFactory(profileModel, loadOrderAnalysis);
                 var preview = buildPreviewFactory(profileModel, loadOrderAnalysis);
                 Build = buildFactory(preview);
                 Maintenance = maintenanceFactory(profileModel);

@@ -39,7 +39,7 @@
                           SourcePageType="{x:Type config:SettingsPage}"/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type rpt:StartupReportViewModel}">
-                <DockPanel Margin="8">
+                <DockPanel Margin="12,8">
                     <Border DockPanel.Dock="Bottom" Margin="0,8,0,0">
                         <ui:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                             <Button x:Name="ContinueButton"

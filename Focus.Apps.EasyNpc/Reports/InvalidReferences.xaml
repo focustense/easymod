@@ -3,10 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Focus.Apps.EasyNpc.Reports"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:local="clr-namespace:Focus.Apps.EasyNpc"
+             xmlns:rpt="clr-namespace:Focus.Apps.EasyNpc.Reports"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              mc:Ignorable="d" 
-             d:DataContext="{d:DesignInstance Type=local:InvalidReferencesViewModel}"
+             d:DataContext="{d:DesignInstance Type=rpt:InvalidReferencesViewModel}"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <CollectionViewSource x:Key="GroupedModels" Source="{Binding Items}">
@@ -19,6 +21,9 @@
         <ListView BorderBrush="{StaticResource SystemControlForegroundBaseMediumLowBrush}"
                   BorderThickness="1"
                   ItemsSource="{Binding Source={StaticResource GroupedModels}}">
+            <i:Interaction.Behaviors>
+                <local:WheelBubblingBehavior/>
+            </i:Interaction.Behaviors>
             <ListView.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.ContainerStyle>

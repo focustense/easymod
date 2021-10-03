@@ -206,6 +206,61 @@ namespace Focus.Analysis.Tests
         }
 
         [Fact]
+        public void WhenPluginAnalysisFails_ProvidesEmptyAnalysisWithException()
+        {
+            availablePlugins.AddRange(new[] { "plugin1", "plugin2", "plugin3", "plugin4" });
+            SetupLoadOrderGraph(new()
+            {
+                { "plugin1", Enumerable.Empty<string>() },
+                { "plugin2", Enumerable.Empty<string>() },
+                { "plugin3", Enumerable.Empty<string>() },
+                { "plugin4", Enumerable.Empty<string>() },
+            });
+            SetupRecordScanner("plugin1", new() { { RecordType.Keyword, new[] { "keyword1:plugin1" } } });
+            SetupRecordScanner("plugin2", new() { { RecordType.Keyword, new[] { "keyword2:plugin2" } } });
+            SetupRecordScanner("plugin3", new() { { RecordType.Keyword, new[] { "keyword3:plugin3" } } });
+            SetupRecordScanner("plugin4", new() { { RecordType.Keyword, new[] { "keyword4:plugin4" } } });
+            var analyzerMock = new Mock<IRecordAnalyzer<RecordAnalysis>>();
+            analyzerMock.SetupGet(x => x.RecordType).Returns(RecordType.Keyword);
+            analyzerMock.Setup(x => x.Analyze(It.IsAny<string>(), It.IsAny<IRecordKey>()))
+                .Returns((string pluginName, IRecordKey key) =>
+                    pluginName == "plugin1" || pluginName == "plugin4" ?
+                        DefaultAnalyze(pluginName, key, RecordType.Keyword, "Keyword") :
+                        throw new Exception("Test analysis failure"));
+
+            var loadOrderAnalysis = runner
+                .Configure(RecordType.Keyword, analyzerMock.Object)
+                .Run();
+
+            Assert.Collection(
+                loadOrderAnalysis.Plugins,
+                plugin =>
+                {
+                    Assert.Null(plugin.Exception);
+                    Assert.Collection(
+                        plugin.Groups[RecordType.Keyword].Records,
+                        keyword => Assert.Equal("Keyword_keyword1:plugin1", keyword.EditorId));
+                },
+                plugin =>
+                {
+                    Assert.NotNull(plugin.Exception);
+                    Assert.Empty(plugin.Groups);
+                },
+                plugin =>
+                {
+                    Assert.NotNull(plugin.Exception);
+                    Assert.Empty(plugin.Groups);
+                },
+                plugin =>
+                {
+                    Assert.Null(plugin.Exception);
+                    Assert.Collection(
+                        plugin.Groups[RecordType.Keyword].Records,
+                        keyword => Assert.Equal("Keyword_keyword4:plugin4", keyword.EditorId));
+                });
+        }
+
+        [Fact]
         public void WhenBaseNotRequested_IgnoresImplicits()
         {
             availablePlugins.AddRange(new[] { "plugin1", "plugin2", "plugin3" });
@@ -300,20 +355,27 @@ namespace Focus.Analysis.Tests
             }, includedEditorIds);
         }
 
+        private FakeRecordAnalysis DefaultAnalyze(
+            string pluginName, IRecordKey key, RecordType recordType, string editorIdPrefix)
+        {
+            return new FakeRecordAnalysis(recordType)
+            {
+                BasePluginName = key.BasePluginName,
+                LocalFormIdHex = key.LocalFormIdHex,
+                EditorId = $"{editorIdPrefix}_{key}",
+                Exists = true,
+                IsInjectedOrInvalid = false,
+                IsOverride = !key.PluginEquals(pluginName),
+            };
+        }
+
         private Mock<IRecordAnalyzer<RecordAnalysis>> DefaultAnalyzerMock(RecordType recordType, string editorIdPrefix)
         {
             var mock = new Mock<IRecordAnalyzer<RecordAnalysis>>();
             mock.SetupGet(x => x.RecordType).Returns(recordType);
             mock.Setup(x => x.Analyze(It.IsAny<string>(), It.IsAny<IRecordKey>()))
-                .Returns((string pluginName, IRecordKey key) => new FakeRecordAnalysis(recordType)
-                {
-                    BasePluginName = key.BasePluginName,
-                    LocalFormIdHex = key.LocalFormIdHex,
-                    EditorId = $"{editorIdPrefix}_{key}",
-                    Exists = true,
-                    IsInjectedOrInvalid = false,
-                    IsOverride = !key.PluginEquals(pluginName),
-                });
+                .Returns((string pluginName, IRecordKey key) =>
+                    DefaultAnalyze(pluginName, key, recordType, editorIdPrefix));
             return mock;
         }
 
