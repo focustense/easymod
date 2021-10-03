@@ -50,6 +50,28 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     addon.AdditionalRaces.Add(actualRace.FormKey);
         }
 
+        public void AddFormListKey(IFormLinkGetter<IFormListGetter> formListLink, FormKey itemKey)
+        {
+            var formListKey = formListLink.FormKey;
+            if (formListKey.IsNull || formListKey.ModKey != mergedMod.ModKey)
+                return;
+            var formList = GetIfMerged<FormList>(formListKey);
+            if (formList is not null && !formList.Items.Contains(itemKey))
+                formList.Items.Add(itemKey);
+        }
+
+        public void AddHeadPartRace(IFormLinkGetter<IHeadPartGetter> headPartLink, IFormLinkGetter<IRaceGetter> raceLink)
+        {
+            if (raceLink.IsNull)
+                return;
+            var headPartKey = headPartLink.FormKey;
+            if (headPartKey.IsNull || headPartKey.ModKey != mergedMod.ModKey)
+                return;
+            var headPart = GetIfMerged<HeadPart>(headPartKey);
+            if (headPart is not null)
+                AddFormListKey(headPart.ValidRaces, raceLink.FormKey);
+        }
+
         public void AddMaster(string pluginName)
         {
             masters.Add(ModKey.FromNameAndExtension(pluginName));
@@ -140,6 +162,11 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             log.Information("Finished processing cloned art object {FormKey} '{EditorId}'", art.EditorID, art.FormKey);
         }
 
+        private void ImportEmptyFormList(FormList formList)
+        {
+            formList.Items.Clear();
+        }
+
         private void ImportHeadPartDependencies(HeadPart headPart)
         {
             log.Debug(
@@ -148,6 +175,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             headPart.Flags &= ~HeadPart.Flag.Playable;
             headPart.Color.SetTo(Import(headPart.Color, mergedMod.Colors));
             headPart.TextureSet.SetTo(Import(headPart.TextureSet, mergedMod.TextureSets));
+            headPart.ValidRaces.SetTo(Import(headPart.ValidRaces, mergedMod.FormLists, ImportEmptyFormList));
             ReplaceAlternateTextures(headPart.Model?.AlternateTextures);
             ReplaceList(headPart.ExtraParts, mergedMod.HeadParts, ImportHeadPartDependencies);
             log.Information(

@@ -87,6 +87,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                         if (mergedHeadPart.HasValue)
                             record.HeadParts.Add(mergedHeadPart.Value);
                     }
+                    foreach (var headPart in record.HeadParts)
+                        patch.Importer.AddHeadPartRace(headPart, record.Race);
                     log.Debug("Importing hair color from {pluginName}", model.FaceOption.PluginName);
                     record.HairColor.SetTo(patch.Importer.Import(faceNpcRecord.HairColor, x => x.Colors));
                     log.Debug("Importing face texture from {pluginName}", model.FaceOption.PluginName);
