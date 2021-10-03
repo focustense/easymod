@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Main
 {
@@ -16,6 +18,12 @@ namespace Focus.Apps.EasyNpc.Main
             Description = new MissingVortexManifestContent(),
         };
 
+        public static StartupWarning InvalidCommandLine(IEnumerable<string> errorMessages) => new()
+        {
+            Title = "Invalid options",
+            Description = new InvalidCommandLineContent { ErrorMessages = errorMessages },
+        };
+
         public static StartupWarning MissingGameData(string gameId, string gameName) => new()
         {
             Title = "Game not found",
@@ -27,6 +35,11 @@ namespace Focus.Apps.EasyNpc.Main
             Title = "Game not supported",
             Description = new UnsupportedGameContent(gameId, gameName),
         };
+    }
+
+    public class InvalidCommandLineContent
+    {
+        public IEnumerable<string> ErrorMessages { get; init; } = Enumerable.Empty<string>();
     }
 
     public class MissingVortexManifestContent
