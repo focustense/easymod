@@ -145,6 +145,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             log.Debug(
                 "Processing head part {FormKey} '{EditorId}' for cloning",
                 headPart.FormKey, headPart.EditorID);
+            headPart.Flags &= ~HeadPart.Flag.Playable;
             headPart.Color.SetTo(Import(headPart.Color, mergedMod.Colors));
             headPart.TextureSet.SetTo(Import(headPart.TextureSet, mergedMod.TextureSets));
             ReplaceAlternateTextures(headPart.Model?.AlternateTextures);
