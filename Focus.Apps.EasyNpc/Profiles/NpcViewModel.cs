@@ -63,25 +63,14 @@ namespace Focus.Apps.EasyNpc.Profiles
             return success;
         }
 
+        public bool TrySetFaceMod(MugshotViewModel mugshot, [MaybeNullWhen(false)] out NpcOptionViewModel option)
+        {
+            return TrySetFaceMod(mugshot.ModName, mugshot.IsBaseGame, out option);
+        }
+
         public bool TrySetFaceMod(string modName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
         {
-            var success = npc.SetFaceMod(modName) == Npc.ChangeResult.OK;
-            if (success)
-            {
-                // If the selected mod ends up being an override (no option/plugin), the "option" parameter will be the
-                // previously-selected option, and the FaceOption won't change. This is the expected behavior. There is
-                // no guarantee that the output option always corresponds to the mod name.
-                option = GetOption(npc.FaceOption.PluginName);
-                if (FaceOption != option)
-                    FaceOption = option;
-                else
-                    // Change handler won't run if they're the same, need to explicitly update mugshot states.
-                    UpdateMugshotAssignments();
-                FaceModNames = npc.GetFaceModNames().ToHashSet(StringComparer.CurrentCultureIgnoreCase);
-            }
-            else
-                option = null;
-            return success;
+            return TrySetFaceMod(modName, false, out option);
         }
 
         public bool TrySetFacePlugin(string pluginName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
@@ -178,6 +167,29 @@ namespace Focus.Apps.EasyNpc.Profiles
                         TrySetFacePlugin(option.PluginName, out _);
                     break;
             }
+        }
+
+        private bool TrySetFaceMod(
+            string modName, bool isBaseGame, [MaybeNullWhen(false)] out NpcOptionViewModel option)
+        {
+            var result = isBaseGame ? npc.RevertToBaseGame() : npc.SetFaceMod(modName);
+            var success = result == Npc.ChangeResult.OK;
+            if (success)
+            {
+                // If the selected mod ends up being an override (no option/plugin), the "option" parameter will be the
+                // previously-selected option, and the FaceOption won't change. This is the expected behavior. There is
+                // no guarantee that the output option always corresponds to the mod name.
+                option = GetOption(npc.FaceOption.PluginName);
+                if (FaceOption != option)
+                    FaceOption = option;
+                else
+                    // Change handler won't run if they're the same, need to explicitly update mugshot states.
+                    UpdateMugshotAssignments();
+                FaceModNames = npc.GetFaceModNames().ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+            }
+            else
+                option = null;
+            return success;
         }
 
         private void UpdateHighlights(string? pluginName)

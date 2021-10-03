@@ -25,7 +25,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             if (e.ChangedButton != MouseButton.Left)
                 return;
             if ((sender as FrameworkElement)?.DataContext is MugshotViewModel mugshot)
-                Model.SelectedNpc?.TrySetFaceMod(mugshot.ModName, out _);
+                Model.SelectedNpc?.TrySetFaceMod(mugshot, out _);
         }
 
         private void SaveProfile_Click(object sender, RoutedEventArgs e)

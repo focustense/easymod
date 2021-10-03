@@ -18,11 +18,6 @@ namespace Focus.Apps.EasyNpc.Profiles
 
     public class LineupBuilder : ILineupBuilder, IDisposable
     {
-        // Placeholders for tracking base game content.
-        private static readonly ModComponentInfo BaseGameComponent = new(
-            new ModLocatorKey(string.Empty, "Vanilla"), string.Empty, "Vanilla", string.Empty);
-        private static readonly ModInfo BaseGameMod = new(string.Empty, "Vanilla");
-
         private readonly Subject<bool> disposed = new();
         private readonly IFileSystem fs;
         private readonly MugshotFile genericFemaleFile;
@@ -68,7 +63,11 @@ namespace Focus.Apps.EasyNpc.Profiles
             var modNamesFromPlugins = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
             var pluginGroups = affectingPlugins
                 .SelectMany(p => loadOrderGraph.IsImplicit(p) ?
-                    new[] { new { Plugin = p, ModComponent = BaseGameComponent, ModKey = BaseGameMod as IModLocatorKey } } :
+                    new[] { new {
+                        Plugin = p,
+                        ModComponent = Placeholders.BaseGameComponent,
+                        ModKey = Placeholders.BaseGameMod as IModLocatorKey
+                    } } :
                     modRepository.SearchForFiles(p, false).Select(x => new { Plugin = p, x.ModComponent, x.ModKey }))
                 .GroupBy(x => x.ModKey, ModLocatorKeyComparer.Default)
                 .Select(g => new
@@ -82,7 +81,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 var mugshotFile = GetMugshotFile(mugshotFiles, pluginGroup.ModKey, npc.IsFemale, modSynonyms);
                 if (!string.IsNullOrEmpty(mugshotFile.TargetModName))
                     includedMugshotModNames.Add(mugshotFile.TargetModName);
-                if (!pluginGroup.ModKey.IsEmpty() && pluginGroup.ModKey != BaseGameMod)
+                if (!pluginGroup.ModKey.IsEmpty() && pluginGroup.ModKey != Placeholders.BaseGameMod)
                     modNamesFromPlugins.Add(pluginGroup.ModKey.Name);
                 yield return CreateMugshotModel(
                     mugshotFile, pluginGroup.ModKey, pluginGroup.Components, pluginGroup.Plugins);
@@ -184,8 +183,8 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             if (modKey is null)
                 return null;
-            if (modKey == BaseGameMod)
-                return BaseGameMod;
+            if (modKey == Placeholders.BaseGameMod)
+                return Placeholders.BaseGameMod;
             return modRepository.FindByKey(modKey);
         }
     }

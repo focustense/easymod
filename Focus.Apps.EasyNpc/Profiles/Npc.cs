@@ -129,6 +129,14 @@ namespace Focus.Apps.EasyNpc.Profiles
             return FaceOption.PluginName.Equals(pluginName, StringComparison.CurrentCultureIgnoreCase);
         }
 
+        public ChangeResult RevertToBaseGame()
+        {
+            var option = Options
+                .Where(x => x.IsBaseGame)
+                .LastOrDefault();
+            return option is not null ? SetFaceOption(option.PluginName) : ChangeResult.Invalid;
+        }
+
         public ChangeResult SetDefaultOption(string pluginName, bool asFallback = false)
         {
             var option = FindOption(pluginName);
@@ -152,12 +160,14 @@ namespace Focus.Apps.EasyNpc.Profiles
         {
             var mod = ModLocatorKey.TryParse(modName, out var key) ?
                 modRepository.FindByKey(key) : modRepository.GetByName(modName);
-            if (mod is null || !modRepository.ContainsFile(mod, FileStructure.GetFaceMeshFileName(this), true))
+            if (mod is null)
+                return ChangeResult.Invalid;
+            var bestOption = Options.LastOrDefault(x => modRepository.ContainsFile(mod, x.PluginName, false));
+            if (bestOption is null && !modRepository.ContainsFile(mod, FileStructure.GetFaceMeshFileName(this), true))
                 return ChangeResult.Invalid;
             if ((FaceGenOverride is not null && FaceGenOverride.IncludesName(modName)) ||
                 modRepository.ContainsFile(mod, FaceOption.PluginName, false))
                 return ChangeResult.Redundant;
-            var bestOption = Options.LastOrDefault(x => modRepository.ContainsFile(mod, x.PluginName, false));
             return bestOption is not null ? SetFaceOption(bestOption.PluginName) : SetFaceGenOverride(mod);
         }
 
