@@ -122,7 +122,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 return null;
 
             log.Debug("Clone requested for {Type} ({FormKey})", link.Type.Name, link.FormKey);
-            if (masters.Contains(link.FormKey.ModKey))
+            if (masters.Contains(link.FormKey.ModKey) && !IsInjected<T, TGetter>(link))
             {
                 log.Debug("Record {FormKey} is already provided by the merged plugin's masters.", link.FormKey);
                 return link.FormKey;
@@ -287,6 +287,18 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             ReplaceAlternateTextures(armor.WorldModel?.Male?.Model?.AlternateTextures);
 
             log.Information("Finished processing cloned armor {FormKey} '{EditorId}'", armor.EditorID, armor.FormKey);
+        }
+
+        private bool IsInjected<T, TGetter>(IFormLinkGetter<TGetter> link)
+            where T : SkyrimMajorRecord, TGetter
+            where TGetter : class, ISkyrimMajorRecordGetter
+        {
+            var baseModKey = link.FormKey.ModKey;
+            // Not the most efficient way to do this check at scale, but seems "good enough" (not more than 1-2
+            // seconds) at this time. Optimal time would be to cache all the relevant top level groups of all the base
+            // mods, and check their contents directly.
+            return link.ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, T, TGetter>(environment.LinkCache)
+                .All(x => x.ModKey != baseModKey);
         }
 
         private void ReplaceAlternateTextures(IEnumerable<AlternateTexture>? altTextures)
