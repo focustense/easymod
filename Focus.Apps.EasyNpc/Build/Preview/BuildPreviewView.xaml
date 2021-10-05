@@ -558,6 +558,34 @@
                                 <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}" Style="{StaticResource CaptionTextBlockStyle}">
                                     Please specify a <Bold>new or empty</Bold> mod. Existing files can interfere with the merge and may also be overwritten or deleted.
                                 </TextBlock>
+                                <ui:SimpleStackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding Output.EnableArchiving}">
+                                        Pack files into archives (recommended)
+                                    </CheckBox>
+                                    <ContentControl Style="{StaticResource HelpIconStyle}" Margin="8,0,0,0">
+                                        <ContentControl.ToolTip>
+                                            <TextBlock>
+                                                Assets such as meshes and textures will be compressed and stored in archives (i.e. BSA files). This option uses much less disk
+                                                space, and typically improves load times significantly. Other mods providing loose files may trigger conflicts, but this can
+                                                usually be resolved by running <Run Text="{StaticResource AppName}"/> in Post-Build mode.
+                                            </TextBlock>
+                                        </ContentControl.ToolTip>
+                                    </ContentControl>
+                                </ui:SimpleStackPanel>
+                                <ui:SimpleStackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding Output.EnableDewiggify}">
+                                        Attempt conversion of wigs to head parts
+                                    </CheckBox>
+                                    <ContentControl Style="{StaticResource HelpIconStyle}" Margin="4,0,0,0">
+                                        <ContentControl.ToolTip>
+                                            <TextBlock>
+                                                NPCs using wigs (Worn Armors with hair addons) will be converted to use real hair, if an equivalent model is availalbe in the
+                                                current load order. If no match is found, the NPC will keep their wig. Disable this option if you are merging NPC mods based
+                                                on HDT-SMP, e.g. most Hair Physics patches.
+                                            </TextBlock>
+                                        </ContentControl.ToolTip>
+                                    </ContentControl>
+                                </ui:SimpleStackPanel>
                                 <TextBlock Text="Plugin Name" Style="{StaticResource LoweredFormLabelStyle}"/>
                                 <TextBox Text="{Binding Output.PluginName, Mode=OneWay}" IsEnabled="False"/>
                                 <TextBlock Foreground="{StaticResource MutedTextBrush}" Style="{StaticResource CaptionTextBlockStyle}">

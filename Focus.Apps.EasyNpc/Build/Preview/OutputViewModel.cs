@@ -29,6 +29,12 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public IObservable<BuildSettings> BuildSettings { get; private init; }
 
+        public bool EnableArchiving
+        {
+            get => enableArchiving.Value;
+            set => enableArchiving.OnNext(value);
+        }
+
         public bool EnableDewiggify
         {
             get => enableDewiggify.Value;
@@ -58,6 +64,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 new(SummaryItemCategory.StatusOk, "Output directory is empty"),
         };
 
+        private readonly BehaviorSubject<bool> enableArchiving = new(true);
         private readonly BehaviorSubject<bool> enableDewiggify = new(true);
         private readonly IFileSystem fs;
         private readonly BehaviorSubject<string> modName = new($"NPC Merge {DateTime.Now:yyyy-MM-dd}");
@@ -70,7 +77,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             this.profile = profile;
             BuildSettings = Observable
                 .CombineLatest(
-                    modSettings.RootDirectoryObservable, modName, enableDewiggify, GetBuildSettings);
+                    modSettings.RootDirectoryObservable, modName, enableArchiving, enableDewiggify, GetBuildSettings);
             BuildSettings.Subscribe(settings =>
             {
                 IsExistingMod = IsOutputDirectoryNonEmpty(settings);
@@ -80,12 +87,13 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         }
 
         private BuildSettings GetBuildSettings(
-            string modRootDirectory, string outputModName, bool enableDewiggify)
+            string modRootDirectory, string outputModName, bool enableArchiving, bool enableDewiggify)
         {
             outputModName = outputModName ?? "";
             var outputDirectory = Path.Combine(modRootDirectory, outputModName);
             return new BuildSettings(profile, outputDirectory, outputModName)
             {
+                EnableArchiving = enableArchiving,
                 EnableDewiggify = enableDewiggify,
             };
         }

@@ -4,6 +4,7 @@ namespace Focus.Apps.EasyNpc.Build
 {
     public class BuildSettings
     {
+        public bool EnableArchiving { get; init; } = true;
         public bool EnableDewiggify { get; init; } = true;
         public string OutputDirectory { get; init; }
         public string OutputModName { get; init; }

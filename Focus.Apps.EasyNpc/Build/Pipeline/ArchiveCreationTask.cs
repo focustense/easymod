@@ -8,7 +8,15 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 {
     public class ArchiveCreationTask : BuildTask<ArchiveCreationTask.Result>
     {
-        public class Result { }
+        public class Result
+        {
+            public bool Skipped { get; private init; }
+
+            public Result(bool skipped = false)
+            {
+                Skipped = skipped;
+            }
+        }
 
         public delegate ArchiveCreationTask Factory(
             PatchSaveTask.Result patch, FaceGenCopyTask.Result faceGens, DewiggifyFaceGensTask.Result faceGenDewiggify,
@@ -41,6 +49,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         protected override async Task<Result> Run(BuildSettings settings)
         {
+            if (!settings.EnableArchiving)
+                return new Result(true);
+
             // FaceGen files are usually much larger and therefore more expensive than other meshes/textures.
             // Applying extra weight to these gives a somewhat more realistic ETA.
             const int FaceGenWeightMultiplier = 3;
