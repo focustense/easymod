@@ -37,8 +37,9 @@ const DUMMY_MOD_ID = 7777777;
 // This really should come from Electron's app.getPath(), same as Vortex itself, but not sure how to
 // use that without including the entire electron package.
 // This implementation comes from https://stackoverflow.com/a/26227660/38360
-const userDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
+const appDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
   process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share");
+const userDataDir = join(appDataDir, 'Vortex');
 
 const init = (context: IExtensionContext) => {
   function activateMod(gameId: string, modName: string): Promise<void> {
