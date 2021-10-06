@@ -23,6 +23,7 @@ interface IModInfo {
 
 interface IBootstrapFile {
   files: Record<string, IFileInfo>;
+  gameDataPath?: string;
   mods: Record<number, IModInfo>;
   reportPath: string;
   stagingDir: string;
@@ -99,6 +100,7 @@ const init = (context: IExtensionContext) => {
   function createLookupFile(profile: IProfile, reportPath: string): string {
     const state = context.api.getState();
     const mods = state.persistent.mods[profile.gameId] || {};
+    const gameInfo = state.settings.gameMode.discovered[profile.gameId] || {};
     let stagingDir = state.settings.mods.installPath[profile.gameId]
       .replace(/{userdata}/ig, userDataDir)
       .replace(/{game}/ig, profile.gameId);
@@ -108,6 +110,9 @@ const init = (context: IExtensionContext) => {
       reportPath,
       stagingDir,
     };
+    if (gameInfo.path) {
+      data.gameDataPath = join(gameInfo.path, 'data');
+    }
     for (const mod of Object.values(mods)) {
       const attributes = (mod.attributes || {}) as IModAttributes;
       data.files[mod.id] = {
