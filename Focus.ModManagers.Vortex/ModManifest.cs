@@ -19,6 +19,7 @@ namespace Focus.ModManagers.Vortex
         [JsonIgnore] // Used only for IModManagerConfiguration, not in file.
         public string ModsDirectory => StagingDir;
 
+        public List<FilePriority> FilePriorities { get; set; } = new();
         public Dictionary<string, FileInfo> Files { get; set; } = new();
         public string GameDataPath { get; set; } = string.Empty;
         public Dictionary<string, ModInfo> Mods { get; set; } = new();
@@ -40,6 +41,12 @@ namespace Focus.ModManagers.Vortex
             return manifest;
         }
     }
+
+    public class FilePriority
+    {
+        public string Path { get; set; } = string.Empty;
+        public string WinningFileId { get; set; } = string.Empty;
+}
 
     public class FileInfo
     {
