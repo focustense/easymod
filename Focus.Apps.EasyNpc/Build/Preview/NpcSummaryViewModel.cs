@@ -24,7 +24,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public string LocalFormIdHex { get; private init; }
         public string Name { get; private init; }
 
-        public NpcSummaryRow(Npc npc)
+        public NpcSummaryRow(INpc npc)
         {
             BasePluginName = npc.BasePluginName;
             LocalFormIdHex = npc.LocalFormIdHex;

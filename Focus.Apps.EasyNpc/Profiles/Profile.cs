@@ -12,16 +12,16 @@ namespace Focus.Apps.EasyNpc.Profiles
     public class ProfileSection
     {
         public int Count => npcs.Count;
-        public IEnumerable<Npc> Npcs => npcs.Values;
+        public IEnumerable<INpc> Npcs => npcs.Values;
 
-        private readonly Dictionary<IRecordKey, Npc> npcs = new();
+        private readonly Dictionary<IRecordKey, INpc> npcs = new();
 
-        public ProfileSection(IEnumerable<Npc> npcs)
+        public ProfileSection(IEnumerable<INpc> npcs)
         {
             this.npcs = npcs.ToDictionary(x => new RecordKey(x), RecordKeyComparer.Default);
         }
 
-        public bool TryGetNpc(IRecordKey key, [MaybeNullWhen(false)] out Npc npc)
+        public bool TryGetNpc(IRecordKey key, [MaybeNullWhen(false)] out INpc npc)
         {
             return npcs.TryGetValue(key, out npc);
         }
@@ -31,7 +31,7 @@ namespace Focus.Apps.EasyNpc.Profiles
     {
         public ProfileSection Hidden { get; private init; }
 
-        public Profile(IEnumerable<Npc> npcs)
+        public Profile(IEnumerable<INpc> npcs)
             : base(npcs.Where(x => x.HasAvailableFaceCustomizations))
         {
             Hidden = new ProfileSection(npcs.Where(x => !x.HasAvailableFaceCustomizations));
@@ -58,7 +58,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             Load(fs);
         }
 
-        public bool TryResolveTemplate(Npc npc, [MaybeNullWhen(false)] out Npc targetNpc)
+        public bool TryResolveTemplate(INpc npc, [MaybeNullWhen(false)] out INpc targetNpc)
         {
             var visitedKeys = new HashSet<IRecordKey>(RecordKeyComparer.Default);
             return TryResolveTemplate(npc, out targetNpc, visitedKeys);
@@ -84,7 +84,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         }
 
         private bool TryResolveTemplate(
-            Npc npc, [MaybeNullWhen(false)] out Npc recursiveTargetNpc, HashSet<IRecordKey> visitedKeys)
+            INpc npc, [MaybeNullWhen(false)] out INpc recursiveTargetNpc, HashSet<IRecordKey> visitedKeys)
         {
             recursiveTargetNpc = null;
             if (npc.DefaultOption.Analysis.TemplateInfo?.InheritsTraits != true)

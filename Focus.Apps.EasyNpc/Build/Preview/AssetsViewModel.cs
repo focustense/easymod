@@ -25,12 +25,12 @@ namespace Focus.Apps.EasyNpc.Build.Preview
     {
         public AssetKind Kind => assetRef.Kind;
         public string NormalizedPath => assetRef.NormalizedPath;
-        public IEnumerable<Npc> ReferencedByNpcs { get; private init; }
+        public IEnumerable<INpc> ReferencedByNpcs { get; private init; }
         public string ScrollKey => $"PreBuild_MissingAssetDetails_{NormalizedPath}";
 
         private readonly AssetReference assetRef;
 
-        public MissingAssetViewModel(AssetReference assetRef, IEnumerable<Npc> referencedByNpcs)
+        public MissingAssetViewModel(AssetReference assetRef, IEnumerable<INpc> referencedByNpcs)
         {
             this.assetRef = assetRef;
             ReferencedByNpcs = referencedByNpcs;
@@ -143,7 +143,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             GC.SuppressFinalize(this);
         }
 
-        private FaceGenInfo GetFaceGenInfo(Npc npc)
+        private FaceGenInfo GetFaceGenInfo(INpc npc)
         {
             var faceGenPath = FileStructure.GetFaceMeshFileName(npc);
             var faceTintPath = FileStructure.GetFaceTintFileName(npc);

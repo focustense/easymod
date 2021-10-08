@@ -10,7 +10,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
 
     public interface INpcBuildCheck
     {
-        IEnumerable<BuildWarning> Run(Npc npc, BuildSettings settings);
+        IEnumerable<BuildWarning> Run(INpc npc, BuildSettings settings);
     }
 
     public interface IPreparableNpcBuildCheck : INpcBuildCheck

@@ -123,7 +123,7 @@ namespace Focus.Apps.EasyNpc.Maintenance
             }
         }
 
-        private Predicate<Npc> GetResetPredicate(NpcProfileField field)
+        private Predicate<INpc> GetResetPredicate(NpcProfileField field)
         {
             if (!OnlyResetInvalid)
                 return npc => true;

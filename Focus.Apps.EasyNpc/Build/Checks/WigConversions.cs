@@ -28,7 +28,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
                 .ToHashSet(RecordKeyComparer.Default);
         }
 
-        public IEnumerable<BuildWarning> Run(Npc npc, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(INpc npc, BuildSettings settings)
         {
             if (!settings.EnableDewiggify || !npc.CanCustomizeFace)
                 yield break;

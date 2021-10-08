@@ -38,9 +38,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         public NpcOptionViewModel? SelectedOption { get; set; }
 
         private readonly bool isInitialized;
-        private readonly Npc npc;
+        private readonly INpc npc;
 
-        public NpcViewModel(Npc npc, IAsyncEnumerable<Mugshot> mugshots)
+        public NpcViewModel(INpc npc, IAsyncEnumerable<Mugshot> mugshots)
         {
             this.npc = npc;
 
@@ -55,7 +55,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public bool TrySetDefaultPlugin(string pluginName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
         {
-            var success = npc.SetDefaultOption(pluginName) == Npc.ChangeResult.OK;
+            var success = npc.SetDefaultOption(pluginName) == NpcChangeResult.OK;
             if (success)
                 DefaultOption = option = GetOption(npc.DefaultOption.PluginName);
             else
@@ -75,7 +75,7 @@ namespace Focus.Apps.EasyNpc.Profiles
 
         public bool TrySetFacePlugin(string pluginName, [MaybeNullWhen(false)] out NpcOptionViewModel option)
         {
-            var success = npc.SetFaceOption(pluginName) == Npc.ChangeResult.OK;
+            var success = npc.SetFaceOption(pluginName) == NpcChangeResult.OK;
             if (success)
             {
                 FaceOption = option = GetOption(npc.FaceOption.PluginName);
@@ -173,7 +173,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             string modName, bool isBaseGame, [MaybeNullWhen(false)] out NpcOptionViewModel option)
         {
             var result = isBaseGame ? npc.RevertToBaseGame() : npc.SetFaceMod(modName);
-            var success = result == Npc.ChangeResult.OK;
+            var success = result == NpcChangeResult.OK;
             if (success)
             {
                 // If the selected mod ends up being an override (no option/plugin), the "option" parameter will be the

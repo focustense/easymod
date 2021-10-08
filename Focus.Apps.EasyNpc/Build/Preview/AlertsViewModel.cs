@@ -145,7 +145,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             GlobalWarnings = globalChecks.SelectMany(x => x.Run(profile, settings)).ToList().AsReadOnly();
         }
 
-        private void RunNpcChecks(Npc npc, BuildSettings settings)
+        private void RunNpcChecks(INpc npc, BuildSettings settings)
         {
             var warnings = npcChecks.SelectMany(c => c.Run(npc, settings)).ToList();
             if (warnings.Count > 0)

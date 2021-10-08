@@ -27,7 +27,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         private readonly HashSet<IRecordKey> alwaysVisibleNpcKeys = new(RecordKeyComparer.Default);
         private readonly ILineupBuilder lineupBuilder;
         private readonly IMessageBus messageBus;
-        private readonly Dictionary<IRecordKey, Npc> npcs = new(RecordKeyComparer.Default);
+        private readonly Dictionary<IRecordKey, INpc> npcs = new(RecordKeyComparer.Default);
         private readonly Dictionary<string, int> pluginOrder;
         private readonly Profile profile;
 
@@ -135,7 +135,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         }
 
         private void ApplySearchParameter(
-            ref IEnumerable<Npc> npcs, Func<INpcSearchParameters, string> propertySelector)
+            ref IEnumerable<INpc> npcs, Func<INpcSearchParameters, string> propertySelector)
         {
             var filterText = propertySelector(Search);
             if (string.IsNullOrEmpty(filterText))
@@ -144,7 +144,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 propertySelector(x)?.Contains(filterText, StringComparison.CurrentCultureIgnoreCase) ?? false);
         }
 
-        private IAsyncEnumerable<Mugshot> GetMugshots(Npc? npc)
+        private IAsyncEnumerable<Mugshot> GetMugshots(INpc? npc)
         {
             if (npc is null)
                 return AsyncEnumerable.Empty<Mugshot>();
@@ -184,7 +184,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                 messageBus.Send(new NpcConfigurationChanged(new RecordKey(vm)));
         }
 
-        private void UpdateSelectedNpc(Npc? npc)
+        private void UpdateSelectedNpc(INpc? npc)
         {
             if (npc is null)
             {

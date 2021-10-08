@@ -15,7 +15,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.modRepository = modRepository;
         }
 
-        public IEnumerable<BuildWarning> Run(Npc npc, BuildSettings _)
+        public IEnumerable<BuildWarning> Run(INpc npc, BuildSettings _)
         {
             if (!npc.CanCustomizeFace)
                 yield break;
