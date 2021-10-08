@@ -1,25 +1,30 @@
 ﻿using Focus.Analysis.Execution;
 using Focus.Analysis.Records;
+using Focus.Providers.Mutagen;
 using Focus.Providers.Mutagen.Analysis;
 using Mutagen.Bethesda.Skyrim;
 using Serilog;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Mutagen
 {
     public class MutagenLoadOrderAnalyzer : LoadOrderAnalyzer
     {
+        private readonly IReadOnlyList<string> baseMasters;
         private readonly IGroupCache groupCache;
         private readonly bool purgeOnComplete;
 
-        public MutagenLoadOrderAnalyzer(IGroupCache groupCache, ILogger log)
-            : this(groupCache, log, true) { }
+        public MutagenLoadOrderAnalyzer(IGroupCache groupCache, ISetupStatics setup, GameSelection game, ILogger log)
+            : this(groupCache, setup, game, log, true) { }
 
-        public MutagenLoadOrderAnalyzer(IGroupCache groupCache, ILogger log, bool purgeOnComplete = true)
+        public MutagenLoadOrderAnalyzer(
+            IGroupCache groupCache, ISetupStatics setup, GameSelection game, ILogger log, bool purgeOnComplete = true)
             : base(new RecordScanner(groupCache), log)
         {
             this.groupCache = groupCache;
             this.purgeOnComplete = purgeOnComplete;
+            baseMasters = setup.GetBaseMasters(game.GameRelease).Select(x => x.FileName.String).ToList().AsReadOnly();
         }
 
         protected override void Configure(AnalysisRunner runner)
@@ -69,6 +74,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
         private static void ConfigureReferences(IReferenceFollower<INpcGetter> follower)
         {
             follower
+                .WithPluginExclusions(baseMasters)
                 .Follow(x => x.HairColor)
                 .Follow(x => x.HeadParts, headPart => headPart
                     .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture))

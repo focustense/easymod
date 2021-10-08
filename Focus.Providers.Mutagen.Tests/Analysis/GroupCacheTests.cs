@@ -201,6 +201,22 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
         }
 
         [Fact]
+        public void GetWinnerWithSource_ReturnsWinningOverrideWithPlugin()
+        {
+            var mod1 = AddLoadedMod("mod1.esp");
+            mod1.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod1Record" });
+            var mod2 = AddLoadedMod("mod2.esp");
+            mod2.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod2Record" });
+            mod2.Shouts.Add(new Shout(FormKey.Factory("000002:mod2.esp"), release) { EditorID = "DummyRecord" });
+            var mod3 = AddLoadedMod("mod3.esp");
+            mod3.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod3Record" });
+
+            var winner = groups.GetWinnerWithSource(FormKey.Factory("000001:mod1.esp").AsLink<Shout>());
+            Assert.Equal("mod3.esp", winner.Key);
+            Assert.Equal("Mod3Record", winner.Value.EditorID);
+        }
+
+        [Fact]
         public void MasterExists_WhenModNotLoaded_ReturnsFalse()
         {
             Assert.False(groups.MasterExists(FormKey.Factory("000002:mod.esp"), RecordType.Shout));

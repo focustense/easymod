@@ -1,4 +1,5 @@
-﻿using Mutagen.Bethesda.Plugins;
+﻿using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
 using System;
@@ -40,6 +41,8 @@ namespace Focus.Providers.Mutagen.Analysis
         IReferenceFollower<T> FollowSelf(Func<T, IFormLinkGetter<T>?> linkSelector);
 
         IReferenceFollower<T> FollowSelf(Func<T, IEnumerable<IFormLinkGetter<T>?>?> linksSelector);
+
+        IReferenceFollower<T> WithPluginExclusions(IEnumerable<string> pluginNames);
     }
 
     public abstract class ReferenceFollower<T, TAccumulate, TResult> : IReferenceFollower<T>
@@ -48,6 +51,7 @@ namespace Focus.Providers.Mutagen.Analysis
         protected ConcurrentDictionary<FormKey, TAccumulate> AccumulatorCache { get; private set; } = new();
         protected IGroupCache GroupCache { get; private init; }
 
+        private readonly HashSet<string> excludedPluginNames = new(StringComparer.CurrentCultureIgnoreCase);
         private readonly List<Func<T, TResult?, IEnumerable<TResult>>> routes = new();
 
         public ReferenceFollower(IGroupCache groupCache)
@@ -108,6 +112,7 @@ namespace Focus.Providers.Mutagen.Analysis
         {
             var subrecordFollower = CreateChild<TNext>();
             subrecordFollower.AccumulatorCache = AccumulatorCache;
+            subrecordFollower.WithPluginExclusions(excludedPluginNames);
             configure?.Invoke(subrecordFollower);
             routes.Add((record, previous) => Walk(record, previous, linksSelector, subrecordFollower));
             return this;
@@ -122,6 +127,13 @@ namespace Focus.Providers.Mutagen.Analysis
         public IReferenceFollower<T> FollowSelf(Func<T, IEnumerable<IFormLinkGetter<T>?>?> linksSelector)
         {
             routes.Add((record, previous) => Walk(record, previous, linksSelector, this));
+            return this;
+        }
+
+        public IReferenceFollower<T> WithPluginExclusions(IEnumerable<string> pluginNames)
+        {
+            foreach (var pluginName in pluginNames)
+                excludedPluginNames.Add(pluginName);
             return this;
         }
 
@@ -149,14 +161,18 @@ namespace Focus.Providers.Mutagen.Analysis
             {
                 if (link is null || link.IsNull)
                     continue;
-                var nextRecord = link.WinnerFrom(GroupCache);
-                if (nextRecord is null)
+                var nextRecordWithSource = GroupCache.GetWinnerWithSource(link);
+                if (nextRecordWithSource is null)
                 {
                     var target = AccumulatorCache.GetOrAdd(link.FormKey, _ => VisitMissing(link));
                     if (IsTerminal(target))
                         yield return Accumulate(result, target);
                     continue;
                 }
+                var nextPlugin = nextRecordWithSource.Key;
+                if (excludedPluginNames.Contains(nextPlugin))
+                    continue;
+                var nextRecord = nextRecordWithSource.Value;
                 var subrecordResults = subrecordFollower.routes
                     .Select(ps => ps(nextRecord, result))
                     .SelectMany(results => results);

@@ -108,6 +108,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return GetAll(link).FirstOrDefault()?.Value;
         }
 
+        public IKeyValue<T, string> GetWinnerWithSource<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            return GetAll(link).FirstOrDefault();
+        }
+
         public bool MasterExists(FormKey formKey, RecordType recordType)
         {
             return GetCache(formKey.ModKey.FileName, recordType.GetGroupType()).ContainsKey(formKey);
