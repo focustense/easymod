@@ -29,7 +29,8 @@ namespace Focus.Apps.EasyNpc.Mutagen
 
         protected override void Configure(AnalysisRunner runner)
         {
-            var referenceChecker = new ReferenceChecker<INpcGetter>(groupCache).Configure(ConfigureReferences);
+            var referenceChecker = new ReferenceChecker<INpcGetter>(groupCache)
+                .Configure(ConfigureNpcReferences);
             var assetPathConfig = AssetPathConfiguration.Builder()
                 .For<IArmorAddonGetter>(armorAddon => armorAddon
                     .Add(AssetKind.Mesh, x => x.FirstPersonModel, x => x.File)
@@ -58,7 +59,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     }))
                 .Build();
             var assetPathExtractor = new AssetPathExtractor<INpcGetter>(groupCache, assetPathConfig)
-                .ConfigureRoutes(ConfigureReferences);
+                .ConfigureRoutes(ConfigureNpcReferences);
             runner
                 .Configure(RecordType.Npc, new NpcAnalyzer(groupCache, referenceChecker, assetPathExtractor))
                 .Configure(RecordType.HeadPart, new HeadPartAnalyzer(groupCache));
@@ -71,33 +72,46 @@ namespace Focus.Apps.EasyNpc.Mutagen
                 groupCache.Purge();
         }
 
-        private static void ConfigureReferences(IReferenceFollower<INpcGetter> follower)
+        private static void ConfigureArmorReferences(IReferenceFollower<IArmorGetter> armor)
+        {
+            armor
+                .Follow(x => x.Armature, addon => addon
+                    .Follow(x => x.AdditionalRaces)
+                    .Follow(x => x.ArtObject, artObject => artObject
+                        .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture)))
+                    .Follow(x => x.FirstPersonModel, g => g.AlternateTextures?.Select(x => x.NewTexture))
+                    .Follow(x => x.Race)
+                    .Follow(x => x.SkinTexture)
+                    .Follow(x => x.TextureSwapList, swapList => swapList
+                        .Follow(x => x.Items
+                            .Where(x => x.Type == typeof(ITextureSetGetter))
+                            .Select(x => x.FormKey.AsLinkGetter<ITextureSetGetter>())))
+                    .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(x => x.NewTexture)))
+                .Follow(x => x.Keywords)
+                .FollowSelf(x => x.TemplateArmor)
+                .Follow(x => x.WorldModel, g => g.Model?.AlternateTextures?.Select(t => t.NewTexture));
+        }
+
+        private static void ConfigureHeadPartReferences(IReferenceFollower<IHeadPartGetter> headPart)
+        {
+            headPart
+                .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture))
+                .Follow(x => x.Color)
+                .FollowSelf(x => x.ExtraParts)
+                .Follow(x => x.TextureSet);
+        }
+
+        private void ConfigureNpcReferences(IReferenceFollower<INpcGetter> follower)
         {
             follower
                 .WithPluginExclusions(baseMasters)
                 .Follow(x => x.HairColor)
-                .Follow(x => x.HeadParts, headPart => headPart
-                    .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture))
-                    .Follow(x => x.Color)
-                    .FollowSelf(x => x.ExtraParts)
-                    .Follow(x => x.TextureSet))
+                .Follow(x => x.HeadParts, ConfigureHeadPartReferences)
                 .Follow(x => x.HeadTexture)
-                .Follow(x => x.WornArmor, armor => armor
-                    .Follow(x => x.Armature, addon => addon
-                        .Follow(x => x.AdditionalRaces)
-                        .Follow(x => x.ArtObject, artObject => artObject
-                            .Follow(x => x.Model?.AlternateTextures?.Select(t => t.NewTexture)))
-                        .Follow(x => x.FirstPersonModel, g => g.AlternateTextures?.Select(x => x.NewTexture))
-                        .Follow(x => x.Race)
-                        .Follow(x => x.SkinTexture)
-                        .Follow(x => x.TextureSwapList, swapList => swapList
-                            .Follow(x => x.Items
-                                .Where(x => x.Type == typeof(ITextureSetGetter))
-                                .Select(x => x.FormKey.AsLinkGetter<ITextureSetGetter>())))
-                        .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(x => x.NewTexture)))
-                    .Follow(x => x.Keywords)
-                    .FollowSelf(x => x.TemplateArmor)
-                    .Follow(x => x.WorldModel, g => g.Model?.AlternateTextures?.Select(t => t.NewTexture)));
+                .Follow(x => x.Race, race => race
+                    .Follow(x => x.HeadData, g => g.HeadParts.Select(x => x.Head), ConfigureHeadPartReferences)
+                    .Follow(x => x.Skin, ConfigureArmorReferences))
+                .Follow(x => x.WornArmor, ConfigureArmorReferences);
         }
     }
 }
