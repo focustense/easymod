@@ -38,6 +38,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly Subject<bool> disposed = new();
         private readonly IGameSettings gameSettings;
         private readonly IEnumerable<IGlobalBuildCheck> globalChecks;
+        private readonly IObservableModSettings modSettings;
         private readonly IEnumerable<INpcBuildCheck> npcChecks;
         private readonly ConcurrentDictionary<IRecordKey, IReadOnlyList<BuildWarning>> npcWarnings =
             new(RecordKeyComparer.Default);
@@ -45,13 +46,15 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly Profile profile;
 
         public AlertsViewModel(
-            IObservableAppSettings appSettings, IGameSettings gameSettings, IEnumerable<IGlobalBuildCheck> globalChecks,
-            IEnumerable<INpcBuildCheck> npcChecks, Profile profile, IObservable<BuildSettings> buildSettings)
+            IObservableAppSettings appSettings, IGameSettings gameSettings, IObservableModSettings modSettings,
+            IEnumerable<IGlobalBuildCheck> globalChecks, IEnumerable<INpcBuildCheck> npcChecks, Profile profile,
+            IObservable<BuildSettings> buildSettings)
         {
             this.appSettings = appSettings;
             this.buildSettings = buildSettings;
             this.gameSettings = gameSettings;
             this.globalChecks = globalChecks;
+            this.modSettings = modSettings;
             this.npcChecks = npcChecks;
             this.profile = profile;
         }
@@ -59,7 +62,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public void BeginWatching()
         {
             var throttledBuildSettings = buildSettings
-                .Throttle(TimeSpan.FromSeconds(1))
+                .Throttle(TimeSpan.FromSeconds(0.5))
                 .DistinctUntilChanged(x => x.EnableDewiggify)
                 .Publish();
             throttledBuildSettings
@@ -67,11 +70,18 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 .TakeUntil(disposed)
                 .Subscribe(settings =>
                 {
-                    GlobalWarnings = globalChecks.SelectMany(x => x.Run(profile, settings)).ToList().AsReadOnly();
                     Parallel.ForEach(profile.Npcs, npc => RunNpcChecks(npc, settings));
                     NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings).ToList().AsReadOnly();
-                    UpdateSummaryItems();
-                    overallErrorLevel.OnNext(GetErrorLevel());
+                    UpdateResults();
+                });
+            var throttledModSettings = modSettings.RootDirectoryObservable.Throttle(TimeSpan.FromSeconds(1));
+            Observable.CombineLatest(throttledBuildSettings, throttledModSettings, (settings, _) => settings)
+                .ObserveOn(NewThreadScheduler.Default)
+                .TakeUntil(disposed)
+                .Subscribe(settings =>
+                {
+                    RunGlobalChecks(settings);
+                    UpdateResults();
                 });
             var modifiedNpcs = Observable
                 .Merge(profile.Npcs.SelectMany(npc => new[]
@@ -88,8 +98,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 {
                     RunNpcChecks(res.npc, res.settings);
                     NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings).ToList().AsReadOnly();
-                    UpdateSummaryItems();
-                    overallErrorLevel.OnNext(GetErrorLevel());
+                    UpdateResults();
                 });
             throttledBuildSettings.Connect();
             appSettings.BuildWarningWhitelistObservable
@@ -131,6 +140,11 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             return issueCount > 0 ? nonZeroCategory : SummaryItemCategory.StatusOk;
         }
 
+        private void RunGlobalChecks(BuildSettings settings)
+        {
+            GlobalWarnings = globalChecks.SelectMany(x => x.Run(profile, settings)).ToList().AsReadOnly();
+        }
+
         private void RunNpcChecks(Npc npc, BuildSettings settings)
         {
             var warnings = npcChecks.SelectMany(c => c.Run(npc, settings)).ToList();
@@ -138,6 +152,12 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 npcWarnings[npc] = warnings;
             else
                 npcWarnings.TryRemove(npc, out _);
+        }
+
+        private void UpdateResults()
+        {
+            UpdateSummaryItems();
+            overallErrorLevel.OnNext(GetErrorLevel());
         }
 
         private void UpdateSummaryItems()
