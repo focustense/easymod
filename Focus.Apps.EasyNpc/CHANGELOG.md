@@ -5,6 +5,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Brand-new build screen. Details on the [wiki page](https://github.com/focustense/easymod/wiki/EasyNPC-%E2%80%90-Build). Main features:
+  - Single-click builds - no more having to click through multiple screens.
+  - Lots more statistics about the pending build, and some predictive info such as file sizes.
+  - New "NPCs" report showing both the NPCs that are _and aren't_ included in the build.
+  - Improved UI for Master Dependencies, easier to read and includes a category for each.
+  - Missing-assets check to warn about files that can't be found and won't be copied.
+  - All checks done in real-time - build stats automatically update as settings and profile are changed.
+  - Option to disable BSA creation (i.e. loose files only).
+
+### Changed
+- #124: Ensure NPC head parts are flagged as non-playable so that they don't crash the race menu in game.
+- #127: Show a useful error when EasyNPC is started with invalid command-line options.
+- #121: [Vortex Extension] Obtain correct game data path from Vortex.
+
+### Fixed
+- #95: Injected records from mods such as Interesting NPCs Visual Overhaul are now merged properly.
+- #118: Fixed single-template detection logic that was accidentally excluding some NPCs from the profile.
+- #119: Patch the Valid Races form lists copied from overhauls to prevent unexpected master dependencies.
+- #122: Double-clicking on vanilla mugshot now updates the face selection.
+- #123: Read file priorities from Vortex so that Post-Build Report shows correct status.
+- #126: Skip and report broken plugins instead of "crashing" on startup.
+- #128: [Vortex Extension] Use correct substitution for `USERDATA` token.
 
 ## [0.9.4] - 2021-09-21
 ### Added
