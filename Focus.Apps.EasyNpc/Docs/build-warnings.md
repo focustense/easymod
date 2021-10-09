@@ -1,4 +1,9 @@
-﻿# Build Warnings
+﻿<table><tr><td width="880px">
+  <h3>🛑 This documentation is obsolete and will soon be removed.</h3>
+  <p>For the latest, most up-to-date documentation, please head over to the <a href="https://github.com/focustense/easymod/wiki/EasyNPC-%E2%80%90-Home">EasyNPC Wiki pages</a>.</p>
+</td></tr></table>
+
+# Build Warnings
 
 EasyNPC has a set of built-in "preflight checks" before starting a build. While every effort is made to provide detailed explanations within the app, some people may still be confused, or wonder why a particular warning matters - or conversely, why it _doesn't_ seem to matter and they can get away with ignoring it. This page provides additional context on these warnings.
 

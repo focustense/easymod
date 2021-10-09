@@ -1,3 +1,8 @@
+﻿<table><tr><td width="880px">
+  <h3>🛑 This documentation is obsolete and will soon be removed.</h3>
+  <p>For the latest, most up-to-date documentation, please head over to the <a href="https://github.com/focustense/easymod/wiki/EasyNPC-%E2%80%90-Home">EasyNPC Wiki pages</a>.</p>
+</td></tr></table>
+
 # Getting Started with EasyNPC
 
 - [Installation](#installation)
