@@ -22,11 +22,8 @@
                 </TextBlock>
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
                     <Run FontWeight="Medium">Why this matters:</Run>
-                    <Run>Almost all NPC appearance mods have two parts to them: the plugin (.esm/.esp) and the generated face meshes, AKA facegen data. If you're using a mod manager with mod isolation, such as</Run>
-                    <Hyperlink local:HyperlinkExtensions.DefaultNavigation="True" NavigateUri="https://www.modorganizer.org/">Mod Organizer</Hyperlink>
-                    <Run>(recommended), then we need to know where your installed mods are located, so we can keep the plugins and facegens in sync. If you</Run>
-                    <Run FontStyle="Italic">don't</Run>
-                    <Run>use one of these, then you are probably letting different mods irrecoverably overwrite each other's facegen data, which is extremely fragile and almost always causes in-game bugs.</Run>
+                    <Run Text="{StaticResource AppName}"/> <Run>is a "merger", not a "patcher", and needs to be able to find all of the assets (files) for each NPC mod being used.</Run>
+                    <Run>Without a valid mod directory, it is not possible to create a successful merge.</Run>
                 </TextBlock>
                 <TextBlock Style="{StaticResource HelpTextParagraph}">
                     <Run FontWeight="Medium">How to fix it:</Run>

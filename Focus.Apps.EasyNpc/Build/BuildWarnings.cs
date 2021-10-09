@@ -99,10 +99,6 @@ namespace Focus.Apps.EasyNpc.Build
 
     public static class WarningMessages
     {
-        private static readonly string ModRootJustification =
-            "Without direct access to your mod structure, this program can only generate a merged plugin, which " +
-            "will probably break NPC appearances unless you are manually organizing the facegen data.";
-
         public static string BadArchive(string path)
         {
             return $"Archive '{path}' is corrupt or unreadable.";
@@ -137,12 +133,12 @@ namespace Focus.Apps.EasyNpc.Build
 
         public static string ModDirectoryNotFound(string directoryName)
         {
-            return $"Mod directory {directoryName} doesn't exist. {ModRootJustification}";
+            return $"Mod directory {directoryName} doesn't exist.";
         }
 
         public static string ModDirectoryNotSpecified()
         {
-            return "No mod directory specified in settings. " + ModRootJustification;
+            return "No mod directory specified in settings. ";
         }
 
         public static string MultipleArchiveSources(string name, IEnumerable<string> providingMods)
