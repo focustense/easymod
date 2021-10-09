@@ -37,6 +37,7 @@ namespace Focus.Apps.EasyNpc.Build.Checks
                 yield break;
             if (!resolvedWigKeys.Contains(wig.Key))
                 yield return new BuildWarning(
+                    npc.FaceOption.PluginName,
                     new RecordKey(npc),
                     BuildWarningId.WigNotMatched,
                     WarningMessages.WigNotMatched(

@@ -19,19 +19,15 @@ namespace Focus.Apps.EasyNpc.Build.Preview
     {
         public delegate AlertsViewModel Factory(Profile profile, IObservable<BuildSettings> buildSettings);
 
-        public IEnumerable<BuildWarning> GlobalWarnings { get; private set; } = Enumerable.Empty<BuildWarning>();
+        public IReadOnlyList<BuildWarning> GlobalWarnings { get; private set; } = new List<BuildWarning>().AsReadOnly();
         public IEnumerable<SummaryItem> HeaderSummaryItems { get; private set; } = Enumerable.Empty<SummaryItem>();
         public IEnumerable<SummaryItem> MainSummaryItems { get; private set; } = Enumerable.Empty<SummaryItem>();
-        public IEnumerable<BuildWarning> NpcWarnings { get; private set; } = Enumerable.Empty<BuildWarning>();
+        public IReadOnlyList<BuildWarning> NpcWarnings { get; private set; } = new List<BuildWarning>().AsReadOnly();
         public IObservable<ErrorLevel> OverallErrorLevel => overallErrorLevel;
         public BuildWarning? SelectedWarning { get; set; }
 
         [DependsOn(nameof(GlobalWarnings), nameof(NpcWarnings))]
-        public IEnumerable<BuildWarning> Warnings => GlobalWarnings.Concat(NpcWarnings)
-            .OrderByDescending(x => x.Severity)
-            .ThenBy(x => x.Id)
-            .ThenBy(x => x.PluginName, StringComparer.CurrentCultureIgnoreCase)
-            .ThenByLoadOrder(x => x.RecordKey ?? RecordKey.Null, gameSettings.PluginLoadOrder);
+        public IEnumerable<BuildWarning> Warnings => GetVisibleWarnings();
 
         private readonly IObservableAppSettings appSettings;
         private readonly IObservable<BuildSettings> buildSettings;
@@ -135,6 +131,25 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             };
         }
 
+        private IEnumerable<BuildWarning> GetVisibleWarnings()
+        {
+            var suppressions = GetBuildWarningSuppressions();
+
+            bool IsSuppressed(BuildWarning warning)
+            {
+                return !string.IsNullOrEmpty(warning.PluginName) &&
+                    warning.Id != null &&
+                    suppressions[warning.PluginName].Contains(warning.Id.Value);
+            }
+
+            return GlobalWarnings.Concat(NpcWarnings)
+                .Where(x => !IsSuppressed(x))
+                .OrderByDescending(x => x.Severity)
+                .ThenBy(x => x.Id)
+                .ThenBy(x => x.PluginName, StringComparer.CurrentCultureIgnoreCase)
+                .ThenByLoadOrder(x => x.RecordKey ?? RecordKey.Null, gameSettings.PluginLoadOrder);
+        }
+
         private static SummaryItemCategory PickCategory(int issueCount, SummaryItemCategory nonZeroCategory)
         {
             return issueCount > 0 ? nonZeroCategory : SummaryItemCategory.StatusOk;
@@ -162,17 +177,9 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         private void UpdateSummaryItems()
         {
-            int criticalCount = 0, conflictCount = 0, otherCount = 0, suppressedCount = 0;
-            var suppressions = GetBuildWarningSuppressions();
+            int criticalCount = 0, conflictCount = 0, otherCount = 0;
             foreach (var warning in Warnings)
             {
-                if (!string.IsNullOrEmpty(warning.PluginName) &&
-                    warning.Id != null &&
-                    suppressions[warning.PluginName].Contains(warning.Id.Value))
-                {
-                    suppressedCount++;
-                    continue;
-                }
                 if (warning.Severity == BuildWarningSeverity.High)
                 {
                     criticalCount++;
@@ -189,6 +196,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
                 }
             }
+            var suppressedCount = GlobalWarnings.Count + NpcWarnings.Count - criticalCount - conflictCount - otherCount;
             HeaderSummaryItems = new SummaryItem[]
             {
                 new(PickCategory(criticalCount, SummaryItemCategory.StatusError), "Critical issues", criticalCount),
