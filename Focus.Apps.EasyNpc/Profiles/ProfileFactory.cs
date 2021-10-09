@@ -62,10 +62,10 @@ namespace Focus.Apps.EasyNpc.Profiles
                     var npcKey = new RecordKey(npc);
                     var isDefaultPluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.DefaultPlugin), out var defaultPluginEvent) &&
-                        npc.SetDefaultOption(defaultPluginEvent.NewValue ?? string.Empty) == Npc.ChangeResult.Invalid;
+                        npc.SetDefaultOption(defaultPluginEvent.NewValue ?? string.Empty) == NpcChangeResult.Invalid;
                     var isFacePluginInvalid =
                         newestEvents.TryGetValue((npcKey, NpcProfileField.FacePlugin), out var facePluginEvent) &&
-                        npc.SetFaceOption(facePluginEvent.NewValue ?? string.Empty) == Npc.ChangeResult.Invalid;
+                        npc.SetFaceOption(facePluginEvent.NewValue ?? string.Empty) == NpcChangeResult.Invalid;
                     // Face mods are now "facegen overrides", so we only care about (want to restore) this setting if it
                     // actually looks like an override - i.e. if the chosen mod exists and does not include any of the
                     // plugins in the record chain.
@@ -79,7 +79,7 @@ namespace Focus.Apps.EasyNpc.Profiles
                             faceMod is not null &&
                             !npc.Options.Any(x => modRepository.ContainsFile(faceMod, x.PluginName, false));
                         isFaceModInvalid =
-                            isFaceGenOverride && npc.SetFaceMod(faceModEvent.NewValue) == Npc.ChangeResult.Invalid;
+                            isFaceGenOverride && npc.SetFaceMod(faceModEvent.NewValue) == NpcChangeResult.Invalid;
                     }
                     var allEvents = new[] { defaultPluginEvent, facePluginEvent, faceModEvent }.NotNull();
                     if (!allEvents.Any())
@@ -125,18 +125,14 @@ namespace Focus.Apps.EasyNpc.Profiles
             var npcs = analysis
                 .ExtractChains<NpcAnalysis>(RecordType.Npc)
                 .AsParallel()
-                .Where(x =>
-                    x.Master.CanUseFaceGen && !x.Master.IsChild && !x.Master.IsAudioTemplate &&
-                    // Template NPCs that are based on another NPC should be included but treated as "read only".
-                    // If ALL POSSIBILITIES point only to Leveled NPC or unknown/invalid (not standard NPC) targets,
-                    // then there is effectively nothing useful we can do with it and it should be excluded entirely.
-                    x.Any(r =>
-                        r.Analysis.TemplateInfo is null ||
-                        r.Analysis.TemplateInfo.TargetType == NpcTemplateTargetType.Npc))
+                .Where(x => policy.IsModdable(x))
                 .Tap(LogInvalidReferences)
                 .Select(x => new Npc(x, baseGamePluginNames, modRepository, profileEventLog, policy))
-                .Where(x => x.HasAvailableFaceCustomizations)
-                .Tap(defaultAction);
+                .Tap(x =>
+                {
+                    if (x.HasAvailableFaceCustomizations)
+                        defaultAction(x);
+                });
             return new Profile(npcs);
         }
 

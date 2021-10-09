@@ -10,51 +10,68 @@
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=rpt:StartupReportViewModel}"
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        <ui:SimpleStackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
-            <fa:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
-                           Height="48"
-                           Icon="Solid_ExclamationTriangle"
-                           Margin="0,0,16,0"
-                           VerticalAlignment="Center"/>
-            <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
-                       Style="{StaticResource SubheaderTextBlockStyle}"
-                       VerticalAlignment="Center">
-                Problems detected while loading
-            </TextBlock>
-        </ui:SimpleStackPanel>
-        <Border Grid.Row="1"
-                Style="{StaticResource GroupBorder}"
-                Visibility="{Binding HasInvalidReferences, Converter={StaticResource BoolToVisibility}}">
-            <DockPanel>
-                <ui:SimpleStackPanel DockPanel.Dock="Top">
-                    <TextBlock Style="{StaticResource TitleTextBlockStyle}">Invalid References</TextBlock>
-                    <TextBlock Style="{StaticResource ParagraphStyle}">
-                        The following NPC options depend on invalid form IDs and have been disabled to prevent build failures.
-                    </TextBlock>
-                    <Expander Foreground="{StaticResource SystemControlHyperlinkTextBrush}" Header="More info" Margin="0,0,0,8" d:IsExpanded="True">
-                        <TextBlock Background="{StaticResource HelpPanelBackgroundBrush}"
-                                   FontSize="12"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   Padding="4"
-                                   Style="{StaticResource FirstParagraphStyle}" TextWrapping="Wrap">
-                            Some plugins are trying to reference records that don't exist. Records that depend on these references, even
-                            indirectly, cannot be safely imported, because <Run Text="{StaticResource AppName}"/> has no way of knowing whether
-                            they're important or what they were originally supposed to point to. Refer to the
-                            <Hyperlink NavigateUri="{Binding Source='invalid-references', Converter={StaticResource DocUrl}}"
-                                       local:HyperlinkExtensions.DefaultNavigation="True">
-                                invalid references documentation
-                            </Hyperlink>
-                            for more information on possible causes and solutions.
+    <ScrollViewer x:Name="ReportScrollViewer">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ui:SimpleStackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
+                <fa:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                               Height="48"
+                               Icon="Solid_ExclamationTriangle"
+                               Margin="0,0,16,0"
+                               VerticalAlignment="Center"/>
+                <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}"
+                           Style="{StaticResource SubheaderTextBlockStyle}"
+                           VerticalAlignment="Center">
+                    Problems detected while loading
+                </TextBlock>
+            </ui:SimpleStackPanel>
+            <Border Grid.Row="1"
+                    Margin="0,0,0,16"
+                    Visibility="{Binding HasPluginErrors, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel>
+                    <ui:SimpleStackPanel DockPanel.Dock="Top">
+                        <TextBlock Style="{StaticResource TitleTextBlockStyle}">Plugin Errors</TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            The following plugins have serious errors and cannot be used until the errors are fixed. You may need to contact the mod
+                            author for a resolution. Click on an error to see the full details.
                         </TextBlock>
-                    </Expander>
-                </ui:SimpleStackPanel>
-                <rpt:InvalidReferences DataContext="{Binding InvalidReferences}"/>
-            </DockPanel>
-        </Border>
-    </Grid>
+                    </ui:SimpleStackPanel>
+                    <rpt:PluginErrorsView DataContext="{Binding PluginErrors}"/>
+                </DockPanel>
+            </Border>
+            <Border Grid.Row="2"
+                    Margin="0,0,0,16"
+                    Visibility="{Binding HasInvalidReferences, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel>
+                    <ui:SimpleStackPanel DockPanel.Dock="Top">
+                        <TextBlock Style="{StaticResource TitleTextBlockStyle}">Invalid References</TextBlock>
+                        <TextBlock Style="{StaticResource ParagraphStyle}">
+                            The following NPC options depend on invalid form IDs and have been disabled to prevent build failures.
+                        </TextBlock>
+                        <Expander Foreground="{StaticResource SystemControlHyperlinkTextBrush}" Header="More info" Margin="0,0,0,8" d:IsExpanded="True">
+                            <TextBlock Background="{StaticResource HelpPanelBackgroundBrush}"
+                                       FontSize="12"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Padding="4"
+                                       Style="{StaticResource FirstParagraphStyle}" TextWrapping="Wrap">
+                                Some plugins are trying to reference records that don't exist. Records that depend on these references, even
+                                indirectly, cannot be safely imported, because <Run Text="{StaticResource AppName}"/> has no way of knowing whether
+                                they're important or what they were originally supposed to point to. Refer to the
+                                <Hyperlink NavigateUri="{Binding Source='invalid-references', Converter={StaticResource DocUrl}}"
+                                           local:HyperlinkExtensions.DefaultNavigation="True">
+                                    invalid references documentation
+                                </Hyperlink>
+                                for more information on possible causes and solutions.
+                            </TextBlock>
+                        </Expander>
+                    </ui:SimpleStackPanel>
+                    <rpt:InvalidReferences DataContext="{Binding InvalidReferences}"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
 </UserControl>

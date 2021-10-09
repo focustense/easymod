@@ -1,4 +1,3 @@
-using System.Linq;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -41,12 +40,14 @@ namespace Focus.ModManagers.Vortex.Tests
                         ""name"": ""Mod 2""
                     }
                 },
+                ""gameDataPath"": ""C:\\games\\steam\\steamapps\\common\\Skyrim Special Edition\\data"",
                 ""reportPath"": ""C:\\temp\\vortexreport.json"",
                 ""stagingDir"": ""C:\\vortex\\staging""
             }";
             fs.AddFile(@"C:\temp\vortex-bootstrap.json", new MockFileData(json));
             var manifest = ModManifest.LoadFromFile(fs, @"C:\temp\vortex-bootstrap.json");
 
+            Assert.Equal(@"C:\games\steam\steamapps\common\Skyrim Special Edition\data", manifest.GameDataPath);
             Assert.Equal(@"C:\vortex\staging", manifest.StagingDir);
             Assert.Equal(@"C:\vortex\staging", manifest.ModsDirectory);
             Assert.Collection(

@@ -48,6 +48,25 @@
                         </ControlTemplate>
                         <Style x:Key="ListItemStyle" TargetType="TextBlock" BasedOn="{StaticResource ParagraphStyle}"/>
 
+                        <DataTemplate DataType="{x:Type main:InvalidCommandLineContent}">
+                            <ui:SimpleStackPanel>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    <Run Text="{StaticResource AppName}"/> was started with invalid command-line arguments and cannot continue. The errors are listed below.
+                                </TextBlock>
+                                <ItemsControl ItemsSource="{Binding ErrorMessages}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ContentControl Template="{StaticResource ListItem}" Tag="•">
+                                                <TextBlock Style="{StaticResource FirstParagraphStyle}" Text="{Binding}"/>
+                                            </ContentControl>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Style="{StaticResource ParagraphStyle}">
+                                    Please correct these settings in your mod manager and restart the app.
+                                </TextBlock>
+                            </ui:SimpleStackPanel>
+                        </DataTemplate>
                         <DataTemplate DataType="{x:Type main:MissingVortexManifestContent}">
                             <ui:SimpleStackPanel>
                                 <TextBlock Style="{StaticResource ParagraphStyle}">

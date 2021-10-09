@@ -5,10 +5,26 @@ import { actions } from 'vortex-api';
 import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
 import { IMod, IProfile } from 'vortex-api/lib/types/IState';
 
+
 interface IModAttributes {
   fileId: string;
   modId: string;
   modName: string;
+}
+
+interface IConflictModInfo {
+  // Other properties exist; we don't care.
+  id: string;
+}
+
+interface IConflictSettings {
+  files: string[];
+  otherMod: IConflictModInfo;
+  suggestion: 'before' | 'after' | null;
+}
+
+interface IDependencySettings {
+  conflicts: { [modName: string]: IConflictSettings[] };
 }
 
 interface IFileInfo {
@@ -17,12 +33,19 @@ interface IFileInfo {
   modId: string;
 }
 
+interface IFilePriority {
+  path: string;
+  winningFileId: string;
+}
+
 interface IModInfo {
   name: string;
 }
 
 interface IBootstrapFile {
   files: Record<string, IFileInfo>;
+  filePriorities: IFilePriority[];
+  gameDataPath?: string;
   mods: Record<number, IModInfo>;
   reportPath: string;
   stagingDir: string;
@@ -37,8 +60,9 @@ const DUMMY_MOD_ID = 7777777;
 // This really should come from Electron's app.getPath(), same as Vortex itself, but not sure how to
 // use that without including the entire electron package.
 // This implementation comes from https://stackoverflow.com/a/26227660/38360
-const userDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
+const appDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
   process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share");
+const userDataDir = join(appDataDir, 'Vortex');
 
 const init = (context: IExtensionContext) => {
   function activateMod(gameId: string, modName: string): Promise<void> {
@@ -98,15 +122,20 @@ const init = (context: IExtensionContext) => {
   function createLookupFile(profile: IProfile, reportPath: string): string {
     const state = context.api.getState();
     const mods = state.persistent.mods[profile.gameId] || {};
+    const gameInfo = state.settings.gameMode.discovered[profile.gameId] || {};
     let stagingDir = state.settings.mods.installPath[profile.gameId]
       .replace(/{userdata}/ig, userDataDir)
       .replace(/{game}/ig, profile.gameId);
     const data: IBootstrapFile = {
       files: {},
+      filePriorities: [],
       mods: {},
       reportPath,
       stagingDir,
     };
+    if (gameInfo.path) {
+      data.gameDataPath = join(gameInfo.path, 'data');
+    }
     for (const mod of Object.values(mods)) {
       const attributes = (mod.attributes || {}) as IModAttributes;
       data.files[mod.id] = {
@@ -117,6 +146,14 @@ const init = (context: IExtensionContext) => {
       if (attributes.modId) {
         data.mods[attributes.modId] = { name: attributes.modName };
       }
+    }
+    try {
+      const enabledMods = new Set(Object.entries(data.files).filter(([_, file]) => file.isEnabled).map(([name]) => name));
+      const dependencies = (state.session as unknown)['dependencies'] as IDependencySettings;
+      data.filePriorities = resolveFilePriorities(dependencies, enabledMods);
+    } catch {
+      // This API isn't documented or provided in the public Vortex API, it's just there in the Redux state.
+      // We therefore don't want to fail if Nexus changes this, just run with degraded functionality.
     }
     const lookupPath = join(tmpdir(), 'easynpc-vortex-bootstrap.json');
     writeFileSync(lookupPath, JSON.stringify(data));
@@ -192,6 +229,45 @@ const init = (context: IExtensionContext) => {
         'Could not find a registered tool named EasyNPC.exe. Check that this tool is configured in the Vortex dashboard.' +
         JSON.stringify(tools));
     }
+  }
+
+  function resolveFilePriorities(dependencies: IDependencySettings, enabledMods: Set<string>): IFilePriority[] {
+    class FileResolutionContext {
+      readonly modIds = new Set<string>();
+      readonly overriddenModIds = new Set<string>();
+
+      findWinner(): string | null {
+        for (const modId of this.modIds) {
+          if (!this.overriddenModIds.has(modId)) {
+            return modId;
+          }
+        }
+        return null;
+      }
+    }
+
+    const acc = new Map<string, FileResolutionContext>();
+    for (const [modId, conflictSettings] of Object.entries(dependencies.conflicts)) {
+      if (!enabledMods.has(modId)) {
+        continue;
+      }
+      for (const setting of conflictSettings) {
+        for (const fileName of setting.files) {
+          let context = acc.get(fileName);
+          if (!context) {
+            context = new FileResolutionContext();
+            acc.set(fileName, context);
+          }
+          context.modIds.add(modId);
+          if (setting.suggestion === 'after') {
+            context.overriddenModIds.add(setting.otherMod.id);
+          }
+        }
+      }
+    }
+    return [...acc.entries()]
+      .map(([path, context]) => ({ path, winningFileId: context.findWinner() }))
+      .filter(x => !!x.winningFileId);
   }
 
   context.registerAction('mod-icons', 998, 'launch-simple', {}, 'Launch EasyNPC', () => launchEasyNpc(), isGameSupported);

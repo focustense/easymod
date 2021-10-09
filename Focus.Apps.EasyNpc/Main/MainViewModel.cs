@@ -1,4 +1,5 @@
 ﻿using Focus.Apps.EasyNpc.Build;
+using Focus.Apps.EasyNpc.Build.Preview;
 using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Debug;
 using Focus.Apps.EasyNpc.Maintenance;
@@ -71,6 +72,7 @@ namespace Focus.Apps.EasyNpc.Main
             StartupReportViewModel.Factory startupReportFactory,
             ProfileViewModel.Factory profileFactory,
             BuildViewModel.Factory buildFactory,
+            BuildPreviewViewModel.Factory buildPreviewFactory,
             MaintenanceViewModel.Factory maintenanceFactory,
             IMessageBus messageBus,
             ILogger logger,
@@ -93,10 +95,12 @@ namespace Focus.Apps.EasyNpc.Main
 
             Loader.Loaded += async () =>
             {
+                var loadOrderAnalysis = await Loader.Tasks!.LoadOrderAnalysis;
                 var profileModel = await Loader.Tasks!.Profile.ConfigureAwait(false);
                 Profile = profileFactory(profileModel);
-                StartupReport = startupReportFactory(profileModel);
-                Build = buildFactory(profileModel);
+                StartupReport = startupReportFactory(profileModel, loadOrderAnalysis);
+                var preview = buildPreviewFactory(profileModel, loadOrderAnalysis);
+                Build = buildFactory(preview);
                 Maintenance = maintenanceFactory(profileModel);
 
                 NavigationMenuItems = new List<NavigationMenuItem>

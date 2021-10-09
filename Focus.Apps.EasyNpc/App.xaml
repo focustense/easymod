@@ -45,9 +45,13 @@
             <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVisibility"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
             <local:InverseBooleanConverter x:Key="InverseBoolean"/>
+            <local:EqualsConverter x:Key="Equals"/>
+            <local:InvertedEqualsConverter x:Key="NotEqual"/>
             <local:EqualsVisibilityConverter x:Key="VisibleWhen"/>
+            <local:InvertedEqualsVisibilityConverter x:Key="HiddenWhen"/>
             <local:MultiBooleanConverter x:Key="BooleanAnd" Operator="And"/>
             <local:MultiBooleanConverter x:Key="BooleanOr" Operator="Or"/>
+            <local:MultiSequenceConverter x:Key="ConcatSequences"/>
             <local:DocUrlConverter x:Key="DocUrl" BaseUrl="https://github.com/focustense/easymod/blob/master/Focus.Apps.EasyNpc/Docs/"/>
             <math:MathConverter x:Key="Math" />
             <build:BuildWarningIdsToTextConverter x:Key="FormatBuildWarningIds"/>
@@ -109,6 +113,9 @@
             <Style TargetType="fa:SvgAwesome">
                 <Setter Property="Foreground" Value="{StaticResource SystemControlForegroundBaseMediumHighBrush}"/>
             </Style>
+
+            <!-- This is not supposed to be any different from AccentButtonStyle, but is easier for WPF to "find". -->
+            <Style TargetType="Button" x:Key="LocalAccentButtonStyle" BasedOn="{StaticResource AccentButtonStyle}"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

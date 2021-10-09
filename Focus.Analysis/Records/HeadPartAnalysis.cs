@@ -14,7 +14,7 @@ namespace Focus.Analysis.Records
         Unknown,
     }
 
-    public class HeadPartAnalysis : RecordAnalysis, IResourceDependencies
+    public class HeadPartAnalysis : RecordAnalysis
     {
         public override RecordType Type => RecordType.HeadPart;
 
@@ -31,7 +31,5 @@ namespace Focus.Analysis.Records
         // Vanilla races are not meant to be an exhaustive list of all valid races. They are used for some specific
         // heuristics, such as matching against common names/identifiers without explicit race info.
         public IReadOnlySet<VanillaRace> ValidVanillaRaces { get; init; } = new HashSet<VanillaRace>();
-        public IReadOnlyList<string> UsedMeshes { get; init; } = Empty.ReadOnlyList<string>();
-        public IReadOnlyList<string> UsedTextures { get; init; } = Empty.ReadOnlyList<string>();
     }
 }

@@ -15,6 +15,11 @@
     <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}"/>
     <SolidColorBrush x:Key="NpcDefaultIconBrush" Color="{StaticResource NpcDefaultIconColor}"/>
     <SolidColorBrush x:Key="NpcFaceIconBrush" Color="{StaticResource NpcFaceIconColor}"/>
+    <SolidColorBrush x:Key="NpcFilterAllBackgroundBrush" Color="{StaticResource NpcFilterAllBackgroundColor}"/>
+    <SolidColorBrush x:Key="NpcFilterIgnoredBackgroundBrush" Color="{StaticResource SystemChromeMediumColor}"/>
+    <SolidColorBrush x:Key="NpcFilterModdedBackgroundBrush" Color="{StaticResource NpcFilterModdedBackgroundColor}"/>
+    <SolidColorBrush x:Key="NpcFilterUnmoddableBackgroundBrush" Color="{StaticResource NpcFilterUnmoddableBackgroundColor}"/>
+    <SolidColorBrush x:Key="NpcFilterUnmoddedBackgroundBrush" Color="{StaticResource NpcFilterUnmoddedBackgroundColor}"/>
     <SolidColorBrush x:Key="SuccessForegroundBrush" Color="{StaticResource SuccessForegroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressBackgroundBrush" Color="{StaticResource TaskProgressBackgroundColor}"/>
     <SolidColorBrush x:Key="TaskProgressCancelledBackgroundBrush" Color="{StaticResource TaskProgressCancelledBackgroundColor}"/>

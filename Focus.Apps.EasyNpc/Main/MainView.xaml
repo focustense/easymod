@@ -17,29 +17,29 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type main:MainViewModel}">
                 <ui:NavigationView Header="{Binding SelectedNavigationMenuItem.Name}"
-                                    IsBackButtonVisible="Collapsed"
-                                    MenuItemsSource="{Binding NavigationMenuItems}"
-                                    PaneDisplayMode="Top"
-                                    SelectedItem="{Binding SelectedNavigationMenuItem, Mode=TwoWay}"
-                                    SelectionChanged="MainNavigationView_SelectionChanged">
+                                   IsBackButtonVisible="Collapsed"
+                                   MenuItemsSource="{Binding NavigationMenuItems}"
+                                   PaneDisplayMode="Top"
+                                   SelectedItem="{Binding SelectedNavigationMenuItem, Mode=TwoWay}"
+                                   SelectionChanged="MainNavigationView_SelectionChanged">
                     <ui:NavigationView.MenuItemTemplate>
                         <DataTemplate>
                             <ui:NavigationViewItem Content="{Binding Name}"/>
                         </DataTemplate>
                     </ui:NavigationView.MenuItemTemplate>
                     <ui:Frame IsTabStop="True"
-                                NavigationUIVisibility="Hidden"
-                                Padding="12,0,12,24"
-                                SourcePageType="{Binding SelectedNavigationMenuItem.PageType, Mode=TwoWay}"/>
+                              NavigationUIVisibility="Hidden"
+                              Padding="12,0,12,24"
+                              SourcePageType="{Binding SelectedNavigationMenuItem.PageType, Mode=TwoWay}"/>
                 </ui:NavigationView>
             </DataTemplate>
             <DataTemplate DataType="{x:Type config:SettingsViewModel}">
                 <ui:Frame DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Padding="12,0,12,24"
-                            SourcePageType="{x:Type config:SettingsPage}"/>
+                          Padding="12,0,12,24"
+                          SourcePageType="{x:Type config:SettingsPage}"/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type rpt:StartupReportViewModel}">
-                <DockPanel Margin="8">
+                <DockPanel Margin="12,8">
                     <Border DockPanel.Dock="Bottom" Margin="0,8,0,0">
                         <ui:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                             <Button x:Name="ContinueButton"

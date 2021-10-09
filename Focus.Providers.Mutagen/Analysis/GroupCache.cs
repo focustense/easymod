@@ -20,7 +20,7 @@ namespace Focus.Providers.Mutagen.Analysis
             new(new TupleEqualityComparer<string, Type>(StringComparer.OrdinalIgnoreCase));
         private readonly ILogger log;
         private readonly ConcurrentDictionary<FormKey, IReadOnlyList<IKeyValue<object, string>>> records = new();
-        private readonly ConcurrentDictionary<FormKey, object?> winningRecords = new();
+        private readonly ConcurrentDictionary<FormKey, IKeyValue<object, string>?> winningRecords = new();
 
         public GroupCache(IReadOnlyGameEnvironment<ISkyrimModGetter> environment, ILogger log)
         {
@@ -70,7 +70,14 @@ namespace Focus.Providers.Mutagen.Analysis
         {
             // Could use ILinkCache.TryResolve here, but this implementation is more consistent and easier to work with
             // in tests, and should have very similar (?) performance characteristics.
-            return winningRecords.GetOrAdd(link.FormKey, _ => GetAll(link).FirstOrDefault()?.Value) as T;
+            return winningRecords.GetOrAdd(link.FormKey, _ => GetAll(link).FirstOrDefault())?.Value as T;
+        }
+
+        public IKeyValue<T, string>? GetWinnerWithSource<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            var cached = winningRecords.GetOrAdd(link.FormKey, _ => GetAll(link).FirstOrDefault());
+            return cached is not null ? new KeyValue<T, string>(cached.Key, (T)cached.Value) : null;
         }
 
         public bool MasterExists(FormKey formKey, RecordType recordType)

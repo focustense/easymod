@@ -1,7 +1,5 @@
 ﻿using PropertyChanged;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,14 +12,14 @@ namespace Focus.Apps.EasyNpc.Reports
     public partial class SummaryGroup : UserControl
     {
         public static readonly DependencyProperty ItemsProperty = DependencyProperty.Register(
-            "Items", typeof(ObservableCollection<SummaryItem>), typeof(SummaryGroup),
-            new PropertyMetadata(new ObservableCollection<SummaryItem>()));
+            "Items", typeof(IEnumerable<SummaryItem>), typeof(SummaryGroup),
+            new PropertyMetadata(Enumerable.Empty<SummaryItem>()));
         public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
             "Title", typeof(string), typeof(SummaryGroup), new PropertyMetadata(""));
 
-        public ObservableCollection<SummaryItem> Items
+        public IEnumerable<SummaryItem> Items
         {
-            get { return (ObservableCollection<SummaryItem>)GetValue(ItemsProperty); }
+            get { return (IEnumerable<SummaryItem>)GetValue(ItemsProperty); }
             set { SetValue(ItemsProperty, value); }
         }
 

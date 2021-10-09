@@ -122,15 +122,15 @@ namespace Focus.Apps.EasyNpc.Nifly
             return true;
         }
 
-        private static IEnumerable<BSDynamicTriShape> GetChildShapes(NifFile file, NiNode parent)
+        private static IEnumerable<NiShape> GetChildShapes(NifFile file, NiNode parent)
         {
             var header = file.GetHeader();
             var refs = new setNiRef();
             parent.GetChildRefs(refs);
             return refs
                 .Select(x => header.GetBlockById(x.index))
-                .Where(x => x is BSDynamicTriShape)
-                .Cast<BSDynamicTriShape>();
+                .Where(x => x is BSDynamicTriShape || /* Oldrim and bad SE conversions */ x is NiTriShape)
+                .Cast<NiShape>();
         }
     }
 }

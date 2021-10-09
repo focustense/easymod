@@ -13,6 +13,13 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         public class Result
         {
             public IReadOnlyList<string> FailedPaths { get; private init; }
+            public bool Skipped { get; private init; }
+
+            public Result(bool skipped)
+                : this(new List<string>().AsReadOnly())
+            {
+                Skipped = skipped;
+            }
 
             public Result(IReadOnlyList<string> failedPaths)
             {
@@ -37,6 +44,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         protected override async Task<Result> Run(BuildSettings settings)
         {
+            if (!settings.EnableDewiggify)
+                return new Result(true);
             var itemsToReplace = faceGen.MeshPaths
                 .Join(
                     dewiggifyRecords.WigConversions,

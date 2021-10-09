@@ -4,6 +4,7 @@
     {
         Profile,
         Build,
+        BuildPreview,
         Maintenance,
         Log,
         Settings

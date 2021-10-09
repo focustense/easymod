@@ -73,6 +73,21 @@ namespace Focus.Providers.Mutagen.Tests
         }
 
         [Fact]
+        public void WhenFileIsInArchive_GetArchiveFileSize_ReturnsSize()
+        {
+            archiveMock.Setup(x => x.CreateReader(GameRelease, "foo.bsa")).Returns(new FakeArchiveReader()
+                .Put(@"a\b\c\1", new byte[] { 1, 2, 3, 4, 5 })
+                .Put(@"a\b\c\2", new byte[] { 1, 2 }));
+
+            Assert.Equal(5u, provider.GetArchiveFileSize("foo.bsa", @"a\b\c\1"));
+            Assert.Equal(2u, provider.GetArchiveFileSize("foo.bsa", @"a\b\c\2"));
+
+            // Nonexistent files should use default (zero) size.
+            Assert.Equal(0u, provider.GetArchiveFileSize("foo.bsa", @"a\b\c\3"));
+            Assert.Equal(0u, provider.GetArchiveFileSize("foo.bsa", "invalid"));
+        }
+
+        [Fact]
         public void ReadBytes_ForDirectorylessPath_Throws()
         {
             Assert.Throws<ArgumentException>(() => provider.ReadBytes(@"C:\game\data\dummy.bsa", "rootfile.txt"));

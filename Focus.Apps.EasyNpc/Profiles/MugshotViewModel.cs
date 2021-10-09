@@ -9,6 +9,7 @@ namespace Focus.Apps.EasyNpc.Profiles
     public class MugshotViewModel
     {
         public IReadOnlyList<string> InstalledPlugins => mugshot.InstalledPlugins;
+        public bool IsBaseGame => mugshot.InstalledMod == Placeholders.BaseGameMod;
         public bool IsDisabledByErrors { get; private init; }
         public bool IsFocused { get; set; }
         public bool IsHighlighted { get; set; }

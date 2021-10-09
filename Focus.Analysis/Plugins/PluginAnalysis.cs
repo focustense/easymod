@@ -1,4 +1,5 @@
 ﻿using Focus.Analysis.Records;
+using System;
 using System.Collections.Generic;
 
 namespace Focus.Analysis.Plugins
@@ -8,6 +9,7 @@ namespace Focus.Analysis.Plugins
         public string FileName { get; private init; }
         public bool IsBaseGame { get; init; }   // Vanilla or DLC
 
+        public Exception? Exception { get; init; }
         public IReadOnlyList<string> ExplicitMasters { get; init; } = Empty.ReadOnlyList<string>();
         public IReadOnlyDictionary<RecordType, RecordAnalysisGroup> Groups { get; init; } =
             Empty.ReadOnlyDictionary<RecordType, RecordAnalysisGroup>();

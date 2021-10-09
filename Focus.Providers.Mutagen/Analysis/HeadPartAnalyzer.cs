@@ -1,5 +1,4 @@
-﻿using Focus.Analysis;
-using Focus.Analysis.Records;
+﻿using Focus.Analysis.Records;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
 using System;
@@ -50,8 +49,6 @@ namespace Focus.Providers.Mutagen.Analysis
                 SupportsFemaleNpcs = isFemale || !isMale,
                 SupportsMaleNpcs = isMale || !isFemale,
                 ValidVanillaRaces = GetValidVanillaRaces(headPart).ToHashSet(),
-                UsedMeshes = Empty.ReadOnlyList<string>(),
-                UsedTextures = Empty.ReadOnlyList<string>(),
             };
         }
         

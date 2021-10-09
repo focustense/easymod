@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build.Checks
 {
-    public class FaceGenConsistency : IBuildCheck
+    public class FaceGenConsistency : INpcBuildCheck
     {
         private readonly IModRepository modRepository;
 
@@ -15,15 +15,10 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.modRepository = modRepository;
         }
 
-        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
+        public IEnumerable<BuildWarning> Run(INpc npc, BuildSettings _)
         {
-            return profile.Npcs
-                .Where(x => x.CanCustomizeFace)
-                .SelectMany(x => CheckForNpc(x));
-        }
-
-        private IEnumerable<BuildWarning> CheckForNpc(Npc npc)
-        {
+            if (!npc.CanCustomizeFace)
+                yield break;
             if (npc.FaceGenOverride is not null)
                 // Eventually, we'll want to open up the override file and actually check the nodes. This check is
                 // temporarily out of scope, which means reporting a generic warning.
@@ -51,12 +46,14 @@ namespace Focus.Apps.EasyNpc.Build.Checks
                 .ToList();
             if (faceGenComponents.Count == 0)
                 yield return new BuildWarning(
+                    npc.FaceOption.PluginName,
                     new RecordKey(npc),
                     BuildWarningId.MissingFaceGen,
                     WarningMessages.MissingFaceGen(
                         npc.EditorId, npc.Name, npc.FaceOption.PluginName, pluginComponents.Select(x => x.Name)));
             else if (faceGenComponents.Count > 1)
                 yield return new BuildWarning(
+                    npc.FaceOption.PluginName,
                     new RecordKey(npc),
                     BuildWarningId.MultipleFaceGen,
                     WarningMessages.MultipleFaceGen(npc.EditorId, npc.Name, faceGenComponents.Select(x => x.Name)));

@@ -2,7 +2,7 @@
 
 namespace Focus.Analysis.Records
 {
-    public class NpcAnalysis : RecordAnalysis, IResourceDependencies
+    public class NpcAnalysis : RecordAnalysis
     {
         public override RecordType Type => RecordType.Npc;
 
@@ -17,8 +17,6 @@ namespace Focus.Analysis.Records
         public string Name { get; init; } = string.Empty;
         public RecordKey? SkinKey { get; init; }
         public NpcTemplateInfo? TemplateInfo { get; init; }
-        public IReadOnlyList<string> UsedMeshes { get; init; } = Empty.ReadOnlyList<string>();
-        public IReadOnlyList<string> UsedTextures { get; init; } = Empty.ReadOnlyList<string>();
         public NpcWigInfo? WigInfo { get; init; }
     }
 

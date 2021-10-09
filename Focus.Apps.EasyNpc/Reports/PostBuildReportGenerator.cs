@@ -244,6 +244,7 @@ namespace Focus.Apps.EasyNpc.Reports
 
         private AssetSource? FindAssetSource(string assetPath, bool checkArchives)
         {
+            // TODO: Write an "AssetLocator" abstraction, which we can use both here and in pre-build.
             var settings = gameSettings.Value;
             var loosePath = fs.Path.Combine(settings.DataDirectory, assetPath);
             if (fs.File.Exists(loosePath))

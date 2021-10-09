@@ -34,6 +34,30 @@ namespace Focus.Files.Tests
         }
 
         [Fact]
+        public void WhenNoProviderHasFile_GetSize_ReturnsZero()
+        {
+            Assert.Equal(0U, provider.GetSize("foo"));
+        }
+
+        [Fact]
+        public void WhenSingleProviderHasFile_GetSize_ReturnsProviderFileSize()
+        {
+            innerProvider1.PutFile("provider1_file", new byte[] { 1, 2, 3 });
+            innerProvider2.PutFile("provider2_file", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+
+            Assert.Equal(8U, provider.GetSize("provider2_file"));
+        }
+
+        [Fact]
+        public void WhenMultipleProvidersHaveFile_GetSize_ReturnsFirstFileSize()
+        {
+            innerProvider1.PutFile("common", new byte[] { 1, 2, 3 });
+            innerProvider2.PutFile("common", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+
+            Assert.Equal(3U, provider.GetSize("common"));
+        }
+
+        [Fact]
         public void WhenNoProviderHasFile_ReadBytes_ReturnsNull()
         {
             // ReadOnlySpan doesn't play nice with xUnit's assertions.

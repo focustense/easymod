@@ -17,6 +17,7 @@ namespace Focus.Apps.EasyNpc.Modules
                 .SingleInstance();
             builder.RegisterType<ModSettings>()
                 .As<IModSettings>()
+                .As<IObservableModSettings>()
                 .SingleInstance();
             builder.RegisterType<SettingsViewModel>();
         }

@@ -18,6 +18,14 @@ namespace Focus.Files
             return providers.Any(p => p.Exists(fileName));
         }
 
+        public ulong GetSize(string fileName)
+        {
+            return providers
+                .Where(p => p.Exists(fileName))
+                .Select(p => p.GetSize(fileName))
+                .FirstOrDefault();
+        }
+
         public ReadOnlySpan<byte> ReadBytes(string fileName)
         {
             var matchingProvider = providers.FirstOrDefault(p => p.Exists(fileName));

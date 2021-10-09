@@ -3,6 +3,7 @@ using Focus.Analysis.Execution;
 using Focus.Apps.EasyNpc.Build;
 using Focus.Apps.EasyNpc.Build.Checks;
 using Focus.Apps.EasyNpc.Build.Pipeline;
+using Focus.Apps.EasyNpc.Build.Preview;
 using Focus.Apps.EasyNpc.Build.UI;
 using Focus.Apps.EasyNpc.Nifly;
 using Focus.Files;
@@ -19,14 +20,14 @@ namespace Focus.Apps.EasyNpc.Modules
                 .As<IWigResolver>()
                 .As<ILoadOrderAnalysisReceiver>()
                 .SingleInstance();
-            builder.RegisterType<BadArchives>().As<IBuildCheck>();
-            builder.RegisterType<FaceGenConsistency>().As<IBuildCheck>();
-            builder.RegisterType<MissingPlugins>().As<IBuildCheck>();
-            builder.RegisterType<ModSettings>().As<IBuildCheck>();
-            builder.RegisterType<OrphanedNpcs>().As<IBuildCheck>();
-            builder.RegisterType<OverriddenArchives>().As<IBuildCheck>();
-            builder.RegisterType<WigConversions>().As<IBuildCheck>();
-            builder.RegisterType<BuildChecker>().As<IBuildChecker>().SingleInstance();
+            builder.RegisterType<CompressionEstimator>().As<ICompressionEstimator>();
+            builder.RegisterType<BadArchives>().As<IGlobalBuildCheck>();
+            builder.RegisterType<FaceGenConsistency>().As<INpcBuildCheck>();
+            builder.RegisterType<MissingPlugins>().As<INpcBuildCheck>();
+            builder.RegisterType<ModSettings>().As<IGlobalBuildCheck>();
+            builder.RegisterType<OrphanedNpcs>().As<IGlobalBuildCheck>();
+            builder.RegisterType<OverriddenArchives>().As<IGlobalBuildCheck>();
+            builder.RegisterType<WigConversions>().As<INpcBuildCheck>();
             builder.RegisterType<BuildTaskViewModel>();
             builder.RegisterType<BuildProgressViewModel<BuildReport>>();
             builder.RegisterType<BuildViewModel>();
@@ -37,6 +38,7 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<RecordImporter>().InstancePerLifetimeScope();
             builder.RegisterType<VanillaTextureOverrideExclusion>().As<ITexturePathFilter>().InstancePerLifetimeScope();
 
+            // Build tasks
             builder.RegisterType<ArchiveCreationTask>();
             builder.RegisterType<DewiggifyFaceGensTask>();
             builder.RegisterType<DewiggifyRecordsTask>();
@@ -49,6 +51,15 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<ReportTask>();
             builder.RegisterType<TextureCopyTask>();
             builder.RegisterType<TexturePathExtractionTask>();
+
+            // Realtime preview
+            builder.RegisterType<PluginCategorizer>().As<IPluginCategorizer>();
+            builder.RegisterType<AlertsViewModel>();
+            builder.RegisterType<AssetsViewModel>();
+            builder.RegisterType<BuildPreviewViewModel>();
+            builder.RegisterType<NpcSummaryViewModel>();
+            builder.RegisterType<OutputViewModel>();
+            builder.RegisterType<PluginsViewModel>();
 
             builder.RegisterType<BuildPipelineConfiguration<BuildReport>>();
             builder

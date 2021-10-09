@@ -1,10 +1,8 @@
-﻿using Focus.Analysis;
-using Focus.Analysis.Records;
+﻿using Focus.Analysis.Records;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Noggog;
-using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -90,17 +88,22 @@ namespace Focus.Providers.Mutagen.Analysis
         };
 
         private readonly IArmorAddonHelper armorAddonHelper;
+        private readonly IAssetPathExtractor<INpcGetter>? assetPathExtractor;
         private readonly IGroupCache groups;
         private readonly IReferenceChecker<INpcGetter>? referenceChecker;
 
-        public NpcAnalyzer(IGroupCache groups, IReferenceChecker<INpcGetter>? referenceChecker = null)
-            : this(groups, new ArmorAddonHelper(groups), referenceChecker) { }
+        public NpcAnalyzer(
+            IGroupCache groups, IReferenceChecker<INpcGetter>? referenceChecker = null,
+            IAssetPathExtractor<INpcGetter>? assetPathExtractor = null)
+            : this(groups, new ArmorAddonHelper(groups), referenceChecker, assetPathExtractor) { }
 
         public NpcAnalyzer(
             IGroupCache groups, IArmorAddonHelper armorAddonHelper,
-            IReferenceChecker<INpcGetter>? referenceChecker = null)
+            IReferenceChecker<INpcGetter>? referenceChecker = null,
+            IAssetPathExtractor<INpcGetter>? assetPathExtractor = null)
         {
             this.armorAddonHelper = armorAddonHelper;
+            this.assetPathExtractor = assetPathExtractor;
             this.groups = groups;
             this.referenceChecker = referenceChecker;
         }
@@ -139,10 +142,10 @@ namespace Focus.Providers.Mutagen.Analysis
                 IsFemale = npc.Configuration.Flags.HasFlag(NpcConfiguration.Flag.Female),
                 MainHeadParts = GetMainHeadParts(npc).Select(x => x.FormKey).ToRecordKeys(),
                 Name = npc.Name?.String ?? string.Empty,
+                ReferencedAssets = (assetPathExtractor?.GetReferencedAssets(npc) ?? Enumerable.Empty<AssetReference>())
+                    .ToList().AsReadOnly(),
                 SkinKey = GetSkin(npc).FormKeyNullable?.ToSystemNullable()?.ToRecordKey(),
-                UsedMeshes = Empty.ReadOnlyList<string>(),
                 TemplateInfo = GetTemplateInfo(npc),
-                UsedTextures = Empty.ReadOnlyList<string>(),
                 WigInfo = GetWigInfo(npc),
             };
         }

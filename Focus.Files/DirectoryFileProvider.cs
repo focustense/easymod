@@ -17,7 +17,13 @@ namespace Focus.Files
 
         public bool Exists(string fileName)
         {
-            return fs.File.Exists(Path.Combine(rootPath, fileName));
+            return fs.File.Exists(fs.Path.Combine(rootPath, fileName));
+        }
+
+        public ulong GetSize(string fileName)
+        {
+            var fi = fs.FileInfo.FromFileName(fs.Path.Combine(rootPath, fileName));
+            return fi.Exists ? (ulong)fi.Length : 0;
         }
 
         public ReadOnlySpan<byte> ReadBytes(string fileName)

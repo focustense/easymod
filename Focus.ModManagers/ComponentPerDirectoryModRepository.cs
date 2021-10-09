@@ -91,13 +91,16 @@ namespace Focus.ModManagers
         public IEnumerable<ModSearchResult> SearchForFiles(
             string relativePath, bool includeArchives, bool includeDisabled = false)
         {
-            return inner.SearchForFiles(relativePath, includeArchives, includeDisabled);
+            return OrderSearchResults(
+                relativePath, inner.SearchForFiles(relativePath, includeArchives, includeDisabled));
         }
 
         public IEnumerable<ModSearchResult> SearchForFiles(
-            IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives, bool includeDisabled = false)
+            IEnumerable<ModComponentInfo> components, string relativePath, bool includeArchives,
+            bool includeDisabled = false)
         {
-            return inner.SearchForFiles(components, relativePath, includeArchives, includeDisabled);
+            return OrderSearchResults(
+                relativePath, inner.SearchForFiles(components, relativePath, includeArchives, includeDisabled));
         }
 
         protected virtual Task<INotifyingBucketedFileIndex> BuildIndexAsync(TConfig config)
@@ -110,6 +113,12 @@ namespace Focus.ModManagers
         }
 
         protected abstract IComponentResolver GetComponentResolver(TConfig config);
+
+        protected virtual IEnumerable<ModSearchResult> OrderSearchResults(
+            string relativePath, IEnumerable<ModSearchResult> results)
+        {
+            return results;
+        }
 
         IEnumerator IEnumerable.GetEnumerator()
         {

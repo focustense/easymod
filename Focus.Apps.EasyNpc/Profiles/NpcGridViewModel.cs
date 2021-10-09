@@ -12,8 +12,8 @@ namespace Focus.Apps.EasyNpc.Profiles
 #pragma warning restore 67
 
         public NpcGridHeaders Headers { get; private set; }
-        public IEnumerable<Npc> Npcs { get; set; } = Enumerable.Empty<Npc>();
-        public Npc? SelectedNpc { get; set; }
+        public IEnumerable<INpc> Npcs { get; set; } = Enumerable.Empty<Npc>();
+        public INpc? SelectedNpc { get; set; }
 
         public NpcGridViewModel(NpcSearchParameters searchParameters)
         {

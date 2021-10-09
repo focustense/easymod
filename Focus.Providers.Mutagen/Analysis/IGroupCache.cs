@@ -19,6 +19,8 @@ namespace Focus.Providers.Mutagen.Analysis
         ISkyrimModGetter? GetMod(string pluginName);
         T? GetWinner<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter;
+        IKeyValue<T, string>? GetWinnerWithSource<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter;
         bool MasterExists(FormKey formKey, RecordType recordType);
         void Purge();
     }

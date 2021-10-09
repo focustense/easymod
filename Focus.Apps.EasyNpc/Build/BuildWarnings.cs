@@ -21,6 +21,14 @@ namespace Focus.Apps.EasyNpc.Build
         FaceGenOverride,
     }
 
+    public enum BuildWarningSeverity
+    {
+        Unspecified = 0,
+        Low = 1,
+        Medium = 2,
+        High = 3,
+    }
+
     public class BuildWarning
     {
         // Used for help links, if provided.
@@ -28,6 +36,7 @@ namespace Focus.Apps.EasyNpc.Build
         public string Message { get; init; } = string.Empty;
         public RecordKey? RecordKey { get; init; }
         public string? PluginName { get; init; }
+        public BuildWarningSeverity Severity => GetSeverity(Id);
 
         public BuildWarning() { }
 
@@ -57,6 +66,21 @@ namespace Focus.Apps.EasyNpc.Build
         {
             RecordKey = key;
         }
+
+        private static BuildWarningSeverity GetSeverity(BuildWarningId? id) => id switch
+        {
+            BuildWarningId.BadArchive => BuildWarningSeverity.High,
+            BuildWarningId.FaceGenOverride => BuildWarningSeverity.Low,
+            BuildWarningId.MasterPluginRemoved => BuildWarningSeverity.Low,
+            BuildWarningId.MissingFaceGen => BuildWarningSeverity.Medium,
+            BuildWarningId.ModDirectoryNotFound => BuildWarningSeverity.High,
+            BuildWarningId.ModDirectoryNotSpecified => BuildWarningSeverity.High,
+            BuildWarningId.MultipleArchiveSources => BuildWarningSeverity.Low,
+            BuildWarningId.MultipleFaceGen => BuildWarningSeverity.Low,
+            BuildWarningId.SelectedPluginRemoved => BuildWarningSeverity.Low,
+            BuildWarningId.WigNotMatched => BuildWarningSeverity.Low,
+            _ => BuildWarningSeverity.Unspecified,
+        };
     }
 
     public class BuildWarningIdsToTextConverter : IValueConverter
@@ -73,12 +97,8 @@ namespace Focus.Apps.EasyNpc.Build
         }
     }
 
-    static class WarningMessages
+    public static class WarningMessages
     {
-        private static readonly string ModRootJustification =
-            "Without direct access to your mod structure, this program can only generate a merged plugin, which " +
-            "will probably break NPC appearances unless you are manually organizing the facegen data.";
-
         public static string BadArchive(string path)
         {
             return $"Archive '{path}' is corrupt or unreadable.";
@@ -113,12 +133,12 @@ namespace Focus.Apps.EasyNpc.Build
 
         public static string ModDirectoryNotFound(string directoryName)
         {
-            return $"Mod directory {directoryName} doesn't exist. {ModRootJustification}";
+            return $"Mod directory {directoryName} doesn't exist.";
         }
 
         public static string ModDirectoryNotSpecified()
         {
-            return "No mod directory specified in settings. " + ModRootJustification;
+            return "No mod directory specified in settings. ";
         }
 
         public static string MultipleArchiveSources(string name, IEnumerable<string> providingMods)

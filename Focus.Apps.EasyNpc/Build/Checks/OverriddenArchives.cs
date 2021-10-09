@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build.Checks
 {
-    public class OverriddenArchives : IBuildCheck
+    public class OverriddenArchives : IGlobalBuildCheck
     {
         private readonly IGameSettings gameSettings;
         private readonly IModRepository modRepository;

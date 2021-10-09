@@ -4,8 +4,9 @@ using System.Linq;
 
 namespace Focus.Apps.EasyNpc.Build.Checks
 {
-    public class WigConversions : IBuildCheck
+    public class WigConversions : IPreparableNpcBuildCheck
     {
+        private HashSet<IRecordKey> resolvedWigKeys = new();
         private readonly IWigResolver wigResolver;
 
         public WigConversions(IWigResolver wigResolver)
@@ -13,28 +14,34 @@ namespace Focus.Apps.EasyNpc.Build.Checks
             this.wigResolver = wigResolver;
         }
 
-        public IEnumerable<BuildWarning> Run(Profile profile, BuildSettings settings)
+        public void Prepare(Profile profile)
         {
-            if (!settings.EnableDewiggify)
-                return Enumerable.Empty<BuildWarning>();
             var wigKeys = profile.Npcs
                 .Where(x => x.CanCustomizeFace)
-                .Select(x => x.FaceOption.Analysis.WigInfo)
+                .SelectMany(x => x.Options)
+                .Select(x => x.Analysis.WigInfo)
                 .NotNull()
                 .Distinct();
-            var matchedWigKeys = wigResolver.ResolveAll(wigKeys)
+            resolvedWigKeys = wigResolver.ResolveAll(wigKeys)
                 .Where(x => x.HairKeys.Any())
                 .Select(x => x.WigKey)
-                .ToHashSet();
-            return profile.Npcs
-                .Where(x => x.CanCustomizeFace)
-                .Select(x => new { Npc = x, Wig = x.FaceOption.Analysis.WigInfo })
-                .Where(x => x.Wig is not null && (!settings.EnableDewiggify || !matchedWigKeys.Contains(x.Wig.Key)))
-                .Select(x => new BuildWarning(
-                    new RecordKey(x.Npc),
+                .ToHashSet(RecordKeyComparer.Default);
+        }
+
+        public IEnumerable<BuildWarning> Run(INpc npc, BuildSettings settings)
+        {
+            if (!settings.EnableDewiggify || !npc.CanCustomizeFace)
+                yield break;
+            var wig = npc.FaceOption.Analysis.WigInfo;
+            if (wig is null)
+                yield break;
+            if (!resolvedWigKeys.Contains(wig.Key))
+                yield return new BuildWarning(
+                    npc.FaceOption.PluginName,
+                    new RecordKey(npc),
                     BuildWarningId.WigNotMatched,
                     WarningMessages.WigNotMatched(
-                        x.Npc.EditorId, x.Npc.Name, x.Npc.FaceOption.PluginName, x.Wig!.ModelName ?? string.Empty)));
+                        npc.EditorId, npc.Name, npc.FaceOption.PluginName, wig.ModelName ?? string.Empty));
         }
     }
 }

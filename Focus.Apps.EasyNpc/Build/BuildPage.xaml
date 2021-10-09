@@ -1,221 +1,38 @@
 ﻿<ui:Page x:Class="Focus.Apps.EasyNpc.Build.BuildPage"
          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:bp="clr-namespace:Focus.Apps.EasyNpc.Build.Preview"
          xmlns:bu="clr-namespace:Focus.Apps.EasyNpc.Build.UI"
-         xmlns:build="clr-namespace:Focus.Apps.EasyNpc.Build"
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-         xmlns:fa5="http://schemas.fontawesome.com/icons/"
          xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:ui="http://schemas.modernwpf.com/2019"
          KeepAlive="True"
          mc:Ignorable="d" 
          d:DataContext="{d:DesignInstance Type=main:MainViewModel}"
-         d:DesignHeight="700" d:DesignWidth="1200" Loaded="Page_Loaded">
+         d:DesignHeight="700" d:DesignWidth="1200">
     <Grid DataContext="{Binding Build}">
-        <Grid.Resources>
-            <Style TargetType="TextBlock" x:Key="LoweredFormLabelStyle" BasedOn="{StaticResource FormLabelStyle}">
-                <Setter Property="Margin" Value="0,16,0,2"/>
-            </Style>
-        </Grid.Resources>
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition/>
-            </Grid.RowDefinitions>
-            <Button x:Name="AltCheckForProblemsButton" ToolTip="Check for problems" IsEnabled="{Binding IsProblemCheckerEnabled}" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource InvBoolToVisibility}}" Grid.Row="0" Click="AltCheckForProblemsButton_Click">
-                <fa5:SvgAwesome Icon="Solid_Glasses" Width="16" Height="16"/>
-            </Button>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckerVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="1" d:Visibility="Collapsed">
-                <ui:SimpleStackPanel>
-                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
-                        <Run Text="{StaticResource AppName}"/> includes a set of pre-build checks that can warn you about a variety of potential bugs and conflicts, including those likely to cause blackface or
-                        crashes. These checks normally take a few seconds and it is recommended to run them before each build.
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParagraphStyle}">
-                        <Bold Foreground="{StaticResource WarningForegroundBrush}">Note:</Bold> These checks only relate to the data that <Run Text="{StaticResource AppName}"/> specifically modifies, i.e. NPC appearances.
-                        For help with other types of issues, consult a general conflict-resolution guide that discusses load order, mod/file priorities, patching tools, etc.
-                    </TextBlock>
-                    <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding HasWigs, Converter={StaticResource BoolToVisibility}}">
-                        <CheckBox x:Name="DewiggifyCheckBox" IsChecked="{Binding EnableDewiggify}">
-                            Attempt de-wiggification for NPCs with wigs
-                        </CheckBox>
-                        <ContentControl Style="{StaticResource HelpIconStyle}" Margin="8,0,0,0">
-                            <ContentControl.ToolTip>
-                                <ui:SimpleStackPanel>
-                                    <TextBlock Style="{StaticResource FirstParagraphStyle}">
-                                        Some of your NPC choices point to records that use wigs (i.e. worn armor) for hair instead of standard head parts. Wigs cannot be carried over and will disappear in the merge.
-                                    </TextBlock>
-                                    <TextBlock Style="{StaticResource ParagraphStyle}">
-                                        <Run Text="{StaticResource AppName}"/> can attempt to convert these to hairs, but note that <Run FontWeight="SemiBold">this feature is experimental</Run>, and may not work on every NPC or
-                                        produce great results for the NPCs it does work on. In addition, it requires that you have the original hair resource installed (e.g. KS Hairdos if the NPC overhaul uses KS Wigs) and will
-                                        not be able to tell the difference between that resource not being installed vs. the wig being un-convertible.
-                                    </TextBlock>
-                                    <TextBlock Style="{StaticResource ParagraphStyle}">
-                                        Disabling this feature may prevent some bugs, but wigged NPCs will end up either bald or using their default hair. For best compatibility with this tool, choose a different face plugin for
-                                        these NPCs. You can locate wig selections by clicking the <fa5:SvgAwesome Icon="Solid_Filter" Height="12"/> (Filter) button on the Profile page and selecting "Wigs".
-                                    </TextBlock>
-                                </ui:SimpleStackPanel>
-                            </ContentControl.ToolTip>
-                        </ContentControl>
-                    </ui:SimpleStackPanel>
-                    <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <Button Style="{StaticResource AccentButtonStyle}" x:Name="CheckForProblemsButton" Content="Check for problems" Click="CheckForProblemsButton_Click"/>
-                        <Button x:Name="SkipProblemsButton" Content="Skip for this session" Margin="8,0,0,0" Click="SkipProblemsButton_Click"/>
-                    </ui:SimpleStackPanel>
-                </ui:SimpleStackPanel>
+            <Border Visibility="{Binding IsBuildStarted, Converter={StaticResource InvBoolToVisibility}}">
+                <bp:BuildPreviewView DataContext="{Binding Preview}"
+                                     d:Visibility="Collapsed"
+                                     BuildClick="BuildPreviewView_BuildClick"/>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemCheckingInProgress, Converter={StaticResource BoolToVisibility}}" Grid.Row="2" d:Visibility="Collapsed">
-                <GroupBox>
-                    <GroupBox.Header>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontSize="{DynamicResource GroupBoxHeaderFontSize}">Checking for problems</TextBlock>
-                            <fa5:SvgAwesome Icon="Solid_Cog" Spin="True" Width="20" Height="20" Margin="8,0,0,0"/>
-                        </StackPanel>
-                    </GroupBox.Header>
-                    <StackPanel>
-                        <TextBlock Text="Working on it..."/>
-                    </StackPanel>
+            <Border Padding="8"
+                    Style="{StaticResource GroupBorder}"
+                    Visibility="{Binding IsBuildInProgress, Converter={StaticResource BoolToVisibility}}"
+                    d:Visibility="Visible">
+                <GroupBox x:Name="BuildConfirmationGroup" Header="Status" Padding="0">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource SmallHeaderStyle}" Text="Task Progress"/>
+                        <bu:BuildProgress DataContext="{Binding Progress}" Margin="0,8,0,0"/>
+                    </DockPanel>
                 </GroupBox>
             </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsProblemReportVisible, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
-                <GroupBox Header="Checks completed">
-                    <Grid>
-                        <ui:SimpleStackPanel Visibility="{Binding HasProblems, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
-                            <TextBlock Text="No problems were found." Style="{StaticResource FirstParagraphStyle}"/>
-                            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-                                <Button Name="DoneNoProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Done" Click="DoneNoProblemsButton_Click"/>
-                            </ui:SimpleStackPanel>
-                        </ui:SimpleStackPanel>
-                        <DockPanel Visibility="{Binding HasProblems, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource FirstParagraphStyle}">
-                                Potential problems were found. Check the list below for anything serious or game-breaking, and fix if possible. Click on an item for details.
-                            </TextBlock>
-                            <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0" DockPanel.Dock="Bottom">
-                                <Button Name="RecheckProblemsButton" Content="Check again" Margin="0,0,8,0" Click="CheckForProblemsButton_Click"/>
-                                <Button Name="DismissProblemsButton" Style="{StaticResource AccentButtonStyle}" Content="Looks good" Click="DismissProblemsButton_Click"/>
-                            </ui:SimpleStackPanel>
-                            <Border Style="{StaticResource GroupBorder}"
-                                    Background="{StaticResource HelpPanelBackgroundBrush}"
-                                    CornerRadius="16"
-                                    Margin="8,0,0,0"
-                                    Width="350"
-                                    DockPanel.Dock="Right"
-                                    Visibility="{Binding IsWarningInfoVisible, Converter={StaticResource BoolToVisibility}}">
-                                <GroupBox>
-                                    <GroupBox.Header>
-                                        <ui:SimpleStackPanel>
-                                            <TextBlock FontSize="{DynamicResource GroupBoxHeaderFontSize}">Warning Info</TextBlock>
-                                            <Separator Height="2" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="0,8,0,0"/>
-                                        </ui:SimpleStackPanel>
-                                    </GroupBox.Header>
-                                    <ui:ScrollViewerEx>
-                                        <bu:BuildWarningHelp DataContext="{Binding SelectedWarning}"/>
-                                    </ui:ScrollViewerEx>
-                                </GroupBox>
-                            </Border>
-                            <ListBox x:Name="WarningsListBox"
-                                     ItemsSource="{Binding PreBuildReport.Warnings}"
-                                     DisplayMemberPath="Message"
-                                     SelectedItem="{Binding SelectedWarning}"
-                                     Margin="0,8,0,0"
-                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
-                                     MouseDoubleClick="WarningsListBox_MouseDoubleClick"/>
-                        </DockPanel>
-                    </Grid>
-                </GroupBox>
-            </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsReadyToBuild, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Visible">
-                <GroupBox x:Name="BuildConfirmationGroup" Header="Ready to build" Padding="0">
-                    <Grid>
-                        <ui:SimpleStackPanel Visibility="{Binding IsBuilding, Converter={StaticResource InvBoolToVisibility}}" d:Visibility="Collapsed">
-                            <TextBlock Style="{StaticResource FirstParagraphStyle}">All checks passed (or ignored). Confirm build settings and click "Build" to start.</TextBlock>
-                            <TextBlock Text="Mod Name" Style="{StaticResource LoweredFormLabelStyle}"/>
-                            <TextBox Text="{Binding OutputModName, UpdateSourceTrigger=PropertyChanged}"/>
-                            <ui:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding IsModOverwriteWarningVisible, Converter={StaticResource BoolToVisibility}}">
-                                <fa5:SvgAwesome Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Icon="Solid_ExclamationTriangle" Width="10" Height="10"/>
-                                <TextBlock Foreground="{StaticResource SystemControlErrorTextForegroundBrush}" Text="Mod already exists" Margin="4,0,0,0"/>
-                            </ui:SimpleStackPanel>
-                            <TextBlock Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}">
-                                Please specify a <Bold>new or empty</Bold> mod. Existing files can interfere with the merge and may also be overwritten or deleted.
-                            </TextBlock>
-                            <TextBlock Text="Plugin Name" Style="{StaticResource LoweredFormLabelStyle}"/>
-                            <TextBox Text="{Binding OutputPluginName, Mode=OneWay}" IsEnabled="False"/>
-                            <TextBlock Foreground="{StaticResource MutedTextBrush}">
-                                This is shown for your information. You can't change it.
-                            </TextBlock>
-                            <TextBlock Text="Master Dependencies" Style="{StaticResource LoweredFormLabelStyle}"/>
-                            <ListBox x:Name="MasterDependenciesListBox"
-                                     MaxHeight="{Binding ElementName=BuildConfirmationGroup, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter=x-365}"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                     ItemsSource="{Binding PreBuildReport.Masters}"
-                                     MouseDoubleClick="MasterDependenciesListBox_MouseDoubleClick">
-                                <ListBox.Resources>
-                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsLikelyOverhaul}" Value="True">
-                                                <Setter Property="ToolTip">
-                                                    <Setter.Value>
-                                                        <ToolTip>
-                                                            <TextBlock>
-                                                                This looks like it <Run FontWeight="SemiBold">might</Run> be from a visual overhaul, but
-                                                                <Run Text="{StaticResource AppName}"/> can't know for sure. If you recognize it as part of
-                                                                a mod that is only expected to change NPC appearances, then remove it from the NPCs who
-                                                                are referencing it as the <Run FontWeight="SemiBold">default (master)</Run> plugin.
-                                                                <LineBreak/><LineBreak FontSize="6"/>
-                                                                Master dependencies on visual overhauls may cause conflicts in the game.
-                                                            </TextBlock>
-                                                        </ToolTip>
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </ListBox.Resources>
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal"/>
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding PluginName}">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsLikelyOverhaul}" Value="True">
-                                                            <Setter Property="Foreground" Value="{StaticResource DangerForegroundBrush}"/>
-                                                            <Setter Property="FontWeight" Value="Bold"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <TextBlock Foreground="{StaticResource MutedTextBrush}">
-                                Your merge will depend on these plugins as masters. If you see anything that doesn't belong, double-click on it to see the
-                                list of affected NPCs, and change their "Default plugin" to something else.
-                            </TextBlock>
-                            <ui:SimpleStackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                                <Button Style="{StaticResource AccentButtonStyle}" x:Name="BuildButton" Content="Build" Click="BuildButton_Click"/>
-                            </ui:SimpleStackPanel>
-                        </ui:SimpleStackPanel>
-                        <DockPanel Height="{Binding ElementName=BuildConfirmationGroup, Path=ActualHeight, Converter={StaticResource Math}, ConverterParameter=x-50}"
-                                   Visibility="{Binding IsBuilding, Converter={StaticResource BoolToVisibility}}"
-                                   d:Visibility="Visible">
-                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource SmallHeaderStyle}" Text="Build Progress"/>
-                            <bu:BuildProgress DataContext="{Binding Progress}" Margin="0,8,0,0"/>
-                        </DockPanel>
-                    </Grid>
-                </GroupBox>
-            </Border>
-            <Border Style="{StaticResource GroupBorder}" Padding="8" Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}" Grid.Row="3" d:Visibility="Collapsed">
+            <Border Padding="8"
+                    Style="{StaticResource GroupBorder}"
+                    Visibility="{Binding IsBuildCompleted, Converter={StaticResource BoolToVisibility}}"
+                    d:Visibility="Collapsed">
                 <GroupBox Header="All done">
                     <ui:SimpleStackPanel>
                         <ui:SimpleStackPanel.Resources>
@@ -231,7 +48,7 @@
                         </ui:SimpleStackPanel.Resources>
 
                         <TextBlock Style="{StaticResource FirstParagraphStyle}" Text="Your NPC merge is ready at:"/>
-                        <ui:HyperlinkButton Content="{Binding OutputDirectory}" d:Content="C:\Foo\Bar\Baz" Click="HyperlinkButton_Click"/>
+                        <ui:HyperlinkButton Content="{Binding BuildSettings.OutputDirectory}" d:Content="C:\Foo\Bar\Baz" Click="HyperlinkButton_Click"/>
                         <TextBlock Style="{StaticResource ParagraphStyle}">
                             To start using the new mod:
                         </TextBlock>
@@ -257,8 +74,8 @@
                         </ContentControl>
                         <ContentControl Template="{StaticResource ListItem}" Tag="2.">
                             <TextBlock Style="{StaticResource ListItemStyle}">
-                                Activate the mod named <Run FontWeight="SemiBold" Text="{Binding OutputModName}" d:Text="NPC Merge"/>, and ensure that the plugin
-                                <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> is at the bottom of your load order.
+                                Activate the mod named <Run FontWeight="SemiBold" Text="{Binding BuildSettings.OutputModName}" d:Text="NPC Merge"/>, and ensure that the plugin
+                                <Run Text="{Binding Preview.Output.PluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> is at the bottom of your load order.
                                 It does not matter whether it goes above or below other generated patches (Wrye Bash, Synthesis, etc. - see the note under "Optional instructions" below) but it
                                 should load after all standard mods.
                             </TextBlock>
@@ -274,16 +91,16 @@
                         </TextBlock>
                         <ContentControl Template="{StaticResource ListItem}" Tag="•">
                             <TextBlock Style="{StaticResource ListItemStyle}">
-                                <Bold>LOOT:</Bold> Add <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> to the "Dynamic Patches" group
-                                so that it stays near the bottom after each sort.
+                                <Bold>LOOT:</Bold> Add <Run Text="{Binding Preview.Output.PluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> to the "Dynamic Patches"
+                                group so that it stays near the bottom after each sort.
                             </TextBlock>
                         </ContentControl>
                         <ContentControl Template="{StaticResource ListItem}" Tag="•">
                             <TextBlock Style="{StaticResource ParagraphStyle}">
                                 <Bold>Automated Patchers (Wrye Bash, Synthesis, etc.):</Bold> You can run <Run Text="{StaticResource AppName}"/> either before or after these patchers. If you've selected a patch
                                 (<Run Style="{StaticResource CodeStyle}">Bashed Patch, 0.esp</Run>, <Run Style="{StaticResource CodeStyle}">Synthesis.esp</Run>, etc.) as the plugin source for any NPCs, then make
-                                sure that <Run Text="{Binding OutputPluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> loads after the patch. Otherwise, re-run
-                                those patchers after finishing with <Run Text="{StaticResource AppName}"/>.
+                                sure that <Run Text="{Binding Preview.Output.PluginName, Mode=OneWay}" Style="{StaticResource CodeStyle}" d:Text="NPC Appearances Merged.esp"/> loads after the patch. Otherwise,
+                                re-run those patchers after finishing with <Run Text="{StaticResource AppName}"/>.
                             </TextBlock>
                         </ContentControl>
                         <TextBlock Style="{StaticResource ParagraphStyle}">

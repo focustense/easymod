@@ -13,10 +13,10 @@ namespace Focus.Apps.EasyNpc.Reports
         public IReadOnlyList<ReferencePathViewModel> Paths { get; private init; }
         public string PluginName => option.PluginName;
 
-        private readonly Npc npc;
+        private readonly INpc npc;
         private readonly NpcOption option;
 
-        public InvalidReferenceViewModel(Npc npc, NpcOption option)
+        public InvalidReferenceViewModel(INpc npc, NpcOption option)
         {
             this.npc = npc;
             this.option = option;

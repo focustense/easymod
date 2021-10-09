@@ -5,7 +5,7 @@ using System.IO.Abstractions;
 
 namespace Focus.Apps.EasyNpc.Build.Checks
 {
-    public class ModSettings : IBuildCheck
+    public class ModSettings : IGlobalBuildCheck
     {
         private readonly IFileSystem fs;
         private readonly IModSettings modSettings;

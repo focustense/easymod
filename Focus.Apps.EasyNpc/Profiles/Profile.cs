@@ -1,22 +1,40 @@
 ﻿using Focus.ModManagers;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 
 namespace Focus.Apps.EasyNpc.Profiles
 {
-    public class Profile
+    public class ProfileSection
     {
         public int Count => npcs.Count;
-        public IEnumerable<Npc> Npcs => npcs.Values;
+        public IEnumerable<INpc> Npcs => npcs.Values;
 
-        private readonly Dictionary<IRecordKey, Npc> npcs = new();
+        private readonly Dictionary<IRecordKey, INpc> npcs = new();
 
-        public Profile(IEnumerable<Npc> npcs)
+        public ProfileSection(IEnumerable<INpc> npcs)
         {
             this.npcs = npcs.ToDictionary(x => new RecordKey(x), RecordKeyComparer.Default);
+        }
+
+        public bool TryGetNpc(IRecordKey key, [MaybeNullWhen(false)] out INpc npc)
+        {
+            return npcs.TryGetValue(key, out npc);
+        }
+    }
+
+    public class Profile : ProfileSection
+    {
+        public ProfileSection Hidden { get; private init; }
+
+        public Profile(IEnumerable<INpc> npcs)
+            : base(npcs.Where(x => x.HasAvailableFaceCustomizations))
+        {
+            Hidden = new ProfileSection(npcs.Where(x => !x.HasAvailableFaceCustomizations));
         }
 
         public void Load(Stream stream)
@@ -25,7 +43,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             Parallel.ForEach(savedProfile.Npcs, x =>
             {
                 var key = new RecordKey(x);
-                if (!npcs.TryGetValue(key, out var npc))
+                if (!TryGetNpc(key, out var npc))
                     return;
                 npc.SetDefaultOption(x.DefaultPluginName);
                 npc.SetFaceOption(x.FacePluginName);
@@ -40,7 +58,7 @@ namespace Focus.Apps.EasyNpc.Profiles
             Load(fs);
         }
 
-        public bool TryResolveTemplate(Npc npc, [MaybeNullWhen(false)] out Npc targetNpc)
+        public bool TryResolveTemplate(INpc npc, [MaybeNullWhen(false)] out INpc targetNpc)
         {
             var visitedKeys = new HashSet<IRecordKey>(RecordKeyComparer.Default);
             return TryResolveTemplate(npc, out targetNpc, visitedKeys);
@@ -65,13 +83,8 @@ namespace Focus.Apps.EasyNpc.Profiles
             Save(fs);
         }
 
-        public bool TryGetNpc(IRecordKey key, [MaybeNullWhen(false)] out Npc npc)
-        {
-            return npcs.TryGetValue(key, out npc);
-        }
-
         private bool TryResolveTemplate(
-            Npc npc, [MaybeNullWhen(false)] out Npc recursiveTargetNpc, HashSet<IRecordKey> visitedKeys)
+            INpc npc, [MaybeNullWhen(false)] out INpc recursiveTargetNpc, HashSet<IRecordKey> visitedKeys)
         {
             recursiveTargetNpc = null;
             if (npc.DefaultOption.Analysis.TemplateInfo?.InheritsTraits != true)

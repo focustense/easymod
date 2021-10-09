@@ -38,10 +38,10 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 pluginOrder.Add(pluginName);
             var groupGetterType = LoquiRegistration.GetRegister(typeof(T)).GetterType;
             var group = GetCache(pluginName, groupGetterType);
-            var nextId = nextIds.TryGetValue(pluginName, out var id) ? id : 0;
             var newKeys = new List<FormKey>();
             foreach (var configure in configureRecords)
             {
+                var nextId = nextIds.TryGetValue(pluginName, out var id) ? id : 0;
                 var formKey = new FormKey(masterName, ++nextId);
                 nextIds[pluginName] = nextId;
                 var record = (T)Activator.CreateInstance(typeof(T), formKey, SkyrimRelease.SkyrimSE);
@@ -106,6 +106,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             where T : class, ISkyrimMajorRecordGetter
         {
             return GetAll(link).FirstOrDefault()?.Value;
+        }
+
+        public IKeyValue<T, string> GetWinnerWithSource<T>(IFormLinkGetter<T> link)
+            where T : class, ISkyrimMajorRecordGetter
+        {
+            return GetAll(link).FirstOrDefault();
         }
 
         public bool MasterExists(FormKey formKey, RecordType recordType)

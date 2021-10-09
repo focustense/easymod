@@ -99,22 +99,36 @@ namespace Focus.Analysis.Execution
         private PluginAnalysis RunForPlugin(string pluginName)
         {
             log.Information("Starting analysis of {pluginName}", pluginName);
-            var recordGroups =
-                from type in recordTypes
-                where !ignoredTypes.Contains(type)
-                let analyzerAction = GetAnalyzerAction(type)
-                where analyzerAction != null
-                let keys = scanner.GetKeys(pluginName, type)
-                select analyzerAction(pluginName, keys);
-            var result = new PluginAnalysis(pluginName)
+            var explicitMasters = loadOrderGraph.GetAllMasters(pluginName, false).ToList().AsReadOnly();
+            var implicitMasters = loadOrderGraph.GetAllMasters(pluginName, true).ToList().AsReadOnly();
+            var isBaseGame = loadOrderGraph.IsImplicit(pluginName);
+            Dictionary<RecordType, RecordAnalysisGroup> groups = new();
+            Exception? exception = null;
+            try
             {
-                ExplicitMasters = loadOrderGraph.GetAllMasters(pluginName, false).ToList().AsReadOnly(),
-                ImplicitMasters = loadOrderGraph.GetAllMasters(pluginName, true).ToList().AsReadOnly(),
-                IsBaseGame = loadOrderGraph.IsImplicit(pluginName),
-                Groups = recordGroups.ToDictionary(g => g.Type),
+                var analyzerResults =
+                    from type in recordTypes
+                    where !ignoredTypes.Contains(type)
+                    let analyzerAction = GetAnalyzerAction(type)
+                    where analyzerAction != null
+                    let keys = scanner.GetKeys(pluginName, type)
+                    select analyzerAction(pluginName, keys);
+                groups = analyzerResults.ToDictionary(g => g.Type);
+                log.Information("Completed analysis of {pluginName}", pluginName);
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+                log.Error(ex, "Analysis failed for {pluginName}", pluginName);
+            }
+            return new PluginAnalysis(pluginName)
+            {
+                ExplicitMasters = explicitMasters,
+                ImplicitMasters = implicitMasters,
+                IsBaseGame = isBaseGame,
+                Groups = groups,
+                Exception = exception,
             };
-            log.Information("Completed analysis of {pluginName}", pluginName);
-            return result;
         }
     }
 }

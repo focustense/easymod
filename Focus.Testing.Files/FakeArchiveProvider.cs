@@ -36,6 +36,14 @@ namespace Focus.Testing.Files
                 .Where(f => string.IsNullOrEmpty(path) || f.StartsWith(path));
         }
 
+        public uint GetArchiveFileSize(string archivePath, string archiveFilePath)
+        {
+            return GetArchiveFiles(archivePath)
+                .Where(x => x.Key == archiveFilePath)
+                .Select(x => (uint)x.Value.Length)
+                .FirstOrDefault();
+        }
+
         public IEnumerable<string> GetBadArchivePaths()
         {
             return BadArchivePaths;

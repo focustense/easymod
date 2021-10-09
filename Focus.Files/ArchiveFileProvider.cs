@@ -18,6 +18,11 @@ namespace Focus.Files
             return archiveProvider.ContainsFile(archivePath, fileName);
         }
 
+        public ulong GetSize(string fileName)
+        {
+            return archiveProvider.GetArchiveFileSize(archivePath, fileName);
+        }
+
         public ReadOnlySpan<byte> ReadBytes(string fileName)
         {
             return archiveProvider.ReadBytes(archivePath, fileName);

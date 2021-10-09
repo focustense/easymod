@@ -14,9 +14,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         public class Result
         {
-            public IReadOnlyList<(Profiles.Npc Model, NpcRecord Record)> Npcs { get; private init; }
+            public IReadOnlyList<(Profiles.INpc Model, NpcRecord Record)> Npcs { get; private init; }
 
-            public Result(IReadOnlyList<(Profiles.Npc model, NpcRecord record)> npcs)
+            public Result(IReadOnlyList<(Profiles.INpc model, NpcRecord record)> npcs)
             {
                 Npcs = npcs;
             }
@@ -41,12 +41,12 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             return Task.Run(() =>
             {
                 ItemCount.OnNext(settings.Profile.Count);
-                var npcs = new List<(Profiles.Npc model, NpcRecord record)>();
+                var npcs = new List<(Profiles.INpc model, NpcRecord record)>();
                 foreach (var npc in settings.Profile.Npcs)
                 {
                     log.Debug("Importing default attributes for {npcLabel}", npc.DescriptiveLabel);
                     NextItem(npc.DescriptiveLabel);
-                    if (npc.HasUnmodifiedFaceTemplate())
+                    if (npc.HasUnmodifiedFaceTemplate)
                     {
                         log.Information(
                             "Skipping {npcLabel} because all overrides use the same template.", npc.DescriptiveLabel);

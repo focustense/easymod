@@ -15,25 +15,28 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
 {
     public class ReferenceCheckerTests
     {
-        private readonly ReferenceChecker<INpcGetter> checker;
+        private readonly IReferenceChecker<INpcGetter> checker;
         private readonly FakeGroupCache groups = new();
+
+        private IReferenceFollower<INpcGetter> follower;
 
         public ReferenceCheckerTests()
         {
             checker = new ReferenceChecker<INpcGetter>(groups)
-                .Follow(x => x.Class)
-                .Follow(x => x.DefaultOutfit)
-                .Follow(x => x.Keywords)
-                .Follow(x => x.HeadParts, headPart => headPart
-                    .Follow(x => x.Color)
-                    .FollowSelf(x => x.ExtraParts)
-                    .Follow(x => x.TextureSet))
-                .Follow(x => x.Race, race => race
-                    .Follow(x => x.DefaultHairColors)
-                    .Follow(x => x.Skin, skin => skin
-                        .Follow(x => x.Armature, addon => addon
-                            .Follow(x => x.AdditionalRaces)
-                            .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(t => t.NewTexture)))));
+                .Configure(f => follower = f
+                    .Follow(x => x.Class)
+                    .Follow(x => x.DefaultOutfit)
+                    .Follow(x => x.Keywords)
+                    .Follow(x => x.HeadParts, headPart => headPart
+                        .Follow(x => x.Color)
+                        .FollowSelf(x => x.ExtraParts)
+                        .Follow(x => x.TextureSet))
+                    .Follow(x => x.Race, race => race
+                        .Follow(x => x.DefaultHairColors)
+                        .Follow(x => x.Skin, skin => skin
+                            .Follow(x => x.Armature, addon => addon
+                                .Follow(x => x.AdditionalRaces)
+                                .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(t => t.NewTexture))))));
         }
 
         [Fact]
@@ -240,6 +243,53 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     .Id("BodyArmor")
                     .Id("FeetAddon")
                     .Key("123456:badfeettexture.esp", RecordType.TextureSet)));
+        }
+
+        [Fact]
+        public void WhenPluginsExcluded_SkipsExcludedRecords()
+        {
+            var mainHeadPartKeys = groups
+                .AddRecords<HeadPart>(
+                    "main.esp",
+                    x => x.EditorID = "Eyes",
+                    x =>
+                    {
+                        x.EditorID = "Face";
+                        x.ExtraParts.Add(FormKey.Factory("123456:badheadpart.esp").AsLink<IHeadPartGetter>());
+                    })
+                .ToFormKeys()
+                .ToList();
+            var excludedHeadPartKeys = groups
+                .AddRecords<HeadPart>(
+                    "excluded.esp",
+                    x =>
+                    {
+                        x.EditorID = "Hair";
+                        x.Color.SetTo(AddRecord<ColorRecord>("HairColor"));
+                        // Adding these to main should still cause them to be ignored, because they are only reachable
+                        // via the excluded plugin.
+                        x.ExtraParts.AddRange(groups.AddRecords<HeadPart>("main.esp", hp =>
+                        {
+                            hp.EditorID = "Hairline";
+                            hp.Color.SetTo(AddRecord<ColorRecord>("HairlineColor"));
+                            hp.TextureSet.SetTo(FormKey.Factory("123456:badhairlinetextureset.esp"));
+                        }).ToFormKeys());
+                        x.TextureSet.SetTo(AddRecord<TextureSet>("HairTextureSet"));
+                    })
+                .ToFormKeys()
+                .ToList();
+            var headPartKeys = mainHeadPartKeys.Concat(excludedHeadPartKeys);
+            var npc = new Npc(FormKey.Factory("123456:main.esp"), SkyrimRelease.SkyrimSE)
+            {
+                EditorID = "TestNpc",
+                HeadParts = new(headPartKeys.Select(x => x.AsLink<IHeadPartGetter>())),
+            };
+            follower.WithPluginExclusions(new[] { "excluded.esp" });
+            var invalidPaths = checker.GetInvalidPaths(npc).ToList();
+
+            Assert.Collection(
+                invalidPaths,
+                x => AssertPath(x, PathFrom(npc).Id("Face").Key("123456:badheadpart.esp", RecordType.HeadPart)));
         }
 
         private FormKey AddRecord<T>(string editorId)
