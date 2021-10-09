@@ -97,7 +97,7 @@ namespace Focus.Apps.EasyNpc.Build
         }
     }
 
-    static class WarningMessages
+    public static class WarningMessages
     {
         private static readonly string ModRootJustification =
             "Without direct access to your mod structure, this program can only generate a merged plugin, which " +

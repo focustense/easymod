@@ -64,6 +64,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{
 		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Focus.Apps.EasyNpc.Tests", "Focus.Apps.EasyNpc.Tests\Focus.Apps.EasyNpc.Tests.csproj", "{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -338,6 +340,18 @@ Global
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}.Release|x64.Build.0 = Release|Any CPU
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}.Release|x86.ActiveCfg = Release|Any CPU
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E}.Release|x86.Build.0 = Release|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Debug|x64.Build.0 = Debug|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Debug|x86.Build.0 = Debug|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Release|x64.ActiveCfg = Release|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Release|x64.Build.0 = Release|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Release|x86.ActiveCfg = Release|Any CPU
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -353,6 +367,7 @@ Global
 		{98B262AF-6F61-4615-BF50-89EA32BA58A3} = {DF4E8E41-91CA-4ECB-8BD6-6620FEE7CA85}
 		{D6C5F0C1-4BE5-49B4-819E-DD67E55C159E} = {DF4E8E41-91CA-4ECB-8BD6-6620FEE7CA85}
 		{2EB2EC2D-8597-4C1B-9B1F-2A1007F13A8A} = {8DE32EE3-68FF-4968-AFED-97C4627A6C22}
+		{A2964293-EA85-4C5A-B3EB-2E78B8B3B732} = {DF4E8E41-91CA-4ECB-8BD6-6620FEE7CA85}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C2E2C6EB-242E-4378-9D57-8173E5AF2551}
