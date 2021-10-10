@@ -7,6 +7,7 @@ using Focus.Apps.EasyNpc.Reports;
 using Focus.Files;
 using Focus.ModManagers;
 using PropertyChanged;
+using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -99,7 +100,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public AssetsViewModel(
             IFileSystem fs, IFileProvider fileProvider, IArchiveProvider archiveProvider, IModRepository modRepository,
-            ICompressionEstimator compressionEstimator, Profile profile, LoadOrderAnalysis analysis)
+            ICompressionEstimator compressionEstimator, ILogger log, Profile profile, LoadOrderAnalysis analysis)
         {
             this.archiveProvider = archiveProvider;
             this.compressionEstimator = compressionEstimator;
@@ -114,7 +115,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 .ObserveOn(NewThreadScheduler.Default)
                 .Synchronize()
                 .TakeUntil(disposed)
-                .Subscribe(_ => RefreshAssetSizes());
+                .SubscribeSafe(log, _ => RefreshAssetSizes());
             Observable
                 .Merge(
                     profile.Npcs.SelectMany(npc => new[]
@@ -124,7 +125,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                     }))
                 .ObserveOn(NewThreadScheduler.Default)
                 .TakeUntil(disposed)
-                .Subscribe(npc =>
+                .SubscribeSafe(log, npc =>
                 {
                     if (!npcChains.TryGetValue(npc, out var chain))
                         return;

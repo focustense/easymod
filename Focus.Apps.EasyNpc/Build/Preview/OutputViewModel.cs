@@ -12,6 +12,7 @@ using Focus.Apps.EasyNpc.GameData.Files;
 using Focus.Apps.EasyNpc.Profiles;
 using Focus.Apps.EasyNpc.Reports;
 using PropertyChanged;
+using Serilog;
 
 namespace Focus.Apps.EasyNpc.Build.Preview
 {
@@ -71,14 +72,14 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly BehaviorSubject<ErrorLevel> overallErrorLevel = new(ErrorLevel.None);
         private readonly Profile profile;
 
-        public OutputViewModel(IObservableModSettings modSettings, IFileSystem fs, Profile profile)
+        public OutputViewModel(IObservableModSettings modSettings, IFileSystem fs, ILogger log, Profile profile)
         {
             this.fs = fs;
             this.profile = profile;
             BuildSettings = Observable
                 .CombineLatest(
                     modSettings.RootDirectoryObservable, modName, enableArchiving, enableDewiggify, GetBuildSettings);
-            BuildSettings.Subscribe(settings =>
+            BuildSettings.SubscribeSafe(log, settings =>
             {
                 IsExistingMod = IsOutputDirectoryNonEmpty(settings);
                 IsValidDirectory = IsOutputDirectoryValid(settings);
