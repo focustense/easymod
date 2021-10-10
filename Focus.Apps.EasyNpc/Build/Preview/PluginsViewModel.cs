@@ -3,6 +3,7 @@ using Focus.Apps.EasyNpc.Reports;
 using Focus.Environment;
 using Focus.ModManagers;
 using PropertyChanged;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,14 +73,14 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public PluginsViewModel(
             IReadOnlyLoadOrderGraph loadOrderGraph, IPluginCategorizer pluginCategorizer, IModRepository modRepository,
-            Profile profile)
+            ILogger log, Profile profile)
         {
             this.modRepository = modRepository;
             this.pluginCategorizer = pluginCategorizer;
 
             Observable.CombineLatest(profile.Npcs.Select(x => x.DefaultOptionObservable))
                 .SubscribeOn(NewThreadScheduler.Default)
-                .Subscribe(defaultOptions =>
+                .SubscribeSafe(log, defaultOptions =>
                 {
                     var defaultPlugins = defaultOptions
                         .Select(x => x.PluginName)
@@ -91,7 +92,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 });
             Observable.CombineLatest(profile.Npcs.Select(x => x.FaceOptionObservable))
                 .SubscribeOn(NewThreadScheduler.Default)
-                .Subscribe(faceOptions => FacePlugins = CreatePluginLookup(faceOptions.Select(x => x.PluginName)));
+                .SubscribeSafe(log, faceOptions =>
+                    FacePlugins = CreatePluginLookup(faceOptions.Select(x => x.PluginName)));
         }
 
         private IReadOnlyDictionary<string, PluginViewModel> CreatePluginLookup(IEnumerable<string> pluginNames)

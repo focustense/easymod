@@ -2,6 +2,7 @@
 using Focus.Apps.EasyNpc.Messages;
 using Focus.Apps.EasyNpc.Profiles;
 using PropertyChanged;
+using Serilog;
 using System;
 using System.Linq;
 using System.Reactive.Linq;
@@ -37,7 +38,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         public BuildPreviewViewModel(
             IMessageBus messageBus, NpcSummaryViewModel.Factory npcsFactory, PluginsViewModel.Factory pluginsFactory,
             AlertsViewModel.Factory alertsFactory, OutputViewModel.Factory outputFactory,
-            AssetsViewModel.Factory assetsFactory, Profile profile, LoadOrderAnalysis analysis)
+            AssetsViewModel.Factory assetsFactory, ILogger log, Profile profile, LoadOrderAnalysis analysis)
         {
             this.messageBus = messageBus;
             Npcs = npcsFactory(profile, analysis);
@@ -50,10 +51,10 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             Observable.CombineLatest(Assets.OverallErrorLevel, Output.OverallErrorLevel, Alerts.OverallErrorLevel)
                 .Select(errorLevels => errorLevels.Max())
                 .TakeUntil(disposed)
-                .Subscribe(lvl => OverallErrorLevel = lvl);
+                .SubscribeSafe(log, lvl => OverallErrorLevel = lvl);
             Output.BuildSettings
                 .TakeUntil(disposed)
-                .Subscribe(settings => CurrentSettings = settings);
+                .SubscribeSafe(log, settings => CurrentSettings = settings);
         }
 
         public void Dispose()
