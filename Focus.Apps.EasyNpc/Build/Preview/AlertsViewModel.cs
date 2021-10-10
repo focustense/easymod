@@ -3,6 +3,7 @@ using Focus.Apps.EasyNpc.Configuration;
 using Focus.Apps.EasyNpc.Profiles;
 using Focus.Apps.EasyNpc.Reports;
 using PropertyChanged;
+using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -34,6 +35,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly Subject<bool> disposed = new();
         private readonly IGameSettings gameSettings;
         private readonly IEnumerable<IGlobalBuildCheck> globalChecks;
+        private readonly ILogger log;
         private readonly IObservableModSettings modSettings;
         private readonly IEnumerable<INpcBuildCheck> npcChecks;
         private readonly ConcurrentDictionary<IRecordKey, IReadOnlyList<BuildWarning>> npcWarnings =
@@ -43,13 +45,14 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         public AlertsViewModel(
             IObservableAppSettings appSettings, IGameSettings gameSettings, IObservableModSettings modSettings,
-            IEnumerable<IGlobalBuildCheck> globalChecks, IEnumerable<INpcBuildCheck> npcChecks, Profile profile,
-            IObservable<BuildSettings> buildSettings)
+            IEnumerable<IGlobalBuildCheck> globalChecks, IEnumerable<INpcBuildCheck> npcChecks, ILogger log,
+            Profile profile, IObservable<BuildSettings> buildSettings)
         {
             this.appSettings = appSettings;
             this.buildSettings = buildSettings;
             this.gameSettings = gameSettings;
             this.globalChecks = globalChecks;
+            this.log = log;
             this.modSettings = modSettings;
             this.npcChecks = npcChecks;
             this.profile = profile;
@@ -64,7 +67,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             throttledBuildSettings
                 .ObserveOn(NewThreadScheduler.Default)
                 .TakeUntil(disposed)
-                .Subscribe(settings =>
+                .SubscribeSafe(log, settings =>
                 {
                     Parallel.ForEach(profile.Npcs, npc => RunNpcChecks(npc, settings));
                     NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings).ToList().AsReadOnly();
@@ -74,7 +77,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             Observable.CombineLatest(throttledBuildSettings, throttledModSettings, (settings, _) => settings)
                 .ObserveOn(NewThreadScheduler.Default)
                 .TakeUntil(disposed)
-                .Subscribe(settings =>
+                .SubscribeSafe(log, settings =>
                 {
                     RunGlobalChecks(settings);
                     UpdateResults();
@@ -90,7 +93,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
                 .WithLatestFrom(throttledBuildSettings, (npc, settings) => (npc, settings))
                 .ObserveOn(NewThreadScheduler.Default)
                 .TakeUntil(disposed)
-                .Subscribe(res =>
+                .SubscribeSafe(log, res =>
                 {
                     RunNpcChecks(res.npc, res.settings);
                     NpcWarnings = npcWarnings.Values.SelectMany(warnings => warnings).ToList().AsReadOnly();
@@ -99,7 +102,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             throttledBuildSettings.Connect();
             appSettings.BuildWarningWhitelistObservable
                 .TakeUntil(disposed)
-                .Subscribe(_ => UpdateSummaryItems());
+                .SubscribeSafe(log, _ => UpdateSummaryItems());
         }
 
         public void Dispose()
@@ -122,7 +125,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
 
         private ErrorLevel GetErrorLevel()
         {
-            var maxSeverity = GlobalWarnings.Concat(NpcWarnings).Max(x => x.Severity);
+            var maxSeverity = GlobalWarnings.Concat(NpcWarnings).DefaultIfEmpty().Max(x => x?.Severity);
             return maxSeverity switch
             {
                 BuildWarningSeverity.High => ErrorLevel.Fatal,
