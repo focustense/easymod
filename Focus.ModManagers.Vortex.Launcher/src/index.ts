@@ -1,9 +1,9 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { basename, join } from 'path';
-import { actions } from 'vortex-api';
+import { actions, selectors } from 'vortex-api';
 import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
-import { IMod, IProfile } from 'vortex-api/lib/types/IState';
+import { IDiscoveryResult, IMod, IProfile } from 'vortex-api/lib/types/IState';
 
 
 interface IModAttributes {
@@ -56,13 +56,6 @@ interface IReportFile {
 }
 
 const DUMMY_MOD_ID = 7777777;
-
-// This really should come from Electron's app.getPath(), same as Vortex itself, but not sure how to
-// use that without including the entire electron package.
-// This implementation comes from https://stackoverflow.com/a/26227660/38360
-const appDataDir = process.env.APPDATA || (process.platform == 'darwin' ?
-  process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share");
-const userDataDir = join(appDataDir, 'Vortex');
 
 const init = (context: IExtensionContext) => {
   function activateMod(gameId: string, modName: string): Promise<void> {
@@ -119,13 +112,10 @@ const init = (context: IExtensionContext) => {
     }
   }
 
-  function createLookupFile(profile: IProfile, reportPath: string): string {
+  function createLookupFile(profile: IProfile, discovery: IDiscoveryResult, reportPath: string): string {
     const state = context.api.getState();
     const mods = state.persistent.mods[profile.gameId] || {};
-    const gameInfo = state.settings.gameMode.discovered[profile.gameId] || {};
-    let stagingDir = state.settings.mods.installPath[profile.gameId]
-      .replace(/{userdata}/ig, userDataDir)
-      .replace(/{game}/ig, profile.gameId);
+    const stagingDir = selectors.installPathForGame(state, profile.gameId);
     const data: IBootstrapFile = {
       files: {},
       filePriorities: [],
@@ -133,8 +123,8 @@ const init = (context: IExtensionContext) => {
       reportPath,
       stagingDir,
     };
-    if (gameInfo.path) {
-      data.gameDataPath = join(gameInfo.path, 'data');
+    if (discovery.path) {
+      data.gameDataPath = join(discovery.path, 'data');
     }
     for (const mod of Object.values(mods)) {
       const attributes = (mod.attributes || {}) as IModAttributes;
@@ -160,9 +150,12 @@ const init = (context: IExtensionContext) => {
     return lookupPath;
   }
 
+  function getCurrentDiscovery(): IDiscoveryResult {
+    return selectors.currentGameDiscovery(context.api.getState());
+  }
+
   function getCurrentProfile(): IProfile {
-    const state = context.api.getState();
-    return state.persistent.profiles[state.settings.profiles.activeProfileId]
+    return selectors.activeProfile(context.api.getState());
   }
 
   function isGameSupported(): boolean {
@@ -181,7 +174,9 @@ const init = (context: IExtensionContext) => {
     writeFileSync(reportPath, sentinelContent);
 
     const profile = getCurrentProfile();
-    const dataPath = createLookupFile(profile, reportPath);
+    const discovery = getCurrentDiscovery();
+
+    const dataPath = createLookupFile(profile, discovery, reportPath);
 
     const tools = context.api.getState().settings.gameMode.discovered[profile.gameId]?.tools || {};
     const easyNpcTool = Object.values(tools).find(t => t.path && basename(t.path).toLowerCase() == "easynpc.exe");
