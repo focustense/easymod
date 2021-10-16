@@ -40,6 +40,13 @@ namespace Focus.Apps.EasyNpc.Configuration
             set => mugshotsDirectory.OnNext(value);
         }
 
+        public IReadOnlyList<RecordKey> RaceTransformationKeys { get; set; } = new List<RecordKey>
+        {
+            new("Skyrim.esm", "0CDD84"),        // WerewolfBeastRace
+            new("Dawnguard.esm", "00283A"),     // DLC1VampireBeastRace
+            new("Dragonborn.esm", "01E17B"),    // DLC2WerebearBeastRace
+        };
+
         public string StaticAssetsPath => ProgramData.AssetsPath;
 
         public bool UseModManagerForModDirectory
@@ -57,6 +64,7 @@ namespace Focus.Apps.EasyNpc.Configuration
 
         IEnumerable<BuildWarningSuppression> IAppSettings.BuildWarningWhitelist => BuildWarningWhitelist;
         IEnumerable<MugshotRedirect> IAppSettings.MugshotRedirects => MugshotRedirects;
+        IEnumerable<IRecordKey> IAppSettings.RaceTransformationKeys => RaceTransformationKeys;
 
         private readonly BehaviorSubject<IReadOnlyList<BuildWarningSuppression>> buildWarningWhitelist =
             new(new List<BuildWarningSuppression>());
@@ -93,6 +101,7 @@ namespace Focus.Apps.EasyNpc.Configuration
                 ModRootDirectory = DefaultModRootDirectory,
                 MugshotRedirects = MugshotRedirects,
                 MugshotsDirectory = MugshotsDirectory,
+                RaceTransformationKeys = RaceTransformationKeys.Select(x => x.ToString()).ToList(),
                 UseModManagerForModDirectory = UseModManagerForModDirectory,
             };
             data.SaveToFile(path);
@@ -108,6 +117,8 @@ namespace Focus.Apps.EasyNpc.Configuration
                 MugshotRedirects = data.MugshotRedirects;
             if (!string.IsNullOrEmpty(data.MugshotsDirectory))
                 MugshotsDirectory = data.MugshotsDirectory;
+            if (data.RaceTransformationKeys is not null)
+                RaceTransformationKeys = data.RaceTransformationKeys.Select(RecordKey.Parse).ToList().AsReadOnly();
             if (data.UseModManagerForModDirectory.HasValue)
                 UseModManagerForModDirectory = data.UseModManagerForModDirectory.Value;
         }
@@ -228,6 +239,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         public string? ModRootDirectory { get; set; }
         public IReadOnlyList<MugshotRedirect>? MugshotRedirects { get; set; }
         public string? MugshotsDirectory { get; set; }
+        public IReadOnlyList<string>? RaceTransformationKeys { get; set; }
         public bool? UseModManagerForModDirectory { get; set; }
     }
 }
