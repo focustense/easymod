@@ -1,4 +1,5 @@
-﻿using Focus.Providers.Mutagen;
+﻿using Focus.Apps.EasyNpc.Configuration;
+using Focus.Providers.Mutagen;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
@@ -22,13 +23,18 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private readonly ISkyrimMod mergedMod;
         // We need to keep track of these ourselves, because merged records won't appear in the original LinkCache.
         private readonly Dictionary<FormKey, IMajorRecord> mergedRecords = new();
+        private readonly Lazy<IReadOnlyList<IFormLinkGetter<IArmorAddonGetter>>> raceTransformationAddons;
 
         public RecordImporter(
-            IMutableGameEnvironment<ISkyrimMod, ISkyrimModGetter> environment, ISkyrimMod mergedMod, ILogger log)
+            IMutableGameEnvironment<ISkyrimMod, ISkyrimModGetter> environment, IAppSettings appSettings,
+            ISkyrimMod mergedMod, ILogger log)
         {
             this.environment = environment;
             this.log = log;
             this.mergedMod = mergedMod;
+
+            var raceTransformationKeys = appSettings.RaceTransformationKeys.Select(key => key.ToFormKey()).ToList();
+            raceTransformationAddons = new(() => GetDefaultRaceArmorAddons(raceTransformationKeys).ToList(), true);
         }
 
         public void AddArmorRace(
@@ -81,17 +87,21 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             where T : SkyrimMajorRecord, TGetter
             where TGetter : class, ISkyrimMajorRecordGetter
         {
-            Action<T>? setup = null;
+            Action<T>? defaultSetup = null;
+            Action<T>? masterSetup = null;
             // There's probably a switch expression that's better for this, but Mutagen doesn't make it obvious.
             if (typeof(IHeadPartGetter).IsAssignableFrom(link.Type))
-                setup = x => ImportHeadPartDependencies((HeadPart)(SkyrimMajorRecord)x);
+                defaultSetup = x => ImportHeadPartDependencies((HeadPart)(SkyrimMajorRecord)x);
             else if (typeof(IArmorGetter).IsAssignableFrom(link.Type))
-                setup = x => ImportWornArmorDependencies((Armor)(SkyrimMajorRecord)x);
+            {
+                defaultSetup = x => ImportWornArmorDependencies((Armor)(SkyrimMajorRecord)x);
+                masterSetup = x => AddRaceTransformationAddons((Armor)(SkyrimMajorRecord)x);
+            }
             else if (typeof(IArmorAddonGetter).IsAssignableFrom(link.Type))
-                setup = x => ImportWornArmorAddonDependencies((ArmorAddon)(SkyrimMajorRecord)x);
+                defaultSetup = x => ImportWornArmorAddonDependencies((ArmorAddon)(SkyrimMajorRecord)x);
             else if (typeof(IArtObjectGetter).IsAssignableFrom(link.Type))
-                setup = x => ImportArtObjectDependencies((ArtObject)(SkyrimMajorRecord)x);
-            return Import(link, groupSelector(mergedMod), setup);
+                defaultSetup = x => ImportArtObjectDependencies((ArtObject)(SkyrimMajorRecord)x);
+            return Import(link, groupSelector(mergedMod), defaultSetup, masterSetup);
         }
 
         public T? TryResolve<T>(FormKey key) where T : class, IMajorRecordGetter
@@ -108,13 +118,38 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             return record;
         }
 
+        private void AddRaceTransformationAddons(Armor armor)
+        {
+            armor.EditorID += "Patched";
+            foreach (var addon in raceTransformationAddons.Value)
+                if (!armor.Armature.Contains(addon.FormKey))
+                    armor.Armature.Add(addon);
+        }
+
+        private IEnumerable<IFormLinkGetter<IArmorAddonGetter>> GetDefaultRaceArmorAddons(
+            IEnumerable<FormKey> raceKeys)
+        {
+            foreach (var raceKey in raceKeys)
+            {
+                var race = raceKey.AsLinkGetter<IRaceGetter>().TryResolve(environment.LinkCache);
+                if (race is null)
+                    continue;
+                var skin = race.Skin.TryResolve(environment.LinkCache);
+                if (skin is null)
+                    continue;
+                foreach (var addon in skin.Armature)
+                    yield return addon;
+            }
+        }
+
         private T? GetIfMerged<T>(FormKey key) where T : IMajorRecordGetter
         {
             return mergedRecords.TryGetValue(key, out var merged) ? (T)merged : default;
         }
 
         private FormKey? Import<T, TGetter>(
-            IFormLinkGetter<TGetter>? link, IGroup<T> group, Action<T>? setup = null)
+            IFormLinkGetter<TGetter>? link, IGroup<T> group, Action<T>? defaultSetup = null,
+            Action<T>? masterSetup = null)
             where T : SkyrimMajorRecord, TGetter
             where TGetter : class, ISkyrimMajorRecordGetter
         {
@@ -122,7 +157,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 return null;
 
             log.Debug("Clone requested for {Type} ({FormKey})", link.Type.Name, link.FormKey);
-            if (masters.Contains(link.FormKey.ModKey) && !IsInjected<T, TGetter>(link))
+            var isFromMaster = masters.Contains(link.FormKey.ModKey) && !IsInjected<T, TGetter>(link);
+            if (isFromMaster && masterSetup is null)
             {
                 log.Debug("Record {FormKey} is already provided by the merged plugin's masters.", link.FormKey);
                 return link.FormKey;
@@ -145,7 +181,10 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 log.Debug(
                     "Clone completed for {FormKey} -> {ClonedFormKey}; performing additional setup",
                     link.FormKey, duplicateRecord.FormKey);
-                setup?.Invoke(duplicateRecord);
+                if (isFromMaster)
+                    masterSetup?.Invoke(duplicateRecord);
+                else
+                    defaultSetup?.Invoke(duplicateRecord);
                 log.Information(
                     "Cloned {Type} '{EditorId}' ({FormKey}) as {ClonedFormKey}",
                     link.Type.Name, sourceRecord.EditorID, link.FormKey, duplicateRecord.FormKey);
@@ -279,6 +318,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             // Setting to default race should allow all races to "equip" the armor, meaning it should be compatible with
             // whatever race an NPC happens to be inheriting from the default (not face) plugin.
             armor.Race.SetTo(environment.LinkCache.Resolve<IRaceGetter>("DefaultRace"));
+
+            // Required for beast transformations to work: https://github.com/focustense/easymod/issues/133
+            AddRaceTransformationAddons(armor);
 
             ReplaceList(armor.Armature, mergedMod.ArmorAddons, ImportWornArmorAddonDependencies);
             ReplaceList(armor.Keywords, mergedMod.Keywords);

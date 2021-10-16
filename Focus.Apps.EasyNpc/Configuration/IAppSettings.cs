@@ -10,6 +10,7 @@ namespace Focus.Apps.EasyNpc.Configuration
         string DefaultModRootDirectory { get; }
         IEnumerable<MugshotRedirect> MugshotRedirects { get; }
         string MugshotsDirectory { get; }
+        IEnumerable<IRecordKey> RaceTransformationKeys { get; }
         string StaticAssetsPath { get; }
         bool UseModManagerForModDirectory { get; }
     }
