@@ -16,11 +16,11 @@ namespace Focus.Providers.Mutagen.Analysis
         private readonly IReadOnlyGameEnvironment<ISkyrimModGetter> environment;
         private readonly ConcurrentDictionary<Tuple<string, Type>, IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>?> commonGroups =
             new(new TupleEqualityComparer<string, Type>(StringComparer.OrdinalIgnoreCase));
-        private readonly ConcurrentDictionary<Tuple<string, Type>, IGroupCommonGetter<ISkyrimMajorRecordGetter>?> genericGroups =
+        private readonly ConcurrentDictionary<Tuple<string, Type>, IGroupGetter<ISkyrimMajorRecordGetter>?> genericGroups =
             new(new TupleEqualityComparer<string, Type>(StringComparer.OrdinalIgnoreCase));
         private readonly ILogger log;
-        private readonly ConcurrentDictionary<FormKey, IReadOnlyList<IKeyValue<object, string>>> records = new();
-        private readonly ConcurrentDictionary<FormKey, IKeyValue<object, string>?> winningRecords = new();
+        private readonly ConcurrentDictionary<FormKey, IReadOnlyList<IKeyValue<string, object>>> records = new();
+        private readonly ConcurrentDictionary<FormKey, IKeyValue<string, object>?> winningRecords = new();
 
         public GroupCache(IReadOnlyGameEnvironment<ISkyrimModGetter> environment, ILogger log)
         {
@@ -38,26 +38,26 @@ namespace Focus.Providers.Mutagen.Analysis
                 if (genericGroups.TryGetValue(groupKey, out var genericGroup) && genericGroup != null)
                     return genericGroup.RecordCache;
                 var mod = GetMod(x.Item1);
-                return mod?.GetTopLevelGroup(groupType)?.RecordCache as IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>;
+                return mod?.TryGetTopLevelGroup(groupType)?.RecordCache as IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>;
             });
         }
 
-        public IGroupCommonGetter<T>? Get<T>(
-            string pluginName, Func<ISkyrimModGetter, IGroupCommonGetter<T>> groupSelector)
+        public IGroupGetter<T>? Get<T>(
+            string pluginName, Func<ISkyrimModGetter, IGroupGetter<T>> groupSelector)
             where T : class, ISkyrimMajorRecordGetter
         {
-            return (IGroupCommonGetter<T>?)genericGroups.GetOrAdd(Tuple.Create(pluginName, typeof(T)), x =>
+            return (IGroupGetter<T>?)genericGroups.GetOrAdd(Tuple.Create(pluginName, typeof(T)), x =>
             {
                 var mod = GetMod(x.Item1);
                 return mod != null ? groupSelector(mod) : null;
             });
         }
 
-        public IEnumerable<IKeyValue<T, string>> GetAll<T>(IFormLinkGetter<T> link)
+        public IEnumerable<IKeyValue<string, T>> GetAll<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {
             return records.GetOrAdd(link.FormKey, _ => LoadAll(link).ToList().AsReadOnly())
-                .Cast<IKeyValue<T, string>>();
+                .Cast<IKeyValue<string, T>>();
         }
 
         public ISkyrimModGetter? GetMod(string pluginName)
@@ -73,11 +73,11 @@ namespace Focus.Providers.Mutagen.Analysis
             return winningRecords.GetOrAdd(link.FormKey, _ => GetAll(link).FirstOrDefault())?.Value as T;
         }
 
-        public IKeyValue<T, string>? GetWinnerWithSource<T>(IFormLinkGetter<T> link)
+        public IKeyValue<string, T>? GetWinnerWithSource<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {
             var cached = winningRecords.GetOrAdd(link.FormKey, _ => GetAll(link).FirstOrDefault());
-            return cached is not null ? new KeyValue<T, string>(cached.Key, (T)cached.Value) : null;
+            return cached is not null ? new KeyValue<string, T>(cached.Key, (T)cached.Value) : null;
         }
 
         public bool MasterExists(FormKey formKey, RecordType recordType)
@@ -94,7 +94,7 @@ namespace Focus.Providers.Mutagen.Analysis
             winningRecords.Clear();
         }
 
-        private IEnumerable<IKeyValue<T, string>> LoadAll<T>(IFormLinkGetter<T> link)
+        private IEnumerable<IKeyValue<string, T>> LoadAll<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {
             if (!link.FormKeyNullable.HasValue)
@@ -109,7 +109,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 var group = Get(listing.ModKey.FileName, typeof(T));
                 var record = group?.TryGetValue(link.FormKey);
                 if (record is T resolved)
-                    yield return new KeyValue<T, string>(listing.ModKey.FileName, resolved);
+                    yield return new KeyValue<string, T>(listing.ModKey.FileName, resolved);
             }
         }
     }

@@ -51,7 +51,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             mod3.Shouts.Add(new Shout(FormKey.Factory("000002:mod2.esp"), release) { EditorID = "Mod3Record3" });
             
             Assert.Collection(
-                groups.GetAll(FormKey.Factory("000001:mod1.esp").AsLink<IShoutGetter>()),
+                groups.GetAll(FormKey.Factory("000001:mod1.esp").ToLink<IShoutGetter>()),
                 x =>
                 {
                     Assert.Equal("mod3.esp", x.Key);
@@ -66,7 +66,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     Assert.Equal("Mod1Record1", x.Value.EditorID);
                 });
             Assert.Collection(
-                groups.GetAll(FormKey.Factory("000002:mod1.esp").AsLink<IShoutGetter>()),
+                groups.GetAll(FormKey.Factory("000002:mod1.esp").ToLink<IShoutGetter>()),
                 x =>
                 {
                     Assert.Equal("mod3.esp", x.Key);
@@ -77,7 +77,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     Assert.Equal("Mod1Record2", x.Value.EditorID);
                 });
             Assert.Collection(
-                groups.GetAll(FormKey.Factory("000002:mod2.esp").AsLink<IShoutGetter>()),
+                groups.GetAll(FormKey.Factory("000002:mod2.esp").ToLink<IShoutGetter>()),
                 x =>
                 {
                     Assert.Equal("mod3.esp", x.Key);
@@ -196,7 +196,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             var mod3 = AddLoadedMod("mod3.esp");
             mod3.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod3Record" });
 
-            var winner = groups.GetWinner(FormKey.Factory("000001:mod1.esp").AsLink<Shout>());
+            var winner = groups.GetWinner(FormKey.Factory("000001:mod1.esp").ToLink<Shout>());
             Assert.Equal("Mod3Record", winner.EditorID);
         }
 
@@ -211,7 +211,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             var mod3 = AddLoadedMod("mod3.esp");
             mod3.Shouts.Add(new Shout(FormKey.Factory("000001:mod1.esp"), release) { EditorID = "Mod3Record" });
 
-            var winner = groups.GetWinnerWithSource(FormKey.Factory("000001:mod1.esp").AsLink<Shout>());
+            var winner = groups.GetWinnerWithSource(FormKey.Factory("000001:mod1.esp").ToLink<Shout>());
             Assert.Equal("mod3.esp", winner.Key);
             Assert.Equal("Mod3Record", winner.Value.EditorID);
         }

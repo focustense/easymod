@@ -96,7 +96,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public T? TryResolve<T>(FormKey key) where T : class, IMajorRecordGetter
         {
-            var record = GetIfMerged<T>(key) ?? key.AsLink<T>().TryResolve(environment.LinkCache);
+            var record = GetIfMerged<T>(key) ?? key.ToLink<T>().TryResolve(environment.LinkCache);
             if (record == null)
             {
                 var recordTypeName = MutagenExtensions.GetRecordTypeName<T>();
@@ -191,7 +191,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             {
                 var mergedTextureSetKey = Import(textureSetLink, mergedMod.TextureSets);
                 if (mergedTextureSetKey != null)
-                    list.Items.Add(mergedTextureSetKey.Value.AsLinkGetter<ITextureSetGetter>());
+                    list.Items.Add(mergedTextureSetKey.Value.ToLinkGetter<ITextureSetGetter>());
             }
         }
 
@@ -236,8 +236,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 var maleSkinTexture = Import(addon.SkinTexture?.Male, mergedMod.TextureSets) ?? FormKey.Null;
                 var femaleSkinTexture = Import(addon.SkinTexture?.Female, mergedMod.TextureSets) ?? FormKey.Null;
                 addon.SkinTexture = new GenderedItem<IFormLinkNullableGetter<ITextureSetGetter>>(
-                    maleSkinTexture.AsLinkGetter<ITextureSetGetter>().AsNullable(),
-                    femaleSkinTexture.AsLinkGetter<ITextureSetGetter>().AsNullable());
+                    maleSkinTexture.ToLinkGetter<ITextureSetGetter>().AsNullable(),
+                    femaleSkinTexture.ToLinkGetter<ITextureSetGetter>().AsNullable());
             }
             // Form lists (skin texture swap list) can be pretty brutal to merge as a form list can technically contain
             // anything at all. However, we can reduce the complexity without breaking anything important (hopefully) by
@@ -249,8 +249,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 var femaleSwapList =
                     Import(addon.TextureSwapList?.Female, mergedMod.FormLists, ImportTextureSetList) ?? FormKey.Null;
                 addon.TextureSwapList = new GenderedItem<IFormLinkNullableGetter<IFormListGetter>>(
-                    maleSwapList.AsLinkGetter<IFormListGetter>().AsNullable(),
-                    femaleSwapList.AsLinkGetter<IFormListGetter>().AsNullable());
+                    maleSwapList.ToLinkGetter<IFormListGetter>().AsNullable(),
+                    femaleSwapList.ToLinkGetter<IFormListGetter>().AsNullable());
             }
             ReplaceAlternateTextures(addon.WorldModel?.Female?.AlternateTextures);
             ReplaceAlternateTextures(addon.WorldModel?.Male?.AlternateTextures);

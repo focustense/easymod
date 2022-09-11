@@ -1193,7 +1193,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     AddEmptyRecords<Faction>(pluginName, "JarlFaction", "VampireFaction", "MarriageExcludedFaction")
                     // Faction ranks appear signed in xEdit, but Mutagen uses a byte type?
                     .Zip(new byte[] { 1, 0, 2 })
-                    .Select(x => new RankPlacement { Faction = x.First.AsLink<IFactionGetter>(), Rank = x.Second })
+                    .Select(x => new RankPlacement { Faction = x.First.ToLink<IFactionGetter>(), Rank = x.Second })
                     .ToList()
                     .AsReadOnly(),
                 HairColorKey = AddEmptyRecords<ColorRecord>(pluginName, "Blond").Single(),
@@ -1207,7 +1207,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 ItemEntries = AddEmptyRecords<MiscItem>(pluginName, "Basket", "Health Potion", "Gold")
                     .Zip(new[] { 1, 5, 50 })
                     .Select(x => new ContainerEntry {
-                        Item = new ContainerItem { Item = x.First.AsLink<IMiscItemGetter>(), Count = x.Second }
+                        Item = new ContainerItem { Item = x.First.ToLink<IMiscItemGetter>(), Count = x.Second }
                     })
                     .ToList()
                     .AsReadOnly(),
@@ -1215,7 +1215,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 PackageKeys = AddEmptyRecords<Package>(pluginName, "WatfordWork", "DefaultSandbox", "Eat", "Sing"),
                 PerkPlacements = AddEmptyRecords<Perk>(pluginName, "MagicResistance30", "Recovery30", "Regeneration")
                     .Zip(new byte[] { 2, 3, 1 })
-                    .Select(x => new PerkPlacement { Perk = x.First.AsLink<IPerkGetter>(), Rank = x.Second })
+                    .Select(x => new PerkPlacement { Perk = x.First.ToLink<IPerkGetter>(), Rank = x.Second })
                     .ToList()
                     .AsReadOnly(),
                 SleepOutfitKey = AddEmptyRecords<Outfit>(pluginName, "DefaultSleepOutfit").Single(),

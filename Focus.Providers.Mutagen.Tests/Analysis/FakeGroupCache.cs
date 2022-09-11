@@ -1,6 +1,7 @@
 ﻿using Focus.Providers.Mutagen.Analysis;
 using Loqui;
 using Moq;
+using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 using Mutagen.Bethesda.Skyrim;
@@ -76,14 +77,13 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return GetCache(pluginName, groupType);
         }
 
-        public IGroupCommonGetter<T> Get<T>(
-            string pluginName, Func<ISkyrimModGetter, IGroupCommonGetter<T>> groupSelector)
+        public IGroupGetter<T> Get<T>(string pluginName, Func<ISkyrimModGetter, IGroupGetter<T>> groupSelector)
             where T : class, ISkyrimMajorRecordGetter
         {
             return GetGroupGetter<T>(pluginName, typeof(T));
         }
 
-        public IEnumerable<IKeyValue<T, string>> GetAll<T>(IFormLinkGetter<T> link)
+        public IEnumerable<IKeyValue<string, T>> GetAll<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {
             if (!link.FormKeyNullable.HasValue)
@@ -93,7 +93,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 var groupCache = GetCache(pluginOrder[i], typeof(T));
                 var record = groupCache.TryGetValue(link.FormKey);
                 if (record != null)
-                    yield return new KeyValue<T, string>(pluginOrder[i], (T)record);
+                    yield return new KeyValue<string, T>(pluginOrder[i], (T)record);
             }
         }
 
@@ -108,7 +108,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return GetAll(link).FirstOrDefault()?.Value;
         }
 
-        public IKeyValue<T, string> GetWinnerWithSource<T>(IFormLinkGetter<T> link)
+        public IKeyValue<string, T> GetWinnerWithSource<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter
         {
             return GetAll(link).FirstOrDefault();
@@ -141,7 +141,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return cache;
         }
 
-        private IGroupCommonGetter<T> GetGroupGetter<T>(string pluginName, Type groupType)
+        private IGroupGetter<T> GetGroupGetter<T>(string pluginName, Type groupType)
             where T : class, ISkyrimMajorRecordGetter
         {
             var key = Tuple.Create(pluginName, groupType);
@@ -153,19 +153,26 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 group = fakeGroup;
                 typedGroups.Add(key, group);
             }
-            return (IGroupCommonGetter<T>)group;
+            return (IGroupGetter<T>)group;
         }
 
         // Moq is too buggy to use a mock for this, but its implementation isn't suitable for use as a "general" test
         // double, which is why it is currently a private inner class.
-        class WrappedGroupGetter<T> : IGroupCommonGetter<T>
+        class WrappedGroupGetter<T> : IGroupGetter<T>
             where T : class, ISkyrimMajorRecordGetter
         {
             public T this[FormKey key] => cache[key];
+            public ILoquiRegistration ContainedRecordRegistration => LoquiRegistration.GetRegister(ContainedRecordType);
+            public Type ContainedRecordType => typeof(T);
             public int Count => cache.Count;
             public IEnumerable<FormKey> FormKeys => cache.Keys;
             public IReadOnlyCache<T, FormKey> RecordCache => cache;
+            public IEnumerable<T> Records => cache.Select(x => x.Value);
             public IMod SourceMod => throw new NotImplementedException();
+
+            IReadOnlyCache<IMajorRecordGetter, FormKey> IGroupGetter.RecordCache => cache;
+            IEnumerable<IMajorRecordGetter> IGroupGetter.Records => Records;
+            IMajorRecordGetter IGroupGetter.this[FormKey key] => this[key];
 
             private readonly IReadOnlyCache<T, FormKey> cache;
 
@@ -177,6 +184,11 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             public bool ContainsKey(FormKey key)
             {
                 return cache.ContainsKey(key);
+            }
+
+            public IEnumerable<IFormLinkGetter> EnumerateFormLinks()
+            {
+                return cache.Select(x => x.Value.ToLinkGetter());
             }
 
             public IEnumerator<T> GetEnumerator()

@@ -68,7 +68,7 @@ namespace Focus.Providers.Mutagen.Analysis
             if (raceList is null)
                 return Enumerable.Empty<VanillaRace>();
             return raceList.Items
-                .Select(x => x.FormKey.AsLink<IRaceGetter>().WinnerFrom(groups))
+                .Select(x => x.FormKey.ToLink<IRaceGetter>().WinnerFrom(groups))
                 .NotNull()
                 .Select(x => InferRace(x.EditorID))
                 .NotNull();

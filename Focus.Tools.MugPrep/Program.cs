@@ -117,7 +117,7 @@ namespace Focus.Tools.MugPrep
     {
         private static readonly string DefaultEyeCubeMapPath = @"textures\cubemaps\eyecubemap.dds";
 
-        private readonly IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env;
+        private readonly IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env;
         private IReadOnlySet<string> eyeNodeNames;
         private readonly string faceGenDirectory;
         private readonly IFileProvider fileProvider;
@@ -128,7 +128,7 @@ namespace Focus.Tools.MugPrep
         private readonly TempFileCache tempFileCache;
 
         public FaceGenProcessor(
-            IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter> env, IFileSystem fs, string faceGenDirectory,
+            IGameEnvironment<ISkyrimMod, ISkyrimModGetter> env, IFileSystem fs, string faceGenDirectory,
             TempFileCache tempFileCache, FaceGenProcessingOptions options, ILogger log)
         {
             this.env = env;
@@ -152,7 +152,7 @@ namespace Focus.Tools.MugPrep
         public void Process(FaceGenPath faceGenPath)
         {
             EnsureNodeNames();
-            var npc = faceGenPath.AsFormKey().AsLink<INpcGetter>().Resolve(env.LinkCache);
+            var npc = faceGenPath.AsFormKey().ToLink<INpcGetter>().Resolve(env.LinkCache);
             if (npc.Race.IsNull)
             {
                 Console.Error.WriteLine(

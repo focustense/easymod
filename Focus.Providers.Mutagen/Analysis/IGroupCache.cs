@@ -12,14 +12,14 @@ namespace Focus.Providers.Mutagen.Analysis
     public interface IGroupCache
     {
         IReadOnlyCache<ISkyrimMajorRecordGetter, FormKey>? Get(string pluginName, Type groupType);
-        IGroupCommonGetter<T>? Get<T>(string pluginName, Func<ISkyrimModGetter, IGroupCommonGetter<T>> groupSelector)
+        IGroupGetter<T>? Get<T>(string pluginName, Func<ISkyrimModGetter, IGroupGetter<T>> groupSelector)
             where T : class, ISkyrimMajorRecordGetter;
-        IEnumerable<IKeyValue<T, string>> GetAll<T>(IFormLinkGetter<T> link)
+        IEnumerable<IKeyValue<string, T>> GetAll<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter;
         ISkyrimModGetter? GetMod(string pluginName);
         T? GetWinner<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter;
-        IKeyValue<T, string>? GetWinnerWithSource<T>(IFormLinkGetter<T> link)
+        IKeyValue<string, T>? GetWinnerWithSource<T>(IFormLinkGetter<T> link)
             where T : class, ISkyrimMajorRecordGetter;
         bool MasterExists(FormKey formKey, RecordType recordType);
         void Purge();
@@ -27,7 +27,7 @@ namespace Focus.Providers.Mutagen.Analysis
 
     public static class GroupCacheExtensions
     {
-        public static IEnumerable<IKeyValue<T, string>> AllFrom<T>(this IFormLinkGetter<T> link, IGroupCache cache)
+        public static IEnumerable<IKeyValue<string, T>> AllFrom<T>(this IFormLinkGetter<T> link, IGroupCache cache)
             where T : class, ISkyrimMajorRecordGetter
         {
             return cache.GetAll(link);
@@ -82,8 +82,8 @@ namespace Focus.Providers.Mutagen.Analysis
     public class ContextRelations<T>
         where T : ISkyrimMajorRecordGetter
     {
-        public IKeyValue<T, string>? Base { get; init; } = null;
-        public IEnumerable<IKeyValue<T, string>> Masters { get; init; } = Enumerable.Empty<IKeyValue<T, string>>();
-        public IKeyValue<T, string>? Previous { get; init; } = null;
+        public IKeyValue<string, T>? Base { get; init; } = null;
+        public IEnumerable<IKeyValue<string, T>> Masters { get; init; } = Enumerable.Empty<IKeyValue<string, T>>();
+        public IKeyValue<string, T>? Previous { get; init; } = null;
     }
 }

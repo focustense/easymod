@@ -32,10 +32,10 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             return records.ContainsKey(key);
         }
 
-        public IEnumerator<IKeyValue<ISkyrimMajorRecordGetter, FormKey>> GetEnumerator()
+        public IEnumerator<IKeyValue<FormKey, ISkyrimMajorRecordGetter>> GetEnumerator()
         {
             foreach (var kvp in records)
-                yield return new KeyValue<ISkyrimMajorRecordGetter, FormKey>(kvp.Key, kvp.Value);
+                yield return new KeyValue<FormKey, ISkyrimMajorRecordGetter>(kvp.Key, kvp.Value);
         }
 
         public ISkyrimMajorRecordGetter TryGetValue(FormKey key)
@@ -68,9 +68,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 return inner.ContainsKey(key);
             }
 
-            public IEnumerator<IKeyValue<T, FormKey>> GetEnumerator()
+            public IEnumerator<IKeyValue<FormKey, T>> GetEnumerator()
             {
-                return inner.Select(x => new KeyValue<T, FormKey>(x.Key, (T)x.Value)).GetEnumerator();
+                return inner
+                    .Select(x => new KeyValue<FormKey, T>(x.Key, (T)x.Value))
+                    .Cast<IKeyValue<FormKey, T>>()
+                    .GetEnumerator();
             }
 
             public T TryGetValue(FormKey key)

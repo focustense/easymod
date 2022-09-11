@@ -45,7 +45,7 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<EnvironmentFactory>().As<IEnvironmentFactory>();
             builder.Register(ctx => ctx.Resolve<IEnvironmentFactory>().CreateEnvironment())
                 .As<GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>()
-                .As<IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>()
+                .As<IGameEnvironment<ISkyrimMod, ISkyrimModGetter>>()
                 .OnActivated(NotifyAfterGameSetup)
                 .SingleInstance();
             // Autofac doesn't know how to narrow open generics. Boo.
@@ -62,7 +62,7 @@ namespace Focus.Apps.EasyNpc.Modules
 
             // Futures
             RegisterAfterGameSetup<GameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>(builder);
-            RegisterAfterGameSetup<IGameEnvironmentState<ISkyrimMod, ISkyrimModGetter>>(builder);
+            RegisterAfterGameSetup<IGameEnvironment<ISkyrimMod, ISkyrimModGetter>>(builder);
             RegisterAfterGameSetup<IMutableGameEnvironment<ISkyrimMod, ISkyrimModGetter>>(builder);
             RegisterAfterGameSetup<IReadOnlyGameEnvironment<ISkyrimModGetter>>(builder);
             RegisterAfterGameSetup<IGameSettings>(builder);

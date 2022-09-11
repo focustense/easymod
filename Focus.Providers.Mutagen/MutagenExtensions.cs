@@ -93,7 +93,7 @@ namespace Focus.Providers.Mutagen
         }
 
         public static IReadOnlyList<RecordKey> ToRecordKeys<T>(this IEnumerable<IFormLinkGetter<T>> formLinks)
-            where T : class, IMajorRecordCommonGetter
+            where T : class, IMajorRecordGetter
         {
             return formLinks.Select(x => x.FormKeyNullable).NotNull().Select(x => x.ToRecordKey()).ToList().AsReadOnly();
         }
@@ -141,7 +141,7 @@ namespace Focus.Providers.Mutagen
         public static TMajor? TryResolve<TMajor>(
             this IFormLinkGetter<TMajor> link, ILinkCache cache, IMajorRecordGetter? source, ILogger log,
             string? consequence = null)
-            where TMajor : class, IMajorRecordCommonGetter
+            where TMajor : class, IMajorRecordGetter
         {
             if (link.IsNull)
                 return null;

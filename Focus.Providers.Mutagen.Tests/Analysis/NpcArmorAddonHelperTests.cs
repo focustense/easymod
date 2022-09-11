@@ -36,7 +36,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 r.Skin.SetTo(defaultSkinKey);
             })[0].ToFormKey();
 
-            Assert.True(helper.IsDefaultSkin(addon, raceKey.AsLinkGetter<IRaceGetter>()));
+            Assert.True(helper.IsDefaultSkin(addon, raceKey.ToLinkGetter<IRaceGetter>()));
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 r.Skin.SetTo(defaultSkinKey);
             })[0].ToFormKey();
 
-            Assert.False(helper.IsDefaultSkin(addon, raceKey.AsLinkGetter<IRaceGetter>()));
+            Assert.False(helper.IsDefaultSkin(addon, raceKey.ToLinkGetter<IRaceGetter>()));
         }
 
         [Theory]
@@ -91,7 +91,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             var addon = new ArmorAddon(FormKey.Null, SkyrimRelease.SkyrimSE);
             addon.Race.SetTo(raceKey);
 
-            Assert.True(helper.SupportsRace(addon, raceKey.AsLinkGetter<IRaceGetter>()));
+            Assert.True(helper.SupportsRace(addon, raceKey.ToLinkGetter<IRaceGetter>()));
         }
 
         [Fact]
@@ -102,9 +102,9 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 .ToFormKeys().ToList();
             var addon = new ArmorAddon(FormKey.Null, SkyrimRelease.SkyrimSE);
             addon.Race.SetTo(raceKeys[0]);
-            addon.AdditionalRaces.Add(raceKeys[2].AsLinkGetter<IRaceGetter>());
+            addon.AdditionalRaces.Add(raceKeys[2].ToLinkGetter<IRaceGetter>());
 
-            Assert.True(helper.SupportsRace(addon, raceKeys[2].AsLinkGetter<IRaceGetter>()));
+            Assert.True(helper.SupportsRace(addon, raceKeys[2].ToLinkGetter<IRaceGetter>()));
         }
 
         [Fact]
@@ -115,9 +115,9 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 .ToFormKeys().ToList();
             var addon = new ArmorAddon(FormKey.Null, SkyrimRelease.SkyrimSE);
             addon.Race.SetTo(raceKeys[0]);
-            addon.AdditionalRaces.Add(raceKeys[2].AsLinkGetter<IRaceGetter>());
+            addon.AdditionalRaces.Add(raceKeys[2].ToLinkGetter<IRaceGetter>());
 
-            Assert.False(helper.SupportsRace(addon, raceKeys[1].AsLinkGetter<IRaceGetter>()));
+            Assert.False(helper.SupportsRace(addon, raceKeys[1].ToLinkGetter<IRaceGetter>()));
         }
     }
 }

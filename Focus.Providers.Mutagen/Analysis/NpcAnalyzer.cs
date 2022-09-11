@@ -116,7 +116,7 @@ namespace Focus.Providers.Mutagen.Analysis
                 return new() { BasePluginName = key.BasePluginName, LocalFormIdHex = key.LocalFormIdHex };
 
             var isOverride = !key.PluginEquals(pluginName);
-            var relations = isOverride ? groups.GetRelations(npc.AsLink(), pluginName) : new();
+            var relations = isOverride ? groups.GetRelations(npc.ToLink(), pluginName) : new();
             var comparisonToMasters = relations.Masters.Select(x => Compare(npc, x.Value, x.Key)).ToList().AsReadOnly();
             var comparisonToBase = FindComparison(comparisonToMasters, relations.Base?.Key) ??
                 Compare(npc, relations.Base?.Value, relations.Base?.Key);
@@ -283,9 +283,9 @@ namespace Focus.Providers.Mutagen.Analysis
             if (npc.Template.IsNull)
                 return null;
             var targetType = NpcTemplateTargetType.Invalid;
-            if (npc.Template.FormKey.AsLink<INpcGetter>().WinnerFrom(groups) is not null)
+            if (npc.Template.FormKey.ToLink<INpcGetter>().WinnerFrom(groups) is not null)
                 targetType = NpcTemplateTargetType.Npc;
-            else if (npc.Template.FormKey.AsLink<ILeveledNpcGetter>().WinnerFrom(groups) is not null)
+            else if (npc.Template.FormKey.ToLink<ILeveledNpcGetter>().WinnerFrom(groups) is not null)
                 targetType = NpcTemplateTargetType.LeveledNpc;
             var inheritsTraits = npc.Configuration.TemplateFlags.HasFlag(NpcConfiguration.TemplateFlag.Traits);
             return new NpcTemplateInfo(npc.Template.FormKey.ToRecordKey(), targetType, inheritsTraits);

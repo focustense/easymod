@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using Xunit;
@@ -20,9 +21,8 @@ namespace Focus.Files.Tests
 
         public FileSystemIndexTests()
         {
-            fs = new MockFileSystem();
             var fakeFileSystemWatcherFactory = new FakeFileSystemWatcherFactory();
-            fs.FileSystemWatcher = fakeFileSystemWatcherFactory;
+            fs = new MockFileSystemWithFakeWatcher(fakeFileSystemWatcherFactory);
             AddFiles(new[]
             {
                 @"C:\temp\abc.txt",
@@ -344,6 +344,16 @@ namespace Focus.Files.Tests
         {
             Assert.Equal(name, bucket.Key);
             Assert.Equal(values.OrderBy(f => f), bucket.Value.OrderBy(f => f));
+        }
+    }
+
+    class MockFileSystemWithFakeWatcher : MockFileSystem
+    {
+        public override IFileSystemWatcherFactory FileSystemWatcher { get; }
+
+        public MockFileSystemWithFakeWatcher(IFileSystemWatcherFactory watcherFactory)
+        {
+            FileSystemWatcher = watcherFactory;
         }
     }
 }

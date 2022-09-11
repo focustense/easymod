@@ -75,7 +75,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                         .ToList();
                     record.HeadParts.Remove(oldHairParts.Select(x => x.FormKey));
                     var mergedHair =
-                        patch.Importer.Import(hairKey.ToFormKey().AsLink<IHeadPartGetter>(), x => x.HeadParts);
+                        patch.Importer.Import(hairKey.ToFormKey().ToLink<IHeadPartGetter>(), x => x.HeadParts);
                     if (mergedHair.HasValue)
                         record.HeadParts.Add(mergedHair.Value);
                     wigConversions.Add(new NpcWigConversion

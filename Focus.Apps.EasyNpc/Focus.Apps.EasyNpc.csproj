@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows10.0.19041</TargetFramework>
@@ -14,18 +13,15 @@
     <ApplicationIcon>EasyNPC.ico</ApplicationIcon>
     <NoWarn>MSB3246</NoWarn>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>x64</PlatformTarget>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="assets\female-silhouette.png" />
     <None Remove="assets\male-silhouette.png" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="assets\female-silhouette.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -34,39 +30,36 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="6.2.0" />
+    <PackageReference Include="Autofac" Version="6.4.0" />
     <PackageReference Include="AutofacSerilogIntegration" Version="5.0.0" />
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
-    <PackageReference Include="Fody" Version="6.5.1">
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="Fody" Version="6.6.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="FontAwesome5" Version="2.1.1" />
+    <PackageReference Include="FontAwesome5" Version="2.1.11" />
     <PackageReference Include="MathConverter" Version="1.2.1.6">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.37" />
-    <PackageReference Include="ModernWpfUI" Version="0.9.4" />
-    <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.31.0" />
-    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.31.0" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+    <PackageReference Include="ModernWpfUI" Version="0.9.6" />
+    <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.36.3" />
+    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.39.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="niflysharp" Version="1.2.8" />
-    <PackageReference Include="Ookii.Dialogs.Wpf" Version="3.1.0" />
-    <PackageReference Include="PropertyChanged.Fody" Version="3.3.3">
+    <PackageReference Include="niflysharp" Version="1.3.0" />
+    <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
+    <PackageReference Include="PropertyChanged.Fody" Version="4.0.1">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
-    <PackageReference Include="System.IO.Abstractions" Version="13.2.43" />
-    <PackageReference Include="System.Linq.Async" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="System.IO.Abstractions" Version="17.2.1" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="6.0.0" />
     <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Focus.Analysis\Focus.Analysis.csproj" />
     <ProjectReference Include="..\Focus.Core\Focus.Core.csproj" />
@@ -78,7 +71,6 @@
     <ProjectReference Include="..\Focus.Providers.Mutagen\Focus.Providers.Mutagen.csproj" />
     <ProjectReference Include="..\Focus.Storage.Archives\Focus.Storage.Archives.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Configuration\BuildDate.generated.cs">
       <DesignTime>True</DesignTime>
@@ -94,7 +86,6 @@
       <DependentUpon>EnumResources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <Page Update="Build\Preview\BuildPreviewView.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
@@ -112,23 +103,19 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-
   <ItemGroup>
     <None Update="Configuration\BuildDate.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>BuildDate.generated.cs</LastGenOutput>
     </None>
   </ItemGroup>
-
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Update="Resources\EnumResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>EnumResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
 </Project>

@@ -9,7 +9,7 @@ namespace Focus.Providers.Mutagen
     public static class GameEnvironmentWrapper
     {
         public static GameEnvironmentWrapper<TModSetter, TModGetter> Wrap<TModSetter, TModGetter>(
-            IGameEnvironmentState<TModSetter, TModGetter> env)
+            IGameEnvironment<TModSetter, TModGetter> env)
             where TModSetter : class, IContextMod<TModSetter, TModGetter>, TModGetter
             where TModGetter : class, IContextGetterMod<TModSetter, TModGetter>
         {
@@ -31,9 +31,9 @@ namespace Focus.Providers.Mutagen
 
         ILinkCache IReadOnlyGameEnvironment<TModGetter>.LinkCache => env.LinkCache;
 
-        private readonly IGameEnvironmentState<TModSetter, TModGetter> env;
+        private readonly IGameEnvironment<TModSetter, TModGetter> env;
 
-        public GameEnvironmentWrapper(IGameEnvironmentState<TModSetter, TModGetter> env)
+        public GameEnvironmentWrapper(IGameEnvironment<TModSetter, TModGetter> env)
         {
             this.env = env;
         }

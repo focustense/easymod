@@ -85,7 +85,7 @@ namespace Focus.Apps.EasyNpc.Mutagen
                     .Follow(x => x.TextureSwapList, swapList => swapList
                         .Follow(x => x.Items
                             .Where(x => x.Type == typeof(ITextureSetGetter))
-                            .Select(x => x.FormKey.AsLinkGetter<ITextureSetGetter>())))
+                            .Select(x => x.FormKey.ToLinkGetter<ITextureSetGetter>())))
                     .Follow(x => x.WorldModel, g => g.AlternateTextures?.Select(x => x.NewTexture)))
                 .Follow(x => x.Keywords)
                 .FollowSelf(x => x.TemplateArmor)

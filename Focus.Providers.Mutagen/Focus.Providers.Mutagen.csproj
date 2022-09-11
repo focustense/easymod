@@ -10,9 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Mutagen.Bethesda.Core.Windows" Version="0.31.0" />
-    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.31.0" />
-    <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="Mutagen.Bethesda.Skyrim" Version="0.39.4" />
+    <PackageReference Include="Serilog" Version="2.11.0" />
   </ItemGroup>
 
   <ItemGroup>

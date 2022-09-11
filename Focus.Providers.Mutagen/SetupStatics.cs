@@ -3,6 +3,7 @@ using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Order;
 using Noggog;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Focus.Providers.Mutagen
 {
@@ -23,7 +24,9 @@ namespace Focus.Providers.Mutagen
         public IEnumerable<IModListingGetter> GetLoadOrderListings(
             GameRelease gameRelease, DirectoryPath dataDirectory, bool throwOnMissingMasters = true)
         {
-            return LoadOrder.GetListings(gameRelease, dataDirectory, throwOnMissingMasters);
+            return LoadOrder
+                .GetLoadOrderListings(gameRelease, dataDirectory, throwOnMissingMasters)
+                .Select(x => x.ToModListing(true));
         }
     }
 }

@@ -3,6 +3,7 @@ using Mutagen.Bethesda.Skyrim;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Threading.Tasks;
@@ -67,8 +68,8 @@ namespace Focus.Providers.Mutagen
             try
             {
                 var data = await fs.File.ReadAllBytesAsync(path).ConfigureAwait(false);
-                using var mod =
-                    SkyrimMod.CreateFromBinaryOverlay(data, game.GameRelease.ToSkyrimRelease(), pluginFileName);
+                using var mod = SkyrimMod.CreateFromBinaryOverlay(
+                    new MemoryStream(data), game.GameRelease.ToSkyrimRelease(), pluginFileName);
                 var masterNames = mod.ModHeader.MasterReferences.Select(x => x.Master.FileName.String);
                 return (true, masterNames);
             }

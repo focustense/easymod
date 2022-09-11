@@ -82,7 +82,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     // analysis engine at startup. This ensures that the facegen can't be broken by race edits, etc.
                     foreach (var headPartKey in model.FaceOption.Analysis.MainHeadParts)
                     {
-                        var sourceHeadPart = headPartKey.ToFormKey().AsLinkGetter<IHeadPartGetter>();
+                        var sourceHeadPart = headPartKey.ToFormKey().ToLinkGetter<IHeadPartGetter>();
                         var mergedHeadPart = patch.Importer.Import(sourceHeadPart, x => x.HeadParts);
                         if (mergedHeadPart.HasValue)
                             record.HeadParts.Add(mergedHeadPart.Value);
@@ -96,7 +96,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     log.Debug("Importing worn armor from {pluginName}", model.FaceOption.PluginName);
                     // Like head parts, we want to use the "effective" skin here, in case it was changed by a race edit.
                     var skinKey = model.FaceOption.Analysis.SkinKey?.ToFormKey() ?? FormKey.Null;
-                    record.WornArmor.SetTo(patch.Importer.Import(skinKey.AsLinkGetter<IArmorGetter>(), x => x.Armors));
+                    record.WornArmor.SetTo(patch.Importer.Import(skinKey.ToLinkGetter<IArmorGetter>(), x => x.Armors));
                     patch.Importer.AddArmorRace(record.WornArmor, faceNpcRecord.Race, record.Race);
                 }
                 return new Result();

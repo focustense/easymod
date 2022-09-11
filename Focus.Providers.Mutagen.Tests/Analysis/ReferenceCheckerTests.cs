@@ -71,8 +71,8 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     {
                         x.EditorID = "DefaultRace";
                         x.DefaultHairColors = new GenderedItem<IFormLinkGetter<IColorRecordGetter>>(
-                            AddRecord<ColorRecord>("DefaultMaleHairColor").AsLink<IColorRecordGetter>(),
-                            AddRecord<ColorRecord>("DefaultFemaleHairColor").AsLink<IColorRecordGetter>());
+                            AddRecord<ColorRecord>("DefaultMaleHairColor").ToLink<IColorRecordGetter>(),
+                            AddRecord<ColorRecord>("DefaultFemaleHairColor").ToLink<IColorRecordGetter>());
                         x.Skin = groups
                             .AddRecords<Armor>(
                                 "main.esp",
@@ -96,12 +96,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                                                     new AlternateTexture
                                                     {
                                                         NewTexture = AddRecord<TextureSet>("Feet1")
-                                                            .AsLink<ITextureSetGetter>()
+                                                            .ToLink<ITextureSetGetter>()
                                                     },
                                                     new AlternateTexture
                                                     {
                                                         NewTexture = AddRecord<TextureSet>("Feet2")
-                                                            .AsLink<ITextureSetGetter>()
+                                                            .ToLink<ITextureSetGetter>()
                                                     },
                                                 }),
                                             };
@@ -110,16 +110,16 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                                 })
                             .Single()
                             .ToFormKey()
-                            .AsNullableLink<IArmorGetter>();
+                            .ToNullableLink<IArmorGetter>();
                     })
                 .Single()
                 .ToFormKey();
             var npc = new Npc(FormKey.Factory("123456:main.esp"), SkyrimRelease.SkyrimSE)
             {
-                Class = classKey.AsLink<IClassGetter>(),
-                HeadParts = new(headPartKeys.Select(x => x.AsLink<IHeadPartGetter>())),
-                Keywords = new(keywordKeys.Select(x => x.AsLink<IKeywordGetter>())),
-                Race = raceKey.AsLink<IRaceGetter>()
+                Class = classKey.ToLink<IClassGetter>(),
+                HeadParts = new(headPartKeys.Select(x => x.ToLink<IHeadPartGetter>())),
+                Keywords = new(keywordKeys.Select(x => x.ToLink<IKeywordGetter>())),
+                Race = raceKey.ToLink<IRaceGetter>()
             };
             var invalidPaths = checker.GetInvalidPaths(npc);
 
@@ -149,13 +149,13 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                             hp.Color.SetTo(AddRecord<ColorRecord>("HairlineColor"));
                             hp.TextureSet.SetTo(FormKey.Factory("123456:badhairlinetextureset.esp"));
                         }).ToFormKeys());
-                        x.ExtraParts.Add(FormKey.Factory("123456:badheadpart.esp").AsLink<IHeadPartGetter>());
+                        x.ExtraParts.Add(FormKey.Factory("123456:badheadpart.esp").ToLink<IHeadPartGetter>());
                         x.TextureSet.SetTo(AddRecord<TextureSet>("HairTextureSet"));
                     },
                     x =>
                     {
                         x.EditorID = "Face";
-                        x.Color.SetTo(FormKey.Factory("123456:badfacecolor.esp").AsLink<IColorRecordGetter>());
+                        x.Color.SetTo(FormKey.Factory("123456:badfacecolor.esp").ToLink<IColorRecordGetter>());
                     })
                 .ToFormKeys()
                 .ToList();
@@ -166,8 +166,8 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     {
                         x.EditorID = "DefaultRace";
                         x.DefaultHairColors = new GenderedItem<IFormLinkGetter<IColorRecordGetter>>(
-                            FormKey.Factory("123456:badmalehaircolor.esp").AsLink<IColorRecordGetter>(),
-                            AddRecord<ColorRecord>("DefaultFemaleHairColor").AsLink<IColorRecordGetter>());
+                            FormKey.Factory("123456:badmalehaircolor.esp").ToLink<IColorRecordGetter>(),
+                            AddRecord<ColorRecord>("DefaultFemaleHairColor").ToLink<IColorRecordGetter>());
                         x.Skin = groups
                             .AddRecords<Armor>(
                                 "main.esp",
@@ -192,12 +192,12 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                                                     new AlternateTexture
                                                     {
                                                         NewTexture = FormKey.Factory("123456:badfeettexture.esp")
-                                                            .AsLink<ITextureSetGetter>(),
+                                                            .ToLink<ITextureSetGetter>(),
                                                     },
                                                     new AlternateTexture
                                                     {
                                                         NewTexture = AddRecord<TextureSet>("Feet2")
-                                                            .AsLink<ITextureSetGetter>()
+                                                            .ToLink<ITextureSetGetter>()
                                                     },
                                                 }),
                                             };
@@ -206,17 +206,17 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                                 })
                             .Single()
                             .ToFormKey()
-                            .AsNullableLink<IArmorGetter>();
+                            .ToNullableLink<IArmorGetter>();
                     })
                 .Single()
                 .ToFormKey();
             var npc = new Npc(FormKey.Factory("123456:main.esp"), SkyrimRelease.SkyrimSE)
             {
                 EditorID = "TestNpc",
-                Class = classKey.AsLink<IClassGetter>(),
-                HeadParts = new(headPartKeys.Select(x => x.AsLink<IHeadPartGetter>())),
-                Keywords = new(keywordKeys.Select(x => x.AsLink<IKeywordGetter>())),
-                Race = raceKey.AsLink<IRaceGetter>()
+                Class = classKey.ToLink<IClassGetter>(),
+                HeadParts = new(headPartKeys.Select(x => x.ToLink<IHeadPartGetter>())),
+                Keywords = new(keywordKeys.Select(x => x.ToLink<IKeywordGetter>())),
+                Race = raceKey.ToLink<IRaceGetter>()
             };
             var invalidPaths = checker.GetInvalidPaths(npc).ToList();
 
@@ -255,7 +255,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                     x =>
                     {
                         x.EditorID = "Face";
-                        x.ExtraParts.Add(FormKey.Factory("123456:badheadpart.esp").AsLink<IHeadPartGetter>());
+                        x.ExtraParts.Add(FormKey.Factory("123456:badheadpart.esp").ToLink<IHeadPartGetter>());
                     })
                 .ToFormKeys()
                 .ToList();
@@ -282,7 +282,7 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
             var npc = new Npc(FormKey.Factory("123456:main.esp"), SkyrimRelease.SkyrimSE)
             {
                 EditorID = "TestNpc",
-                HeadParts = new(headPartKeys.Select(x => x.AsLink<IHeadPartGetter>())),
+                HeadParts = new(headPartKeys.Select(x => x.ToLink<IHeadPartGetter>())),
             };
             follower.WithPluginExclusions(new[] { "excluded.esp" });
             var invalidPaths = checker.GetInvalidPaths(npc).ToList();
