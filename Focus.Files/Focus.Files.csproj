@@ -4,6 +4,9 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
+  <AssemblyTitle>File indexing and other file abstractions</AssemblyTitle>
+    <Product>EasyMod</Product>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
