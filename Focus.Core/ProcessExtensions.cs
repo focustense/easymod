@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.Versioning;
 
-namespace Focus.Apps.EasyNpc.Main
+namespace Focus
 {
-    static class ProcessExtensions
+    [SupportedOSPlatform("windows")]
+    public static class ProcessExtensions
     {
         [DllImport("ntdll.dll")]
         private static extern int NtQueryInformationProcess(
