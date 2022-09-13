@@ -9,8 +9,8 @@ int iExport
 bool shouldExportOutfit = true
 bool shouldExportInventory = false
 bool shouldExportNonPlayableInventory = false
+bool shouldExportAbilities = false
 bool shouldExportSpells = false
-bool shouldExportOnlyBaseSpells = true
 
 string exportName
 
@@ -22,7 +22,18 @@ Function ExportEasyFollowerData(string fileName)
 	string playerRace = GetFormIdentifier(playerBase.GetRace().GetFormId())
 	int playerSex = playerBase.GetSex()
 	int playerSkinTone = Game.GetTintMaskColor(6, 0)
-	float playerHeight = playerBase.GetHeight()
+	;NOTE: GetScale gives us the actual, absolute scale, not relative to race.
+	float playerHeight = PlayerRef.GetScale()
+	;If the height is changed in RaceMenu's body scales, then it does not change the player scale.
+	;Instead, it adds a transform to the root node.
+	;What we end up with is still relative to the race; the converter must compare the two.
+	float npcNodeScale = GetNodeScale("NPC")
+	If (npcNodeScale <= 0)
+		npcNodeScale = GetNodeScale("NPC Root [Root]")
+	EndIf
+	If (npcNodeScale > 0)
+		playerHeight *= npcNodeScale
+	EndIf
 	int armorFormIdentifiers = 0
 	If (shouldExportOutfit)
 		Debug.Trace("Get equipped armors")
@@ -33,10 +44,15 @@ Function ExportEasyFollowerData(string fileName)
 		Debug.Trace("Get inventory items")
 		inventory = GetInventoryItems()
 	EndIf
+	int abilities = 0
+	If (shouldExportAbilities)
+		Debug.Trace("Get ability list")
+		abilities = GetSpells(;/ passive /; true);
+	EndIf
 	int spells = 0
 	If (shouldExportSpells)
 		Debug.Trace("Get spell list")
-		spells = GetSpells()
+		spells = GetSpells(;/ passive /; false);
 	EndIf
 
 	Debug.Trace("Build JSON output")
@@ -51,10 +67,21 @@ Function ExportEasyFollowerData(string fileName)
 	If (inventory != 0)
 		JMap.setObj(playerData, "inventory", inventory)
 	EndIf
+	If (abilities != 0)
+		JMap.setObj(playerData, "abilities", abilities)
+	EndIf
 	If (spells != 0)
 		JMap.setObj(playerData, "spells", spells)
 	EndIf
 	JValue.writeToFile(playerData, "data/easyfollower/exported/" + fileName + ".json")
+EndFunction
+
+float Function GetNodeScale(string nodeName)
+	If NetImmerse.HasNode(PlayerRef, nodeName, false)
+		return NetImmerse.GetNodeScale(PlayerRef, "NPC", false)
+	Else
+		return 0
+	EndIf
 EndFunction
 
 int Function GetEquippedArmors() ;/ returns JArray object /;
@@ -92,27 +119,54 @@ int Function GetInventoryItems() ;/ returns JArray object /;
 	return inventory
 EndFunction
 
-int Function GetSpells() ;/ returns JArray object /;
-	int formIdentifiers = JArray.object()
+int Function GetSpells(bool passive) ;/ returns JArray object /;
+	int spells = JArray.object()
+
 	ActorBase playerBase = PlayerRef.GetActorBase()
-	int spellCount
-	If (shouldExportOnlyBaseSpells)
-		spellCount = playerBase.GetSpellCount()
-	Else
-		spellCount = PlayerRef.GetSpellCount()
-	EndIf
+	int baseSpellCount = playerBase.GetSpellCount()
 	int spellIndex = 0
-	While (spellIndex < spellCount)
-		Spell nextSpell
-		If (shouldExportOnlyBaseSpells)
-			nextSpell = playerBase.GetNthSpell(spellIndex)
-		Else
-			nextSpell = PlayerRef.GetNthSpell(spellIndex)
-		EndIf
-		JArray.addStr(formIdentifiers, GetFormIdentifier(nextSpell.GetFormId()))
+	While (spellIndex < baseSpellCount)
+		Spell nextSpell = playerBase.GetNthSpell(spellIndex)
+		MaybeAddSpell(spells, nextSpell, passive)
 		spellIndex += 1
 	EndWhile
-	return formIdentifiers
+
+	int playerSpellCount = PlayerRef.GetSpellCount()
+	spellIndex = 0
+	While (spellIndex < playerSpellCount)
+		Spell nextSpell = PlayerRef.GetNthSpell(spellIndex)
+		MaybeAddSpell(spells, nextSpell, passive)
+		spellIndex += 1
+	EndWhile
+
+	return spells
+EndFunction
+
+Function MaybeAddSpell(int ;/ JArray /; spells, Spell aSpell, bool passive)
+	If ((passive && IsAbility(aSpell) && HasVisibleActiveEffects(aSpell)) || (!passive && !IsAbility(aSpell)))
+		JArray.addStr(spells, GetFormIdentifier(aSpell.GetFormId()))
+	EndIf
+EndFunction
+
+bool Function HasVisibleActiveEffects(Spell aSpell)
+	int effectCount = aSpell.GetNumEffects()
+	int effectIndex = 0
+	While (effectIndex < effectCount)
+		MagicEffect effect = aSpell.GetNthEffectMagicEffect(effectIndex)
+		If (!effect.IsEffectFlagSet(;/ HideInUI /; 0x00008000) && PlayerRef.HasMagicEffect(effect))
+			return true
+		EndIf
+		effectIndex += 1
+	EndWhile
+	return false
+EndFunction
+
+bool Function IsAbility(Spell aSpell)
+	If (aSpell.GetNumEffects() == 0)
+		return false
+	EndIf
+	MagicEffect effect = aSpell.GetNthEffectMagicEffect(0)
+	return effect.GetCastingType() == 0
 EndFunction
 
 Function SetStateEnabled(string stateName, bool enabled)
@@ -163,8 +217,8 @@ Event OnPageReset(string page)
 	AddToggleOptionST("EXPORT_OUTFIT_TOGGLE", "Export outfit", shouldExportOutfit)
 	AddToggleOptionST("EXPORT_INVENTORY_TOGGLE", "Export inventory", shouldExportInventory)
 	AddToggleOptionST("EXPORT_NON_PLAYABLE_INVENTORY_TOGGLE", "Include non-playable items", shouldExportNonPlayableInventory, OPTION_FLAG_DISABLED)
+	AddToggleOptionST("EXPORT_ABILITIES_TOGGLE", "Export abilities", shouldExportAbilities)
 	AddToggleOptionST("EXPORT_SPELLS_TOGGLE", "Export spells", shouldExportSpells)
-	AddToggleOptionST("EXPORT_ONLY_BASE_SPELLS_TOGGLE", "Only base spells", shouldExportOnlyBaseSpells, OPTION_FLAG_DISABLED)
 	iExport = AddInputOption("Export current character", exportName)
 EndEvent
 
@@ -236,36 +290,34 @@ State EXPORT_NON_PLAYABLE_INVENTORY_TOGGLE
 	EndEvent
 EndState
 
+State EXPORT_ABILITIES_TOGGLE
+	Event OnSelectST()
+		shouldExportAbilities = !shouldExportAbilities
+		SetToggleOptionValueST(shouldExportAbilities)
+	EndEvent
+
+	Event OnDefaultST()
+		shouldExportAbilities = true
+		SetToggleOptionValueST(shouldExportAbilities)
+	EndEvent
+
+	Event OnHighlightST()
+		SetInfoText("NPC will possess all current passive abilities (including diseases). NOTE: This cannot check conditions and may include abilities that should be hidden.")
+	EndEvent
+EndState
+
 State EXPORT_SPELLS_TOGGLE
 	Event OnSelectST()
 		shouldExportSpells = !shouldExportSpells
 		SetToggleOptionValueST(shouldExportSpells)
-		SetStateEnabled("EXPORT_ONLY_BASE_SPELLS_TOGGLE", shouldExportSpells)
 	EndEvent
 
 	Event OnDefaultST()
 		shouldExportSpells = true
 		SetToggleOptionValueST(shouldExportSpells)
-		SetStateEnabled("EXPORT_ONLY_BASE_SPELLS_TOGGLE", shouldExportSpells)
 	EndEvent
 
 	Event OnHighlightST()
-		SetInfoText("NPC will possess all current player spells.")
-	EndEvent
-EndState
-
-State EXPORT_ONLY_BASE_SPELLS_TOGGLE
-	Event OnSelectST()
-		shouldExportOnlyBaseSpells = !shouldExportOnlyBaseSpells
-		SetToggleOptionValueST(shouldExportOnlyBaseSpells)
-	EndEvent
-
-	Event OnDefaultST()
-		shouldExportOnlyBaseSpells = true
-		SetToggleOptionValueST(shouldExportOnlyBaseSpells)
-	EndEvent
-
-	Event OnHighlightST()
-		SetInfoText("Include only the player's ActorBase spells. This filters out a lot of junk added by mod scripts and should normally be left enabled.")
+		SetInfoText("NPC will possess all current player spells, shouts, lesser powers, etc.")
 	EndEvent
 EndState
