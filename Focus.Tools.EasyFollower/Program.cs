@@ -41,6 +41,8 @@ Parser.Default
         {
             using var env = GameEnvironmentFactory.CreateGameEnvironment(options.GameName, log);
             var outputModName = !string.IsNullOrWhiteSpace(options.ModName) ? options.ModName : options.FileName;
+            if (!Path.HasExtension(outputModName))
+                outputModName = Path.ChangeExtension(outputModName, "esp");
             var patcher = new Patcher(env, log);
             var converter = new FollowerConverter(patcher, env.DataFolderPath, log);
             if (!converter.Convert(options.FileName, outputModName, options.BackupFiles))

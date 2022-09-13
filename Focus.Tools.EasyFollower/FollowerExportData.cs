@@ -2,6 +2,7 @@
 {
     public class FollowerExportData
     {
+        public List<string> Abilities { get; set; } = new();
         public string Race { get; set; } = "";
         public int Sex { get; set; }
         public int SkinToneColor { get; set; }

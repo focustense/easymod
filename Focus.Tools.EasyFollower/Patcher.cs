@@ -30,8 +30,7 @@ namespace Focus.Tools.EasyFollower
             string outputModName, bool backupFiles, out string localFormIdHex)
         {
             localFormIdHex = "";
-            var modFileName = Path.ChangeExtension(outputModName, "esp");
-            var modPath = Path.Combine(env.DataFolderPath, modFileName);
+            var modPath = Path.Combine(env.DataFolderPath, outputModName);
             var release = env.GameRelease.ToSkyrimRelease();
             bool isExistingMod = File.Exists(modPath);
             log.Information(
@@ -41,7 +40,7 @@ namespace Focus.Tools.EasyFollower
                 modPath);
             var mod = isExistingMod
                 ? SkyrimMod.CreateFromBinary(modPath, release)
-                : new SkyrimMod(modFileName, release);
+                : new SkyrimMod(outputModName, release);
             var npcEditorId = EditorIdRegex.Replace(npcName, "");
             bool isFemale = exportData.Sex == 1;
             var femaleFlag = isFemale ? NpcConfiguration.Flag.Female : 0;
@@ -51,27 +50,12 @@ namespace Focus.Tools.EasyFollower
                 log.Error("Invalid race {formId} found in export data", exportData.Race);
                 return false;
             }
-            ColorRecord hairColor = new ColorRecord(mod, $"{npcEditorId}HairColor")
-            {
-                Color = Color.FromArgb(preset.Actor.HairColor),
-                Playable = false,
-            };
-            mod.Colors.ReplaceByEditorId(ref hairColor);
-            Outfit? defaultOutfit = null;
-            HashSet<FormKey> outfitItemKeys = new();
-            if (exportData.Equipment.Count > 0)
-            {
-                var outfitLinks = GetFormLinks<IOutfitTargetGetter>(exportData.Equipment);
-                if (outfitLinks != null)
-                    // Used for filtering inventory later
-                    outfitItemKeys = new(outfitLinks.Select(x => x.FormKey));
-                defaultOutfit = new Outfit(mod, $"{npcEditorId}Outfit")
-                {
-                    Items = outfitLinks,
-                };
-                mod.Outfits.ReplaceByEditorId(ref defaultOutfit);
-            }
-            Npc npc = new Npc(mod, npcEditorId)
+            var baseHeight = race.TryResolve(env.LinkCache)?.Height.PickGender(isFemale) ?? 1.0f;
+            var relativeHeight = baseHeight != 0 ? exportData.Height / baseHeight : 1.0f;
+            var hairColor = AddHairColor(mod, npcEditorId, preset.Actor.HairColor);
+            var defaultOutfit = AddOutfit(mod, npcEditorId, exportData.Equipment);
+            var outfitItemKeys = defaultOutfit?.Items?.Select(x => x.FormKey).ToHashSet() ?? new();
+            var npc = new Npc(mod, npcEditorId)
             {
                 Name = npcName,
                 // Common bounds used for all human NPCs.
@@ -98,7 +82,7 @@ namespace Focus.Tools.EasyFollower
                 },
                 Race = race,
                 AttackRace = race.AsNullable(),
-                Height = exportData.Height,
+                Height = relativeHeight,
                 Weight = preset.Actor.Weight,
                 HeadParts =
                     GetFormLinks<IHeadPartGetter>(preset.HeadParts.Select(x => x.FormIdentifier))
@@ -144,9 +128,11 @@ namespace Focus.Tools.EasyFollower
                         Rank = unchecked((byte)-1),
                     },
                 },
-                ActorEffect = GetFormLinks<ISpellRecordGetter>(
-                    exportData.Spells,
-                    keyBlacklist: FormLinks.PCHealRateCombat),
+                ActorEffect =
+                    GetFormLinks<ISpellRecordGetter>(
+                        exportData.Abilities.Concat(exportData.Spells),
+                        keyBlacklist: FormLinks.PCHealRateCombat)
+                    ?? new(),
                 Packages = new ExtendedList<IFormLinkGetter<IPackageGetter>>
                 {
                     FormLinks.DefaultSandboxEditorLocation512,
@@ -213,6 +199,29 @@ namespace Focus.Tools.EasyFollower
             log.Information("Wrote NPC records to {modPath}", modPath);
             localFormIdHex = npc.FormKey.IDString();
             return true;
+        }
+
+        private ColorRecord AddHairColor(ISkyrimMod mod, string npcEditorId, int colorArgb)
+        {
+            ColorRecord hairColor = new ColorRecord(mod, $"{npcEditorId}HairColor")
+            {
+                Color = Color.FromArgb(colorArgb),
+                Playable = false,
+            };
+            mod.Colors.ReplaceByEditorId(ref hairColor);
+            return hairColor;
+        }
+
+        private Outfit? AddOutfit(ISkyrimMod mod, string npcEditorId, IEnumerable<string> equipment)
+        {
+            if (!equipment.Any())
+                return null;
+            var outfit = new Outfit(mod, $"{npcEditorId}Outfit")
+            {
+                Items = GetFormLinks<IOutfitTargetGetter>(equipment),
+            };
+            mod.Outfits.ReplaceByEditorId(ref outfit);
+            return outfit;
         }
 
         private Relationship AddRelationship(
