@@ -185,6 +185,7 @@ namespace Focus.Tools.EasyFollower
                 // Face parts and tints are ignored, since they're hard to do properly and we don't
                 // need them anyway (appearance comes from the exported facegen nif/dds files).
             };
+            AddOverlayScript(npc, preset.Overrides);
             mod.Npcs.ReplaceByEditorId(ref npc);
             AddRelationship(mod, npc, Relationship.RankType.Ally);
             if (backupFiles && File.Exists(modPath))
@@ -210,6 +211,56 @@ namespace Focus.Tools.EasyFollower
             };
             mod.Colors.ReplaceByEditorId(ref hairColor);
             return hairColor;
+        }
+
+        private void AddOverlayScript(Npc npc, IEnumerable<Override> overrides)
+        {
+            log.Debug("Checking NiOverride values...");
+            var overrideSettings = NiNodeOverrideSettings.FromRaceMenuPreset(overrides).ToList();
+            if (overrideSettings.Count == 0)
+            {
+                log.Information("No NI overrides found.");
+                return;
+            }
+            log.Information("Found {overrideCount} NI node overrides", overrideSettings.Count);
+            npc.VirtualMachineAdapter = new VirtualMachineAdapter
+            {
+                Scripts = new ExtendedList<ScriptEntry>
+                {
+                    new ScriptEntry
+                    {
+                        Name = "FTEasyFollowerOverlayScript",
+                        Properties = new ExtendedList<ScriptProperty>
+                        {
+                            new ScriptStringListProperty
+                            {
+                                Name = "NodeNames",
+                                Data = new(overrideSettings.Select(x => x.NodeName)),
+                            },
+                            new ScriptIntListProperty
+                            {
+                                Name = "NodeIndices",
+                                Data = new(overrideSettings.Select(x => x.TextureIndex)),
+                            },
+                            new ScriptStringListProperty
+                            {
+                                Name = "TexturePaths",
+                                Data = new(overrideSettings.Select(x => x.TexturePath)),
+                            },
+                            new ScriptIntListProperty
+                            {
+                                Name = "TintColors",
+                                Data = new(overrideSettings.Select(x => x.TintColor.ToArgb())),
+                            },
+                            new ScriptIntListProperty
+                            {
+                                Name = "EmissiveColors",
+                                Data = new(overrideSettings.Select(x => x.EmissiveColor.ToArgb())),
+                            },
+                        },
+                    }
+                }
+            };
         }
 
         private Outfit? AddOutfit(ISkyrimMod mod, string npcEditorId, IEnumerable<string> equipment)

@@ -1,4 +1,6 @@
-﻿namespace Focus.Tools.EasyFollower
+﻿using System.Text.Json;
+
+namespace Focus.Tools.EasyFollower
 {
     public class RaceMenuPreset
     {
@@ -47,7 +49,7 @@
     // appears to be something RaceMenu uses internally to keep track of the node names.
     public class OverrideValue
     {
-        public object Data { get; set; } = new(); // Data type depends on the key and index
+        public JsonElement Data { get; set; } = new(); // Data type depends on the key and index
         public int Index { get; set; }
         public int Key { get; set; }
         public int Type { get; set; } // Likely should not use this, per comments above.
