@@ -14,6 +14,9 @@ namespace Focus.Tools.EasyFollower
         public static readonly IFormLink<IFactionGetter> PotentialMarriageFaction = FormLink<IFactionGetter>("Skyrim.esm", 0x019809);
         public static readonly IFormLink<IFactionGetter> PotentialFollowerFaction = FormLink<IFactionGetter>("Skyrim.esm", 0x05c84d);
 
+        // NPCs
+        public static readonly IFormLink<INpcGetter> Player = FormLink<INpcGetter>("Skyrim.esm", 0x000007);
+
         // Packages
         public static readonly IFormLink<IPackageGetter> DefaultSandboxEditorLocation512 = FormLink<IPackageGetter>("Skyrim.esm", 0x01b217);
 

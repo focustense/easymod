@@ -200,6 +200,7 @@ namespace Focus.Tools.EasyFollower
                 // need them anyway (appearance comes from the exported facegen nif/dds files).
             };
             mod.Npcs.ReplaceByEditorId(ref npc);
+            AddRelationship(mod, npc, Relationship.RankType.Ally);
             if (backupFiles && File.Exists(modPath))
                 File.Copy(
                     modPath,
@@ -212,6 +213,19 @@ namespace Focus.Tools.EasyFollower
             log.Information("Wrote NPC records to {modPath}", modPath);
             localFormIdHex = npc.FormKey.IDString();
             return true;
+        }
+
+        private Relationship AddRelationship(
+            ISkyrimMod mod, INpcGetter npc, Relationship.RankType rank)
+        {
+            Relationship relationship = new Relationship(mod, $"{npc.EditorID}Relationship")
+            {
+                Parent = npc.ToLink(),
+                Child = FormLinks.Player,
+                Rank = rank,
+            };
+            mod.Relationships.ReplaceByEditorId(ref relationship);
+            return relationship;
         }
 
         private static NpcFaceMorph ConvertFaceMorph(IList<float> morphValues)
