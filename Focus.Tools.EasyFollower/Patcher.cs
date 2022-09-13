@@ -27,8 +27,9 @@ namespace Focus.Tools.EasyFollower
 
         public bool Patch(
             string npcName, RaceMenuPreset preset, FollowerExportData exportData,
-            string outputModName, bool backupFiles)
+            string outputModName, bool backupFiles, out string localFormIdHex)
         {
+            localFormIdHex = "";
             var modFileName = Path.ChangeExtension(outputModName, "esp");
             var modPath = Path.Combine(env.DataFolderPath, modFileName);
             var release = env.GameRelease.ToSkyrimRelease();
@@ -209,6 +210,7 @@ namespace Focus.Tools.EasyFollower
                 MastersListOrdering = new MastersListOrderingByLoadOrder(env.LoadOrder),
             });
             log.Information("Wrote NPC records to {modPath}", modPath);
+            localFormIdHex = npc.FormKey.IDString();
             return true;
         }
 

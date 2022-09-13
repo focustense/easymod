@@ -57,9 +57,24 @@ namespace Focus.Tools.EasyFollower
             var preset = ReadPreset(filePaths.PresetPath);
             if (preset == null)
                 return false;
-            if (!patcher.Patch(fileName, preset, exportData, outputModName, backupFiles))
+            if (!patcher.Patch(
+                fileName, preset, exportData, outputModName, backupFiles, out var npcFormId))
                 return false;
+            CopyFile(
+                filePaths.HeadMeshPath, ResolveHeadMeshPath(outputModName, npcFormId), backupFiles);
+            CopyFile(
+                filePaths.FaceTintPath, ResolveFaceTintPath(outputModName, npcFormId), backupFiles);
             return true;
+        }
+
+        private void CopyFile(string sourcePath, string destPath, bool backupExisting)
+        {
+            if (backupExisting && File.Exists(destPath))
+                File.Copy(
+                    destPath,
+                    Path.ChangeExtension(destPath, $"{Path.GetExtension(destPath)}.backup"),
+                    /* overwrite */ true);
+            File.Copy(sourcePath, destPath, /* overwrite */ true);
         }
 
         private FollowerExportData? ReadFollowerExportData(string fileName)
@@ -88,6 +103,24 @@ namespace Focus.Tools.EasyFollower
             else
                 log.Error("Couldn't read preset data from {presetPath} (unknown error)", fileName);
             return preset;
+        }
+
+        private string ResolveFaceTintPath(string pluginFileName, string npcFormId)
+        {
+            return Path.Combine(
+                dataDirectory,
+                @"textures\actors\character\facegendata\facetint",
+                pluginFileName,
+                $"00{npcFormId}.dds");
+        }
+
+        private string ResolveHeadMeshPath(string pluginFileName, string npcFormId)
+        {
+            return Path.Combine(
+                dataDirectory,
+                @"meshes\actors\character\facegendata\facegeom",
+                pluginFileName,
+                $"00{npcFormId}.nif");
         }
 
         private FilePaths? ValidatePaths(string fileName)
