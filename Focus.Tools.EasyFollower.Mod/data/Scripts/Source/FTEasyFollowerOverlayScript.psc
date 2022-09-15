@@ -1,4 +1,4 @@
-Scriptname FTEasyFollowerOverlayScript extends Actor  
+Scriptname FTEasyFollowerOverlayScript extends Actor
 
 ;Constants
 int Property KEY_TEXTURE = 9 AutoReadOnly
@@ -40,10 +40,12 @@ Function AddOverlay(Actor target, string nodeName, int index, string texturePath
 		NiOverride.AddNodeOverrideInt(target, isFemale, nodeName, KEY_EMISSIVE_COLOR, -1, emissiveRgb, ;/ persist /; true)
 		NiOverride.AddNodeOverrideFloat(target, isFemale, nodeName, KEY_EMISSIVE_MULTIPLE, -1, emissiveAlpha / 10.0, ;/ persist /; true)
 	EndIf
+	NiOverride.AddOverlays(target)
 	Debug.Trace("Successfully applied override")
 EndFunction
 
-Event OnActivate(ObjectReference akActionRef)
+Event OnLoad()
+	Debug.Trace("Restoring overlays for NPC: " + Self.GetActorBase().GetName())
 	If (SKSE.GetPluginVersion("skee") < 1)
 		Debug.Trace("RaceMenu plugin is missing or invalid. Overlays will be ignored.")
 		return
