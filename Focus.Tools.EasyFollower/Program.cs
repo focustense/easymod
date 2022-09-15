@@ -19,6 +19,8 @@ Parser.Default
             loggingLevelSwitch.MinimumLevel = LogEventLevel.Verbose;
             log.Verbose("Debug logging enabled.");
         }
+        if (options.DryRun)
+            log.Information("Dry run enabled; no files will be written.");
         Console.WriteLine();
         if (string.IsNullOrWhiteSpace(options.FileName))
         {
@@ -39,13 +41,21 @@ Parser.Default
         }
         try
         {
-            using var env = GameEnvironmentFactory.CreateGameEnvironment(options.GameName, log);
-            var outputModName = !string.IsNullOrWhiteSpace(options.ModName) ? options.ModName : options.FileName;
+            using var container = AppContainer.Create(options.GameName, log);
+            var outputModName =
+                !string.IsNullOrWhiteSpace(options.ModName) ? options.ModName : options.FileName;
             if (!Path.HasExtension(outputModName))
                 outputModName = Path.ChangeExtension(outputModName, "esp");
-            var patcher = new Patcher(env, log);
-            var converter = new FollowerConverter(patcher, env.DataFolderPath, log);
-            if (!converter.Convert(options.FileName, outputModName, options.BackupFiles))
+            var nifEditor = new NifEditor(container.FileProvider, log);
+            var patcher = new Patcher(container.Environment, nifEditor, log);
+            var converter =
+                new FollowerConverter(patcher, container.Environment.DataFolderPath, log);
+            var outputMode = options.DryRun
+                ? OutputMode.DryRun
+                : options.BackupFiles
+                    ? OutputMode.NormalWithBackup
+                    : OutputMode.Normal;
+            if (!converter.Convert(options.FileName, outputModName, outputMode))
                 statusCode = -2;
         } catch (Exception ex)
         {

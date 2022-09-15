@@ -1,15 +1,5 @@
-﻿using Focus.Providers.Mutagen;
-using Mutagen.Bethesda;
-using Mutagen.Bethesda.Environments;
-using Mutagen.Bethesda.Plugins;
-using Mutagen.Bethesda.Plugins.Binary.Parameters;
-using Mutagen.Bethesda.Plugins.Records;
-using Mutagen.Bethesda.Skyrim;
-using Noggog;
-using Serilog;
-using System.Drawing;
+﻿using Serilog;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace Focus.Tools.EasyFollower
 {
@@ -45,7 +35,7 @@ namespace Focus.Tools.EasyFollower
             this.log = log;
         }
 
-        public bool Convert(string fileName, string outputModName, bool backupFiles)
+        public bool Convert(string fileName, string outputModName, OutputMode outputMode)
         {
             log.Information("Starting conversion of exported character {fileName}", fileName);
             var filePaths = ValidatePaths(fileName);
@@ -58,23 +48,42 @@ namespace Focus.Tools.EasyFollower
             if (preset == null)
                 return false;
             if (!patcher.Patch(
-                fileName, preset, exportData, outputModName, backupFiles, out var npcFormId))
+                fileName, preset, exportData, outputModName, outputMode, out var patch))
                 return false;
-            CopyFile(
-                filePaths.HeadMeshPath, ResolveHeadMeshPath(outputModName, npcFormId), backupFiles);
-            CopyFile(
-                filePaths.FaceTintPath, ResolveFaceTintPath(outputModName, npcFormId), backupFiles);
+            var headMeshPath = ResolveHeadMeshPath(outputModName, patch.LocalFormIdHex);
+            if (CopyFile(filePaths.HeadMeshPath, headMeshPath, outputMode))
+                log.Information("Wrote head mesh to {fileName}", headMeshPath);
+            var faceTintPath = ResolveFaceTintPath(outputModName, patch.LocalFormIdHex);
+            if (CopyFile(filePaths.FaceTintPath, faceTintPath, outputMode))
+                log.Information("Wrote face tint to {fileName}", faceTintPath);
+            if (patch.HasHairPhysics)
+            {
+                log.Debug("Removing temporary physics nodes and old head parts from head mesh");
+                // A bit awkward to pretend to update the source mesh, but since this step requires
+                // reopening the head mesh, the entire step would otherwise we skipped in a dry run.
+                var meshToClean =
+                    outputMode == OutputMode.DryRun ? filePaths.HeadMeshPath : headMeshPath;
+                patcher.NifEditor.RemoveNodes(
+                    meshToClean,
+                    name =>
+                        name.StartsWith(
+                            "hdtSSEPhysics_AutoRename_", StringComparison.OrdinalIgnoreCase)
+                        || patch.InvalidHeadPartNames.Contains(name),
+                    // Disable backups for this step because we just created the file.
+                    outputMode == OutputMode.NormalWithBackup ? OutputMode.Normal : outputMode);
+                log.Information("Finished cleaning head mesh for HDT physics.");
+            }
             return true;
         }
 
-        private void CopyFile(string sourcePath, string destPath, bool backupExisting)
+        private bool CopyFile(string sourcePath, string destPath, OutputMode outputMode)
         {
-            if (backupExisting && File.Exists(destPath))
-                File.Copy(
-                    destPath,
-                    Path.ChangeExtension(destPath, $"{Path.GetExtension(destPath)}.backup"),
-                    /* overwrite */ true);
+            if (outputMode == OutputMode.DryRun)
+                return false;
+            if (outputMode == OutputMode.NormalWithBackup)
+                Files.Backup(destPath);
             File.Copy(sourcePath, destPath, /* overwrite */ true);
+            return true;
         }
 
         private FollowerExportData? ReadFollowerExportData(string fileName)

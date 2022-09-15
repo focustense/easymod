@@ -23,6 +23,14 @@ namespace Focus.Tools.EasyFollower
         public bool? ConfirmOnExit { get; set; }
 
         [Option(
+            shortName: 'd',
+            longName: "dryRun",
+            HelpText =
+                "Performs a dry-run, i.e. does not actually create or modify any files. " +
+                "Used for troubleshooting or testing new configurations.")]
+        public bool DryRun { get; set; }
+
+        [Option(
             shortName: 'f',
             longName: "filename",
             HelpText =
