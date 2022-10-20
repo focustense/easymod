@@ -19,6 +19,19 @@ namespace Focus.Graphics.OpenGL
             return texture;
         }
 
+        public static unsafe Texture FromBgra(GL gl, uint width, uint height, Span<int> bgraPixels)
+        {
+            var texture = CreateAndBind(gl);
+            fixed (void* data = &bgraPixels[0])
+            {
+                gl.TexImage2D(
+                    TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba8, width, height, 0,
+                    PixelFormat.Bgra, PixelType.UnsignedByte, data);
+            }
+            texture.SetDefaultParameters();
+            return texture;
+        }
+
         public static unsafe Texture FromMemory<T>(
             GL gl, Span<T> buffer, uint width, uint height,
             InternalFormat internalFormat = InternalFormat.Rgba8,

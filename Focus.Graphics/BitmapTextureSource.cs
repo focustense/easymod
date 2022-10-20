@@ -17,6 +17,8 @@ namespace Focus.Graphics
 
         private readonly Func<Bitmap> loadBitmap;
 
+        public TexturePixelFormat Format => TexturePixelFormat.ARGB;
+
         internal BitmapTextureSource(Func<Bitmap> bitmapSource)
         {
             loadBitmap = bitmapSource;

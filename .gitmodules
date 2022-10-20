@@ -1,3 +1,6 @@
 [submodule "nexus-uploader"]
 	path = nexus-uploader
 	url = https://github.com/focustense/nexus-uploader.git
+[submodule "DirectXTex"]
+	path = DirectXTex
+	url = https://github.com/focustense/DirectXTex.git
