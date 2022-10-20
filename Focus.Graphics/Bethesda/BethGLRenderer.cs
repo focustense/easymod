@@ -96,8 +96,9 @@ namespace Focus.Graphics.Bethesda
             shaderProgram.SetUniform("model", centerModel);
             shaderProgram.SetUniform("view", view);
             shaderProgram.SetUniform("projection", projection);
-            shaderProgram.SetUniform("lightColor", Vector3.One * 0.5f);
-            shaderProgram.SetUniform("lightDirection", new Vector3(0f, 1f, 0f));
+            shaderProgram.SetUniform("ambientLightingStrength", 0.4f);
+            shaderProgram.SetUniform("lightColor", Vector3.One);
+            shaderProgram.SetUniform("lightPosition", new Vector3(0f, -1f, 0f));
             BindTextures();
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
         }
