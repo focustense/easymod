@@ -3,6 +3,7 @@
 uniform sampler2D diffuseTexture;
 uniform sampler2D normalTexture;
 uniform float ambientLightingStrength;
+uniform float specularLightingStrength;
 uniform vec3 lightColor;
 
 in vec2 fUV;
@@ -26,7 +27,7 @@ void main()
     vec3 diffuseComponent = diffuseAmount * lightColor.rgb;
 
     // Specular lighting
-    float specularStrength = normalSample.a;
+    float specularStrength = normalSample.a * specularLightingStrength;
     float shininess = 32;
     vec3 tangentViewDirection = normalize(-tangentFragPosition);
     vec3 tangentReflectDirection = reflect(-tangentLightDirection, tangentNormal);

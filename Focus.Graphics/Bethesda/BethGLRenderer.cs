@@ -97,6 +97,7 @@ namespace Focus.Graphics.Bethesda
             shaderProgram.SetUniform("view", view);
             shaderProgram.SetUniform("projection", projection);
             shaderProgram.SetUniform("ambientLightingStrength", 0.4f);
+            shaderProgram.SetUniform("specularLightingStrength", 1.0f);
             shaderProgram.SetUniform("lightColor", Vector3.One);
             shaderProgram.SetUniform("lightPosition", new Vector3(0f, -1f, 0f));
             BindTextures();
