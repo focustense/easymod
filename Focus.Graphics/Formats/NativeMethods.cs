@@ -20,6 +20,6 @@ namespace Focus.Graphics.Formats
 
         [DllImport(DdsDllName, CallingConvention = CallingConvention.StdCall)]
         public static extern int LoadDDSFromMemory(
-            [In] byte[] data, int size, [In, Out] ref DDSFile file);
+            [In] byte[] data, int size, [Out] out DDSFile file);
     }
 }

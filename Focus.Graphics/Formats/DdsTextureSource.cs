@@ -9,36 +9,59 @@ namespace Focus.Graphics.Formats
             return new DdsTextureSource(() => File.ReadAllBytes(path));
         }
 
-        private readonly Func<byte[]> loadData;
+        public static async Task<DdsTextureSource> PreloadAsync(string path)
+        {
+            var data = await File.ReadAllBytesAsync(path);
+            var source = new DdsTextureSource(() => data);
+            source.LoadTextureData();
+            return source;
+        }
+
+        private readonly Func<byte[]> getFileData;
+
+        private int width;
+        private int height;
+        private int[] bgraValues = Array.Empty<int>();
+        private bool isLoaded;
 
         public TexturePixelFormat Format => TexturePixelFormat.BGRA;
 
-        internal DdsTextureSource(Func<byte[]> loadData)
+        internal DdsTextureSource(Func<byte[]> getFileData)
         {
-            this.loadData = loadData;
+            this.getFileData = getFileData;
         }
 
         public TextureData GetTextureData()
         {
-            var bytes = loadData();
-            var file = new DDSFile();
-            var hr = NativeMethods.LoadDDSFromMemory(bytes, bytes.Length, ref file);
+            LoadTextureData();
+            return new TextureData((uint)width, (uint)height, bgraValues);
+        }
+
+        private void LoadTextureData()
+        {
+            if (isLoaded)
+                return;
+            var bytes = getFileData();
+            var hr = NativeMethods.LoadDDSFromMemory(bytes, bytes.Length, out var file);
             if (hr < 0)
                 Marshal.ThrowExceptionForHR(hr);
             try
             {
-                var bgraValues = new int[file.Width * file.Height];
+                width = file.Width;
+                height = file.Height;
+                bgraValues = new int[file.Width * file.Height];
                 for (var row = 0; row < file.Height; row++)
                     Marshal.Copy(
                         file.Scan0 + row * file.Stride,
                         bgraValues,
                         row * file.Width,
                         file.Width);
-                return new TextureData((uint)file.Width, (uint)file.Height, bgraValues);
-            } finally
+            }
+            finally
             {
                 NativeMethods.FreeDDS(ref file);
             }
+            isLoaded = true;
         }
     }
 }

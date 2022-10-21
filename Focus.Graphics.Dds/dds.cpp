@@ -13,7 +13,7 @@ struct Point
 HRESULT WINAPI LoadDDSFromMemory(
 	_In_reads_bytes_(size) const void* pSource,
 	_In_ size_t size,
-	_Inout_ DDSFile* file)
+	_Out_ DDSFile* file)
 {
 	if (pSource == nullptr || file == nullptr)
 		return E_INVALIDARG;
@@ -142,7 +142,7 @@ HRESULT WINAPI LoadDDSFromMemory(
 	return S_OK;
 }
 
-void WINAPI FreeDDS(DDSFile* file)
+void WINAPI FreeDDS(_Inout_ DDSFile* file)
 {
 	if (file == nullptr)
 		return;

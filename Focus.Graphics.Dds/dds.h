@@ -17,9 +17,9 @@ extern "C" {
 	__declspec(dllexport) HRESULT WINAPI LoadDDSFromMemory(
 		_In_reads_bytes_(size) const void* pSource,
 		_In_ size_t size,
-		_Inout_ DDSFile* file);
+		_Out_ DDSFile* file);
 
-	__declspec(dllexport) void WINAPI FreeDDS(DDSFile* file);
+	__declspec(dllexport) void WINAPI FreeDDS(_Inout_ DDSFile* file);
 
 #ifdef __cplusplus
 }

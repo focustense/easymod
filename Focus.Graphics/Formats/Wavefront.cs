@@ -11,48 +11,32 @@ namespace Focus.Graphics.Formats
             return LoadFromStream(fs);
         }
 
+        public static async Task<WavefrontMesh> LoadFromFileAsync(string path)
+        {
+            using var fs = File.OpenRead(path);
+            return await LoadFromStreamAsync(fs);
+        }
+
         public static WavefrontMesh LoadFromStream(Stream stream)
         {
             using var reader = new StreamReader(stream);
             var file = new WavefrontMesh();
             WavefrontObject? currentObject = null;
             for (var nextLine = reader.ReadLine(); nextLine != null; nextLine = reader.ReadLine())
-            {
-                if (nextLine.StartsWith("#"))
-                    continue;
-                var parts = nextLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts[0] == "o")
-                {
-                    currentObject = new WavefrontObject(parts[1]);
-                    file.Objects.Add(currentObject);
-                }
-                else if (currentObject == null)
-                    continue;
-                switch (parts[0])
-                {
-                    case "v":
-                        var vertex = new Vector3(
-                            float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3]));
-                        currentObject.Vertices.Add(vertex);
-                        break;
-                    case "vn":
-                        var normal = new Vector3(
-                            float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3]));
-                        currentObject.Normals.Add(normal);
-                        break;
-                    case "vt":
-                        var uv = new Vector2(float.Parse(parts[1]), float.Parse(parts[2]));
-                        currentObject.UVs.Add(uv);
-                        break;
-                    case "f":
-                        var elements = parts.Skip(1).Select(ParseFaceElement).ToList();
-                        currentObject.Faces.Add(new WavefrontFace(elements));
-                        break;
-                    default:
-                        // Just skip unknown stuff.
-                        break;
-                }
-            }
+                file.ParseLine(ref currentObject, nextLine);
+            return file;
+        }
+
+        public static async Task<WavefrontMesh> LoadFromStreamAsync(Stream stream)
+        {
+            using var reader = new StreamReader(stream);
+            var file = new WavefrontMesh();
+            WavefrontObject? currentObject = null;
+            for (
+                var nextLine = await reader.ReadLineAsync();
+                nextLine != null;
+                nextLine = await reader.ReadLineAsync())
+                file.ParseLine(ref currentObject, nextLine);
             return file;
         }
 
@@ -92,6 +76,44 @@ namespace Focus.Graphics.Formats
             var parts = s.Split('/');
             return new WavefrontFaceElement(
                 uint.Parse(parts[0]) - 1, uint.Parse(parts[1]) - 1, uint.Parse(parts[2]) - 1);
+        }
+
+        private void ParseLine(ref WavefrontObject? currentObject, string line)
+        {
+            if (line.StartsWith("#"))
+                return;
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts[0] == "o")
+            {
+                currentObject = new WavefrontObject(parts[1]);
+                Objects.Add(currentObject);
+            }
+            else if (currentObject == null)
+                return;
+            switch (parts[0])
+            {
+                case "v":
+                    var vertex = new Vector3(
+                        float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3]));
+                    currentObject.Vertices.Add(vertex);
+                    break;
+                case "vn":
+                    var normal = new Vector3(
+                        float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3]));
+                    currentObject.Normals.Add(normal);
+                    break;
+                case "vt":
+                    var uv = new Vector2(float.Parse(parts[1]), float.Parse(parts[2]));
+                    currentObject.UVs.Add(uv);
+                    break;
+                case "f":
+                    var elements = parts.Skip(1).Select(ParseFaceElement).ToList();
+                    currentObject.Faces.Add(new WavefrontFace(elements));
+                    break;
+                default:
+                    // Just skip unknown stuff.
+                    break;
+            }
         }
     }
 
