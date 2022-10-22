@@ -80,7 +80,7 @@ namespace Focus.Graphics.Formats
 
         private void ParseLine(ref WavefrontObject? currentObject, string line)
         {
-            if (line.StartsWith("#"))
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
                 return;
             var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts[0] == "o")
