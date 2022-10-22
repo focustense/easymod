@@ -6,7 +6,7 @@ using Texture = Focus.Graphics.OpenGL.Texture;
 
 namespace Focus.Graphics.Bethesda
 {
-    public class BethGLRenderer : IRenderer
+    public class BethGLRenderer : IMeshRenderer
     {
         private readonly GL gl;
 
@@ -16,8 +16,7 @@ namespace Focus.Graphics.Bethesda
         private BufferObject? ebo;
         private Texture? diffuseTexture;
         private Texture? normalTexture;
-        private Vector3 center;
-        private Bounds bounds = new(Vector3.Zero, Vector3.One);
+        private Bounds3 bounds = Bounds3.Default;
 
         public BethGLRenderer(GL gl)
             : this(gl, CreateDefaultShaderProgram(gl))
@@ -41,14 +40,9 @@ namespace Focus.Graphics.Bethesda
             GC.SuppressFinalize(this);
         }
 
-        public Vector3 GetModelCenter()
+        public Bounds3 GetModelBounds()
         {
-            return center;
-        }
-
-        public Vector3 GetModelSize()
-        {
-            return Vector3.Abs(bounds.Max - bounds.Min);
+            return bounds;
         }
 
         public void LoadGeometry(IMesh mesh)
@@ -69,11 +63,9 @@ namespace Focus.Graphics.Bethesda
                 .Select(v => vertexIndexMap[(v.Point, v.Normal, v.UV)])
                 .ToArray();
             bounds = vertices.Aggregate(
-                new Bounds(Vector3.Zero, Vector3.Zero),
-                (bounds, x) => new Bounds(
+                new Bounds3(Vector3.Zero, Vector3.Zero),
+                (bounds, x) => new Bounds3(
                     Vector3.Min(bounds.Min, x.Point), Vector3.Max(bounds.Max, x.Point)));
-            center =
-                vertices.Aggregate(Vector3.Zero, (sum, v) => sum + v.Point) / vertices.Length;
 
             vbo = BufferObject.Create(gl, BufferTargetARB.ArrayBuffer, vertices);
             ebo = BufferObject.Create(gl, BufferTargetARB.ElementArrayBuffer, vertexIndices);
@@ -130,7 +122,5 @@ namespace Focus.Graphics.Bethesda
                 Path.Combine(AppContext.BaseDirectory, "Bethesda", "shader.frag");
             return ShaderProgram.FromFiles(gl, vertexShaderPath, fragmentShaderPath);
         }
-
-        record Bounds(Vector3 Min, Vector3 Max);
     }
 }
