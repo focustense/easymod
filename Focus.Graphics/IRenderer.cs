@@ -4,6 +4,7 @@ namespace Focus.Graphics
 {
     public interface IRenderer : IDisposable
     {
+        Vector3 GetModelCenter();
         Vector3 GetModelSize();
 
         void LoadGeometry(IMesh mesh);

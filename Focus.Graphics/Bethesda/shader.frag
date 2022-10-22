@@ -35,6 +35,5 @@ void main()
     vec3 specularComponent = specularStrength * specularAmount * lightColor;
 
     // Apply all lighting
-    if (diffuseColor.r < -1000 || diffuseComponent.r < -1000 || specularComponent.r < -1000) return;
     fColor = vec4((ambientComponent + diffuseComponent + specularComponent) * diffuseColor, 1);
 }

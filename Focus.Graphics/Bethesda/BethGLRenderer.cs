@@ -41,6 +41,11 @@ namespace Focus.Graphics.Bethesda
             GC.SuppressFinalize(this);
         }
 
+        public Vector3 GetModelCenter()
+        {
+            return center;
+        }
+
         public Vector3 GetModelSize()
         {
             return Vector3.Abs(bounds.Max - bounds.Min);
@@ -92,14 +97,13 @@ namespace Focus.Graphics.Bethesda
                 return;
             vao.Bind();
             shaderProgram.Use();
-            var centerModel = Matrix4x4.CreateTranslation(-center) * model;
-            shaderProgram.SetUniform("model", centerModel);
+            shaderProgram.SetUniform("model", model);
             shaderProgram.SetUniform("view", view);
             shaderProgram.SetUniform("projection", projection);
             shaderProgram.SetUniform("ambientLightingStrength", 0.4f);
             shaderProgram.SetUniform("specularLightingStrength", 1.0f);
             shaderProgram.SetUniform("lightColor", Vector3.One);
-            shaderProgram.SetUniform("lightPosition", new Vector3(0f, -1f, 0f));
+            shaderProgram.SetUniform("lightPosition", new Vector3(0f, -100f, 0f));
             BindTextures();
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
         }
