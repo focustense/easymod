@@ -7,27 +7,29 @@ namespace Focus.Graphics.OpenGL
         public static VertexArrayObject Bind(GL gl, BufferObject vbo, BufferObject ebo)
         {
             var handle = gl.GenVertexArray();
-            var vao = new VertexArrayObject(gl, handle, vbo.ElementSize);
+            var vao = new VertexArrayObject(gl, handle, ebo, vbo.ElementSize);
             vao.Bind();
             vbo.Bind();
-            ebo.Bind();
             return vao;
         }
 
         private readonly GL gl;
         private readonly uint handle;
+        private readonly BufferObject ebo;
         private readonly uint vertexSize;
 
-        private VertexArrayObject(GL gl, uint handle, uint vertexSize)
+        private VertexArrayObject(GL gl, uint handle, BufferObject ebo, uint vertexSize)
         {
             this.gl = gl;
             this.handle = handle;
+            this.ebo = ebo;
             this.vertexSize = vertexSize;
         }
 
         public void Bind()
         {
             gl.BindVertexArray(handle);
+            ebo.Bind();
         }
 
         public void Dispose()
