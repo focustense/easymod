@@ -32,6 +32,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
         private readonly IFileSystem fs;
         private readonly SharedResourceCopyTask.Result headParts;
         private readonly PatchSaveTask.Result patch;
+        private readonly PathNormalizer pathNormalizer;
 
         public TexturePathExtractionTask(
             IFileSystem fs, IFileSync fileSync, PatchSaveTask.Result patch, SharedResourceCopyTask.Result headParts,
@@ -42,6 +43,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             this.fs = fs;
             this.headParts = headParts;
             this.patch = patch;
+            pathNormalizer = new(fs);
         }
 
         protected override async Task<Result> Run(BuildSettings settings)
@@ -80,16 +82,12 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 .SelectMany(p => p)
                 .Concat(pathsFromTextureSets)
                 .AsParallel()
-                .Select(NormalizeTexturePath)
+                .Select(pathNormalizer.NormalizeTexturePath)
                 .ToHashSet(PathComparer.Default);
             return new Result(allTexturePaths);
         }
 
-        private static string? GetPathAfter(string path, string search, int offset)
-        {
-            var index = path.LastIndexOf(search, StringComparison.OrdinalIgnoreCase);
-            return index >= 0 ? path.Substring(index + offset) : null;
-        }
+        
 
         // Parsing the NIF using nifly would be more accurate - but this is much faster, and it has never been shown
         // to be inaccurate.
@@ -107,34 +105,6 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 match = match.NextMatch();
             }
             return texturePaths.ToList();
-        }
-
-        private string NormalizeTexturePath(string rawTexturePath)
-        {
-            var texturePath = rawTexturePath;
-            try
-            {
-                if (fs.Path.IsPathRooted(texturePath))
-                {
-                    texturePath =
-                        GetPathAfter(texturePath, @"data\textures", 5) ??
-                        GetPathAfter(texturePath, @"data/textures", 5) ??
-                        GetPathAfter(texturePath, @"\textures\", 1) ??
-                        GetPathAfter(texturePath, @"/textures\", 1) ??
-                        GetPathAfter(texturePath, @"\textures/", 1) ??
-                        GetPathAfter(texturePath, @"/textures/", 1) ??
-                        GetPathAfter(texturePath, @"\data\", 1) ??
-                        GetPathAfter(texturePath, @"/data\", 1) ??
-                        GetPathAfter(texturePath, @"\data/", 1) ??
-                        GetPathAfter(texturePath, @"/data/", 1) ??
-                        texturePath;
-                }
-            }
-            catch (Exception)
-            {
-                // Just use the best we were able to come up with before the error.
-            }
-            return texturePath.PrefixPath("textures");
         }
     }
 }
