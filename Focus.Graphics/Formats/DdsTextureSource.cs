@@ -9,15 +9,20 @@ namespace Focus.Graphics.Formats
             return new DdsTextureSource(() => File.ReadAllBytes(path));
         }
 
-        public static async Task<DdsTextureSource> PreloadAsync(string path)
+        public static Task<DdsTextureSource> PreloadAsync(string path)
         {
-            var data = await File.ReadAllBytesAsync(path);
+            return PreloadAsync(async () => await File.ReadAllBytesAsync(path));
+        }
+
+        public static async Task<DdsTextureSource> PreloadAsync(Func<Task<Memory<byte>>> dataSource)
+        {
+            var data = await dataSource();
             var source = new DdsTextureSource(() => data);
             source.LoadTextureData();
             return source;
         }
 
-        private readonly Func<byte[]> getFileData;
+        private readonly Func<Memory<byte>> getFileData;
 
         private int width;
         private int height;
@@ -26,7 +31,7 @@ namespace Focus.Graphics.Formats
 
         public TexturePixelFormat Format => TexturePixelFormat.BGRA;
 
-        internal DdsTextureSource(Func<byte[]> getFileData)
+        internal DdsTextureSource(Func<Memory<byte>> getFileData)
         {
             this.getFileData = getFileData;
         }
@@ -37,12 +42,17 @@ namespace Focus.Graphics.Formats
             return new TextureData((uint)width, (uint)height, bgraValues);
         }
 
-        private void LoadTextureData()
+        private unsafe void LoadTextureData()
         {
             if (isLoaded)
                 return;
             var bytes = getFileData();
-            var hr = NativeMethods.LoadDDSFromMemory(bytes, bytes.Length, out var file);
+            int hr;
+            DDSFile file;
+            fixed (byte* dataPtr = bytes.Span)
+            {
+                hr = NativeMethods.LoadDDSFromMemory(dataPtr, bytes.Length, out file);
+            }
             if (hr < 0)
                 Marshal.ThrowExceptionForHR(hr);
             try

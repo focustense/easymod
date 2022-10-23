@@ -9,23 +9,23 @@ namespace Focus.Graphics.Bethesda
     public class NifSceneSource : ISceneSource
     {
         private readonly Func<Task<NifFile>> openFile;
-        private readonly IEnumerable<string> textureSearchPaths;
+        private readonly IAsyncFileProvider fileProvider;
 
-        public NifSceneSource(string fileName, IEnumerable<string> textureSearchPaths)
-            : this(() => OpenFileAsync(fileName), textureSearchPaths)
+        public NifSceneSource(IAsyncFileProvider fileProvider, string fileName)
+            : this(fileProvider, () => OpenFileAsync(fileProvider, fileName))
         {
         }
 
-        public NifSceneSource(Func<NifFile> openFile, IEnumerable<string> textureSearchPaths)
+        public NifSceneSource(IAsyncFileProvider fileProvider, Func<NifFile> openFile)
         {
+            this.fileProvider = fileProvider;
             this.openFile = () => Task.FromResult(openFile());
-            this.textureSearchPaths = textureSearchPaths;
         }
 
-        public NifSceneSource(Func<Task<NifFile>> openFile, IEnumerable<string> textureSearchPaths)
+        public NifSceneSource(IAsyncFileProvider fileProvider, Func<Task<NifFile>> openFile)
         {
+            this.fileProvider = fileProvider;
             this.openFile = openFile;
-            this.textureSearchPaths = textureSearchPaths;
         }
 
         public async Task<IEnumerable<SceneObject>> LoadAsync()
@@ -36,14 +36,15 @@ namespace Focus.Graphics.Bethesda
 
         private IEnumerable<SceneObject> LoadAsync(NifFile file)
         {
-            using var loader = new ObjectLoader(file, textureSearchPaths);
+            using var loader = new ObjectLoader(file, fileProvider);
             return loader.LoadObjects();
         }
 
-        private static async Task<NifFile> OpenFileAsync(string fileName)
+        private static async Task<NifFile> OpenFileAsync(
+            IAsyncFileProvider fileProvider, string fileName)
         {
-            var data = await File.ReadAllBytesAsync(fileName);
-            return new NifFile(new vectoruchar(data));
+            var data = await fileProvider.ReadBytesAsync(fileName);
+            return new NifFile(new vectoruchar(data.ToArray()));
         }
 
         // Using an inner class for this allows us to save some disposables without having to pass
@@ -52,13 +53,13 @@ namespace Focus.Graphics.Bethesda
         {
             private readonly NifFile nif;
             private readonly NiHeader header;
-            private readonly IEnumerable<string> textureSearchPaths;
+            private readonly IAsyncFileProvider fileProvider;
 
-            public ObjectLoader(NifFile file, IEnumerable<string> textureSearchPaths)
+            public ObjectLoader(NifFile file, IAsyncFileProvider fileProvider)
             {
+                this.fileProvider = fileProvider;
                 nif = file;
                 header = file.GetHeader();
-                this.textureSearchPaths = textureSearchPaths;
             }
 
             public void Dispose()
@@ -133,6 +134,7 @@ namespace Focus.Graphics.Bethesda
                     .ToDictionary(x => x.vertex, x => BoneWeights.FromWeights(x.weights));
                 foreach (var vw in vertexWeights)
                     meshBuilder.SetVertexWeights(vw.Key, vw.Value);
+                skinInstance.Dispose();
             }
 
             private void AddSkinTransformsFromShape(
@@ -153,16 +155,11 @@ namespace Focus.Graphics.Bethesda
 
             private async Task<ITextureSource?> CreateTextureSourceAsync(string texturePath)
             {
-                if (!Path.GetExtension(texturePath).Equals(".dds", StringComparison.OrdinalIgnoreCase))
+                if (!Path.GetExtension(texturePath).Equals(".dds", StringComparison.OrdinalIgnoreCase)
+                    || !await fileProvider.ExistsAsync(texturePath))
                     return null;
-                var normalizedPath = PathNormalizer.Default.NormalizeTexturePath(texturePath);
-                var foundPath = textureSearchPaths
-                    .Prepend("")
-                    .Select(searchPath => Path.Combine(searchPath, normalizedPath))
-                    .Where(f => File.Exists(f))
-                    .FirstOrDefault();
-                return !string.IsNullOrEmpty(foundPath)
-                    ? await DdsTextureSource.PreloadAsync(foundPath) : null;
+                return await DdsTextureSource.PreloadAsync(
+                    () => fileProvider.ReadBytesAsync(texturePath));
             }
 
             private IReadOnlyDictionary<uint, uint> GetBoneIdsByIndex(NiShape shape)
@@ -188,7 +185,7 @@ namespace Focus.Graphics.Bethesda
                     var boneName = boneNode.name.get();
                     var bone = new Bone(boneName);
                     bones.Add(childRef.index, bone);
-                    var boneGlobalTransform = new MatTransform();
+                    using var boneGlobalTransform = new MatTransform();
                     nif.GetNodeTransformToGlobal(bone.Name, boneGlobalTransform);
                     defaultTransforms.Add(bone, boneGlobalTransform.ToMat4());
                 }
@@ -203,6 +200,8 @@ namespace Focus.Graphics.Bethesda
                     !header.TryGetBlock<BSShaderTextureSet>(shader.TextureSetRef(), out var textureSet))
                     return TextureSet.Empty;
                 var textureList = textureSet.textures.items().Select(x => x.get()).ToList();
+                textureSet.Dispose();
+                shader.Dispose();
                 // We'll add more texture types later; currently only support diffuse and normal.
                 var diffuseTask = CreateTextureSourceAsync(textureList[0]);
                 var normalTask = CreateTextureSourceAsync(textureList[1]);
