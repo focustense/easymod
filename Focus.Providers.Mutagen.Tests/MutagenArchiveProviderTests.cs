@@ -130,6 +130,53 @@ namespace Focus.Providers.Mutagen.Tests
         }
 
         [Fact]
+        public void GetFileStream_ForDirectorylessPath_Throws()
+        {
+            Assert.Throws<ArgumentException>(
+                () => provider.GetFileStream(@"C:\game\data\dummy.bsa", "rootfile.txt"));
+        }
+
+        [Fact]
+        public void GetFileStream_ForMissingFolder_Throws()
+        {
+            archiveMock
+                .Setup(x => x.CreateReader(GameRelease, @"C:\game\data\archive.bsa"))
+                .Returns(new FakeArchiveReader());
+            Assert.Throws<ArchiveException>(
+                () => provider.GetFileStream(@"C:\game\data\archive.bsa", @"unknown\foo.bar"));
+        }
+
+        [Fact]
+        public void GetFileStream_ForMissingFile_Throws()
+        {
+            archiveMock
+                .Setup(x => x.CreateReader(GameRelease, @"C:\game\data\archive.bsa"))
+                .Returns(new FakeArchiveReader()
+                    .Put(@"a\b\c\1", "")
+                    .Put(@"a\b\c\2", "")
+                    .Put(@"a\b\c\3", ""));
+
+            Assert.Throws<ArchiveException>(
+                () => provider.GetFileStream(@"C:\game\data\archive.bsa", @"a\b\c\4"));
+        }
+
+        [Fact]
+        public void GetFileStream_ForFoundFile_ReturnsContentStream()
+        {
+            archiveMock
+                .Setup(x => x.CreateReader(GameRelease, @"C:\game\data\archive.bsa"))
+                .Returns(new FakeArchiveReader()
+                    .Put(@"a\b\c\1", "")
+                    .Put(@"a\b\c\2", new byte[] { 1, 2, 3, 4, 5 })
+                    .Put(@"a\b\c\3", ""));
+            var stream = provider.GetFileStream(@"C:\game\data\archive.bsa", @"a\b\c\2");
+
+            var data = new byte[stream.Length];
+            stream.Read(data);
+            Assert.Equal(new byte[] { 1, 2, 3, 4, 5 }, data);
+        }
+
+        [Fact]
         public void WhenArchiveHasInvalidData_FlagsAsBad()
         {
             archiveMock.Setup(x => x.CreateReader(GameRelease, "foo.bsa")).Returns(new FakeArchiveReader()

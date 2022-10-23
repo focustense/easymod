@@ -1,5 +1,6 @@
 ﻿using Focus.Testing.Files;
 using System;
+using System.IO;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -72,9 +73,9 @@ namespace Focus.Files.Tests
         }
 
         [Fact]
-        public void WhenFileIsNowhere_ReadBytes_ReturnsNull()
+        public void WhenFileIsNowhere_ReadBytes_Throws()
         {
-            Assert.False(provider.ReadBytes("file") != null);
+            Assert.Throws<FileNotFoundException>(() => provider.ReadBytes("file"));
         }
 
         [Fact]
@@ -98,5 +99,8 @@ namespace Focus.Files.Tests
 
             Assert.Equal(new byte[] { 12, 13, 14 }, provider.ReadBytes("file").ToArray());
         }
+        
+        // Foregoing async tests because the GameFileProvider just inherits from
+        // CascadingFileProvider. We're only interested in the file prioritization.
     }
 }

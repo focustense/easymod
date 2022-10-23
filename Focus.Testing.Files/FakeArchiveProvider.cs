@@ -57,7 +57,7 @@ namespace Focus.Testing.Files
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
         {
             var archiveFiles = GetArchiveFiles(archivePath);
-            return archiveFiles.TryGetValue(archiveFilePath, out var data) ? data : null;
+            return archiveFiles.TryGetValue(archiveFilePath, out var data) ? data : default;
         }
 
         private Dictionary<string, byte[]> GetArchiveFiles(string archivePath)
@@ -68,6 +68,13 @@ namespace Focus.Testing.Files
                 files.Add(archivePath, archiveFiles);
             }
             return archiveFiles;
+        }
+
+        public Stream GetFileStream(string archivePath, string archiveFilePath)
+        {
+            var archiveFiles = GetArchiveFiles(archivePath);
+            return archiveFiles.TryGetValue(archiveFilePath, out var data)
+                ? new MemoryStream(data) : new MemoryStream();
         }
     }
 }

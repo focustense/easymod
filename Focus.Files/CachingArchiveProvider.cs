@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 
@@ -54,6 +55,11 @@ namespace Focus.Files
             // This list could change at any time, so we don't want to cache it. Providers shouldn't scan every archive
             // every time we request this - instead it's passively updated whenever a bad archive is detected.
             return innerProvider.GetBadArchivePaths();
+        }
+
+        public Stream GetFileStream(string archivePath, string archiveFilePath)
+        {
+            return innerProvider.GetFileStream(archivePath, archiveFilePath);
         }
 
         public bool IsArchiveFile(string path)

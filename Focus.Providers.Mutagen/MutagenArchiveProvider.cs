@@ -74,6 +74,12 @@ namespace Focus.Providers.Mutagen
             return badArchivePaths;
         }
 
+        public Stream GetFileStream(string archivePath, string archiveFilePath)
+        {
+            var file = GetRequiredFile(archivePath, archiveFilePath);
+            return file.AsStream();
+        }
+
         public bool IsArchiveFile(string path)
         {
             return string.Equals(
@@ -81,6 +87,17 @@ namespace Focus.Providers.Mutagen
         }
 
         public ReadOnlySpan<byte> ReadBytes(string archivePath, string archiveFilePath)
+        {
+            var file = GetRequiredFile(archivePath, archiveFilePath);
+            return file.GetSpan();
+        }
+
+        private IArchiveReader GetReader(string archivePath)
+        {
+            return readers.GetOrAdd(archivePath, _ => archive.CreateReader(game.GameRelease, archivePath));
+        }
+
+        private IArchiveFile GetRequiredFile(string archivePath, string archiveFilePath)
         {
             var reader = GetReader(archivePath);
             var folderName = Path.GetDirectoryName(archiveFilePath)?.ToLower();  // Mutagen is case-sensitive
@@ -92,12 +109,7 @@ namespace Focus.Providers.Mutagen
                 .SingleOrDefault(f => string.Equals(f.Path, archiveFilePath, StringComparison.OrdinalIgnoreCase));
             if (file == null)
                 throw new ArchiveException($"Couldn't find file {archiveFilePath} in archive {archivePath}");
-            return file.GetSpan();
-        }
-
-        private IArchiveReader GetReader(string archivePath)
-        {
-            return readers.GetOrAdd(archivePath, _ => archive.CreateReader(game.GameRelease, archivePath));
+            return file;
         }
 
         private T? Safe<T>(string archivePath, Func<T> action)
