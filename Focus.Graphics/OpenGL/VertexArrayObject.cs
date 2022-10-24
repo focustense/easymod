@@ -4,7 +4,7 @@ namespace Focus.Graphics.OpenGL
 {
     public class VertexArrayObject : IDisposable
     {
-        public static VertexArrayObject Bind(GL gl, BufferObject vbo, BufferObject ebo)
+        public static VertexArrayObject Bind(GL gl, BufferObject vbo, BufferObject? ebo = null)
         {
             var handle = gl.GenVertexArray();
             var vao = new VertexArrayObject(gl, handle, ebo, vbo.ElementSize);
@@ -15,10 +15,10 @@ namespace Focus.Graphics.OpenGL
 
         private readonly GL gl;
         private readonly uint handle;
-        private readonly BufferObject ebo;
+        private readonly BufferObject? ebo;
         private readonly uint vertexSize;
 
-        private VertexArrayObject(GL gl, uint handle, BufferObject ebo, uint vertexSize)
+        private VertexArrayObject(GL gl, uint handle, BufferObject? ebo, uint vertexSize)
         {
             this.gl = gl;
             this.handle = handle;
@@ -29,7 +29,7 @@ namespace Focus.Graphics.OpenGL
         public void Bind()
         {
             gl.BindVertexArray(handle);
-            ebo.Bind();
+            ebo?.Bind();
         }
 
         public void Dispose()
