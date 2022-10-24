@@ -5,12 +5,12 @@ namespace Focus.Graphics
 {
     public class SceneRenderer : IRenderer
     {
-        private readonly Func<IMeshRenderer> meshRendererFactory;
+        private readonly Func<ObjectRenderingSettings, IMeshRenderer> meshRendererFactory;
         private readonly ConcurrentBag<IMeshRenderer> meshRenderers = new();
 
         private bool isDisposed = false;
 
-        public SceneRenderer(Func<IMeshRenderer> meshRendererFactory)
+        public SceneRenderer(Func<ObjectRenderingSettings, IMeshRenderer> meshRendererFactory)
         {
             this.meshRendererFactory = meshRendererFactory;
         }
@@ -25,11 +25,7 @@ namespace Focus.Graphics
 
         public Bounds3 GetModelBounds()
         {
-            return meshRenderers
-                .Aggregate(
-                    (Bounds3?)null,
-                    (acc, r) => Bounds3.Union(r.GetModelBounds(), acc))
-                ?? Bounds3.Default;
+            return Bounds3.UnionAll(meshRenderers, r => r.GetModelBounds());
         }
 
         public async Task LoadAsync(ISceneSource source, IScheduler scheduler)
@@ -39,7 +35,7 @@ namespace Focus.Graphics
             {
                 var renderer = scheduler.Run(() =>
                 {
-                    var renderer = meshRendererFactory();
+                    var renderer = meshRendererFactory(obj.RenderingSettings);
                     renderer.LoadGeometry(obj.Mesh);
                     renderer.LoadTextures(TextureSet.Empty);
                     return renderer;

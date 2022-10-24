@@ -1,5 +1,6 @@
 ﻿using nifly;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Numerics;
 
 using NifVector2 = nifly.Vector2;
@@ -11,6 +12,12 @@ namespace Focus.Graphics.Bethesda
 {
     internal static class NifExtensions
     {
+        public static Color ToColor(this NifVector3 v)
+        {
+            return Color.FromArgb(
+                (int)Math.Round(v.x * 255), (int)Math.Round(v.y * 255), (int)Math.Round(v.z * 255));
+        }
+
         public static Matrix4x4 ToMat4(this MatTransform t)
         {
             // nifly doesn't appear to have any API for actually reading a matrix directly.

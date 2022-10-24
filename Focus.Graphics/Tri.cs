@@ -62,8 +62,6 @@ namespace Focus.Graphics
             bitangent = Vector3.Normalize(bitangent - tangent * Vector3.Dot(tangent, bitangent));
             if (Vector3.Dot(Vector3.Cross(normal, tangent), bitangent) < 0)
                 tangent *= -1.0f;
-            if (float.IsNaN(tangent.X))
-                Debugger.Break();
             return new VertexData(point, normal, tangent, bitangent, uv);
         }
     }

@@ -5,10 +5,34 @@ namespace Focus.Graphics
     public record Bounds3(Vector3 Min, Vector3 Max)
     {
         public static readonly Bounds3 Default = new Bounds3(Vector3.Zero, Vector3.One);
+        public static readonly Bounds3 Empty = new Bounds3(Vector3.Zero, Vector3.Zero);
+
+        public static Bounds3 FromPoints(IEnumerable<Vector3> points)
+        {
+            Vector3? min = null;
+            Vector3? max = null;
+            foreach (var point in points)
+            {
+                min = min != null ? Vector3.Min(min.Value, point) : point;
+                max = max != null ? Vector3.Max(max.Value, point) : point;
+            }
+            return new Bounds3(min ?? Vector3.Zero, max ?? Vector3.Zero);
+        }
+
+        public static Bounds3 UnionAll<T>(IEnumerable<T> source, Func<T, Bounds3> getBounds)
+        {
+            return source.Aggregate(
+                (Bounds3?)null, (acc, x) => Union(getBounds(x), acc)) ?? Default;
+        }
 
         public static Bounds3 Union(Bounds3 first, Bounds3? second)
         {
-            return second != null ? first.Union(second) : first;
+            return (second != null && !second.IsEmpty()) ? first.Union(second) : first;
+        }
+
+        public bool IsEmpty()
+        {
+            return Min == Vector3.Zero && Max == Vector3.Zero;
         }
 
         public Bounds3 Union(Bounds3 other)

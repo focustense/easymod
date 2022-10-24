@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Focus.Graphics
 {
@@ -7,11 +8,15 @@ namespace Focus.Graphics
         IEnumerable<Face> Faces { get; }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public record Vertex(Vector3 Point, Vector3 Normal, Vector2 UV);
 
     public record Face(IEnumerable<Vertex> Vertices)
     {
-        public IEnumerable<Tri> Triangulate()
+        public Face(params Vertex[] vertices)
+            : this(vertices.AsEnumerable()) { }
+
+        public IEnumerable<T> Triangulate<T>(Func<Vertex, Vertex, Vertex, T> selector)
         {
             using var vertexEnumerator = Vertices.GetEnumerator();
             if (!vertexEnumerator.MoveNext())
@@ -23,7 +28,7 @@ namespace Focus.Graphics
             while (vertexEnumerator.MoveNext())
             {
                 var nextVertex = vertexEnumerator.Current;
-                yield return Tri.WithVertices(firstVertex, previousVertex, nextVertex);
+                yield return selector(firstVertex, previousVertex, nextVertex);
                 previousVertex = nextVertex;
             }
         }

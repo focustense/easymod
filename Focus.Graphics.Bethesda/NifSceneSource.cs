@@ -8,23 +8,37 @@ namespace Focus.Graphics.Bethesda
 {
     public class NifSceneSource : ISceneSource
     {
+        public class Settings
+        {
+            // Speculars seem generally weak compared to what we see in NifSkope, etc.
+            // Using values > 1 make ours look much closer.
+            public float SpecularMultiplier { get; init; } = 3.0f;
+        }
+
         private readonly Func<Task<NifFile>> openFile;
         private readonly IAsyncFileProvider fileProvider;
+        private readonly Settings settings;
 
-        public NifSceneSource(IAsyncFileProvider fileProvider, string fileName)
-            : this(fileProvider, () => OpenFileAsync(fileProvider, fileName))
+        public NifSceneSource(
+            IAsyncFileProvider fileProvider, string fileName, Settings? settings = null)
+            : this(fileProvider, () => OpenFileAsync(fileProvider, fileName), settings)
         {
         }
 
-        public NifSceneSource(IAsyncFileProvider fileProvider, Func<NifFile> openFile)
+        public NifSceneSource(
+            IAsyncFileProvider fileProvider, Func<NifFile> openFile, Settings? settings = null)
         {
             this.fileProvider = fileProvider;
+            this.settings = settings ?? new();
             this.openFile = () => Task.FromResult(openFile());
         }
 
-        public NifSceneSource(IAsyncFileProvider fileProvider, Func<Task<NifFile>> openFile)
+        public NifSceneSource(
+            IAsyncFileProvider fileProvider, Func<Task<NifFile>> openFile,
+            Settings? settings = null)
         {
             this.fileProvider = fileProvider;
+            this.settings = settings ?? new();
             this.openFile = openFile;
         }
 
@@ -36,7 +50,7 @@ namespace Focus.Graphics.Bethesda
 
         private IEnumerable<SceneObject> LoadAsync(NifFile file)
         {
-            using var loader = new ObjectLoader(file, fileProvider);
+            using var loader = new ObjectLoader(file, fileProvider, settings);
             return loader.LoadObjects();
         }
 
@@ -54,10 +68,12 @@ namespace Focus.Graphics.Bethesda
             private readonly NifFile nif;
             private readonly NiHeader header;
             private readonly IAsyncFileProvider fileProvider;
+            private readonly Settings settings;
 
-            public ObjectLoader(NifFile file, IAsyncFileProvider fileProvider)
+            public ObjectLoader(NifFile file, IAsyncFileProvider fileProvider, Settings settings)
             {
                 this.fileProvider = fileProvider;
+                this.settings = settings;
                 nif = file;
                 header = file.GetHeader();
             }
@@ -91,8 +107,9 @@ namespace Focus.Graphics.Bethesda
                     shape, meshBuilder, bonesById, boneIdsByIndex, outVertices);
                 var mesh = meshBuilder.Build();
                 mesh.ApplyPose(defaultPose);
+                var renderingSettings = GetShapeRenderingSettings(shape);
                 var textures = GetTexturesFromShape(shape);
-                return new SceneObject(mesh, textures);
+                return new SceneObject(mesh, textures, renderingSettings);
             }
 
             private void AddBoneWeightsFromShape(
@@ -192,6 +209,26 @@ namespace Focus.Graphics.Bethesda
                 return bones;
             }
 
+            private ObjectRenderingSettings GetShapeRenderingSettings(NiShape shape)
+            {
+                if (!shape.HasShaderProperty() ||
+                    !header.TryGetBlock<NiShader>(shape.ShaderPropertyRef(), out var shader))
+                    return new ObjectRenderingSettings();
+                return new ObjectRenderingSettings
+                {
+                    Shininess = shader.GetGlossiness(),
+                    SpecularSource = shader.HasSpecular()
+                        ? SupportsSpecularMap(shader)
+                            ? SpecularSource.SpecularMap : SpecularSource.NormalMapAlpha
+                        : SpecularSource.None,
+                    SpecularLightingColor = shader.GetSpecularColor().ToColor(),
+                    SpecularLightingStrength = shader.HasSpecular()
+                        ? shader.GetSpecularStrength() * settings.SpecularMultiplier : 0,
+                    NormalSpace = shader.IsModelSpace()
+                        ? NormalSpace.ObjectSpace : NormalSpace.TangentSpace,
+                };
+            }
+
             private async Task<TextureSet> GetTexturesFromShape(NiShape shape)
             {
                 if (!shape.HasShaderProperty() ||
@@ -200,12 +237,20 @@ namespace Focus.Graphics.Bethesda
                     !header.TryGetBlock<BSShaderTextureSet>(shader.TextureSetRef(), out var textureSet))
                     return TextureSet.Empty;
                 var textureList = textureSet.textures.items().Select(x => x.get()).ToList();
-                textureSet.Dispose();
-                shader.Dispose();
                 // We'll add more texture types later; currently only support diffuse and normal.
                 var diffuseTask = CreateTextureSourceAsync(textureList[0]);
                 var normalTask = CreateTextureSourceAsync(textureList[1]);
-                return new TextureSet(await diffuseTask, await normalTask);
+                var specularTask = SupportsSpecularMap(shader)
+                    ? CreateTextureSourceAsync(textureList[7])
+                    : Task.FromResult((ITextureSource?)null);
+                return new TextureSet(await diffuseTask, await normalTask, await specularTask);
+            }
+
+            private static bool SupportsSpecularMap(NiShader shader)
+            {
+                var shaderType = shader.GetShaderType();
+                return shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_SKINTINT
+                    || shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_MULTILAYERPARALLAX;
             }
 
             private bool TrySetFacesFromVerts(

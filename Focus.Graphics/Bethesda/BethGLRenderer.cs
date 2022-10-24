@@ -1,5 +1,6 @@
 ﻿using Focus.Graphics.OpenGL;
 using Silk.NET.OpenGL;
+using Silk.NET.Vulkan;
 using System.Numerics;
 
 using Texture = Focus.Graphics.OpenGL.Texture;
@@ -9,6 +10,7 @@ namespace Focus.Graphics.Bethesda
     public class BethGLRenderer : IMeshRenderer
     {
         private readonly GL gl;
+        private readonly ObjectRenderingSettings renderingSettings;
 
         private ShaderProgram shaderProgram;
         private VertexArrayObject? vao;
@@ -16,16 +18,19 @@ namespace Focus.Graphics.Bethesda
         private BufferObject? ebo;
         private Texture? diffuseTexture;
         private Texture? normalTexture;
+        private Texture? specularMap;
         private Bounds3 bounds = Bounds3.Default;
 
-        public BethGLRenderer(GL gl)
-            : this(gl, CreateDefaultShaderProgram(gl))
+        public BethGLRenderer(GL gl, ObjectRenderingSettings renderingSettings)
+            : this(gl, CreateDefaultShaderProgram(gl), renderingSettings)
         {
         }
 
-        internal BethGLRenderer(GL gl, ShaderProgram shaderProgram)
+        internal BethGLRenderer(
+            GL gl, ShaderProgram shaderProgram, ObjectRenderingSettings renderingSettings)
         {
             this.gl = gl;
+            this.renderingSettings = renderingSettings;
             this.shaderProgram = shaderProgram;
         }
 
@@ -48,7 +53,7 @@ namespace Focus.Graphics.Bethesda
         public void LoadGeometry(IMesh mesh)
         {
             var ungroupedVertices = mesh.Faces
-                .SelectMany(f => f.Triangulate())
+                .SelectMany(f => f.Triangulate(Tri.WithVertices))
                 .SelectMany(t => t.GetVertices())
                 .ToList();
             var vertices = ungroupedVertices
@@ -62,10 +67,7 @@ namespace Focus.Graphics.Bethesda
             var vertexIndices = ungroupedVertices
                 .Select(v => vertexIndexMap[(v.Point, v.Normal, v.UV)])
                 .ToArray();
-            bounds = vertices.Aggregate(
-                new Bounds3(Vector3.Zero, Vector3.Zero),
-                (bounds, x) => new Bounds3(
-                    Vector3.Min(bounds.Min, x.Point), Vector3.Max(bounds.Max, x.Point)));
+            bounds = Bounds3.FromPoints(vertices.Select(v => v.Point));
 
             vbo = BufferObject.Create(gl, BufferTargetARB.ArrayBuffer, vertices);
             ebo = BufferObject.Create(gl, BufferTargetARB.ElementArrayBuffer, vertexIndices);
@@ -81,6 +83,7 @@ namespace Focus.Graphics.Bethesda
         {
             diffuseTexture = textureSet.Diffuse?.CreateTexture(gl);
             normalTexture = textureSet.Normal?.CreateTexture(gl);
+            specularMap = textureSet.Specular?.CreateTexture(gl);
         }
 
         public unsafe void Render(Matrix4x4 model, Matrix4x4 view, Matrix4x4 projection)
@@ -89,13 +92,32 @@ namespace Focus.Graphics.Bethesda
                 return;
             vao.Bind();
             shaderProgram.Use();
-            shaderProgram.SetUniform("model", model);
-            shaderProgram.SetUniform("view", view);
+            shaderProgram.SetUniform("modelToWorld", model);
+            shaderProgram.SetUniform("worldToView", view);
+            shaderProgram.SetUniform(
+                "normalToView",
+                Matrix4x4.Transpose(
+                    Matrix4x4.Invert(view * model, out var inverted)
+                        ? inverted
+                        : throw new Exception("Failed to compute inverse model-view transform.")));
             shaderProgram.SetUniform("projection", projection);
-            shaderProgram.SetUniform("ambientLightingStrength", 0.4f);
-            shaderProgram.SetUniform("specularLightingStrength", 1.0f);
-            shaderProgram.SetUniform("lightColor", Vector3.One);
-            shaderProgram.SetUniform("lightPosition", new Vector3(0f, -100f, 0f));
+            shaderProgram.SetUniform(
+                "ambientLightingColor", renderingSettings.AmbientLightingColor.ToRgbVector());
+            shaderProgram.SetUniform(
+                "ambientLightingStrength", renderingSettings.AmbientLightingStrength);
+            shaderProgram.SetUniform(
+                "diffuseLightingColor", renderingSettings.DiffuseLightingColor.ToRgbVector());
+            shaderProgram.SetUniform(
+                "diffuseLightingStrength", renderingSettings.DiffuseLightingStrength);
+            shaderProgram.SetUniform(
+                "specularLightingColor", renderingSettings.SpecularLightingColor.ToRgbVector());
+            shaderProgram.SetUniform(
+                "specularLightingStrength", renderingSettings.SpecularLightingStrength);
+            shaderProgram.SetUniform("specularSource", (int)renderingSettings.SpecularSource);
+            shaderProgram.SetUniform("shininess", renderingSettings.Shininess);
+            shaderProgram.SetUniform("lightPosition", new Vector3(0f, 0f, -50f));
+            shaderProgram.SetUniform("normalSpace", (int)renderingSettings.NormalSpace);
+            shaderProgram.SetUniform("hasNormalMap", normalTexture != null ? 1 : 0);
             BindTextures();
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
         }
@@ -110,7 +132,12 @@ namespace Focus.Graphics.Bethesda
             if (normalTexture != null)
             {
                 normalTexture.Bind(TextureUnit.Texture1);
-                shaderProgram.SetUniform("normalTexture", 1);
+                shaderProgram.SetUniform("normalMap", 1);
+            }
+            if (specularMap != null)
+            {
+                specularMap.Bind(TextureUnit.Texture2);
+                shaderProgram.SetUniform("specularMap", 2);
             }
         }
 
