@@ -8,13 +8,27 @@ namespace Focus.Files
         public static bool CopyToFile(
             this IArchiveProvider archiveProvider, string archivePath, string archiveFilePath, string outFilePath)
         {
-            return TryWrite(archiveProvider.ReadBytes(archivePath, archiveFilePath), outFilePath);
+            try
+            {
+                return TryWrite(archiveProvider.ReadBytes(archivePath, archiveFilePath), outFilePath);
+            }
+            catch (FileNotFoundException)
+            {
+                return false;
+            }
         }
 
         public static bool CopyToFile(
             this IFileProvider fileProvider, string providerFilePath, string outFilePath)
         {
-            return TryWrite(fileProvider.ReadBytes(providerFilePath), outFilePath);
+            try
+            {
+                return TryWrite(fileProvider.ReadBytes(providerFilePath), outFilePath);
+            }
+            catch (FileNotFoundException)
+            {
+                return false;
+            }
         }
 
         private static bool TryWrite(ReadOnlySpan<byte> data, string outFilePath)
