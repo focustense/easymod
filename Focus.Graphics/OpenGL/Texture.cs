@@ -5,60 +5,101 @@ namespace Focus.Graphics.OpenGL
 {
     public class Texture : IDisposable
     {
-        public static unsafe Texture FromArgb(GL gl, uint width, uint height, Span<int> argbPixels)
+        public static unsafe Texture FromArgb(
+            GL gl, TextureUnit slot, uint width, uint height, Span<int> argbPixels,
+            IEnumerable<CubemapFace>? cubemapFaceOrder = null)
         {
             var bgraValues = ArgbToBgra(argbPixels);
-            return FromMemory(gl, bgraValues, width, height, InternalFormat.Rgba8, PixelFormat.Bgra);
+            return FromMemory(
+                gl, slot, bgraValues, width, height, InternalFormat.Rgba8, PixelFormat.Bgra,
+                cubemapFaceOrder);
         }
 
-        public static unsafe Texture FromBgra(GL gl, uint width, uint height, Span<int> bgraPixels)
+        public static unsafe Texture FromBgra(
+            GL gl, TextureUnit slot, uint width, uint height, Span<int> bgraPixels,
+            IEnumerable<CubemapFace>? cubemapFaceOrder = null)
         {
-            return FromMemory(gl, bgraPixels, width, height, InternalFormat.Rgba8, PixelFormat.Bgra);
+            return FromMemory(
+                gl, slot, bgraPixels, width, height, InternalFormat.Rgba8, PixelFormat.Bgra,
+                cubemapFaceOrder);
         }
 
-        public static unsafe Texture FromRgba(GL gl, uint width, uint height, Span<int> rgbaPixels)
+        public static unsafe Texture FromRgba(
+            GL gl, TextureUnit slot, uint width, uint height, Span<int> rgbaPixels,
+            IEnumerable<CubemapFace>? cubemapFaceOrder = null)
         {
-            return FromMemory(gl, rgbaPixels, width, height, InternalFormat.Rgba8, PixelFormat.Rgba);
+            return FromMemory(
+                gl, slot, rgbaPixels, width, height, InternalFormat.Rgba8, PixelFormat.Rgba,
+                cubemapFaceOrder);
         }
 
         public static unsafe Texture FromMemory<T>(
-            GL gl, Span<T> buffer, uint width, uint height,
+            GL gl, TextureUnit slot, Span<T> buffer, uint width, uint height,
             InternalFormat internalFormat = InternalFormat.Rgba8,
-            PixelFormat pixelFormat = PixelFormat.Rgba)
+            PixelFormat pixelFormat = PixelFormat.Rgba,
+            IEnumerable<CubemapFace>? cubemapFaceOrder = null)
             where T : unmanaged
         {
-            var texture = CreateAndBind(gl);
+            Texture texture;
             fixed (void* data = &buffer[0])
             {
-                gl.TexImage2D(
-                    TextureTarget.Texture2D, 0, internalFormat, width, height, 0, pixelFormat,
-                    PixelType.UnsignedByte, data);
+                if (cubemapFaceOrder != null)
+                {
+                    var faceOrder = cubemapFaceOrder.Distinct().ToList();
+                    if (faceOrder.Count != 6)
+                        throw new ArgumentException(
+                            "Invalid cubemap face order; must specify exactly 6 distinct faces.",
+                            nameof(cubemapFaceOrder));
+                    var faceHeight = height / 6;
+                    texture = CreateAndBind(gl, slot, TextureTarget.TextureCubeMap);
+                    for (int i = 0; i < faceOrder.Count; i++)
+                    {
+                        var face = faceOrder[i];
+                        var faceTarget = GetCubemapFaceTarget(face);
+                        gl.TexImage2D(
+                            faceTarget, 0, internalFormat, width, faceHeight, 0, pixelFormat,
+                            PixelType.UnsignedByte,
+                            (byte*)data + i * faceHeight * width * sizeof(int));
+                    }
+                    texture.SetDefaultParameters(TextureTarget.TextureCubeMap, false);
+                }
+                else
+                {
+                    texture = CreateAndBind(gl, slot, TextureTarget.Texture2D);
+                    gl.TexImage2D(
+                        TextureTarget.Texture2D, 0, internalFormat, width, height, 0, pixelFormat,
+                        PixelType.UnsignedByte, data);
+                    texture.SetDefaultParameters(TextureTarget.Texture2D);
+                }
             }
-            texture.SetDefaultParameters();
             return texture;
         }
 
-        private static Texture CreateAndBind(GL gl)
+        private static Texture CreateAndBind(GL gl, TextureUnit slot, TextureTarget target)
         {
             var handle = gl.GenTexture();
-            var texture = new Texture(gl, handle);
+            var texture = new Texture(gl, slot, handle, target);
             texture.Bind();
             return texture;
         }
 
         private readonly GL gl;
+        private readonly TextureUnit slot;
         private readonly uint handle;
+        private readonly TextureTarget target;
 
-        private Texture(GL gl, uint handle)
+        private Texture(GL gl, TextureUnit slot, uint handle, TextureTarget target)
         {
             this.gl = gl;
+            this.slot = slot;
             this.handle = handle;
+            this.target = target;
         }
 
-        public void Bind(TextureUnit slot = TextureUnit.Texture0)
+        public void Bind()
         {
             gl.ActiveTexture(slot);
-            gl.BindTexture(TextureTarget.Texture2D, handle);
+            gl.BindTexture(target, handle);
         }
 
         public void Dispose()
@@ -85,16 +126,29 @@ namespace Focus.Graphics.OpenGL
             return bgraValues;
         }
 
-        private void SetDefaultParameters()
+        private static TextureTarget GetCubemapFaceTarget(CubemapFace face) => face switch
+        {
+            CubemapFace.Right => TextureTarget.TextureCubeMapPositiveX,
+            CubemapFace.Left => TextureTarget.TextureCubeMapNegativeX,
+            CubemapFace.Top => TextureTarget.TextureCubeMapPositiveY,
+            CubemapFace.Bottom => TextureTarget.TextureCubeMapNegativeY,
+            CubemapFace.Front => TextureTarget.TextureCubeMapPositiveZ,
+            CubemapFace.Back => TextureTarget.TextureCubeMapNegativeZ,
+            _ => throw new ArgumentException($"Unknown cubemap face {face}", nameof(face))
+        };
+
+        private void SetDefaultParameters(TextureTarget target, bool enableMipMap = true)
         {
             // Copied from the Silk example. Don't understand most of it yet.
-            gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
-            gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
-            gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
-            gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-            gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
-            gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 8);
-            gl.GenerateMipmap(TextureTarget.Texture2D);
+            gl.TexParameter(target, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+            gl.TexParameter(target, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+            gl.TexParameter(target, TextureParameterName.TextureMinFilter,
+                enableMipMap ? (int)GLEnum.LinearMipmapLinear : (int)GLEnum.Linear);
+            gl.TexParameter(target, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+            gl.TexParameter(target, TextureParameterName.TextureBaseLevel, 0);
+            gl.TexParameter(target, TextureParameterName.TextureMaxLevel, 8);
+            if (enableMipMap)
+                gl.GenerateMipmap(target);
         }
     }
 }

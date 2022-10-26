@@ -4,16 +4,27 @@ namespace Focus.Graphics.OpenGL
 {
     static class TextureExtensions
     {
-        public static Texture CreateTexture(this ITextureSource source, GL gl)
+        delegate Texture TextureFactory(
+            GL gl, TextureUnit slot, uint width, uint height, Span<int> pixels,
+            IEnumerable<CubemapFace>? cubemapFaceOrder);
+
+        public static Texture CreateTexture(this ITextureSource source, GL gl, TextureUnit slot)
         {
             var textureData = source.GetTextureData();
-            return source.Format switch
-            {
-                TexturePixelFormat.ARGB => Texture.FromArgb(gl, textureData.Width, textureData.Height, textureData.Pixels),
-                TexturePixelFormat.BGRA => Texture.FromBgra(gl, textureData.Width, textureData.Height, textureData.Pixels),
-                TexturePixelFormat.RGBA => Texture.FromRgba(gl, textureData.Width, textureData.Height, textureData.Pixels),
-                _ => throw new NotSupportedException("Unsupported texture format")
-            };
+            var cubemapFaceOrder =
+                source.Type == TextureType.RowsCubemap ? source.CubemapFaceOrder : null;
+            var factory = GetTextureFactory(source.Format);
+            return factory(
+                gl, slot, textureData.Width, textureData.Height, textureData.Pixels,
+                cubemapFaceOrder);
         }
+
+        private static TextureFactory GetTextureFactory(TexturePixelFormat format) => format switch
+        {
+            TexturePixelFormat.ARGB => Texture.FromArgb,
+            TexturePixelFormat.BGRA => Texture.FromBgra,
+            TexturePixelFormat.RGBA => Texture.FromRgba,
+            _ => throw new NotSupportedException("Unsupported texture format")
+        };
     }
 }

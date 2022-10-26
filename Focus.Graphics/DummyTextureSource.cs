@@ -1,14 +1,27 @@
-﻿namespace Focus.Graphics
+﻿using System.Drawing;
+
+namespace Focus.Graphics
 {
     public class DummyTextureSource : ITextureSource
     {
-        public TexturePixelFormat Format => TexturePixelFormat.BGRA;
+        public TexturePixelFormat Format => TexturePixelFormat.ARGB;
+        public TextureType Type => TextureType.Rows2D;
 
-        private const int defaultColor = unchecked((int)0xcccc33ff);
+        private readonly int color;
+
+        public DummyTextureSource() : this(Color.Purple) { }
+
+        public DummyTextureSource(Color color) : this(color.ToArgb()) { }
+
+
+        private DummyTextureSource(int color)
+        {
+            this.color = color;
+        }
 
         public TextureData GetTextureData()
         {
-            return new TextureData(1, 1, new[] { defaultColor });
+            return new TextureData(1, 1, new[] { color });
         }
     }
 }

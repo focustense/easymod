@@ -46,6 +46,11 @@ namespace Focus.Graphics.OpenGL
             GC.SuppressFinalize(this);
         }
 
+        public void SetUniform(string name, bool value)
+        {
+            SetUniform(name, value ? 1 : 0, gl.Uniform1);
+        }
+
         public void SetUniform(string name, float value)
         {
             SetUniform(name, value, gl.Uniform1);

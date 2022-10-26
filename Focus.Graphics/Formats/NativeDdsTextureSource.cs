@@ -30,6 +30,7 @@ namespace Focus.Graphics.Formats
         private bool isLoaded;
 
         public TexturePixelFormat Format => TexturePixelFormat.BGRA;
+        public TextureType Type => TextureType.Rows2D; // Don't support cubemaps here yet.
 
         internal NativeDdsTextureSource(Func<Memory<byte>> getFileData)
         {

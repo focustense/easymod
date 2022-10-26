@@ -35,6 +35,7 @@ namespace Focus.Graphics
         public float AmbientLightingStrength { get; set; } = 0.4f;
         public Color DiffuseLightingColor { get; set; } = Color.White;
         public float DiffuseLightingStrength { get; set; } = 1.0f;
+        public float EnvironmentStrength { get; set; } = 0.5f;
         public NormalMapSwizzle NormalMapSwizzle { get; set; } = NormalMapSwizzle.None;
         public NormalSpace NormalSpace { get; set; } = NormalSpace.TangentSpace;
         public float Shininess { get; set; } = 32;

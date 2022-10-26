@@ -2,7 +2,7 @@
 
 uniform mat4 modelToWorld;
 uniform mat4 worldToView;
-uniform mat4 normalToView;
+uniform mat4 viewToModel;
 uniform mat4 projection;
 uniform vec3 lightPosition;
 // Keep consistent with NormalMapType enum
@@ -20,6 +20,7 @@ out vec3 nsFragPosition;
 out vec3 nsLightPosition;
 out vec3 nsNormalDirection;
 out mat3 nsNormalMapTransform;
+out mat4 nsCubeMapTransform;
 
 void main()
 {
@@ -29,7 +30,7 @@ void main()
     fUV = vec2(vUV.x, 1 - vUV.y);
 
     vec3 mvFragPosition = vec3(mv * vec4(vPos, 1.0));
-    mat3 mvNormalMapTransform = mat3(normalToView);
+    mat3 mvNormalMapTransform = mat3(viewToModel);
     vec3 mvNormalDirection = mvNormalMapTransform * vNormal;
     vec3 mvLightPosition = vec3(worldToView * vec4(lightPosition, 1.0));
     if (normalSpace == 1) {
@@ -37,6 +38,10 @@ void main()
         nsNormalDirection = mvNormalDirection;
         nsLightPosition = mvLightPosition;
         nsNormalMapTransform = mvNormalMapTransform;
+        // Cube map is always assumed to be in world space. Reflection direction vector will end up
+        // in view space. Since viewToModel is the inverse of worldToView * modelToWorld, need to
+        // reapply modelToWorld.
+        nsCubeMapTransform = modelToWorld * viewToModel;
         return;
     }
 
@@ -44,9 +49,14 @@ void main()
     vec3 vn_mv = vec3(mv * vec4(normalize(vNormal), 0));
     vec3 vt_mv = vec3(mv * vec4(normalize(vTangent), 0));
     vec3 vb_mv = vec3(mv * vec4(normalize(vBitangent), 0));
-    mat3 TBN = transpose(mat3(vt_mv, vb_mv, vn_mv));
-    nsFragPosition = TBN * mvFragPosition;
-    nsNormalDirection = TBN * mvNormalDirection;
-    nsLightPosition = TBN * mvLightPosition;
-    nsNormalMapTransform = mat3(1.0);
+    mat3 tangentToView = mat3(vt_mv, vb_mv, vn_mv);
+    // TBN (viewToTangent) is orthogonal (?), so transpose == inverse
+    mat3 viewToTangent = transpose(tangentToView);
+    nsFragPosition = viewToTangent * mvFragPosition;
+    nsNormalDirection = viewToTangent * mvNormalDirection;
+    nsLightPosition = viewToTangent * mvLightPosition;
+    nsNormalMapTransform = mat3(1.0); // Tangent to tangent, i.e. identity.
+    // Convert reflection direction from tangent space to model (world?) space.
+    // TODO: Why is it incorrect to include the modelToWorld transform here?
+    nsCubeMapTransform = viewToModel * mat4(tangentToView);
 }

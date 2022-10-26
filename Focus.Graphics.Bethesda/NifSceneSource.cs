@@ -10,6 +10,9 @@ namespace Focus.Graphics.Bethesda
     {
         public class Settings
         {
+            // Reflections seem generally weak compared to what we see in NifSkope, etc.
+            public float EnvironmentMultiplier { get; init; } = 5.0f;
+
             // Speculars seem generally weak compared to what we see in NifSkope, etc.
             // Using values > 1 make ours look much closer.
             public float SpecularMultiplier { get; init; } = 3.0f;
@@ -258,6 +261,8 @@ namespace Focus.Graphics.Bethesda
                     SpecularLightingColor = shader.GetSpecularColor().ToColor(),
                     SpecularLightingStrength = shader.HasSpecular()
                         ? shader.GetSpecularStrength() * settings.SpecularMultiplier : 0,
+                    EnvironmentStrength =
+                        shader.GetEnvironmentMapScale() * settings.EnvironmentMultiplier,
                     NormalSpace = shader.IsModelSpace()
                         ? NormalSpace.ObjectSpace : NormalSpace.TangentSpace,
                     // This seems to be right for some NIFs, like hands, but not others, like face?
@@ -285,7 +290,11 @@ namespace Focus.Graphics.Bethesda
                 var specularTask = SupportsSpecularMap(shader)
                     ? GetTextureSourceAsync(textureList[7])
                     : Task.FromResult((ITextureSource?)null);
-                return new TextureSet(await diffuseTask, await normalTask, await specularTask);
+                var environmentTask = GetTextureSourceAsync(textureList[4]);
+                var reflectionTask = GetTextureSourceAsync(textureList[5]);
+                return new TextureSet(
+                    await diffuseTask, await normalTask, await specularTask, await environmentTask,
+                    await reflectionTask);
             }
 
             private static bool SupportsSpecularMap(NiShader shader)

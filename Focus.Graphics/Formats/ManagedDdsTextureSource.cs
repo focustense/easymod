@@ -2,7 +2,6 @@
 using BCnEncoder.Shared;
 using BCnEncoder.Shared.ImageFiles;
 using Microsoft.Toolkit.HighPerformance;
-using System.Net;
 using System.Runtime.InteropServices;
 
 namespace Focus.Graphics.Formats
@@ -32,8 +31,16 @@ namespace Focus.Graphics.Formats
         private readonly Func<Task<Memory<byte>>> getFileDataAsync;
 
         private Task<Memory2D<ColorRgba32>> decodeTask = InvalidDecodeTask;
+        private TextureType textureType;
 
+        public IEnumerable<CubemapFace> CubemapFaceOrder => new[]
+        {
+            CubemapFace.Right, CubemapFace.Left,
+            CubemapFace.Top, CubemapFace.Bottom,
+            CubemapFace.Front, CubemapFace.Back,
+        };
         public TexturePixelFormat Format => TexturePixelFormat.RGBA;
+        public TextureType Type => GetTextureType();
 
         internal ManagedDdsTextureSource(Func<Task<Memory<byte>>> getFileDataAsync)
         {
@@ -63,16 +70,20 @@ namespace Focus.Graphics.Formats
                 var format = decoder.GetFormat(dds);
                 if (dds.Faces.Count == 6 && HasUniformFaces(dds)) // Cubemap
                 {
+                    textureType = TextureType.RowsCubemap;
                     var height = (int)dds.Faces[0].Height;
                     var width = (int)dds.Faces[0].Width;
                     Memory2D<ColorRgba32> colors = new ColorRgba32[height * 6, width];
+                    // Expected order: Right, Left, Top, Bottom, Front, Back
                     for (int i = 0; i < 6; i++)
                     {
                         var face = await DecodeFace(decoder, dds.Faces[i], format);
                         face.CopyTo(colors.Slice(height * i, 0, height, width));
                     }
+                    tcs.SetResult(colors);
                     return colors;
                 }
+                textureType = TextureType.Rows2D;
                 var decoded = await decoder.Decode2DAsync(dds);
                 tcs.SetResult(decoded);
                 return decoded;
@@ -98,6 +109,14 @@ namespace Focus.Graphics.Formats
             var pixels = new ColorRgba32[decoded.Width * decoded.Height];
             decoded.Span.CopyTo(pixels);
             return MemoryMarshal.Cast<ColorRgba32, int>(pixels);
+        }
+
+        private TextureType GetTextureType()
+        {
+            // We don't actually know what the texture type is (i.e. cubemap or not) until the DDS
+            // is loaded.
+            PreloadAsync().Wait();
+            return textureType;
         }
 
         private static bool HasUniformFaces(DdsFile dds)
