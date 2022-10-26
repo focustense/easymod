@@ -273,7 +273,8 @@ namespace Focus.Graphics.Bethesda
             private static bool SupportsSpecularMap(NiShader shader)
             {
                 var shaderType = shader.GetShaderType();
-                return shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_SKINTINT
+                return shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_FACE
+                    || shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_SKINTINT
                     || shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_MULTILAYERPARALLAX;
             }
 
