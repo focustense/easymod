@@ -13,6 +13,7 @@ uniform float shininess;
 uniform vec3 specularLightingColor;
 uniform float specularLightingStrength;
 uniform int specularSource; // 0 = none, 1 = normal alpha, 2 = specular map
+uniform int normalMapSwizzle; // 0 = rgba, 1 = rbga (g/b flipped, for MS normals)
 
 in vec2 fUV;
 
@@ -34,6 +35,11 @@ void main()
 
     // Diffuse lighting
     vec4 normalSample = texture(normalMap, fUV);
+    switch (normalMapSwizzle) {
+        case 1:
+            normalSample = normalSample.rbga;
+            break;
+    }
     vec3 nsNormal = normalize(hasNormalMap > 0
         ? vec3(nsNormalMapTransform * normalize(normalSample.rgb * 2.0 - 1.0))
         : nsNormalDirection);

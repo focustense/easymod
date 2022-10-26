@@ -16,6 +16,12 @@ namespace Focus.Graphics
         ObjectSpace = 1,
     }
 
+    public enum NormalMapSwizzle
+    {
+        None = 0,   // i.e. RGBA
+        RBGA = 1,
+    }
+
     public enum SpecularSource
     {
         None = 0,
@@ -29,6 +35,7 @@ namespace Focus.Graphics
         public float AmbientLightingStrength { get; set; } = 0.4f;
         public Color DiffuseLightingColor { get; set; } = Color.White;
         public float DiffuseLightingStrength { get; set; } = 1.0f;
+        public NormalMapSwizzle NormalMapSwizzle { get; set; } = NormalMapSwizzle.None;
         public NormalSpace NormalSpace { get; set; } = NormalSpace.TangentSpace;
         public float Shininess { get; set; } = 32;
         public Color SpecularLightingColor { get; set; } = Color.White;

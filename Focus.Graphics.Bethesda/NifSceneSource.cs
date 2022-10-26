@@ -247,6 +247,9 @@ namespace Focus.Graphics.Bethesda
                         ? shader.GetSpecularStrength() * settings.SpecularMultiplier : 0,
                     NormalSpace = shader.IsModelSpace()
                         ? NormalSpace.ObjectSpace : NormalSpace.TangentSpace,
+                    // This seems to be right for some NIFs, like hands, but not others, like face?
+                    NormalMapSwizzle = shader.IsModelSpace()
+                        ? NormalMapSwizzle.RBGA : NormalMapSwizzle.None,
                 };
             }
 

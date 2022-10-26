@@ -117,6 +117,7 @@ namespace Focus.Graphics.Bethesda
             shaderProgram.SetUniform("shininess", renderingSettings.Shininess);
             shaderProgram.SetUniform("lightPosition", new Vector3(0f, 0f, -50f));
             shaderProgram.SetUniform("normalSpace", (int)renderingSettings.NormalSpace);
+            shaderProgram.SetUniform("normalMapSwizzle", (int)renderingSettings.NormalMapSwizzle);
             shaderProgram.SetUniform("hasNormalMap", normalTexture != null ? 1 : 0);
             BindTextures();
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
