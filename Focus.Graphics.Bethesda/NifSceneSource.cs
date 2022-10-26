@@ -17,28 +17,37 @@ namespace Focus.Graphics.Bethesda
 
         private readonly Func<Task<NifFile>> openFile;
         private readonly IAsyncFileProvider fileProvider;
+        private readonly IConcurrentCache<string, Task<ITextureSource?>> textureCache;
         private readonly Settings settings;
 
         public NifSceneSource(
-            IAsyncFileProvider fileProvider, string fileName, Settings? settings = null)
-            : this(fileProvider, () => OpenFileAsync(fileProvider, fileName), settings)
+            IAsyncFileProvider fileProvider, string fileName,
+            IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
+            Settings? settings = null)
+            : this(
+                  fileProvider, () => OpenFileAsync(fileProvider, fileName), textureCache, settings)
         {
         }
 
         public NifSceneSource(
-            IAsyncFileProvider fileProvider, Func<NifFile> openFile, Settings? settings = null)
-        {
-            this.fileProvider = fileProvider;
-            this.settings = settings ?? new();
-            this.openFile = () => Task.FromResult(openFile());
-        }
-
-        public NifSceneSource(
-            IAsyncFileProvider fileProvider, Func<Task<NifFile>> openFile,
+            IAsyncFileProvider fileProvider, Func<NifFile> openFile,
+            IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
             Settings? settings = null)
         {
             this.fileProvider = fileProvider;
             this.settings = settings ?? new();
+            this.openFile = () => Task.FromResult(openFile());
+            this.textureCache = textureCache ?? new NullCache<string, Task<ITextureSource?>>();
+        }
+
+        public NifSceneSource(
+            IAsyncFileProvider fileProvider, Func<Task<NifFile>> openFile,
+            IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
+            Settings? settings = null)
+        {
+            this.fileProvider = fileProvider;
+            this.settings = settings ?? new();
+            this.textureCache = textureCache ?? new NullCache<string, Task<ITextureSource?>>();
             this.openFile = openFile;
         }
 
@@ -50,7 +59,7 @@ namespace Focus.Graphics.Bethesda
 
         private IEnumerable<SceneObject> LoadAsync(NifFile file)
         {
-            using var loader = new ObjectLoader(file, fileProvider, settings);
+            using var loader = new ObjectLoader(file, fileProvider, textureCache, settings);
             return loader.LoadObjects();
         }
 
@@ -68,12 +77,16 @@ namespace Focus.Graphics.Bethesda
             private readonly NifFile nif;
             private readonly NiHeader header;
             private readonly IAsyncFileProvider fileProvider;
+            private readonly IConcurrentCache<string, Task<ITextureSource?>> textureCache;
             private readonly Settings settings;
 
-            public ObjectLoader(NifFile file, IAsyncFileProvider fileProvider, Settings settings)
+            public ObjectLoader(
+                NifFile file, IAsyncFileProvider fileProvider,
+                IConcurrentCache<string, Task<ITextureSource?>> textureCache, Settings settings)
             {
                 this.fileProvider = fileProvider;
                 this.settings = settings;
+                this.textureCache = textureCache;
                 nif = file;
                 header = file.GetHeader();
             }
@@ -253,6 +266,11 @@ namespace Focus.Graphics.Bethesda
                 };
             }
 
+            private Task<ITextureSource?> GetTextureSourceAsync(string texturePath)
+            {
+                return textureCache.GetOrAdd(texturePath, _ => CreateTextureSourceAsync(texturePath));
+            }
+
             private async Task<TextureSet> GetTexturesFromShape(NiShape shape)
             {
                 if (!shape.HasShaderProperty() ||
@@ -262,10 +280,10 @@ namespace Focus.Graphics.Bethesda
                     return TextureSet.Empty;
                 var textureList = textureSet.textures.items().Select(x => x.get()).ToList();
                 // We'll add more texture types later; currently only support diffuse and normal.
-                var diffuseTask = CreateTextureSourceAsync(textureList[0]);
-                var normalTask = CreateTextureSourceAsync(textureList[1]);
+                var diffuseTask = GetTextureSourceAsync(textureList[0]);
+                var normalTask = GetTextureSourceAsync(textureList[1]);
                 var specularTask = SupportsSpecularMap(shader)
-                    ? CreateTextureSourceAsync(textureList[7])
+                    ? GetTextureSourceAsync(textureList[7])
                     : Task.FromResult((ITextureSource?)null);
                 return new TextureSet(await diffuseTask, await normalTask, await specularTask);
             }

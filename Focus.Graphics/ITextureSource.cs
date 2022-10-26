@@ -3,7 +3,8 @@
     public enum TexturePixelFormat
     {
         ARGB,
-        BGRA
+        BGRA,
+        RGBA,
     }
 
     public interface ITextureSource
