@@ -11,6 +11,7 @@ namespace Focus.Graphics.OpenGL
             {
                 TexturePixelFormat.ARGB => Texture.FromArgb(gl, textureData.Width, textureData.Height, textureData.Pixels),
                 TexturePixelFormat.BGRA => Texture.FromBgra(gl, textureData.Width, textureData.Height, textureData.Pixels),
+                TexturePixelFormat.RGBA => Texture.FromRgba(gl, textureData.Width, textureData.Height, textureData.Pixels),
                 _ => throw new NotSupportedException("Unsupported texture format")
             };
         }

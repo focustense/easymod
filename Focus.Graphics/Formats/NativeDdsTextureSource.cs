@@ -2,22 +2,22 @@
 
 namespace Focus.Graphics.Formats
 {
-    public class DdsTextureSource : ITextureSource
+    public class NativeDdsTextureSource : ITextureSource
     {
-        public static DdsTextureSource FromFile(string path)
+        public static NativeDdsTextureSource FromFile(string path)
         {
-            return new DdsTextureSource(() => File.ReadAllBytes(path));
+            return new NativeDdsTextureSource(() => File.ReadAllBytes(path));
         }
 
-        public static Task<DdsTextureSource> PreloadAsync(string path)
+        public static Task<NativeDdsTextureSource> PreloadAsync(string path)
         {
             return PreloadAsync(async () => await File.ReadAllBytesAsync(path));
         }
 
-        public static async Task<DdsTextureSource> PreloadAsync(Func<Task<Memory<byte>>> dataSource)
+        public static async Task<NativeDdsTextureSource> PreloadAsync(Func<Task<Memory<byte>>> dataSource)
         {
             var data = await dataSource();
-            var source = new DdsTextureSource(() => data);
+            var source = new NativeDdsTextureSource(() => data);
             source.LoadTextureData();
             return source;
         }
@@ -31,7 +31,7 @@ namespace Focus.Graphics.Formats
 
         public TexturePixelFormat Format => TexturePixelFormat.BGRA;
 
-        internal DdsTextureSource(Func<Memory<byte>> getFileData)
+        internal NativeDdsTextureSource(Func<Memory<byte>> getFileData)
         {
             this.getFileData = getFileData;
         }

@@ -172,11 +172,32 @@ namespace Focus.Graphics.Bethesda
 
             private async Task<ITextureSource?> CreateTextureSourceAsync(string texturePath)
             {
+                
                 if (!Path.GetExtension(texturePath).Equals(".dds", StringComparison.OrdinalIgnoreCase)
                     || !await fileProvider.ExistsAsync(texturePath))
                     return null;
-                return await DdsTextureSource.PreloadAsync(
-                    () => fileProvider.ReadBytesAsync(texturePath));
+                try
+                {
+                    return await ManagedDdsTextureSource.PreloadAsync(
+                        () => fileProvider.ReadBytesAsync(texturePath));
+                }
+                catch
+                {
+                    // TODO: Log something
+                }
+
+                // Sometimes - rarely - BCnEncoder.NET fails with divide by zero. The DirectXTex
+                // version generally works for these odd cases.
+                try
+                {
+                    return await NativeDdsTextureSource.PreloadAsync(
+                        () => fileProvider.ReadBytesAsync(texturePath));
+                }
+                catch
+                {
+                    // TODO: Log something
+                    return null;
+                }
             }
 
             private IReadOnlyDictionary<uint, uint> GetBoneIdsByIndex(NiShape shape)
