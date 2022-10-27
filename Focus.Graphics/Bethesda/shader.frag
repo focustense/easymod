@@ -5,6 +5,8 @@ uniform sampler2D normalMap;
 uniform sampler2D specularMap;
 uniform samplerCube environmentTexture;
 uniform sampler2D reflectionMap;
+uniform sampler2D detailMask;
+uniform sampler2D tintMask;
 
 uniform vec3 ambientLightingColor;
 uniform float ambientLightingStrength;
@@ -13,11 +15,15 @@ uniform float diffuseLightingStrength;
 uniform float environmentStrength;
 uniform bool hasEnvironmentTexture;
 uniform bool hasNormalMap;
+uniform bool hasDetailMask;
+uniform bool hasTintMask;
 uniform float shininess;
 uniform vec3 specularLightingColor;
 uniform float specularLightingStrength;
 uniform int specularSource; // 0 = none, 1 = normal alpha, 2 = specular map
 uniform int normalMapSwizzle; // 0 = rgba, 1 = rbga (g/b flipped, for MS normals)
+uniform bool hasTintColor;
+uniform vec3 tintColor;
 
 in vec2 fUV;
 
@@ -30,6 +36,18 @@ in mat3 nsNormalMapTransform;
 in mat4 nsCubeMapTransform;
 
 out vec4 fColor;
+
+float overlayBlend(float a, float b) {
+    // https://en.wikipedia.org/wiki/Blend_modes#Overlay
+    return a < 0.5
+        ? 2 * a * b
+        : 1 - 2 * (1 - a) * (1 - b);
+}
+
+vec3 overlayBlend(vec3 a, vec3 b) {
+    return vec3(
+        overlayBlend(a.r, b.r), overlayBlend(a.g, b.g), overlayBlend(a.b, b.b));
+}
 
 void main()
 {
@@ -79,6 +97,21 @@ void main()
         environmentComponent = environmentStrength * reflectionAmount * environmentSample.rgb;
     }
 
+    // Tint and detail masks modify the base color, before lighting.
+    // Compute the albedo now and tint it, lighting will be added after.
+    vec3 albedo = materialColor * (ambientComponent + diffuseComponent);
+    if (hasTintMask) {
+        vec4 tintSample = texture(tintMask, fUV);
+        albedo = overlayBlend(albedo, tintSample.rgb);
+    }
+    if (hasDetailMask) {
+        vec4 detailSample = texture(detailMask, fUV);
+        albedo = overlayBlend(albedo, detailSample.rgb);
+    }
+    if (hasTintColor) {
+        albedo *= tintColor;
+    }
+
     // Apply all lighting
-    fColor = vec4((ambientComponent + diffuseComponent + specularComponent + environmentComponent) * materialColor, 1);
+    fColor = vec4(albedo + specularComponent + environmentComponent, 1);
 }

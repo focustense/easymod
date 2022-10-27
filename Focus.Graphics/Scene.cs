@@ -42,6 +42,7 @@ namespace Focus.Graphics
         public Color SpecularLightingColor { get; set; } = Color.White;
         public float SpecularLightingStrength { get; set; } = 1.0f;
         public SpecularSource SpecularSource { get; set; } = SpecularSource.None;
+        public Color TintColor { get; set; } = Color.White;
     }
 
     public interface ISceneSource

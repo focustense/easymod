@@ -20,10 +20,12 @@ namespace Focus.Graphics.Bethesda
         private BufferObject? ebo;
         private Light[] lights;
         private Texture? diffuseTexture;
-        private Texture? normalTexture;
+        private Texture? normalMap;
         private Texture? specularMap;
         private Texture? environmentTexture;
         private Texture? reflectionMap;
+        private Texture? detailMask;
+        private Texture? tintMask;
         private Bounds3 bounds = Bounds3.Default;
 
         public BethGLRenderer(
@@ -48,7 +50,12 @@ namespace Focus.Graphics.Bethesda
             ebo?.Dispose();
             vao?.Dispose();
             diffuseTexture?.Dispose();
-            normalTexture?.Dispose();
+            normalMap?.Dispose();
+            specularMap?.Dispose();
+            environmentTexture?.Dispose();
+            reflectionMap?.Dispose();
+            detailMask?.Dispose();
+            tintMask?.Dispose();
             shaderProgram.Dispose();
             GC.SuppressFinalize(this);
         }
@@ -90,7 +97,7 @@ namespace Focus.Graphics.Bethesda
         public void LoadTextures(TextureSet textureSet)
         {
             diffuseTexture = textureSet.Diffuse?.CreateTexture(gl, TextureUnit.Texture0);
-            normalTexture = textureSet.Normal?.CreateTexture(gl, TextureUnit.Texture1);
+            normalMap = textureSet.Normal?.CreateTexture(gl, TextureUnit.Texture1);
             specularMap = textureSet.Specular?.CreateTexture(gl, TextureUnit.Texture2);
             environmentTexture = textureSet.Environment?.CreateTexture(gl, TextureUnit.Texture3);
             // Reflection map is only interesting if an environment texture is specified.
@@ -99,6 +106,8 @@ namespace Focus.Graphics.Bethesda
                 ? (textureSet.Reflection ?? DummyReflectionMap).CreateTexture(
                     gl, TextureUnit.Texture4)
                 : null;
+            detailMask = textureSet.Detail?.CreateTexture(gl, TextureUnit.Texture5);
+            tintMask = textureSet.Tint?.CreateTexture(gl, TextureUnit.Texture6);
         }
 
         public unsafe void Render(Matrix4x4 model, Matrix4x4 view, Matrix4x4 projection)
@@ -136,8 +145,14 @@ namespace Focus.Graphics.Bethesda
                 "lightPosition", lights.Length > 0 ? lights[0].Position : Vector3.Zero);
             shaderProgram.SetUniform("normalSpace", (int)renderingSettings.NormalSpace);
             shaderProgram.SetUniform("normalMapSwizzle", (int)renderingSettings.NormalMapSwizzle);
-            shaderProgram.SetUniform("hasNormalMap", normalTexture != null);
+            shaderProgram.SetUniform("hasNormalMap", normalMap != null);
             shaderProgram.SetUniform("hasEnvironmentTexture", environmentTexture != null);
+            shaderProgram.SetUniform("hasDetailMask", detailMask != null);
+            shaderProgram.SetUniform("hasTintMask", tintMask != null);
+            shaderProgram.SetUniform("tintColor", renderingSettings.TintColor.ToRgbVector());
+            // White tint color has the same outcome as no tint at all, so we use that default value
+            // to mean "ignore".
+            shaderProgram.SetUniform("hasTintColor", renderingSettings.TintColor != Color.White);
             BindTextures();
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
         }
@@ -147,32 +162,28 @@ namespace Focus.Graphics.Bethesda
             this.lights = lights.ToArray();
         }
 
+        private void BindTexture(Texture? texture, string uniformName)
+        {
+            if (texture == null)
+                return;
+            texture.Bind();
+            shaderProgram.SetUniform(uniformName, texture.SlotIndex);
+        }
+
         private void BindTextures()
         {
-            if (diffuseTexture != null)
+            // Note: Even though the field names are the same as the uniforn names, we don't use
+            // nameof(field) here because the uniform names are specified in the shader.
+            BindTexture(diffuseTexture, "diffuseTexture");
+            BindTexture(normalMap, "normalMap");
+            BindTexture(specularMap, "specularMap");
+            BindTexture(environmentTexture, "environmentTexture");
+            BindTexture(reflectionMap, "reflectionMap");
+            BindTexture(detailMask, "detailMask");
+            BindTexture(tintMask, "tintMask");
             {
-                diffuseTexture.Bind();
-                shaderProgram.SetUniform("diffuseTexture", 0);
             }
-            if (normalTexture != null)
             {
-                normalTexture.Bind();
-                shaderProgram.SetUniform("normalMap", 1);
-            }
-            if (specularMap != null)
-            {
-                specularMap.Bind();
-                shaderProgram.SetUniform("specularMap", 2);
-            }
-            if (environmentTexture != null)
-            {
-                environmentTexture.Bind();
-                shaderProgram.SetUniform("environmentTexture", 3);
-            }
-            if (reflectionMap != null)
-            {
-                reflectionMap.Bind();
-                shaderProgram.SetUniform("reflectionMap", 4);
             }
         }
 

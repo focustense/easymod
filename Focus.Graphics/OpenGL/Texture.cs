@@ -83,6 +83,8 @@ namespace Focus.Graphics.OpenGL
             return texture;
         }
 
+        public int SlotIndex => slot - TextureUnit.Texture0;
+
         private readonly GL gl;
         private readonly TextureUnit slot;
         private readonly uint handle;

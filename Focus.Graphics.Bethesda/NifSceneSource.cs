@@ -2,20 +2,33 @@
 using Focus.Graphics.Formats;
 using nifly;
 using System.Collections.Immutable;
+using System.Drawing;
 using System.Numerics;
 
 namespace Focus.Graphics.Bethesda
 {
     public class NifSceneSource : ISceneSource
     {
+        enum TextureSlot
+        {
+            Diffuse = 0,
+            Normal = 1,
+            Subsurface = 2,
+            Detail = 3,
+            Environment = 4,
+            Reflection = 5,
+            Tint = 6,
+            Specular = 7,
+        }
+
         public class Settings
         {
             // Reflections seem generally weak compared to what we see in NifSkope, etc.
-            public float EnvironmentMultiplier { get; init; } = 7.0f;
+            public float EnvironmentMultiplier { get; init; } = 3.0f;
 
             // Speculars seem generally weak compared to what we see in NifSkope, etc.
             // Using values > 1 make ours look much closer.
-            public float SpecularMultiplier { get; init; } = 3.0f;
+            public float SpecularMultiplier { get; init; } = 2.0f;
         }
 
         private readonly Func<Task<NifFile>> openFile;
@@ -79,6 +92,8 @@ namespace Focus.Graphics.Bethesda
         // them around from method to method. Just a convenience.
         class ObjectLoader : IDisposable
         {
+            private static readonly Task<ITextureSource?> UnspecifiedTextureTask = Task.FromResult((ITextureSource?)null);
+
             private readonly NifFile nif;
             private readonly NiHeader header;
             private readonly IAsyncFileProvider fileProvider;
@@ -253,6 +268,15 @@ namespace Focus.Graphics.Bethesda
                 if (!shape.HasShaderProperty() ||
                     !header.TryGetBlock<NiShader>(shape.ShaderPropertyRef(), out var shader))
                     return new ObjectRenderingSettings();
+                nifly.Vector3? tintColor = null;
+                if (shader is BSLightingShaderProperty bsShader)
+                {
+                    var shaderType = shader.GetShaderType();
+                    if (shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_HAIRTINT)
+                        tintColor = bsShader.hairTintColor;
+                    else if (shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_SKINTINT)
+                        tintColor = bsShader.skinTintColor;
+                }
                 return new ObjectRenderingSettings
                 {
                     Shininess = shader.GetGlossiness(),
@@ -270,7 +294,14 @@ namespace Focus.Graphics.Bethesda
                     // This seems to be right for some NIFs, like hands, but not others, like face?
                     NormalMapSwizzle = shader.IsModelSpace()
                         ? NormalMapSwizzle.RBGA : NormalMapSwizzle.None,
+                    TintColor = tintColor?.ToColor() ?? Color.White,
                 };
+            }
+
+            private Task<ITextureSource?> GetTextureSourceAsync(
+                IReadOnlyList<string> texturePaths, TextureSlot slot)
+            {
+                return GetTextureSourceAsync(texturePaths[(int)slot]);
             }
 
             private Task<ITextureSource?> GetTextureSourceAsync(string texturePath)
@@ -286,24 +317,36 @@ namespace Focus.Graphics.Bethesda
                     !header.TryGetBlock<BSShaderTextureSet>(shader.TextureSetRef(), out var textureSet))
                     return TextureSet.Empty;
                 var textureList = textureSet.textures.items().Select(x => x.get()).ToList();
-                // We'll add more texture types later; currently only support diffuse and normal.
-                var diffuseTask = GetTextureSourceAsync(textureList[0]);
-                var normalTask = GetTextureSourceAsync(textureList[1]);
+                var diffuseTask = GetTextureSourceAsync(textureList, TextureSlot.Diffuse);
+                var normalTask = GetTextureSourceAsync(textureList, TextureSlot.Normal);
                 var specularTask = SupportsSpecularMap(shader)
-                    ? GetTextureSourceAsync(textureList[7])
-                    : Task.FromResult((ITextureSource?)null);
-                var environmentTask = GetTextureSourceAsync(textureList[4]);
-                var reflectionTask = GetTextureSourceAsync(textureList[5]);
+                    ? GetTextureSourceAsync(textureList, TextureSlot.Specular)
+                    : UnspecifiedTextureTask;
+                var environmentTask = GetTextureSourceAsync(textureList, TextureSlot.Environment);
+                var reflectionTask = GetTextureSourceAsync(textureList, TextureSlot.Reflection);
+                var supportsTint = IsTintShader(shader.GetShaderType());
+                var detailTask = supportsTint
+                    ? GetTextureSourceAsync(textureList, TextureSlot.Detail)
+                    : UnspecifiedTextureTask;
+                var tintTask = supportsTint
+                    ? GetTextureSourceAsync(textureList, TextureSlot.Tint)
+                    : UnspecifiedTextureTask;
                 return new TextureSet(
                     await diffuseTask, await normalTask, await specularTask, await environmentTask,
-                    await reflectionTask);
+                    await reflectionTask, await detailTask, await tintTask);
+            }
+
+            private static bool IsTintShader(uint shaderType)
+            {
+                return shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_FACE
+                    || shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_HAIRTINT
+                    || shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_SKINTINT;
             }
 
             private static bool SupportsSpecularMap(NiShader shader)
             {
                 var shaderType = shader.GetShaderType();
-                return shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_FACE
-                    || shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_SKINTINT
+                return IsTintShader(shaderType)
                     || shaderType == (int)BSLightingShaderPropertyShaderType.BSLSP_MULTILAYERPARALLAX;
             }
 
