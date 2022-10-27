@@ -32,7 +32,7 @@ namespace Focus.Graphics.Bethesda
                 * Matrix4x4.CreateRotationX(yaw);
             var translation =
                 Matrix4x4.CreateTranslation(t.translation.x, t.translation.y, t.translation.z);
-            return Matrix4x4.Transpose(rotation * translation) * t.scale;
+            return Matrix4x4.Transpose(rotation * translation * t.scale);
         }
 
         public static Vector2 ToVector2(this NifVector2 v, bool flipV = false)

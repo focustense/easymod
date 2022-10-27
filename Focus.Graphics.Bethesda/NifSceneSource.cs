@@ -31,7 +31,7 @@ namespace Focus.Graphics.Bethesda
             public float SpecularMultiplier { get; init; } = 2.0f;
         }
 
-        private readonly Func<Task<NifFile>> openFile;
+        private readonly FileLoaderAsync openFile;
         private readonly IAsyncFileProvider fileProvider;
         private readonly IConcurrentCache<string, Task<ITextureSource?>> textureCache;
         private readonly Settings settings;
@@ -41,23 +41,13 @@ namespace Focus.Graphics.Bethesda
             IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
             Settings? settings = null)
             : this(
-                  fileProvider, () => OpenFileAsync(fileProvider, fileName), textureCache, settings)
+                  fileProvider, NifLoader.FromProviderFile(fileProvider, fileName), textureCache,
+                  settings)
         {
         }
 
         public NifSceneSource(
-            IAsyncFileProvider fileProvider, Func<NifFile> openFile,
-            IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
-            Settings? settings = null)
-        {
-            this.fileProvider = fileProvider;
-            this.settings = settings ?? new();
-            this.openFile = () => Task.FromResult(openFile());
-            this.textureCache = textureCache ?? new NullCache<string, Task<ITextureSource?>>();
-        }
-
-        public NifSceneSource(
-            IAsyncFileProvider fileProvider, Func<Task<NifFile>> openFile,
+            IAsyncFileProvider fileProvider, FileLoaderAsync openFile,
             IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
             Settings? settings = null)
         {
@@ -79,13 +69,6 @@ namespace Focus.Graphics.Bethesda
         {
             using var loader = new ObjectLoader(file, fileProvider, textureCache, settings);
             return loader.LoadObjects();
-        }
-
-        private static async Task<NifFile> OpenFileAsync(
-            IAsyncFileProvider fileProvider, string fileName)
-        {
-            var data = await fileProvider.ReadBytesAsync(fileName);
-            return new NifFile(new vectoruchar(data.ToArray()));
         }
 
         // Using an inner class for this allows us to save some disposables without having to pass
