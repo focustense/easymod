@@ -2,7 +2,7 @@
 
 namespace Focus.Graphics
 {
-    public record Scene(IEnumerable<SceneObject> Objects);
+    public record Scene(IEnumerable<SceneObject> Objects, IEnumerable<Light> Lights);
 
     public record SceneObject(IMesh Mesh, Task<TextureSet> TexturesTask, ObjectRenderingSettings RenderingSettings)
     {
@@ -46,7 +46,7 @@ namespace Focus.Graphics
 
     public interface ISceneSource
     {
-        IEnumerable<SceneObject> Load()
+        Scene Load()
         {
             // We should get the same outcome with LoadAsync().Result, but this way makes the
             // semantics clearer.
@@ -55,6 +55,6 @@ namespace Focus.Graphics
             return loadTask.Result;
         }
 
-        Task<IEnumerable<SceneObject>> LoadAsync();
+        Task<Scene> LoadAsync();
     }
 }

@@ -13,11 +13,12 @@ namespace Focus.Graphics.Bethesda
 
         private readonly GL gl;
         private readonly ObjectRenderingSettings renderingSettings;
+        private readonly ShaderProgram shaderProgram;
 
-        private ShaderProgram shaderProgram;
         private VertexArrayObject? vao;
         private BufferObject? vbo;
         private BufferObject? ebo;
+        private Light[] lights;
         private Texture? diffuseTexture;
         private Texture? normalTexture;
         private Texture? specularMap;
@@ -25,15 +26,18 @@ namespace Focus.Graphics.Bethesda
         private Texture? reflectionMap;
         private Bounds3 bounds = Bounds3.Default;
 
-        public BethGLRenderer(GL gl, ObjectRenderingSettings renderingSettings)
-            : this(gl, CreateDefaultShaderProgram(gl), renderingSettings)
+        public BethGLRenderer(
+            GL gl, ObjectRenderingSettings renderingSettings, IEnumerable<Light>? lights = null)
+            : this(gl, CreateDefaultShaderProgram(gl), renderingSettings, lights)
         {
         }
 
         internal BethGLRenderer(
-            GL gl, ShaderProgram shaderProgram, ObjectRenderingSettings renderingSettings)
+            GL gl, ShaderProgram shaderProgram, ObjectRenderingSettings renderingSettings,
+            IEnumerable<Light>? lights)
         {
             this.gl = gl;
+            this.lights = (lights ?? Enumerable.Empty<Light>()).ToArray();
             this.renderingSettings = renderingSettings;
             this.shaderProgram = shaderProgram;
         }
@@ -127,13 +131,20 @@ namespace Focus.Graphics.Bethesda
             shaderProgram.SetUniform("specularSource", (int)renderingSettings.SpecularSource);
             shaderProgram.SetUniform("shininess", renderingSettings.Shininess);
             shaderProgram.SetUniform("environmentStrength", renderingSettings.EnvironmentStrength);
-            shaderProgram.SetUniform("lightPosition", new Vector3(0f, 0f, -50f));
+            // Currently only support 1 simple light. Improve this later.
+            shaderProgram.SetUniform(
+                "lightPosition", lights.Length > 0 ? lights[0].Position : Vector3.Zero);
             shaderProgram.SetUniform("normalSpace", (int)renderingSettings.NormalSpace);
             shaderProgram.SetUniform("normalMapSwizzle", (int)renderingSettings.NormalMapSwizzle);
             shaderProgram.SetUniform("hasNormalMap", normalTexture != null);
             shaderProgram.SetUniform("hasEnvironmentTexture", environmentTexture != null);
             BindTextures();
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
+        }
+
+        public void SetLights(IEnumerable<Light> lights)
+        {
+            this.lights = lights.ToArray();
         }
 
         private void BindTextures()

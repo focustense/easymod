@@ -30,6 +30,11 @@ namespace Focus.Graphics
             return (second != null && !second.IsEmpty()) ? first.Union(second) : first;
         }
 
+        public Vector3 GetSize()
+        {
+            return Vector3.Abs(Max - Min);
+        }
+
         public bool IsEmpty()
         {
             return Min == Vector3.Zero && Max == Vector3.Zero;
@@ -64,5 +69,6 @@ namespace Focus.Graphics
     {
         void LoadGeometry(IMesh mesh);
         void LoadTextures(TextureSet textureSet);
+        void SetLights(IEnumerable<Light> lights);
     }
 }

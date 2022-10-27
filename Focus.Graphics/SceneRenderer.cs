@@ -30,14 +30,15 @@ namespace Focus.Graphics
 
         public async Task LoadAsync(ISceneSource source, IScheduler scheduler)
         {
-            var objects = await source.LoadAsync();
-            foreach (var obj in objects)
+            var scene = await source.LoadAsync();
+            foreach (var obj in scene.Objects)
             {
                 var renderer = scheduler.Run(() =>
                 {
                     var renderer = meshRendererFactory(obj.RenderingSettings);
                     renderer.LoadGeometry(obj.Mesh);
                     renderer.LoadTextures(TextureSet.Empty);
+                    renderer.SetLights(scene.Lights);
                     return renderer;
                 });
                 meshRenderers.Add(renderer);

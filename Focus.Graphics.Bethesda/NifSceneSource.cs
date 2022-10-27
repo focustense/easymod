@@ -11,7 +11,7 @@ namespace Focus.Graphics.Bethesda
         public class Settings
         {
             // Reflections seem generally weak compared to what we see in NifSkope, etc.
-            public float EnvironmentMultiplier { get; init; } = 5.0f;
+            public float EnvironmentMultiplier { get; init; } = 7.0f;
 
             // Speculars seem generally weak compared to what we see in NifSkope, etc.
             // Using values > 1 make ours look much closer.
@@ -54,13 +54,15 @@ namespace Focus.Graphics.Bethesda
             this.openFile = openFile;
         }
 
-        public async Task<IEnumerable<SceneObject>> LoadAsync()
+        public async Task<Scene> LoadAsync()
         {
             using var file = await openFile();
-            return LoadAsync(file);
+            var objects = Load(file);
+            // NIFs don't define their own lights.
+            return new(objects, Enumerable.Empty<Light>());
         }
 
-        private IEnumerable<SceneObject> LoadAsync(NifFile file)
+        private IEnumerable<SceneObject> Load(NifFile file)
         {
             using var loader = new ObjectLoader(file, fileProvider, textureCache, settings);
             return loader.LoadObjects();

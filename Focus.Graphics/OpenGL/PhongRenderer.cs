@@ -6,9 +6,11 @@ namespace Focus.Graphics.OpenGL
 {
     public class PhongRenderer : IMeshRenderer
     {
+        private static readonly Vector3 DefaultLightPosition = Vector3.UnitY;
+
         public float AmbientStrength { get; set; } = 0.1f;
         public Color LightColor { get; set; } = Color.White;
-        public Vector3 LightPosition { get; set; } = Vector3.UnitY;
+        public Vector3 LightPosition { get; set; } = DefaultLightPosition;
         public IReadOnlyList<Color> Palette { get; set; } = new[] { Color.Orange };
         public float Shininess { get; set; } = 32;
         public float SpecularStrength { get; set; } = 0.5f;
@@ -93,6 +95,11 @@ namespace Focus.Graphics.OpenGL
             shaderProgram.SetUniform("shininess", Shininess);
             shaderProgram.SetUniform("specularStrength", SpecularStrength);
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
+        }
+
+        public void SetLights(IEnumerable<Light> lights)
+        {
+            LightPosition = lights.Cast<Light?>().FirstOrDefault()?.Position ?? DefaultLightPosition;
         }
 
         private static ShaderProgram CreateDefaultShaderProgram(GL gl)
