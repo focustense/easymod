@@ -26,16 +26,13 @@ namespace Focus.Graphics.Bethesda
             t.rotation.ToEulerAngles(ref yaw, ref pitch, ref roll);
             // Matrix4x4.CreateFromYawPitchRoll gives results that make no sense. This way seems inefficient
             // but it'll work until it can be determined WTF is going on with System.Numerics.
-            // Also, System.Numerics transposes the arrangement of a transformation matrix, so we either
-            // have to transpose everything before multiplying, or multiply in reverse order and then
-            // transpose the result. The latter is unintuitive, but faster.
             var rotation =
                 Matrix4x4.CreateRotationZ(roll)
                 * Matrix4x4.CreateRotationY(pitch)
                 * Matrix4x4.CreateRotationX(yaw);
             var translation =
                 Matrix4x4.CreateTranslation(t.translation.x, t.translation.y, t.translation.z);
-            return rotation * translation * t.scale;
+            return Matrix4x4.Transpose(rotation * translation) * t.scale;
         }
 
         public static Vector2 ToVector2(this NifVector2 v, bool flipV = false)
