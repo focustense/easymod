@@ -4,24 +4,28 @@ using System.Numerics;
 
 namespace Focus.Graphics.OpenGL
 {
+    public enum GridPlane { X, Y, Z }
+
     public class GridRenderer : IRenderer
     {
         public Color Color { get; set; } = Color.LightGray;
 
         private readonly GL gl;
         private readonly ShaderProgram shaderProgram;
+        private readonly GridPlane plane;
 
         private VertexArrayObject? vao;
         private BufferObject? vbo;
 
-        public GridRenderer(GL gl)
-            : this(gl, CreateDefaultShaderProgram(gl))
+        public GridRenderer(GL gl, GridPlane plane = GridPlane.Y)
+            : this(gl, CreateDefaultShaderProgram(gl), plane)
         { }
 
-        internal GridRenderer(GL gl, ShaderProgram shaderProgram)
+        internal GridRenderer(GL gl, ShaderProgram shaderProgram, GridPlane plane)
         {
             this.gl = gl;
             this.shaderProgram = shaderProgram;
+            this.plane = plane;
         }
 
         public void Dispose()
@@ -45,8 +49,7 @@ namespace Focus.Graphics.OpenGL
                 return;
             vao.Bind();
             shaderProgram.Use();
-            // Ignore model transformation, grid is static.
-            shaderProgram.SetUniform("model", Matrix4x4.Identity);
+            shaderProgram.SetUniform("model", model);
             shaderProgram.SetUniform("view", view);
             shaderProgram.SetUniform("projection", projection);
             shaderProgram.SetUniform("objectColor", Color.ToRgbVector());
@@ -70,15 +73,47 @@ namespace Focus.Graphics.OpenGL
             return ShaderProgram.FromFiles(gl, vertexShaderPath, fragmentShaderPath);
         }
 
-        private static IEnumerable<Vector3> GenerateVertices(float interval, float max)
+        private IEnumerable<Vector3> GenerateVertices(float interval, float max)
         {
+            // Getting a delegate for what to run inside the loop is much faster than putting a
+            // switch statement inside the loop.
+            var generator = GetGridLineGenerator(plane);
             for (var i = -max; i <= max; i += interval)
-            {
-                yield return new Vector3(i, 0, -max);
-                yield return new Vector3(i, 0, max);
-                yield return new Vector3(-max, 0, i);
-                yield return new Vector3(max, 0, i);
-            }
+                foreach (var vertex in generator(i, max))
+                    yield return vertex;
         }
+
+        private static IEnumerable<Vector3> GenerateVerticesX(float i, float max)
+        {
+            yield return new Vector3(0, i, -max);
+            yield return new Vector3(0, i, max);
+            yield return new Vector3(0, -max, i);
+            yield return new Vector3(0, max, i);
+        }
+
+        private static IEnumerable<Vector3> GenerateVerticesY(float i, float max)
+        {
+            yield return new Vector3(i, 0, -max);
+            yield return new Vector3(i, 0, max);
+            yield return new Vector3(-max, 0, i);
+            yield return new Vector3(max, 0, i);
+        }
+
+        private static IEnumerable<Vector3> GenerateVerticesZ(float i, float max)
+        {
+            yield return new Vector3(i, -max, 0);
+            yield return new Vector3(i, max, 0);
+            yield return new Vector3(-max, i, 0);
+            yield return new Vector3(max, i, 0);
+        }
+
+        private static Func<float, float, IEnumerable<Vector3>> GetGridLineGenerator(
+            GridPlane plane) => plane switch
+            {
+                GridPlane.X => GenerateVerticesX,
+                GridPlane.Y => GenerateVerticesY,
+                GridPlane.Z => GenerateVerticesZ,
+                _ => throw new ArgumentException($"Unrecognized plane: {plane}", nameof(plane)),
+            };
     }
 }
