@@ -6,7 +6,7 @@ namespace Focus.Graphics
     public class SceneRenderer : IRenderer
     {
         private readonly Func<ObjectRenderingSettings, IMeshRenderer> meshRendererFactory;
-        private readonly ConcurrentBag<IMeshRenderer> meshRenderers = new();
+        private readonly ConcurrentQueue<IMeshRenderer> meshRenderers = new();
 
         private bool isDisposed = false;
 
@@ -41,7 +41,7 @@ namespace Focus.Graphics
                     renderer.SetLights(scene.Lights);
                     return renderer;
                 });
-                meshRenderers.Add(renderer);
+                meshRenderers.Enqueue(renderer);
                 // Load textures as fire-and-forget. Having the geometry allows us to start
                 // rendering, gives us scene bounds, etc. Textures can load later.
                 _ = obj.TexturesTask.ContinueWith(t =>
