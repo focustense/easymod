@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Silk.NET.OpenGL;
+using System.Collections.Concurrent;
 using System.Numerics;
 
 namespace Focus.Graphics
@@ -59,7 +60,17 @@ namespace Focus.Graphics
 
         public void Render(Matrix4x4 model, Matrix4x4 view, Matrix4x4 projection)
         {
+            var transparentRenderers = new List<IMeshRenderer>();
             foreach (var renderer in meshRenderers)
+                if (renderer.HasTransparency())
+                    transparentRenderers.Add(renderer);
+                else
+                    renderer.Render(model, view, projection);
+
+            // TODO: Try to sort transparent renderers by Z-order.
+            // This may require applying model-view transform for each in order to get bounds.
+            // Unsure what the best way is to handle overlapping geometry.
+            foreach (var renderer in transparentRenderers)
                 renderer.Render(model, view, projection);
         }
     }

@@ -65,6 +65,11 @@ namespace Focus.Graphics.Bethesda
             return bounds;
         }
 
+        public bool HasTransparency()
+        {
+            return renderingSettings.AlphaBlendSettings.EnableBlending;
+        }
+
         public void LoadGeometry(IMesh mesh)
         {
             var ungroupedVertices = mesh.Faces
@@ -147,6 +152,7 @@ namespace Focus.Graphics.Bethesda
             shaderProgram.SetUniform("normalMapSwizzle", (int)renderingSettings.NormalMapSwizzle);
             shaderProgram.SetUniform("hasNormalMap", normalMap != null);
             shaderProgram.SetUniform("hasEnvironmentTexture", environmentTexture != null);
+            shaderProgram.SetUniform("hasReflectionMap", reflectionMap != null);
             shaderProgram.SetUniform("hasDetailMask", detailMask != null);
             shaderProgram.SetUniform("hasTintMask", tintMask != null);
             shaderProgram.SetUniform("tintColor", renderingSettings.TintColor.ToRgbVector());
@@ -154,6 +160,17 @@ namespace Focus.Graphics.Bethesda
             // to mean "ignore".
             shaderProgram.SetUniform("hasTintColor", renderingSettings.TintColor != Color.White);
             BindTextures();
+            if (renderingSettings.AlphaBlendSettings.EnableBlending)
+                gl.BlendFunc(
+                    renderingSettings.AlphaBlendSettings.SourceFactor.ToGL(),
+                    renderingSettings.AlphaBlendSettings.DestinationFactor.ToGL());
+            if (renderingSettings.AlphaBlendSettings.EnableTesting)
+            {
+                shaderProgram.SetUniform(
+                    "alphaTestMode", (int)renderingSettings.AlphaBlendSettings.TestFunction);
+                shaderProgram.SetUniform(
+                    "alphaTestThreshold", (int)renderingSettings.AlphaBlendSettings.TestThreshold);
+            }
             gl.DrawElements(PrimitiveType.Triangles, ebo.ElementCount, DrawElementsType.UnsignedInt, null);
         }
 
@@ -181,10 +198,6 @@ namespace Focus.Graphics.Bethesda
             BindTexture(reflectionMap, "reflectionMap");
             BindTexture(detailMask, "detailMask");
             BindTexture(tintMask, "tintMask");
-            {
-            }
-            {
-            }
         }
 
         private static ShaderProgram CreateDefaultShaderProgram(GL gl)

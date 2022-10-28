@@ -48,6 +48,11 @@ namespace Focus.Graphics.OpenGL
             return bounds;
         }
 
+        public bool HasTransparency()
+        {
+            return false;
+        }
+
         public void LoadGeometry(IMesh mesh)
         {
             var ungroupedVertices = mesh.Faces

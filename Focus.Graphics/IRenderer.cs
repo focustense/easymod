@@ -67,6 +67,7 @@ namespace Focus.Graphics
 
     public interface IMeshRenderer : IRenderer
     {
+        bool HasTransparency();
         void LoadGeometry(IMesh mesh);
         void LoadTextures(TextureSet textureSet);
         void SetLights(IEnumerable<Light> lights);

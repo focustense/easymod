@@ -31,6 +31,7 @@ namespace Focus.Graphics
 
     public class ObjectRenderingSettings
     {
+        public AlphaBlendSettings AlphaBlendSettings { get; set; } = AlphaBlendSettings.Default;
         public Color AmbientLightingColor { get; set; } = Color.White;
         public float AmbientLightingStrength { get; set; } = 0.4f;
         public Color DiffuseLightingColor { get; set; } = Color.White;

@@ -23,12 +23,10 @@ namespace Focus.Graphics.Bethesda
 
         public class Settings
         {
-            // Reflections seem generally weak compared to what we see in NifSkope, etc.
-            public float EnvironmentMultiplier { get; init; } = 3.0f;
-
-            // Speculars seem generally weak compared to what we see in NifSkope, etc.
-            // Using values > 1 make ours look much closer.
-            public float SpecularMultiplier { get; init; } = 2.0f;
+            // Environment still seems slightly weak compared to NifSkope etc.
+            // Probably a bug in the cube mapping.
+            public float EnvironmentMultiplier { get; init; } = 1.5f;
+            public float SpecularMultiplier { get; init; } = 1.0f;
         }
 
         private readonly FileLoaderAsync openFile;
@@ -251,11 +249,21 @@ namespace Focus.Graphics.Bethesda
                 return bones;
             }
 
+            private AlphaBlendSettings GetShapeAlphaBlendSettings(NiShape shape)
+            {
+                if (shape.HasAlphaProperty() &&
+                    header.TryGetBlock<NiAlphaProperty>(
+                        shape.AlphaPropertyRef(), out var alphaProperty))
+                    return alphaProperty.GetAlphaBlendSettings();
+                return AlphaBlendSettings.Default;
+            }
+
             private ObjectRenderingSettings GetShapeRenderingSettings(NiShape shape)
             {
+                var alphaBlendSettings = GetShapeAlphaBlendSettings(shape);
                 if (!shape.HasShaderProperty() ||
                     !header.TryGetBlock<NiShader>(shape.ShaderPropertyRef(), out var shader))
-                    return new ObjectRenderingSettings();
+                    return new ObjectRenderingSettings { AlphaBlendSettings = alphaBlendSettings };
                 nifly.Vector3? tintColor = null;
                 if (shader is BSLightingShaderProperty bsShader)
                 {
@@ -283,6 +291,7 @@ namespace Focus.Graphics.Bethesda
                     NormalMapSwizzle = shader.IsModelSpace()
                         ? NormalMapSwizzle.RBGA : NormalMapSwizzle.None,
                     TintColor = tintColor?.ToColor() ?? Color.White,
+                    AlphaBlendSettings = alphaBlendSettings,
                 };
             }
 

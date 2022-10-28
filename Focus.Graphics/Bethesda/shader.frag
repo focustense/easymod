@@ -15,6 +15,7 @@ uniform float diffuseLightingStrength;
 uniform float environmentStrength;
 uniform bool hasEnvironmentTexture;
 uniform bool hasNormalMap;
+uniform bool hasReflectionMap;
 uniform bool hasDetailMask;
 uniform bool hasTintMask;
 uniform float shininess;
@@ -24,6 +25,8 @@ uniform int specularSource; // 0 = none, 1 = normal alpha, 2 = specular map
 uniform int normalMapSwizzle; // 0 = rgba, 1 = rbga (g/b flipped, for MS normals)
 uniform bool hasTintColor;
 uniform vec3 tintColor;
+uniform int alphaTestMode;
+uniform float alphaTestThreshold;
 
 in vec2 fUV;
 
@@ -37,6 +40,27 @@ in mat4 nsCubeMapTransform;
 
 out vec4 fColor;
 
+bool alphaTest(float a) {
+    switch (alphaTestMode) {
+        case 1: // Never
+            return false;
+        case 2: // Less
+            return a < alphaTestThreshold;
+        case 3: // LessOrEqual
+            return a <= alphaTestThreshold;
+        case 4: // Equal
+            return a == alphaTestThreshold;
+        case 5: // Greater
+            return a > alphaTestThreshold;
+        case 6: // GreaterOrEqual
+            return a >= alphaTestThreshold;
+        case 7: // NotEqual
+            return a != alphaTestThreshold;
+        default:
+            return true;
+    }
+}
+
 float overlayBlend(float a, float b) {
     // https://en.wikipedia.org/wiki/Blend_modes#Overlay
     return a < 0.5
@@ -49,9 +73,27 @@ vec3 overlayBlend(vec3 a, vec3 b) {
         overlayBlend(a.r, b.r), overlayBlend(a.g, b.g), overlayBlend(a.b, b.b));
 }
 
+// Copied from BodySlide, which is essentially identical to the NifSkope function.
+vec3 tonemap(in vec3 x)
+{
+	const float A = 0.15;
+	const float B = 0.50;
+	const float C = 0.10;
+	const float D = 0.20;
+	const float E = 0.02;
+	const float F = 0.30;
+
+	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+}
+
 void main()
 {
-    vec3 materialColor = vec3(texture(diffuseTexture, fUV));
+    vec4 materialColor = vec4(texture(diffuseTexture, fUV));
+
+    if (!alphaTest(materialColor.a)) {
+        discard;
+        return;
+    }
     
     // Ambient lighting
     vec3 ambientComponent = ambientLightingStrength * ambientLightingColor;
@@ -60,7 +102,7 @@ void main()
     vec4 normalSample = texture(normalMap, fUV);
     switch (normalMapSwizzle) {
         case 1:
-            normalSample = normalSample.rbga;
+            normalSample = normalSample.rbga * vec4(1, -1, 1, 1);
             break;
     }
     vec3 nsNormal = normalize(hasNormalMap
@@ -88,18 +130,21 @@ void main()
     vec3 environmentComponent = vec3(0);
     if (hasEnvironmentTexture) {
         // Reflection map relates to the object, not the cube, same as specular map.
-        vec4 reflectionMapSample = texture(reflectionMap, fUV);
-        float reflectionAmount =
-            (reflectionMapSample.r + reflectionMapSample.g + reflectionMapSample.b) / 3.0;
+        float reflectionStrength = specularStrength;
+        if (hasReflectionMap) {
+            vec4 reflectionMapSample = texture(reflectionMap, fUV);
+            reflectionStrength =
+                (reflectionMapSample.r + reflectionMapSample.g + reflectionMapSample.b) / 3.0;
+        }
         vec3 nsEnvReflection = reflect(-nsViewDirection, nsNormal);
         vec3 nsEnvDirection = vec3(nsCubeMapTransform * vec4(nsEnvReflection, 0));
         vec4 environmentSample = texture(environmentTexture, nsEnvDirection);
-        environmentComponent = environmentStrength * reflectionAmount * environmentSample.rgb;
+        environmentComponent = environmentStrength * reflectionStrength * environmentSample.rgb;
     }
 
     // Tint and detail masks modify the base color, before lighting.
     // Compute the albedo now and tint it, lighting will be added after.
-    vec3 albedo = materialColor * (ambientComponent + diffuseComponent);
+    vec3 albedo = materialColor.rgb;
     if (hasTintMask) {
         vec4 tintSample = texture(tintMask, fUV);
         albedo = overlayBlend(albedo, tintSample.rgb);
@@ -113,5 +158,8 @@ void main()
     }
 
     // Apply all lighting
-    fColor = vec4(albedo + specularComponent + environmentComponent, 1);
+    vec3 baseColor = albedo * (ambientComponent + diffuseComponent);
+    vec3 litColor = baseColor + specularComponent + environmentComponent;
+    litColor = tonemap(litColor) / tonemap(vec3(1.0));
+    fColor = vec4(litColor, materialColor.a);
 }
