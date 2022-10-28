@@ -65,11 +65,15 @@ namespace Focus.Graphics
         void Render(Matrix4x4 model, Matrix4x4 view, Matrix4x4 projection);
     }
 
-    public interface IMeshRenderer : IRenderer
+    public interface ILightable
+    {
+        void SetLights(IEnumerable<Light> lights);
+    }
+
+    public interface IMeshRenderer : IRenderer, ILightable
     {
         bool HasTransparency();
         void LoadGeometry(IMesh mesh);
         void LoadTextures(TextureSet textureSet);
-        void SetLights(IEnumerable<Light> lights);
     }
 }

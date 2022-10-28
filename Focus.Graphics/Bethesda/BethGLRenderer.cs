@@ -148,6 +148,8 @@ namespace Focus.Graphics.Bethesda
             // Currently only support 1 simple light. Improve this later.
             shaderProgram.SetUniform(
                 "lightPosition", lights.Length > 0 ? lights[0].Position : Vector3.Zero);
+            shaderProgram.SetUniform("lightIntensity",
+                lights.Length > 0 ? lights[0].Intensity : 1.0f);
             shaderProgram.SetUniform("normalSpace", (int)renderingSettings.NormalSpace);
             shaderProgram.SetUniform("normalMapSwizzle", (int)renderingSettings.NormalMapSwizzle);
             shaderProgram.SetUniform("hasNormalMap", normalMap != null);

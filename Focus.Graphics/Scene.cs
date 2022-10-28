@@ -33,7 +33,7 @@ namespace Focus.Graphics
     {
         public AlphaBlendSettings AlphaBlendSettings { get; set; } = AlphaBlendSettings.Default;
         public Color AmbientLightingColor { get; set; } = Color.White;
-        public float AmbientLightingStrength { get; set; } = 0.4f;
+        public float AmbientLightingStrength { get; set; } = 0.3f;
         public Color DiffuseLightingColor { get; set; } = Color.White;
         public float DiffuseLightingStrength { get; set; } = 1.0f;
         public float EnvironmentStrength { get; set; } = 0.5f;

@@ -8,6 +8,7 @@ uniform sampler2D reflectionMap;
 uniform sampler2D detailMask;
 uniform sampler2D tintMask;
 
+uniform float lightIntensity; // Applies to ALL lighting types
 uniform vec3 ambientLightingColor;
 uniform float ambientLightingStrength;
 uniform vec3 diffuseLightingColor;
@@ -158,8 +159,8 @@ void main()
     }
 
     // Apply all lighting
-    vec3 baseColor = albedo * (ambientComponent + diffuseComponent);
-    vec3 litColor = baseColor + specularComponent + environmentComponent;
+    vec3 baseColor = albedo * lightIntensity * (ambientComponent + diffuseComponent);
+    vec3 litColor = baseColor + lightIntensity * (specularComponent + environmentComponent);
     litColor = tonemap(litColor) / tonemap(vec3(1.0));
     fColor = vec4(litColor, materialColor.a);
 }
