@@ -35,26 +35,28 @@ namespace Focus.Graphics.Bethesda
         private readonly IAsyncFileProvider fileProvider;
         private readonly IConcurrentCache<string, Task<ITextureSource?>> textureCache;
         private readonly Settings settings;
+        private readonly Pose? pose;
 
         public NifSceneSource(
             IAsyncFileProvider fileProvider, string fileName,
             IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
-            Settings? settings = null)
+            Settings? settings = null, Pose? pose = null)
             : this(
                   fileProvider, NifLoader.FromProviderFile(fileProvider, fileName), textureCache,
-                  settings)
+                  settings, pose)
         {
         }
 
         public NifSceneSource(
             IAsyncFileProvider fileProvider, FileLoaderAsync openFile,
             IConcurrentCache<string, Task<ITextureSource?>>? textureCache = null,
-            Settings? settings = null)
+            Settings? settings = null, Pose? pose = null)
         {
             this.fileProvider = fileProvider;
             this.settings = settings ?? new();
             this.textureCache = textureCache ?? new NullCache<string, Task<ITextureSource?>>();
             this.openFile = openFile;
+            this.pose = pose;
         }
 
         public async Task<Scene> LoadAsync()
@@ -67,7 +69,7 @@ namespace Focus.Graphics.Bethesda
 
         private IEnumerable<SceneObject> Load(NifFile file)
         {
-            using var loader = new ObjectLoader(file, fileProvider, textureCache, settings);
+            using var loader = new ObjectLoader(file, fileProvider, textureCache, settings, pose);
             return loader.LoadObjects();
         }
 
@@ -82,14 +84,17 @@ namespace Focus.Graphics.Bethesda
             private readonly IAsyncFileProvider fileProvider;
             private readonly IConcurrentCache<string, Task<ITextureSource?>> textureCache;
             private readonly Settings settings;
+            private readonly Pose? pose;
 
             public ObjectLoader(
                 NifFile file, IAsyncFileProvider fileProvider,
-                IConcurrentCache<string, Task<ITextureSource?>> textureCache, Settings settings)
+                IConcurrentCache<string, Task<ITextureSource?>> textureCache, Settings settings,
+                Pose? pose)
             {
                 this.fileProvider = fileProvider;
                 this.settings = settings;
                 this.textureCache = textureCache;
+                this.pose = pose;
                 nif = file;
                 header = file.GetHeader();
             }
@@ -122,7 +127,7 @@ namespace Focus.Graphics.Bethesda
                 AddBoneWeightsFromShape(
                     shape, meshBuilder, bonesById, boneIdsByIndex, outVertices);
                 var mesh = meshBuilder.Build();
-                mesh.ApplyPose(defaultPose);
+                mesh.ApplyPose(pose ?? defaultPose);
                 var renderingSettings = GetShapeRenderingSettings(shape);
                 var textures = GetTexturesFromShape(shape);
                 return new SceneObject(mesh, textures, renderingSettings);
@@ -141,7 +146,7 @@ namespace Focus.Graphics.Bethesda
                     return;
                 using var skinInstanceRef = shape.SkinInstanceRef();
                 if (
-                    !header.TryGetBlock<BSDismemberSkinInstanceNiSkinInstance>(
+                    !header.TryGetBlock<NiSkinInstance>(
                         skinInstanceRef, out var skinInstance)
                     || !header.TryGetBlock<NiSkinData>(skinInstance.dataRef, out var skinData))
                 {
