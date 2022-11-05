@@ -4,6 +4,8 @@
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+         xmlns:app="clr-namespace:Focus.Apps.EasyNpc"
          xmlns:main="clr-namespace:Focus.Apps.EasyNpc.Main"
          xmlns:profile="clr-namespace:Focus.Apps.EasyNpc.Profiles"
          xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -165,6 +167,9 @@
                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
                          SelectedItem="{Binding SelectedNpc.SelectedMugshot}">
+                <i:Interaction.Behaviors>
+                    <app:HorizontalScrollingBehavior/>
+                </i:Interaction.Behaviors>
                 <ui:ListView.Style>
                     <Style TargetType="ui:ListView">
                         <Style.Triggers>
