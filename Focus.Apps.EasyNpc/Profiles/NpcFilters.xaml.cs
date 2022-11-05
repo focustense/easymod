@@ -15,14 +15,19 @@ namespace Focus.Apps.EasyNpc.Profiles
             InitializeComponent();
         }
 
+        private void ClearAvailablePluginFilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            Model.AvailablePlugin = null;
+        }
+
         private void ClearDefaultPluginFilterButton_Click(object sender, RoutedEventArgs e)
         {
-            Model.DefaultPlugin = null;
+            Model.SelectedDefaultPlugin = null;
         }
 
         private void ClearFacePluginFilterButton_Click(object sender, RoutedEventArgs e)
         {
-            Model.FacePlugin = null;
+            Model.SelectedFacePlugin = null;
         }
 
         private void PluginFiltersGrid_Loaded(object sender, RoutedEventArgs e)

@@ -108,10 +108,12 @@ namespace Focus.Apps.EasyNpc.Profiles
             ApplySearchParameter(ref filteredNpcs, x => x.Name);
             if (Filters.Wigs)
                 filteredNpcs = filteredNpcs.Where(x => x.FaceOption.HasWig);
-            if (!string.IsNullOrEmpty(Filters.DefaultPlugin))
-                filteredNpcs = filteredNpcs.Where(x => x.IsDefaultPlugin(Filters.DefaultPlugin));
-            if (!string.IsNullOrEmpty(Filters.FacePlugin))
-                filteredNpcs = filteredNpcs.Where(x => x.IsFacePlugin(Filters.FacePlugin));
+            if (!string.IsNullOrEmpty(Filters.AvailablePlugin))
+                filteredNpcs = filteredNpcs.Where(x => x.HasPluginOption(Filters.AvailablePlugin));
+            if (!string.IsNullOrEmpty(Filters.SelectedDefaultPlugin))
+                filteredNpcs = filteredNpcs.Where(x => x.IsDefaultPlugin(Filters.SelectedDefaultPlugin));
+            if (!string.IsNullOrEmpty(Filters.SelectedFacePlugin))
+                filteredNpcs = filteredNpcs.Where(x => x.IsFacePlugin(Filters.SelectedFacePlugin));
             if (Filters.Conflicts)
                 // Not really a "conflict" anymore, but we'll repurpose the filter.
                 filteredNpcs = filteredNpcs.Where(x => x.FaceGenOverride is not null);
@@ -162,9 +164,9 @@ namespace Focus.Apps.EasyNpc.Profiles
                 if (message.Filters.Conflicts.HasValue)
                     Filters.Conflicts = message.Filters.Conflicts.Value;
                 if (message.Filters.DefaultPlugin != null)  // Allow "empty" override
-                    Filters.DefaultPlugin = message.Filters.DefaultPlugin;
+                    Filters.SelectedDefaultPlugin = message.Filters.DefaultPlugin;
                 if (message.Filters.FacePlugin != null)
-                    Filters.FacePlugin = message.Filters.FacePlugin;
+                    Filters.SelectedFacePlugin = message.Filters.FacePlugin;
                 if (message.Filters.Missing.HasValue)
                     Filters.Missing = message.Filters.Missing.Value;
                 if (message.Filters.NonDlc.HasValue)

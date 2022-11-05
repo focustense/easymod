@@ -84,17 +84,24 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="8"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">Default plugin:</TextBlock>
                         <ComboBox Grid.Row="0" Grid.Column="1"
                                               HorizontalAlignment="Stretch" Margin="8,0" MinWidth="250"
-                                              ItemsSource="{Binding AvailablePlugins}" IsEditable="True" SelectedItem="{Binding DefaultPlugin}"/>
+                                              ItemsSource="{Binding AvailablePlugins}" IsEditable="True" SelectedItem="{Binding SelectedDefaultPlugin}"/>
                         <Button x:Name="ClearDefaultPluginFilterButton" Grid.Row="0" Grid.Column="2" Style="{StaticResource ClearFilterButtonStyle}" Click="ClearDefaultPluginFilterButton_Click"/>
                         <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">Face plugin:</TextBlock>
                         <ComboBox Grid.Row="2" Grid.Column="1"
                                               HorizontalAlignment="Stretch" Margin="8,0" MinWidth="250"
-                                              ItemsSource="{Binding AvailablePlugins}" IsEditable="True" SelectedItem="{Binding FacePlugin}"/>
+                                              ItemsSource="{Binding AvailablePlugins}" IsEditable="True" SelectedItem="{Binding SelectedFacePlugin}"/>
                         <Button x:Name="ClearFacePluginFilterButton" Grid.Row="2" Grid.Column="2" Style="{StaticResource ClearFilterButtonStyle}" Click="ClearFacePluginFilterButton_Click"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center">Provided in:</TextBlock>
+                        <ComboBox Grid.Row="4" Grid.Column="1"
+                                              HorizontalAlignment="Stretch" Margin="8,0" MinWidth="250"
+                                              ItemsSource="{Binding AvailablePlugins}" IsEditable="True" SelectedItem="{Binding AvailablePlugin}"/>
+                        <Button x:Name="ClearAvailablePluginFilterButton" Grid.Row="4" Grid.Column="2" Style="{StaticResource ClearFilterButtonStyle}" Click="ClearAvailablePluginFilterButton_Click"/>
                     </Grid>
                 </ui:MenuFlyout>
             </ui:DropDownButton.Flyout>

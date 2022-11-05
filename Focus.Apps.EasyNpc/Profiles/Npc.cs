@@ -33,6 +33,7 @@ namespace Focus.Apps.EasyNpc.Profiles
         void ApplyPolicy(bool resetDefaultPlugin = false, bool resetFacePlugin = false, bool alwaysLog = false);
         IEnumerable<string> GetFaceModNames();
         int GetOverrideCount(bool includeBaseGame);
+        bool HasPluginOption(string pluginName);
         bool IsDefaultPlugin(string pluginName);
         bool IsFacePlugin(string pluginName);
         NpcChangeResult RevertToBaseGame();
@@ -141,6 +142,12 @@ namespace Focus.Apps.EasyNpc.Profiles
         public int GetOverrideCount(bool includeBaseGame)
         {
             return Options.Count(x => includeBaseGame || !x.IsBaseGame);
+        }
+
+        public bool HasPluginOption(string pluginName)
+        {
+            return Options.Any(x => x.PluginName.Equals(
+                pluginName, StringComparison.CurrentCultureIgnoreCase));
         }
 
         public bool IsDefaultPlugin(string pluginName)

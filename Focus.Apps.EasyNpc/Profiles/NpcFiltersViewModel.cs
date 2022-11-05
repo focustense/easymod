@@ -8,25 +8,27 @@ namespace Focus.Apps.EasyNpc.Profiles
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
+        public string? AvailablePlugin { get; set; }
         public IReadOnlyList<string> AvailablePlugins { get; set; } = new List<string>().AsReadOnly();
         public bool Conflicts { get; set; }
-        public string? DefaultPlugin { get; set; }
-        public string? FacePlugin { get; set; }
         public bool HasForcedFilter { get; set; }
         public bool Missing { get; set; }
         public bool MultipleChoices { get; set; }
         public bool NonDlc { get; set; }
+        public string? SelectedDefaultPlugin { get; set; }
+        public string? SelectedFacePlugin { get; set; }
         public NpcSexFilter Sex { get; set; }
         public bool Wigs { get; set; }
 
         [DependsOn(
-            "Conflicts", "DefaultPlugin", "FaceChange", "FacePlugin", "Missing", "MultipleChoices", "NonDlc",
-            "Sex", "Wigs")]
+            nameof(Conflicts), nameof(SelectedDefaultPlugin), nameof(SelectedFacePlugin),
+            nameof(AvailablePlugin), nameof(AvailablePlugin), nameof(Missing),
+            nameof(MultipleChoices), nameof(NonDlc), nameof(Sex), nameof(Wigs))]
         public bool IsNonDefault =>
             !NonDlc || Conflicts || Missing || Wigs ||
             Sex != NpcSexFilter.None ||
-            !string.IsNullOrEmpty(DefaultPlugin) ||
-            !string.IsNullOrEmpty(FacePlugin);
+            !string.IsNullOrEmpty(SelectedDefaultPlugin) ||
+            !string.IsNullOrEmpty(SelectedFacePlugin);
 
         public NpcFiltersViewModel()
         {
@@ -36,8 +38,9 @@ namespace Focus.Apps.EasyNpc.Profiles
         public void ResetToDefault()
         {
             Conflicts = false;
-            DefaultPlugin = null;
-            FacePlugin = null;
+            AvailablePlugin = null;
+            SelectedDefaultPlugin = null;
+            SelectedFacePlugin = null;
             Missing = false;
             MultipleChoices = false;
             NonDlc = true;
