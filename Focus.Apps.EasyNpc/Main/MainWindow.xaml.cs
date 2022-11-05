@@ -37,6 +37,12 @@ namespace Focus.Apps.EasyNpc.Main
             };
         }
 
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            WindowChromeFix.Install(this);
+        }
+
         private void Window_Closed(object sender, EventArgs e)
         {
             container.Dispose();
