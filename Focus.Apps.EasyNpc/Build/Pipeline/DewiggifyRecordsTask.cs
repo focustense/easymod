@@ -47,6 +47,8 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         protected override Task<Result> Run(BuildSettings settings)
         {
+            if (!settings.EnableDewiggify)
+                return Task.FromResult(new Result(new List<NpcWigConversion>().AsReadOnly()));
             return Task.Run(() =>
             {
                 var wigs = defaults.Npcs

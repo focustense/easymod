@@ -66,7 +66,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         };
 
         private readonly BehaviorSubject<bool> enableArchiving = new(true);
-        private readonly BehaviorSubject<bool> enableDewiggify = new(true);
+        private readonly BehaviorSubject<bool> enableDewiggify = new(false);
         private readonly IFileSystem fs;
         private readonly BehaviorSubject<string> modName = new($"NPC Merge {DateTime.Now:yyyy-MM-dd}");
         private readonly BehaviorSubject<ErrorLevel> overallErrorLevel = new(ErrorLevel.None);
