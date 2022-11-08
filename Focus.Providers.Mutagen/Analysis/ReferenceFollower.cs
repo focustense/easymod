@@ -52,7 +52,7 @@ namespace Focus.Providers.Mutagen.Analysis
         protected IGroupCache GroupCache { get; private init; }
 
         private readonly HashSet<string> excludedPluginNames = new(StringComparer.CurrentCultureIgnoreCase);
-        private readonly List<Func<T, TResult?, IEnumerable<TResult>>> routes = new();
+        private readonly List<Func<T, TResult?, ISet<FormKey>, IEnumerable<TResult>>> routes = new();
 
         public ReferenceFollower(IGroupCache groupCache)
         {
@@ -114,19 +114,19 @@ namespace Focus.Providers.Mutagen.Analysis
             subrecordFollower.AccumulatorCache = AccumulatorCache;
             subrecordFollower.WithPluginExclusions(excludedPluginNames);
             configure?.Invoke(subrecordFollower);
-            routes.Add((record, previous) => Walk(record, previous, linksSelector, subrecordFollower));
+            routes.Add((record, previous, visited) => Walk(record, previous, linksSelector, subrecordFollower, visited));
             return this;
         }
 
         public IReferenceFollower<T> FollowSelf(Func<T, IFormLinkGetter<T>?> linkSelector)
         {
-            routes.Add((record, previous) => Walk(record, previous, r => new[] { linkSelector(r) }, this));
+            routes.Add((record, previous, visited) => Walk(record, previous, r => new[] { linkSelector(r) }, this, visited));
             return this;
         }
 
         public IReferenceFollower<T> FollowSelf(Func<T, IEnumerable<IFormLinkGetter<T>?>?> linksSelector)
         {
-            routes.Add((record, previous) => Walk(record, previous, linksSelector, this));
+            routes.Add((record, previous, visited) => Walk(record, previous, linksSelector, this, visited));
             return this;
         }
 
@@ -139,16 +139,21 @@ namespace Focus.Providers.Mutagen.Analysis
 
         protected IEnumerable<IEnumerable<TResult>> WalkAll(T record)
         {
-            return routes.Select(walk => walk(record, default));
+            var visited = new HashSet<FormKey>();
+            return routes.Select(walk => walk(record, default, visited));
         }
 
         private IEnumerable<TResult> Walk<U>(
             T record,
             TResult? previous,
             Func<T, IEnumerable<IFormLinkGetter<U>?>?> linksSelector,
-            ReferenceFollower<U, TAccumulate, TResult> subrecordFollower)
+            ReferenceFollower<U, TAccumulate, TResult> subrecordFollower,
+            ISet<FormKey> visited)
             where U : class, ISkyrimMajorRecordGetter
         {
+            if (visited.Contains(record.FormKey))
+                yield break;
+            visited.Add(record.FormKey);
             var originKey = record.FormKey.ToRecordKey();
             var originType = typeof(T).GetRecordType();
             var current = AccumulatorCache.GetOrAdd(record.FormKey, _ => Visit(record));
@@ -174,11 +179,12 @@ namespace Focus.Providers.Mutagen.Analysis
                     continue;
                 var nextRecord = nextRecordWithSource.Value;
                 var subrecordResults = subrecordFollower.routes
-                    .Select(ps => ps(nextRecord, result))
+                    .Select(ps => ps(nextRecord, result, visited))
                     .SelectMany(results => results);
                 foreach (var subrecordPath in subrecordResults)
                     yield return subrecordPath;
             }
+            visited.Remove(record.FormKey);
         }
 
         protected abstract ReferenceFollower<TNext, TAccumulate, TResult> CreateChild<TNext>()

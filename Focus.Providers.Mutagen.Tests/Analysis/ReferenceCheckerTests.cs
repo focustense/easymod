@@ -292,6 +292,43 @@ namespace Focus.Providers.Mutagen.Tests.Analysis
                 x => AssertPath(x, PathFrom(npc).Id("Face").Key("123456:badheadpart.esp", RecordType.HeadPart)));
         }
 
+        [Fact]
+        public void IgnoresCircularReferences()
+        {
+            var headPartKeys = groups
+                .AddRecords<HeadPart>(
+                    "main.esp",
+                    x =>
+                    {
+                        x.EditorID = "Hair";
+                        x.Color.SetTo(AddRecord<ColorRecord>("HairColor"));
+                        x.ExtraParts.AddRange(groups.AddRecords<HeadPart>("main.esp", hp =>
+                        {
+                            hp.EditorID = "Hairline";
+                            hp.Color.SetTo(AddRecord<ColorRecord>("HairlineColor"));
+                        }).ToFormKeys());
+                        x.ExtraParts.Add(x.FormKey.AsLinkGetter<IHeadPartGetter>());
+                        x.ExtraParts.Add(FormKey.Factory("123456:badheadpart.esp").AsLink<IHeadPartGetter>());
+                        x.TextureSet.SetTo(AddRecord<TextureSet>("HairTextureSet"));
+                    },
+                    x =>
+                    {
+                        x.EditorID = "Face";
+                        x.Color.SetTo(AddRecord<ColorRecord>("FaceColor"));
+                    })
+                .ToFormKeys();
+            var npc = new Npc(FormKey.Factory("123456:main.esp"), SkyrimRelease.SkyrimSE)
+            {
+                EditorID = "TestNpc",
+                HeadParts = new(headPartKeys.Select(x => x.AsLink<IHeadPartGetter>())),
+            };
+            var invalidPaths = checker.GetInvalidPaths(npc);
+
+            Assert.Collection(
+                invalidPaths,
+                x => AssertPath(x, PathFrom(npc).Id("Hair").Key("123456:badheadpart.esp", RecordType.HeadPart)));
+        }
+
         private FormKey AddRecord<T>(string editorId)
             where T : class, ISkyrimMajorRecord
         {
