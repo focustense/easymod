@@ -10,11 +10,14 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         public class Result
         {
+            public IReadOnlyCollection<string> FailedPaths { get; private init; }
             public IReadOnlyCollection<string> TexturePaths { get; private init; }
 
-            public Result(IReadOnlyCollection<string> texturePaths)
+            public Result(
+                IReadOnlyCollection<string> texturePaths, IReadOnlyCollection<string> failedPaths)
             {
                 TexturePaths = texturePaths;
+                FailedPaths = failedPaths;
             }
         }
 
@@ -55,8 +58,10 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     })
                     .ToHashSet();
                 ItemCount.OnNext(texturePaths.Count);
-                copier.CopyAll(texturePaths, settings.OutputDirectory, NextItemSync, CancellationToken);
-                return new Result(texturePaths);
+                copier.CopyAll(
+                    texturePaths, settings.OutputDirectory, NextItemSync, out var failedPaths,
+                    CancellationToken);
+                return new Result(texturePaths, failedPaths);
             });
         }
     }

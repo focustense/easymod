@@ -4,13 +4,17 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 {
     public class ReportTask : BuildTask<BuildReport>
     {
-        public delegate ReportTask Factory(PatchSaveTask.Result patch, ArchiveCreationTask.Result archive);
+        public delegate ReportTask Factory(
+            PatchSaveTask.Result patch, ArchiveCreationTask.Result archive,
+            WriteMetadataTask.Result metadata);
 
         private readonly IBuildReporter reporter;
 
-        public ReportTask(IBuildReporter reporter, PatchSaveTask.Result patch, ArchiveCreationTask.Result archive)
+        public ReportTask(
+            IBuildReporter reporter, PatchSaveTask.Result patch, ArchiveCreationTask.Result archive,
+            WriteMetadataTask.Result metadata)
         {
-            RunsAfter(patch, archive);
+            RunsAfter(patch, archive, metadata);
             this.reporter = reporter;
         }
 

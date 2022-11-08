@@ -14,13 +14,17 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         public class Result
         {
+            public IReadOnlyCollection<string> FailedPaths { get; private init; }
             public IReadOnlyCollection<string> MeshPaths { get; private init; }
             public IReadOnlyCollection<string> TintPaths { get; private init; }
 
-            public Result(IReadOnlyCollection<string> meshPaths, IReadOnlyCollection<string> tintPaths)
+            public Result(
+                IReadOnlyCollection<string> meshPaths, IReadOnlyCollection<string> tintPaths,
+                IReadOnlyCollection<string> failedPaths)
             {
                 MeshPaths = meshPaths;
                 TintPaths = tintPaths;
+                FailedPaths = failedPaths;
             }
         }
 
@@ -43,6 +47,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
             {
                 var meshPaths = new List<string>();
                 var tintPaths = new List<string>();
+                var failedPaths = new List<string>();
                 var found = settings.Profile.Npcs
                     .AsParallel()
                     // NPCs using template traits don't need, and generally shouldn't have a facegen. The "chargen data"
@@ -112,8 +117,11 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                             lock (tintPaths)
                                 tintPaths.Add(x.RelativePath);
                     }
+                    else
+                        lock (failedPaths)
+                            failedPaths.Add(x.RelativePath);
                 });
-                return new Result(meshPaths, tintPaths);
+                return new Result(meshPaths, tintPaths, failedPaths);
             });
         }
 

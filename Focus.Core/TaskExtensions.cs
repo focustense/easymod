@@ -6,6 +6,20 @@ namespace Focus
 {
     public static class TaskExtensions
     {
+        public static async Task<T> Catch<T, TException>(
+            this Task<T> task, Func<TException, T> exceptionResultSelector)
+            where TException : Exception
+        {
+            try
+            {
+                return await task;
+            }
+            catch (TException ex)
+            {
+                return exceptionResultSelector(ex);
+            }
+        }
+
         public static Task<T> WithTimeout<T>(
             this Task<T> task, int timeoutMs, Action? onTimeout = null,
             CancellationToken cancellationToken = default)

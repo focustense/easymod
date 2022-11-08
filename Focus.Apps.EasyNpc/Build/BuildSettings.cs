@@ -9,6 +9,7 @@ namespace Focus.Apps.EasyNpc.Build
         public string OutputDirectory { get; init; }
         public string OutputModName { get; init; }
         public Profile Profile { get; init; }
+        public int TextureExtractionTimeoutSec { get; init; } = 30;
 
         public BuildSettings(Profile profile, string outputDirectory, string outputModName)
         {

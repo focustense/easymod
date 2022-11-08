@@ -579,9 +579,23 @@
                                     <ContentControl Style="{StaticResource HelpIconStyle}" Margin="4,0,0,0">
                                         <ContentControl.ToolTip>
                                             <TextBlock>
-                                                NPCs using wigs (Worn Armors with hair addons) will be converted to use real hair, if an equivalent model is availalbe in the
+                                                NPCs using wigs (Worn Armors with hair addons) will be converted to use real hair, if an equivalent model is available in the
                                                 current load order. If no match is found, the NPC will keep their wig. Disable this option if you are merging NPC mods based
                                                 on HDT-SMP, e.g. most Hair Physics patches.
+                                            </TextBlock>
+                                        </ContentControl.ToolTip>
+                                    </ContentControl>
+                                </ui:SimpleStackPanel>
+                                <TextBlock Text="Texture path extraction timeout (seconds, per file)" Style="{StaticResource LoweredFormLabelStyle}"/>
+                                <ui:SimpleStackPanel Orientation="Horizontal">
+                                    <ui:NumberBox Width="100" Value="{Binding Output.TexturePathExtractionTimeoutSec}" Minimum="0" Maximum="300" SpinButtonPlacementMode="Compact"/>
+                                    <ContentControl Style="{StaticResource HelpIconStyle}" Margin="4,0,0,0">
+                                        <ContentControl.ToolTip>
+                                            <TextBlock>
+                                                Maximum time to spend obtaining texture paths from any given file. Limiting this helps to prevent long stalls on machines
+                                                with slower (non-SSD) hard drives. Skipped files will be listed in the build metadata, so that any missing textures can be
+                                                manually copied afterward. Set to 0 in order to disable the timeout; note that doing this may result in builds taking several
+                                                times longer than the expected 5-15 minutes.
                                             </TextBlock>
                                         </ContentControl.ToolTip>
                                     </ContentControl>

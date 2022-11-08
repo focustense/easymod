@@ -1,6 +1,7 @@
 ﻿using Focus.Files;
 using Focus.ModManagers;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,11 +12,15 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         public class Result
         {
+            public IReadOnlyCollection<string> FailedPaths { get; private init; }
             public IReadOnlyCollection<string> MeshPaths { get; private init; }
             public IReadOnlyCollection<string> MorphPaths { get; private init; }
 
-            public Result(IReadOnlyCollection<string> meshPaths, IReadOnlyCollection<string> morphPaths)
+            public Result(
+                IReadOnlyCollection<string> meshPaths, IReadOnlyCollection<string> morphPaths,
+                IReadOnlyCollection<string> failedPaths)
             {
+                FailedPaths = failedPaths;
                 MeshPaths = meshPaths;
                 MorphPaths = morphPaths;
             }
@@ -63,9 +68,15 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                     .ToHashSet(PathComparer.Default);
                 ItemCount.OnNext(meshPaths.Count + morphPaths.Count);
 
-                copier.CopyAll(meshPaths, settings.OutputDirectory, NextItemSync, CancellationToken);
-                copier.CopyAll(morphPaths, settings.OutputDirectory, NextItemSync, CancellationToken);
-                return new Result(meshPaths, morphPaths);
+                copier.CopyAll(
+                    meshPaths, settings.OutputDirectory, NextItemSync, out var failedMeshPaths,
+                    CancellationToken);
+                copier.CopyAll(
+                    morphPaths, settings.OutputDirectory, NextItemSync, out var failedMorphPaths,
+                    CancellationToken);
+                return new Result(
+                    meshPaths, morphPaths,
+                    failedMeshPaths.Concat(failedMorphPaths).ToImmutableList());
             });
         }
 

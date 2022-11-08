@@ -1,6 +1,7 @@
 ﻿using Focus.Files;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
     {
         void CopyAll(
             HashSet<string> paths, string outputDirectory, Action<string> beforeCopy,
-            CancellationToken cancellationToken);
+            out IImmutableList<string> failedPaths, CancellationToken cancellationToken);
     }
 
     public class FileCopier : IFileCopier
@@ -25,9 +26,9 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
 
         public void CopyAll(
             HashSet<string> paths, string outputDirectory, Action<string> beforeCopy,
-            CancellationToken cancellationToken)
+            out IImmutableList<string> failedPaths, CancellationToken cancellationToken)
         {
-            var failedPaths = new List<string>();
+            var mutableFailedPaths = new List<string>();
             // Problem: we don't know for certain whether a file is loose, or coming from a BSA. Loose files are I/O
             // bound, but BSAs are a combination of I/O and CPU.
             // Probably the best we can do is use a few (but not too many) concurrent tasks here, and hope that the
@@ -39,9 +40,10 @@ namespace Focus.Apps.EasyNpc.Build.Pipeline
                 beforeCopy(path);
                 var outputPath = Path.Combine(outputDirectory, path);
                 if (!fileProvider.CopyToFile(path, outputPath))
-                    lock (failedPaths)
-                        failedPaths.Add(outputPath);
+                    lock (mutableFailedPaths)
+                        mutableFailedPaths.Add(outputPath);
             });
+            failedPaths = mutableFailedPaths.ToImmutableList();
             paths.ExceptWith(failedPaths);
         }
     }

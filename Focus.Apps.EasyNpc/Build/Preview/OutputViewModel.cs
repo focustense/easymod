@@ -51,6 +51,12 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             set => modName.OnNext(value);
         }
 
+        public int TexturePathExtractionTimeoutSec
+        {
+            get => texturePathExtractionTimeoutSec.Value;
+            set => texturePathExtractionTimeoutSec.OnNext(value);
+        }
+
         public IObservable<ErrorLevel> OverallErrorLevel => overallErrorLevel;
         public string PluginName => FileStructure.MergeFileName;
 
@@ -71,6 +77,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         private readonly BehaviorSubject<string> modName = new($"NPC Merge {DateTime.Now:yyyy-MM-dd}");
         private readonly BehaviorSubject<ErrorLevel> overallErrorLevel = new(ErrorLevel.None);
         private readonly Profile profile;
+        private readonly BehaviorSubject<int> texturePathExtractionTimeoutSec = new(30);
 
         public OutputViewModel(IObservableModSettings modSettings, IFileSystem fs, ILogger log, Profile profile)
         {
@@ -78,7 +85,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             this.profile = profile;
             BuildSettings = Observable
                 .CombineLatest(
-                    modSettings.RootDirectoryObservable, modName, enableArchiving, enableDewiggify, GetBuildSettings);
+                    modSettings.RootDirectoryObservable, modName, enableArchiving, enableDewiggify,
+                    texturePathExtractionTimeoutSec, GetBuildSettings);
             BuildSettings.SubscribeSafe(log, settings =>
             {
                 IsExistingMod = IsOutputDirectoryNonEmpty(settings);
@@ -88,7 +96,8 @@ namespace Focus.Apps.EasyNpc.Build.Preview
         }
 
         private BuildSettings GetBuildSettings(
-            string modRootDirectory, string outputModName, bool enableArchiving, bool enableDewiggify)
+            string modRootDirectory, string outputModName, bool enableArchiving,
+            bool enableDewiggify, int texturePathExtractionTimeoutSec)
         {
             outputModName = outputModName ?? "";
             var outputDirectory = Path.Combine(modRootDirectory, outputModName);
@@ -96,6 +105,7 @@ namespace Focus.Apps.EasyNpc.Build.Preview
             {
                 EnableArchiving = enableArchiving,
                 EnableDewiggify = enableDewiggify,
+                TextureExtractionTimeoutSec = texturePathExtractionTimeoutSec,
             };
         }
 

@@ -51,6 +51,7 @@ namespace Focus.Apps.EasyNpc.Modules
             builder.RegisterType<ReportTask>();
             builder.RegisterType<TextureCopyTask>();
             builder.RegisterType<TexturePathExtractionTask>();
+            builder.RegisterType<WriteMetadataTask>();
 
             // Realtime preview
             builder.RegisterType<PluginCategorizer>().As<IPluginCategorizer>();
@@ -75,6 +76,7 @@ namespace Focus.Apps.EasyNpc.Modules
                     .RegisterTask<TexturePathExtractionTask.Factory>("Extract Texture Paths")
                     .RegisterTask<TextureCopyTask.Factory>("Copy Textures")
                     .RegisterTask<ArchiveCreationTask.Factory>("Pack BSA Archive")
+                    .RegisterTask<WriteMetadataTask.Factory>("Write Metadata")
                     .RegisterTask<ReportTask.Factory>("Report Results")
                     .CreatePipeline<BuildSettings>())
                 .As<IBuildPipeline<BuildSettings, BuildReport>>();
