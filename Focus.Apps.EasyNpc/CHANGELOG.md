@@ -5,8 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- #80: New "Provided in" filter in profile view, shows all NPCs which *can* be affected by a given mod, even if they are currently pointing to different mods.
+- #139: Able to scroll long mugshot rows using shift + mouse wheel.
+- Output mod directory now contains a `build_info.json` which includes a list of any files that failed to copy or analyze, for help with troubleshooting missing meshes/textures and other in-game issues.
+
 ### Fixed
-- #131: App crashes silently when there are no build alerts to show.
+- #131: App no longer crashes silently when there are no build alerts to show.
+- #133: Beast transformations (werewolf, vampire lord, etc.) should now work with all modded NPCs.
+  - All Worn Armors, whether vanilla or modded, are patched in order to match the specific NPC's race and automatically include beast addons, even if the original mod left them out.
+- #135: Eliminate `WindowChrome` related crashes associated Logitech SetPoint software.
+- #164: All build tasks honor dewiggifier setting; blackface will no longer occur with mods such as High Poly NPC Overhaul 2.0 when wig conversion is disabled.
+- #166: Avoid a stack overflow crash when launched with mods containing circular references.
+
+### Changed
+- #164: Wig conversion is now disabled by default, since Worn Armors (including wigs) are fully supported.
+  - There is not much of an advantage to dewiggifying anymore; it makes the build take longer, and creates a minor risk of in-game issues.
+- #165: Throttle texture path extraction and add a per-file timeout.
+  - This should help many (not necessarily all) users who are experiencing long wait times during the "Extract Texture Paths" part of the build, and make the progress reporting more accurate for all users.
+  - Timeout can be configured in the Output section of the build screen. Default, and recommended, is 30 seconds per file. Any files that time out will be reported in the new `build_info.json` for potential follow-up.
 
 ## [0.9.5] - 2021-10-09
 ### Added
