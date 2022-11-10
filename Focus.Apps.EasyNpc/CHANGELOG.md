@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.9.6] - 2022-11-10
 ### Added
 - #80: New "Provided in" filter in profile view, shows all NPCs which *can* be affected by a given mod, even if they are currently pointing to different mods.
 - #139: Able to scroll long mugshot rows using shift + mouse wheel.
@@ -242,7 +244,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release with basic record-facegen sync. Profiles, build, settings, and high-level maintenance functions.
 
-[Unreleased]: https://github.com/focustense/easymod/compare/v0.9.5...HEAD
+[Unreleased]: https://github.com/focustense/easymod/compare/v0.9.6...HEAD
+[0.9.6]: https://github.com/focustense/easymod/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/focustense/easymod/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/focustense/easymod/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/focustense/easymod/compare/v0.9.2...v0.9.3
